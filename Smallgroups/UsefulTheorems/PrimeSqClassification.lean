@@ -46,7 +46,7 @@ abbrev ElemAbelianRep (p : ℕ) : Type := CyclicRep p × CyclicRep p
 
 /-- `ElemAbelianRep p` has order `p²` (for `p ≠ 0`). -/
 theorem card_elemAbelianRep {p : ℕ} (hp : p ≠ 0) : Nat.card (ElemAbelianRep p) = p ^ 2 := by
-  show Nat.card (CyclicRep p × CyclicRep p) = p ^ 2
+  change Nat.card (CyclicRep p × CyclicRep p) = p ^ 2
   rw [Nat.card_prod, card_cyclicRep hp]
   exact (pow_two p).symm
 

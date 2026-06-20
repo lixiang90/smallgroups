@@ -59,8 +59,10 @@ theorem IsClassif.card_unique {k' : ℕ} {rep' : Fin k' → Type} [∀ i, Group 
   -- Map each representative of one list to the (unique) isomorphic representative of the other.
   let f : Fin k → Fin k' := fun i => (h'.complete (rep i) (h.card i)).choose
   let g : Fin k' → Fin k := fun j => (h.complete (rep' j) (h'.card j)).choose
-  have hf : ∀ i, Nonempty (rep i ≃* rep' (f i)) := fun i => (h'.complete (rep i) (h.card i)).choose_spec
-  have hg : ∀ j, Nonempty (rep' j ≃* rep (g j)) := fun j => (h.complete (rep' j) (h'.card j)).choose_spec
+  have hf : ∀ i, Nonempty (rep i ≃* rep' (f i))
+  := fun i => (h'.complete (rep i) (h.card i)).choose_spec
+  have hg : ∀ j, Nonempty (rep' j ≃* rep (g j))
+  := fun j => (h.complete (rep' j) (h'.card j)).choose_spec
   have left : Function.LeftInverse g f := fun i =>
     (h.distinct i (g (f i)) ⟨(hf i).some.trans (hg (f i)).some⟩).symm
   have right : Function.RightInverse g f := fun j =>
