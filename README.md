@@ -17,22 +17,27 @@ theorems:
 * `Smallgroups/UsefulTheorems/` — reusable tools for classification.
   * `PrimeOrderCyclic.lean` — a finite group of prime order is cyclic
     (`Smallgroups.isCyclic_of_card_eq_prime`).
+    
   * `PrimeOrderClassification.lean` — the shared engine for single-class (cyclic) orders:
     `CyclicRep n = ℤ/n`, `cyclicRep_classification`, `prime_classification`, `prime_unique`,
     and the `singleReps` distinctness scaffolding.
+    
   * `PrimeSqClassification.lean` — the engine for orders `p²`: `prime_sq_mul_comm` (such groups
     are abelian), `prime_sq_classification` (every group of order `p²` is `ℤ/p²` or
     `ElemAbelianRep p = ℤ/p × ℤ/p`, proved via the `ℤ/p`-vector space structure of the non-cyclic
     case), and `prime_sq_distinct` (the two are non-isomorphic).
+    
   * `PrimePairCyclic.lean` — the engine for orders `p * q` (`p > q` distinct primes) in the
     cyclic case: `isCyclic_of_card_eq_prime_mul` shows that when `q ∤ p - 1`, both Sylow subgroups
     are normal (Sylow counting), so the group is nilpotent and, being a squarefree-order `Z`-group,
     cyclic.
+    
   * `PrimePairDihedral.lean` — the engine for orders `2p` (`p` an odd prime), the smallest
     `q ∣ p - 1` case: `classification_card_two_mul_prime` shows every group of order `2p` is the
     cyclic group `ℤ/2p` or the dihedral group `DihedralGroup p` (an index-2 cyclic subgroup forces
     conjugation by an involution to invert it, giving either the abelian/cyclic or the dihedral
     relation), and `cyclicRep_not_mulEquiv_dihedral` separates the two classes.
+    
   * `PrimePairNonabelian.lean` — the non-abelian case for general `q ∣ p - 1`:
     `NonabRep c hc = ℤ/p ⋊ ℤ/q` (semidirect product for the action by a unit `c` of order `q`), with
     `card_nonabRep` (order `p·q`), `not_isCyclic_nonabRep`, `cyclicRep_not_mulEquiv_nonabRep`, and
@@ -41,11 +46,20 @@ theorems:
     `SemidirectProduct.lift` + cardinality), `exists_generators_of_card_eq_prime_mul` (the Sylow
     setup), `unit_mem_zpowers_of_pow_eq` (relabelling), and `classification_card_eq_prime_mul`:
     every group of order `p·q` is cyclic or `≅ NonabRep c₀`.
+    
+  * `P3Group/` — the classification of groups of order `p³` into five classes (`ℤ/p³`,
+    `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
+    `P3Group.classification` gives exhaustiveness; the file also supplies the cards, non-abelianness,
+    and pairwise non-isomorphism facts. (Imported from a companion development.) 
+The code is from [p3group](https://github.com/lixiang90/p3group).
+    
   * `Counting.lean` — turns exhaustiveness + distinctness into a *counting* statement. `IsClassif N
     rep` says `rep : Fin k → Type` is a complete, non-redundant list of representatives of the
     groups of order `N`; `IsClassif.card_unique` proves the length `k` is well defined, so
     exhibiting such a list of length `k` proves "there are exactly `k` isomorphism classes".
-    `isClassif_one` / `isClassif_two` are the constructors used by the per-order files.
+    `isClassif_one` / `isClassif_two` / `isClassif_five` are the constructors used by the per-order
+    files (and `isEmpty_mulEquiv_of_comm_noncomm`: an abelian group is never `≅` a non-abelian one).
+  
 * `Smallgroups/Classifications/` — one file per order, grouped into decade subfolders
   `Classifications_1_to_10`, `Classifications_11_to_20`, …, `Classifications_91_to_100`.
   Each `OrderN.lean` proves the three classification theorems for order `N` in namespace
@@ -62,8 +76,9 @@ theorems:
   `ℤ/p × ℤ/p`; and the cyclic-only products `p * q` with `q ∤ p - 1`
   (`15, 33, 35, 51, 65, 69, 77, 85, 87, 91, 95`), each the single class `ℤ/N`; and the
   even products `2p` (`6, 10, 14, 22, 26, 34, 38, 46, 58, 62, 74, 82, 86, 94`), each with two
-  classes `ℤ/2p` and `DihedralGroup p`; and the odd products `pq` with `q ∣ p - 1`
-  (`21, 39, 55, 57, 93`), each with two classes `ℤ/pq` and the non-abelian `ℤ/p ⋊ ℤ/q`.
+  classes `ℤ/2p` and `DihedralGroup p`; the odd products `pq` with `q ∣ p - 1`
+  (`21, 39, 55, 57, 93`), each with two classes `ℤ/pq` and the non-abelian `ℤ/p ⋊ ℤ/q`; and the
+  prime-cubes `8` and `27`, each with five classes (via `P3Group`).
 
 ## Building
 

@@ -10,5 +10,6 @@ import Smallgroups.Classifications.Classifications_1_to_10.Order4
 import Smallgroups.Classifications.Classifications_1_to_10.Order5
 import Smallgroups.Classifications.Classifications_1_to_10.Order6
 import Smallgroups.Classifications.Classifications_1_to_10.Order7
+import Smallgroups.Classifications.Classifications_1_to_10.Order8
 import Smallgroups.Classifications.Classifications_1_to_10.Order9
 import Smallgroups.Classifications.Classifications_1_to_10.Order10
