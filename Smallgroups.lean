@@ -3,6 +3,7 @@ import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.PrimeSqClassification
 import Smallgroups.UsefulTheorems.PrimePairCyclic
 import Smallgroups.UsefulTheorems.PrimePairDihedral
+import Smallgroups.UsefulTheorems.PrimePairNonabelian
 import Smallgroups.UsefulTheorems.Counting
 import Smallgroups.Classifications.Classifications_1_to_10
 import Smallgroups.Classifications.Classifications_11_to_20

@@ -32,8 +32,15 @@ theorems:
     `q ∣ p - 1` case: `classification_card_two_mul_prime` shows every group of order `2p` is the
     cyclic group `ℤ/2p` or the dihedral group `DihedralGroup p` (an index-2 cyclic subgroup forces
     conjugation by an involution to invert it, giving either the abelian/cyclic or the dihedral
-    relation), and `cyclicRep_not_mulEquiv_dihedral` separates the two classes. The general
-    `q ∣ p - 1` case (`pq` for odd `q`) is not yet done.
+    relation), and `cyclicRep_not_mulEquiv_dihedral` separates the two classes.
+  * `PrimePairNonabelian.lean` — the non-abelian case for general `q ∣ p - 1`:
+    `NonabRep c hc = ℤ/p ⋊ ℤ/q` (semidirect product for the action by a unit `c` of order `q`), with
+    `card_nonabRep` (order `p·q`), `not_isCyclic_nonabRep`, `cyclicRep_not_mulEquiv_nonabRep`, and
+    `exists_unit_orderOf_eq` (an order-`q` unit exists). **The full classification is complete:**
+    `nonempty_mulEquiv_nonabRep` (a group with the right generators is `≅ NonabRep c`, via
+    `SemidirectProduct.lift` + cardinality), `exists_generators_of_card_eq_prime_mul` (the Sylow
+    setup), `unit_mem_zpowers_of_pow_eq` (relabelling), and `classification_card_eq_prime_mul`:
+    every group of order `p·q` is cyclic or `≅ NonabRep c₀`.
   * `Counting.lean` — turns exhaustiveness + distinctness into a *counting* statement. `IsClassif N
     rep` says `rep : Fin k → Type` is a complete, non-redundant list of representatives of the
     groups of order `N`; `IsClassif.card_unique` proves the length `k` is well defined, so
@@ -55,7 +62,8 @@ theorems:
   `ℤ/p × ℤ/p`; and the cyclic-only products `p * q` with `q ∤ p - 1`
   (`15, 33, 35, 51, 65, 69, 77, 85, 87, 91, 95`), each the single class `ℤ/N`; and the
   even products `2p` (`6, 10, 14, 22, 26, 34, 38, 46, 58, 62, 74, 82, 86, 94`), each with two
-  classes `ℤ/2p` and `DihedralGroup p`.
+  classes `ℤ/2p` and `DihedralGroup p`; and the odd products `pq` with `q ∣ p - 1`
+  (`21, 39, 55, 57, 93`), each with two classes `ℤ/pq` and the non-abelian `ℤ/p ⋊ ℤ/q`.
 
 ## Building
 
