@@ -24,6 +24,16 @@ theorems:
     are abelian), `prime_sq_classification` (every group of order `p²` is `ℤ/p²` or
     `ElemAbelianRep p = ℤ/p × ℤ/p`, proved via the `ℤ/p`-vector space structure of the non-cyclic
     case), and `prime_sq_distinct` (the two are non-isomorphic).
+  * `PrimePairCyclic.lean` — the engine for orders `p * q` (`p > q` distinct primes) in the
+    cyclic case: `isCyclic_of_card_eq_prime_mul` shows that when `q ∤ p - 1`, both Sylow subgroups
+    are normal (Sylow counting), so the group is nilpotent and, being a squarefree-order `Z`-group,
+    cyclic.
+  * `PrimePairDihedral.lean` — the engine for orders `2p` (`p` an odd prime), the smallest
+    `q ∣ p - 1` case: `classification_card_two_mul_prime` shows every group of order `2p` is the
+    cyclic group `ℤ/2p` or the dihedral group `DihedralGroup p` (an index-2 cyclic subgroup forces
+    conjugation by an involution to invert it, giving either the abelian/cyclic or the dihedral
+    relation), and `cyclicRep_not_mulEquiv_dihedral` separates the two classes. The general
+    `q ∣ p - 1` case (`pq` for odd `q`) is not yet done.
   * `Counting.lean` — turns exhaustiveness + distinctness into a *counting* statement. `IsClassif N
     rep` says `rep : Fin k → Type` is a complete, non-redundant list of representatives of the
     groups of order `N`; `IsClassif.card_unique` proves the length `k` is well defined, so
@@ -41,8 +51,11 @@ theorems:
     non-redundant representative list has the stated length).
 
   Done so far: order `1` (trivial group); every prime order `≤ 100` (`2, 3, 5, 7, …, 97`), each
-  the single class `ℤ/N`; and the prime-square orders `4, 9, 25, 49`, each with two classes
-  `ℤ/N` and `ℤ/p × ℤ/p`.
+  the single class `ℤ/N`; the prime-square orders `4, 9, 25, 49`, each with two classes `ℤ/N` and
+  `ℤ/p × ℤ/p`; and the cyclic-only products `p * q` with `q ∤ p - 1`
+  (`15, 33, 35, 51, 65, 69, 77, 85, 87, 91, 95`), each the single class `ℤ/N`; and the
+  even products `2p` (`6, 10, 14, 22, 26, 34, 38, 46, 58, 62, 74, 82, 86, 94`), each with two
+  classes `ℤ/2p` and `DihedralGroup p`.
 
 ## Building
 
