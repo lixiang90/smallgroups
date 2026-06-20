@@ -114,4 +114,59 @@ theorem isClassif_two {N : ℕ} (A B : Type) [Group A] [Group B]
     · exact absurd ⟨hiso.some.symm⟩ hdistinct
     · rfl
 
+
+/-- An abelian group is never isomorphic to a non-abelian one. -/
+theorem isEmpty_mulEquiv_of_comm_noncomm {A B : Type*} [Group A] [Group B]
+    (hA : ∀ a b : A, a * b = b * a) (hB : ¬ ∀ a b : B, a * b = b * a) :
+    ¬ Nonempty (A ≃* B) := by
+  rintro ⟨f⟩
+  apply hB
+  intro a b
+  have h := hA (f.symm a) (f.symm b)
+  calc a * b = f (f.symm a * f.symm b) := by simp
+    _ = f (f.symm b * f.symm a) := by rw [h]
+    _ = b * a := by simp
+
+/-! ### Constructor for the five-class case (used for orders `p³`) -/
+
+/-- The five-element representative family. -/
+def rep5 (A B C D E : Type) : Fin 5 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+
+instance instGroupRep5 (A B C D E : Type) [Group A] [Group B] [Group C] [Group D] [Group E] :
+    ∀ i, Group (rep5 A B C D E i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+
+/-- Five representatives of order `N` that together exhaust the groups of order `N` and are pairwise
+non-isomorphic give a five-class classification. -/
+theorem isClassif_five {N : ℕ} (A B C D E : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E]
+    (hA : Nat.card A = N) (hB : Nat.card B = N) (hC : Nat.card C = N) (hD : Nat.card D = N)
+    (hE : Nat.card E = N)
+    (hcomplete : ∀ (G : Type) [Group G], Nat.card G = N → Nonempty (G ≃* A) ∨ Nonempty (G ≃* B) ∨
+      Nonempty (G ≃* C) ∨ Nonempty (G ≃* D) ∨ Nonempty (G ≃* E))
+    (hAB : ¬ Nonempty (A ≃* B)) (hAC : ¬ Nonempty (A ≃* C)) (hAD : ¬ Nonempty (A ≃* D))
+    (hAE : ¬ Nonempty (A ≃* E)) (hBC : ¬ Nonempty (B ≃* C)) (hBD : ¬ Nonempty (B ≃* D))
+    (hBE : ¬ Nonempty (B ≃* E)) (hCD : ¬ Nonempty (C ≃* D)) (hCE : ¬ Nonempty (C ≃* E))
+    (hDE : ¬ Nonempty (D ≃* E)) :
+    IsClassif N (rep5 A B C D E) where
+  card i := by fin_cases i <;> assumption
+  complete G _ hG := by
+    rcases hcomplete G hG with h | h | h | h | h
+    exacts [⟨0, h⟩, ⟨1, h⟩, ⟨2, h⟩, ⟨3, h⟩, ⟨4, h⟩]
+  distinct i j hiso := by
+    fin_cases i <;> fin_cases j <;>
+      first
+        | rfl
+        | exact absurd hiso ‹_›
+        | exact absurd (Nonempty.intro hiso.some.symm) ‹_›
+
 end Smallgroups.UsefulTheorems

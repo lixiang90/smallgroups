@@ -8,4 +8,5 @@ import Smallgroups.Classifications.Classifications_21_to_30.Order22
 import Smallgroups.Classifications.Classifications_21_to_30.Order23
 import Smallgroups.Classifications.Classifications_21_to_30.Order25
 import Smallgroups.Classifications.Classifications_21_to_30.Order26
+import Smallgroups.Classifications.Classifications_21_to_30.Order27
 import Smallgroups.Classifications.Classifications_21_to_30.Order29

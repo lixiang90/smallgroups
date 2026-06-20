@@ -1,0 +1,5 @@
+import Smallgroups.UsefulTheorems.P3Group.Defs
+import Smallgroups.UsefulTheorems.P3Group.Structural
+import Smallgroups.UsefulTheorems.P3Group.AbelianCase
+import Smallgroups.UsefulTheorems.P3Group.NonAbelianCase
+import Smallgroups.UsefulTheorems.P3Group.Classification
