@@ -127,6 +127,17 @@ theorem isEmpty_mulEquiv_of_comm_noncomm {A B : Type*} [Group A] [Group B]
     _ = f (f.symm b * f.symm a) := by rw [h]
     _ = b * a := by simp
 
+/-- The three-element representative family. -/
+def rep3 (A B C : Type) : Fin 3 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+
+instance instGroupRep3 (A B C : Type) [Group A] [Group B] [Group C] : ∀ i, Group (rep3 A B C i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+
 /-! ### Constructor for the five-class case (used for orders `p³`) -/
 
 /-- The five-element representative family. -/
@@ -168,5 +179,50 @@ theorem isClassif_five {N : ℕ} (A B C D E : Type)
         | rfl
         | exact absurd hiso ‹_›
         | exact absurd (Nonempty.intro hiso.some.symm) ‹_›
+
+/-! ### Combining pairwise non-isomorphic families
+
+Rather than checking every cross pair when a list of representatives splits into groups (e.g. the
+abelian ones and the non-abelian ones), prove each group is internally pairwise non-isomorphic and
+that the groups are disjoint, then concatenate. -/
+
+/-- A family of groups is pairwise non-isomorphic. This is exactly the `distinct` field of
+`IsClassif`. -/
+def PairwiseNonMulEquiv {ι : Type*} (rep : ι → Type) [∀ i, Group (rep i)] : Prop :=
+  ∀ i j, Nonempty (rep i ≃* rep j) → i = j
+
+/-- The `Sum.elim` of two families of groups is again a family of groups. -/
+instance instGroupSumElim {ι κ : Type*} {A : ι → Type} {B : κ → Type}
+    [∀ i, Group (A i)] [∀ j, Group (B j)] : ∀ s : ι ⊕ κ, Group (Sum.elim A B s)
+  | Sum.inl i => inferInstanceAs (Group (A i))
+  | Sum.inr j => inferInstanceAs (Group (B j))
+
+/-- **Concatenating two disjoint pairwise-non-isomorphic families.** If `A` and `B` are each
+pairwise non-isomorphic and no `A i` is isomorphic to any `B j`, then `Sum.elim A B` is pairwise
+non-isomorphic. -/
+theorem PairwiseNonMulEquiv.sum {ι κ : Type*} {A : ι → Type} {B : κ → Type}
+    [∀ i, Group (A i)] [∀ j, Group (B j)]
+    (hA : PairwiseNonMulEquiv A) (hB : PairwiseNonMulEquiv B)
+    (hdisj : ∀ i j, ¬ Nonempty (A i ≃* B j)) :
+    PairwiseNonMulEquiv (Sum.elim A B) := by
+  rintro (i | i) (j | j) ⟨e⟩
+  · exact congrArg Sum.inl (hA i j ⟨e⟩)
+  · exact absurd ⟨e⟩ (hdisj i j)
+  · exact absurd ⟨e.symm⟩ (hdisj j i)
+  · exact congrArg Sum.inr (hB i j ⟨e⟩)
+
+/-- Reindex a pairwise-non-isomorphic family along an equivalence of the index. -/
+theorem PairwiseNonMulEquiv.reindex {ι κ : Type*} {rep : ι → Type} [∀ i, Group (rep i)]
+    (e : κ ≃ ι) (h : PairwiseNonMulEquiv rep) :
+    PairwiseNonMulEquiv (fun k => rep (e k)) :=
+  fun i j hiso => e.injective (h (e i) (e j) hiso)
+
+/-- **Abelian and non-abelian families are disjoint.** Supplies the disjointness hypothesis of
+`PairwiseNonMulEquiv.sum` when every `A i` is commutative and every `B j` is not. -/
+theorem pairwise_disjoint_of_comm_noncomm {ι κ : Type*} {A : ι → Type} {B : κ → Type}
+    [∀ i, Group (A i)] [∀ j, Group (B j)]
+    (hA : ∀ i, ∀ a b : A i, a * b = b * a) (hB : ∀ j, ¬ ∀ a b : B j, a * b = b * a) :
+    ∀ i j, ¬ Nonempty (A i ≃* B j) :=
+  fun i j => isEmpty_mulEquiv_of_comm_noncomm (hA i) (hB j)
 
 end Smallgroups.UsefulTheorems

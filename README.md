@@ -74,6 +74,19 @@ theorems:
     (which the further count — depending on `q ∣ p ± 1` and the structure of `P` — leaves to the
     per-order files).
 
+  * `Order2PSq.lean` — the order-`2 p²` family (`p` an odd prime; the `q = 2` instance of the above),
+    which has **five** classes: `ℤ/2p²`, `ℤ/p × ℤ/2p`, `D_{p²}`, `D_p × ℤ/p`, and the generalized
+    dihedral `(ℤ/p)² ⋊₋₁ ℤ/2`. **In progress:** the five representatives are constructed with their
+    orders proved `= 2p²` (`card_R1`…`card_R5`); the two abelian reps are separated from the three
+    non-abelian ones (`R1_comm`/`R2_comm` vs `R3_not_comm`/`R4_not_comm`/`R5_not_comm`) and from each
+    other (`R1_not_mulEquiv_R2`, cyclic vs non-cyclic). **Distinctness is complete**
+    (`all_pairwise`): the five are pairwise non-isomorphic, assembled by `PairwiseNonMulEquiv.sum`
+    from the abelian pair, the non-abelian triple (`D_{p²}` alone has an order-`p²` element,
+    `D_p × ℤ/p` alone an order-`2p` element — `nonabFam_pairwise`), and one abelian-vs-non-abelian
+    disjointness fact. Still to do: exhaustiveness (every order-`2p²` group is one of the five — via
+    the `psq_semidirectProduct` reduction plus classifying the involution `φ(1)` in `Aut(ℤ/p²)` and
+    `GL₂(𝔽_p)`).
+
   * `P3Group/` — the classification of groups of order `p³` into five classes (`ℤ/p³`,
     `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
     `P3Group.classification` gives exhaustiveness; the file also supplies the cards, non-abelianness,
@@ -105,6 +118,11 @@ The code is from [p3group](https://github.com/lixiang90/p3group).
     exhibiting such a list of length `k` proves "there are exactly `k` isomorphism classes".
     `isClassif_one` / `isClassif_two` / `isClassif_five` are the constructors used by the per-order
     files (and `isEmpty_mulEquiv_of_comm_noncomm`: an abelian group is never `≅` a non-abelian one).
+    `PairwiseNonMulEquiv rep` packages the distinctness condition (`rep i ≃* rep j → i = j`) for a
+    family of groups; `PairwiseNonMulEquiv.sum` concatenates two internally-distinct families that are
+    cross-disjoint, and `pairwise_disjoint_of_comm_noncomm` supplies that disjointness when one family
+    is all-abelian and the other all-non-abelian — so a long list of representatives is shown distinct
+    by checking each homogeneous block plus one block-vs-block fact, not every cross pair.
   
 * `Smallgroups/Classifications/` — one file per order, grouped into decade subfolders
   `Classifications_1_to_10`, `Classifications_11_to_20`, …, `Classifications_91_to_100`.
