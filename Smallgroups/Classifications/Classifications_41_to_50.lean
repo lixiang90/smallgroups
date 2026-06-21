@@ -8,3 +8,4 @@ import Smallgroups.Classifications.Classifications_41_to_50.Order43
 import Smallgroups.Classifications.Classifications_41_to_50.Order46
 import Smallgroups.Classifications.Classifications_41_to_50.Order47
 import Smallgroups.Classifications.Classifications_41_to_50.Order49
+import Smallgroups.Classifications.Classifications_41_to_50.Order50

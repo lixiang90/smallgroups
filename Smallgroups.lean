@@ -23,3 +23,4 @@ import Smallgroups.Classifications.Classifications_71_to_80
 import Smallgroups.Classifications.Classifications_81_to_90
 import Smallgroups.Classifications.Classifications_91_to_100
 import Smallgroups.UsefulTheorems.Order2PSqExhaustive
+import Smallgroups.UsefulTheorems.Order2PSqElem

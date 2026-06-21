@@ -44,7 +44,7 @@ theorem order2psq_semidirect [Fact p.Prime] (hp2 : p ≠ 2) [Finite G]
   · exact Or.inr ⟨_, ⟨e.trans (SemidirectProduct.congr' hP.some eK)⟩⟩
 
 /-!
-### Number-theoretic lemma (temporarily admitted)
+### Number-theoretic lemma
 In `ZMod (p ^ 2)` with `p` an odd prime, `k² = 1` implies `k = ±1`.
 -/
 

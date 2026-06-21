@@ -76,19 +76,28 @@ theorems:
 
   * `Order2PSq.lean` — the order-`2 p²` family (`p` an odd prime; the `q = 2` instance of the above),
     which has **five** classes: `ℤ/2p²`, `ℤ/p × ℤ/2p`, `D_{p²}`, `D_p × ℤ/p`, and the generalized
-    dihedral `(ℤ/p)² ⋊₋₁ ℤ/2`. **In progress:** the five representatives are constructed with their
-    orders proved `= 2p²` (`card_R1`…`card_R5`); the two abelian reps are separated from the three
-    non-abelian ones (`R1_comm`/`R2_comm` vs `R3_not_comm`/`R4_not_comm`/`R5_not_comm`) and from each
-    other (`R1_not_mulEquiv_R2`, cyclic vs non-cyclic). **Distinctness is complete**
-    (`all_pairwise`): the five are pairwise non-isomorphic, assembled by `PairwiseNonMulEquiv.sum`
-    from the abelian pair, the non-abelian triple (`D_{p²}` alone has an order-`p²` element,
-    `D_p × ℤ/p` alone an order-`2p` element — `nonabFam_pairwise`), and one abelian-vs-non-abelian
-    disjointness fact. **Exhaustiveness — reduction done** (`Order2PSqExhaustive.lean`,
-    `order2psq_semidirect`): every order-`2p²` group is `ℤ/p² ⋊[ψ] ℤ/2` or `(ℤ/p)² ⋊[ψ] ℤ/2`
-    (via `psq_semidirectProduct` + `SemidirectProduct.congr'` transport + `prime_sq_classification`).
-    Remaining: classify the involution `ψ(1)` and exhibit the explicit isomorphism to a representative
-    — `ℤ/p²` case `ψ(1) = ±1` (→ `ℤ/2p²` via CRT, or `D_{p²}`); `(ℤ/p)²` case by `±1`-eigenspace
-    decomposition (→ `(ℤ/p)²×ℤ/2`, `D_p×ℤ/p`, or the generalized dihedral).
+    dihedral `(ℤ/p)² ⋊₋₁ ℤ/2`. **Complete (sorry-free).** The five representatives are constructed with
+    their orders proved `= 2p²` (`card_R1`…`card_R5`). **Distinctness** (`all_pairwise`): the five are
+    pairwise non-isomorphic, assembled by `PairwiseNonMulEquiv.sum` from the abelian pair, the
+    non-abelian triple (`D_{p²}` alone has an order-`p²` element, `D_p × ℤ/p` alone an order-`2p`
+    element — `nonabFam_pairwise`), and one abelian-vs-non-abelian disjointness fact.
+  * `Order2PSqExhaustive.lean` — **exhaustiveness, cyclic Sylow case.** `order2psq_semidirect`: every
+    order-`2p²` group is `ℤ/p² ⋊[ψ] ℤ/2` or `(ℤ/p)² ⋊[ψ] ℤ/2` (via `psq_semidirectProduct` +
+    `SemidirectProduct.congr'` transport + `prime_sq_classification`). `order2psq_cyclicCase`: the
+    only involutions of `ℤ/p²` are `±1` (`cyclicRep_mulAut_involution`, from `k²=1 ⇒ k=±1` in `ℤ/p²`),
+    giving `ℤ/2p²` (trivial action, via CRT) or `D_{p²}` (inversion, via `SemidirectProduct.lift`).
+  * `Order2PSqElem.lean` — **exhaustiveness, elementary-abelian Sylow case, and the capstone.** The
+    reusable engine `eigenEquiv` splits an exponent-`p` abelian group under an involution `τ` as
+    `fixSubgroup τ × negSubgroup τ` (`±1`-eigenspaces, projections `x ↦ (x·τx)^t` / `x ↦ (x·(τx)⁻¹)^t`
+    with `2t = p+1`); `semidirectProdSplit` peels off a factor on which the action is trivial, so
+    `elem_decomp_semidirect` gives `G ≅ Fix × (Neg ⋊₋₁ ℤ/2)`. Casing on `|Neg| ∈ {1, p, p²}`
+    (`order2psq_elemCase`) yields `(ℤ/p)²×ℤ/2 ≅ ℤ/p×ℤ/2p`, `ℤ/p × D_p`, or the generalized dihedral
+    `(ℤ/p)² ⋊₋₁ ℤ/2`. The capstone `order2psq_classification` combines both Sylow cases: every group of
+    order `2p²` is one of the five reps; with `all_pairwise` this is the full five-class theorem.
+    `order2psq_isClassif` packages exhaustiveness + cards + distinctness into an `IsClassif (2p²)`.
+    Instantiated at the concrete orders **18** (`p=3`), **50** (`p=5`), **98** (`p=7`) in
+    `Classifications_11_to_20/Order18`, `Classifications_41_to_50/Order50`,
+    `Classifications_91_to_100/Order98` (each with `classification`, `isClassif`, `numIsoClasses_eq`).
 
   * `P3Group/` — the classification of groups of order `p³` into five classes (`ℤ/p³`,
     `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
@@ -144,8 +153,8 @@ The code is from [p3group](https://github.com/lixiang90/p3group).
   (`15, 33, 35, 51, 65, 69, 77, 85, 87, 91, 95`), each the single class `ℤ/N`; and the
   even products `2p` (`6, 10, 14, 22, 26, 34, 38, 46, 58, 62, 74, 82, 86, 94`), each with two
   classes `ℤ/2p` and `DihedralGroup p`; the odd products `pq` with `q ∣ p - 1`
-  (`21, 39, 55, 57, 93`), each with two classes `ℤ/pq` and the non-abelian `ℤ/p ⋊ ℤ/q`; and the
-  prime-cubes `8` and `27`, each with five classes (via `P3Group`).
+  (`21, 39, 55, 57, 93`), each with two classes `ℤ/pq` and the non-abelian `ℤ/p ⋊ ℤ/q`; the
+  prime-cubes `8` and `27`, each with five classes (via `P3Group`); and `2p^2` case (`18, 50, 98`) each with five classes.
 
 ## Building
 
