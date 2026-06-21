@@ -53,6 +53,25 @@ theorems:
     and pairwise non-isomorphism facts. (Imported from a companion development.) 
 The code is from [p3group](https://github.com/lixiang90/p3group).
     
+  * `AbelianPa.lean` — the exhaustiveness engine for **abelian** groups of order `p^a`, organised by
+    the partitions of `a`. `partitionGroup p lam` is the group `∏ ℤ/p^λᵢ` attached to a partition
+    `lam : Nat.Partition a` (indexed over its parts); `card_partitionGroup` shows it has order `p^a`,
+    and `abelian_pa_classification` proves **every** abelian group of order `p^a` is `≃*
+    partitionGroup p lam` for *some* partition `lam` of `a` (via the structure theorem
+    `CommGroup.equiv_prod_multiplicative_zmod_of_finite`, with `exists_equiv_of_map_univ_eq` aligning
+    the cyclic factors to the parts). This reduces the abelian part of any `p^a` order to enumerating
+    partitions of `a`.
+
+  * `AbelianPaUniqueness.lean` — the **injective** half, completing the correspondence. The separating
+    invariant is the `p^j`-torsion count `torsionCard G (p^j) = #{x : x^(p^j) = 1}`, which for
+    `partitionGroup p lam` equals `p ^ (∑ᵢ min j λᵢ)` (`torsionCard_partitionGroup`); the sequence
+    `j ↦ ∑ᵢ min j λᵢ` recovers the multiset of parts (`multiset_eq_of_min_sum_eq`). Hence
+    `partitionGroup_mulEquiv_iff`: `partitionGroup p lam ≃* partitionGroup p mu ↔ lam = mu`. Combined
+    with exhaustiveness, `abelian_classCount` gives the genuine count: any complete, pairwise
+    non-isomorphic list of abelian groups of order `p^a` has length `Nat.card (Nat.Partition a)`, the
+    number of partitions of `a`. (The cyclic-factor torsion count uses
+    `IsCyclic.card_powMonoidHom_ker`.)
+
   * `Counting.lean` — turns exhaustiveness + distinctness into a *counting* statement. `IsClassif N
     rep` says `rep : Fin k → Type` is a complete, non-redundant list of representatives of the
     groups of order `N`; `IsClassif.card_unique` proves the length `k` is well defined, so
