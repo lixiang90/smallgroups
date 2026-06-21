@@ -144,7 +144,7 @@ theorem R4_not_comm (hp2 : p ≠ 2) : ¬ ∀ a b : R4 p, a * b = b * a := by
   apply two_ne_zero_p hp2
   linear_combination -key.1
 
-@[simp] private theorem invActionHom_gen {G : Type*} [CommGroup G] :
+@[simp] theorem invActionHom_gen {G : Type*} [CommGroup G] :
     invActionHom G (Multiplicative.ofAdd 1) = invAut G := by
   change invAut G ^ ((1 : ZMod 2).val) = invAut G
   rw [show (1 : ZMod 2).val = 1 from by decide, pow_one]
