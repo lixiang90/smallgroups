@@ -47,6 +47,14 @@ theorems:
     setup), `unit_mem_zpowers_of_pow_eq` (relabelling), and `classification_card_eq_prime_mul`:
     every group of order `p·q` is cyclic or `≅ NonabRep c₀`.
     
+  * `SchurZassenhaus.lean` — the **Schur–Zassenhaus theorem** packaged for classification. Mathlib
+    proves the theorem itself (`Subgroup.exists_right_complement'_of_coprime`); this file combines it
+    with `SemidirectProduct.mulEquivSubgroup` into the semidirect-product form the project uses:
+    `schurZassenhaus_semidirectProduct` (a finite group with a coprime-index normal subgroup `N` is
+    `G ≃* N ⋊[φ] K`) and `schurZassenhaus_of_card` (the same via a coprime factorisation
+    `|G| = m * n` with `|N| = m`). This is the general form of the ad-hoc semidirect-product splitting
+    used for orders `pq` and `p³`.
+
   * `P3Group/` — the classification of groups of order `p³` into five classes (`ℤ/p³`,
     `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
     `P3Group.classification` gives exhaustiveness; the file also supplies the cards, non-abelianness,
