@@ -83,9 +83,12 @@ theorems:
     (`all_pairwise`): the five are pairwise non-isomorphic, assembled by `PairwiseNonMulEquiv.sum`
     from the abelian pair, the non-abelian triple (`D_{p²}` alone has an order-`p²` element,
     `D_p × ℤ/p` alone an order-`2p` element — `nonabFam_pairwise`), and one abelian-vs-non-abelian
-    disjointness fact. Still to do: exhaustiveness (every order-`2p²` group is one of the five — via
-    the `psq_semidirectProduct` reduction plus classifying the involution `φ(1)` in `Aut(ℤ/p²)` and
-    `GL₂(𝔽_p)`).
+    disjointness fact. **Exhaustiveness — reduction done** (`Order2PSqExhaustive.lean`,
+    `order2psq_semidirect`): every order-`2p²` group is `ℤ/p² ⋊[ψ] ℤ/2` or `(ℤ/p)² ⋊[ψ] ℤ/2`
+    (via `psq_semidirectProduct` + `SemidirectProduct.congr'` transport + `prime_sq_classification`).
+    Remaining: classify the involution `ψ(1)` and exhibit the explicit isomorphism to a representative
+    — `ℤ/p²` case `ψ(1) = ±1` (→ `ℤ/2p²` via CRT, or `D_{p²}`); `(ℤ/p)²` case by `±1`-eigenspace
+    decomposition (→ `(ℤ/p)²×ℤ/2`, `D_p×ℤ/p`, or the generalized dihedral).
 
   * `P3Group/` — the classification of groups of order `p³` into five classes (`ℤ/p³`,
     `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
