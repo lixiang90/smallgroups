@@ -8,6 +8,7 @@ import Smallgroups.UsefulTheorems.P3Group
 import Smallgroups.UsefulTheorems.AbelianPa
 import Smallgroups.UsefulTheorems.AbelianPaUniqueness
 import Smallgroups.UsefulTheorems.SchurZassenhaus
+import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Smallgroups.UsefulTheorems.Counting
 import Smallgroups.Classifications.Classifications_1_to_10
 import Smallgroups.Classifications.Classifications_11_to_20

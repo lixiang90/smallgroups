@@ -55,6 +55,16 @@ theorems:
     `|G| = m * n` with `|N| = m`). This is the general form of the ad-hoc semidirect-product splitting
     used for orders `pq` and `p³`.
 
+  * `SemidirectProductClassify.lean` — tools for classifying the semidirect products `N ⋊[φ] H` by
+    their action `φ : H →* MulAut N` (the natural follow-up to Schur–Zassenhaus). The action is
+    recovered from the group by `φ h n = (inr h * inl n * (inr h)⁻¹).left` (`conjAction_eq`), so the
+    parametrisation is **faithful**: an isomorphism fixing `inl`/`inr` forces `φ = ψ`
+    (`semidirectProduct_action_inj`). The constructive iso direction is `semidirectProductCongr` (from
+    `θ : N ≃* N'`, `σ : H ≃* H'` intertwining the actions, build `N ⋊[φ] H ≃* N' ⋊[φ'] H'`), with the
+    orbit-move corollaries `semidirectProductCongrAut` (precompose `φ` with `Aut H`),
+    `semidirectProductCongrConj` (conjugate `φ` by `Aut N`), and `semidirectProductCongr_eq`. So two
+    actions in the same `Aut N × Aut H`-orbit give isomorphic groups.
+
   * `P3Group/` — the classification of groups of order `p³` into five classes (`ℤ/p³`,
     `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
     `P3Group.classification` gives exhaustiveness; the file also supplies the cards, non-abelianness,
