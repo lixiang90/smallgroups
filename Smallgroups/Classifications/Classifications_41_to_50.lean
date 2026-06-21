@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.Classifications.Classifications_41_to_50.Order41
 import Smallgroups.Classifications.Classifications_41_to_50.Order43
+import Smallgroups.Classifications.Classifications_41_to_50.Order45
 import Smallgroups.Classifications.Classifications_41_to_50.Order46
 import Smallgroups.Classifications.Classifications_41_to_50.Order47
 import Smallgroups.Classifications.Classifications_41_to_50.Order49
