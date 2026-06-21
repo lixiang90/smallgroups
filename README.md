@@ -65,6 +65,15 @@ theorems:
     `semidirectProductCongrConj` (conjugate `φ` by `Aut N`), and `semidirectProductCongr_eq`. So two
     actions in the same `Aut N × Aut H`-orbit give isomorphic groups.
 
+  * `PrimeSqPrime.lean` — the structural reduction for orders `p² q` with `p ∤ q − 1` (which already
+    forces `p` odd). Sylow counting gives `n_p ∈ {1, q}` with `n_p = q ⇒ p ∣ q − 1`, so the Sylow
+    `p`-subgroup is unique and normal (`card_sylow_p_eq_one_of_card_psq`,
+    `sylow_p_normal_of_card_psq`); it has order `p²` (`card_sylow_p_subgroup_of_card_psq`, hence
+    abelian). Schur–Zassenhaus then splits `G ≃* P ⋊[φ] K` with `P` normal of order `p²` and `K` of
+    order `q` (`psq_semidirectProduct`), reducing the classification to the action `φ : K → Aut P`
+    (which the further count — depending on `q ∣ p ± 1` and the structure of `P` — leaves to the
+    per-order files).
+
   * `P3Group/` — the classification of groups of order `p³` into five classes (`ℤ/p³`,
     `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
     `P3Group.classification` gives exhaustiveness; the file also supplies the cards, non-abelianness,
