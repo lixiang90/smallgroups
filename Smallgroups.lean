@@ -4,6 +4,7 @@ import Smallgroups.UsefulTheorems.PrimeSqClassification
 import Smallgroups.UsefulTheorems.PrimePairCyclic
 import Smallgroups.UsefulTheorems.PrimePairDihedral
 import Smallgroups.UsefulTheorems.PrimePairNonabelian
+import Smallgroups.UsefulTheorems.PrimeSqPrimeNonabelian
 import Smallgroups.UsefulTheorems.P3Group
 import Smallgroups.UsefulTheorems.AbelianPa
 import Smallgroups.UsefulTheorems.AbelianPaUniqueness

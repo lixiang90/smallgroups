@@ -138,6 +138,29 @@ instance instGroupRep3 (A B C : Type) [Group A] [Group B] [Group C] : ∀ i, Gro
   | 1 => ‹Group B›
   | 2 => ‹Group C›
 
+/-! ### Constructor for the three-class case -/
+
+/-- Three representatives of order `N` that together
+exhaust the groups of order `N` and are pairwise
+non-isomorphic give a three-class classification. -/
+theorem isClassif_three {N : ℕ} (A B C : Type) [Group A] [Group B] [Group C]
+    (hA : Nat.card A = N) (hB : Nat.card B = N) (hC : Nat.card C = N)
+    (hcomplete : ∀ (G : Type) [Group G], Nat.card G = N →
+      Nonempty (G ≃* A) ∨ Nonempty (G ≃* B) ∨ Nonempty (G ≃* C))
+    (hAB : ¬ Nonempty (A ≃* B)) (hAC : ¬ Nonempty (A ≃* C))
+    (hBC : ¬ Nonempty (B ≃* C)) :
+    IsClassif N (rep3 A B C) where
+  card i := by fin_cases i <;> assumption
+  complete G _ hG := by
+    rcases hcomplete G hG with h | h | h
+    exacts [⟨0, h⟩, ⟨1, h⟩, ⟨2, h⟩]
+  distinct i j hiso := by
+    fin_cases i <;> fin_cases j <;>
+      first
+        | rfl
+        | exact absurd hiso ‹_›
+        | exact absurd (Nonempty.intro hiso.some.symm) ‹_›
+
 /-! ### Constructor for the five-class case (used for orders `p³`) -/
 
 /-- The five-element representative family. -/
