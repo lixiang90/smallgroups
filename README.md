@@ -99,6 +99,20 @@ theorems:
     `Classifications_11_to_20/Order18`, `Classifications_41_to_50/Order50`,
     `Classifications_91_to_100/Order98` (each with `classification`, `isClassif`, `numIsoClasses_eq`).
 
+  * `PrimeSqPrimeAbelian.lean` — the order-`p²q` case with `p ∤ q − 1` **and** `q ∤ p² − 1`, where
+    the group is **abelian** with exactly **two** classes: `ℤ/p²q` and `ℤ/p × ℤ/pq`. Building on
+    `PrimeSqPrime` (which gives `G ≃* P ⋊[φ] K`), the key lemma `aut_eq_one_of_card_psq` shows the
+    action is trivial: an automorphism `α` of the order-`p²` group `P` with `α^q = 1` is the
+    identity — acting by the `q`-group `⟨α⟩`, the fixed subgroup `{x | α x = x}` has order
+    `≡ p² [MOD q]` and dividing `p²` (`IsPGroup.card_modEq_card_fixedPoints`), so were `α ≠ 1` its
+    order `1` or `p` would force `q ∣ p² − 1`. Hence `φ = 1` and `G ≅ P × K`, which
+    `psq_prime_abelian` records is abelian. `psq_prime_abelian_classification` then splits `P` via
+    `prime_sq_classification` and recombines by CRT (`crtProd`) into `ℤ/p²q` or `ℤ/p × ℤ/pq`;
+    `psq_prime_distinct` separates them (cyclic vs not) and `psq_prime_isClassif` packages an
+    `IsClassif (p²q)`. Instantiated at the concrete orders **45** (`p=3, q=5`) and **99**
+    (`p=3, q=11`) in `Classifications_41_to_50/Order45` and `Classifications_91_to_100/Order99`
+    (each with `abelian`, `classification`, `isClassif`, `numIsoClasses_eq`).
+
   * `P3Group/` — the classification of groups of order `p³` into five classes (`ℤ/p³`,
     `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
     `P3Group.classification` gives exhaustiveness; the file also supplies the cards, non-abelianness,
@@ -154,7 +168,10 @@ The code is from [p3group](https://github.com/lixiang90/p3group).
   even products `2p` (`6, 10, 14, 22, 26, 34, 38, 46, 58, 62, 74, 82, 86, 94`), each with two
   classes `ℤ/2p` and `DihedralGroup p`; the odd products `pq` with `q ∣ p - 1`
   (`21, 39, 55, 57, 93`), each with two classes `ℤ/pq` and the non-abelian `ℤ/p ⋊ ℤ/q`; the
-  prime-cubes `8` and `27`, each with five classes (via `P3Group`); and `2p^2` case (`18, 50, 98`) each with five classes.
+  prime-cubes `8` and `27`, each with five classes (via `P3Group`); the `2p²` orders
+  (`18, 50, 98`), each with five classes (via `Order2PSq*`); and the `p²q` orders with `p ∤ q − 1`
+  and `q ∤ p² − 1` (`45, 99`), each abelian with two classes `ℤ/p²q` and `ℤ/p × ℤ/pq`
+  (via `PrimeSqPrimeAbelian`).
 
 ## Building
 
