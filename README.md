@@ -113,6 +113,18 @@ theorems:
     (`p=3, q=11`) in `Classifications_41_to_50/Order45` and `Classifications_91_to_100/Order99`
     (each with `abelian`, `classification`, `isClassif`, `numIsoClasses_eq`).
 
+  * `PrimeSqPrimeNonabelian.lean` — the order-`3p²` case with `3 ∤ p − 1` **and** `p ≥ 5`,
+    where the group has exactly **three** classes:
+    `psqPrimeRep1 p q = ℤ/3p²` (cyclic), `psqPrimeRep2 p 3 = ℤ/p × ℤ/3p` (abelian non-cyclic),
+    and `psqPrimeNonabRep p = (ℤ/p)² ⋊ ℤ/3` (the unique nonabelian semidirect product). The key
+    lemmas `aut_eq_one_of_cyclic_psq` (when the Sylow `p`-subgroup is cyclic, the action is
+    trivial) and `semidirect_elem_nonab_iso` (all non-trivial actions `ℤ/3 → Aut((ℤ/p)²)` are
+    conjugate, yielding a unique nonabelian class) reduce via `psq_semidirectProduct` to the
+    three-class theorem `psq_prime_nonab_classification`. `psq_prime_nonab_isClassif` packages
+    an `IsClassif (p²·3)`. Instantiated at the concrete order **75** (`p=5`) in
+    `Classifications_71_to_80/Order75` (with `classification`, `isClassif`,
+    `numIsoClasses_eq`).
+
   * `P3Group/` — the classification of groups of order `p³` into five classes (`ℤ/p³`,
     `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
     `P3Group.classification` gives exhaustiveness; the file also supplies the cards, non-abelianness,
@@ -171,7 +183,9 @@ The code is from [p3group](https://github.com/lixiang90/p3group).
   prime-cubes `8` and `27`, each with five classes (via `P3Group`); the `2p²` orders
   (`18, 50, 98`), each with five classes (via `Order2PSq*`); and the `p²q` orders with `p ∤ q − 1`
   and `q ∤ p² − 1` (`45, 99`), each abelian with two classes `ℤ/p²q` and `ℤ/p × ℤ/pq`
-  (via `PrimeSqPrimeAbelian`).
+  (via `PrimeSqPrimeAbelian`); and the `p²q` orders with `q ∣ p − 1` (`75`), with three
+  classes `ℤ/p²q`, `ℤ/p × ℤ/pq`, and the nonabelian `(ℤ/p)² ⋊ ℤ/q` (via
+  `PrimeSqPrimeNonabelian`).
 
 ## Building
 

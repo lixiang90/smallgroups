@@ -8,7 +8,7 @@ import Smallgroups.UsefulTheorems.PrimePairNonabelian
 import Mathlib.Data.Nat.Totient
 
 /-!
-# Groups of order `p² · 3` with `3 ∤ p − 1`: three isomorphism classes
+# Groups of order `p² · 3` with `3 ∤ p − 1` and `p > 3`: three isomorphism classes
 -/
 
 namespace Smallgroups.UsefulTheorems
