@@ -74,6 +74,15 @@ theorems:
     (which the further count — depending on `q ∣ p ± 1` and the structure of `P` — leaves to the
     per-order files).
 
+  * `Order4Prime.lean` — the first reduction for the `4p` family with `p > 4`. Sylow counting shows
+    that the Sylow `p`-subgroup is unique and normal
+    (`card_sylow_p_eq_one_of_card_four_mul_prime`, `sylow_p_normal_of_card_four_mul_prime`); it has
+    order `p` (`card_sylow_p_subgroup_of_card_four_mul_prime`). Schur–Zassenhaus then splits
+    `G ≃* P ⋊[φ] K` with `|P| = p` and `|K| = 4` (`four_mul_prime_semidirectProduct`), setting up the
+    still-missing classifications of orders such as `20`, `28`, `44`, `52`, `68`, `76`, and `92`.
+    The complement is then reduced to the two order-`4` possibilities, `ℤ/4` and `ℤ/2 × ℤ/2`
+    (`four_mul_prime_semidirectProduct_complement_cases`).
+
   * `Order2PSq.lean` — the order-`2 p²` family (`p` an odd prime; the `q = 2` instance of the above),
     which has **five** classes: `ℤ/2p²`, `ℤ/p × ℤ/2p`, `D_{p²}`, `D_p × ℤ/p`, and the generalized
     dihedral `(ℤ/p)² ⋊₋₁ ℤ/2`. **Complete (sorry-free).** The five representatives are constructed with
