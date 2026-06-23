@@ -9,7 +9,7 @@ import Mathlib.Tactic.NormNum.Prime
 /-!
 # Classification of groups of order 75
 
-`75 = 5² · 3`. Since `3 ∤ 5 − 1` and `5 ∤ 2`, every group of order 75 is either:
+`75 = 5² · 3`. Since `3 ∤ 5 − 1` and `5 > 3`, every group of order 75 is either:
 1. the cyclic group `ℤ/75`,
 2. the abelian but non-cyclic group `ℤ/5 × ℤ/15`, or
 3. the unique nonabelian group `(ℤ/5)² ⋊ ℤ/3`.
@@ -35,14 +35,14 @@ variable {G : Type*} [Group G]
 theorem classification (h : Nat.card G = 75) :
     Nonempty (G ≃* RA) ∨ Nonempty (G ≃* RB) ∨ Nonempty (G ≃* RC) := by
   haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [h]; norm_num)
-  exact psq_prime_nonab_classification (p := 5) (by norm_num) (by decide) (by decide)
-    (by norm_num) (hN := by norm_num) h
+  exact psq_prime_nonab_classification (p := 5) (by norm_num) (by decide) (by norm_num)
+    (hN := by norm_num) h
 
 /-- **(2) Distinctness & (3) Counting.** The three groups are a complete, non-redundant list of
 representatives of the groups of order 75. -/
 theorem isClassif : IsClassif 75 (rep3 RA RB RC) :=
-  psq_prime_nonab_isClassif (p := 5) (by norm_num) (by decide) (by decide)
-    (by norm_num) (by norm_num)
+  psq_prime_nonab_isClassif (p := 5) (by norm_num) (by decide) (by norm_num)
+    (by norm_num)
 
 /-- **The number of isomorphism classes of groups of order 75 is exactly `3`.** -/
 theorem numIsoClasses_eq {k : ℕ} {rep : Fin k → Type} [∀ i, Group (rep i)]

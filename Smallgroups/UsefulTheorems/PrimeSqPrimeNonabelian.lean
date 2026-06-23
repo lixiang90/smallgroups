@@ -582,15 +582,18 @@ private theorem semidirect_elem_nonab_iso (p : ℕ) (hp : Nat.Prime p) (hp3 : ¬
 
 /-! ### Exhaustiveness and classification -/
 
-/-- Three-way classification for order `p² · 3` with `3 ∤ p − 1`, `p ≠ 3`. -/
+/-- Three-way classification for order `p² · 3` with `3 ∤ p − 1`, `p > 3`. -/
 theorem psq_prime_nonab_classification {p : ℕ} (hp : p.Prime) (hp3 : ¬ (3 : ℕ) ∣ p - 1)
-    (hpdvd : ¬ p ∣ 2) (hpq : p ≠ 3) {G : Type*} [Group G] [Finite G]
+    (hpgt : 3 < p) {G : Type*} [Group G] [Finite G]
     {N : ℕ} (hN : p ^ 2 * 3 = N) (hG : Nat.card G = N) :
     Nonempty (G ≃* psqPrimeRep1 p 3) ∨
     Nonempty (G ≃* psqPrimeRep2 p 3) ∨
     Nonempty (G ≃* psqPrimeNonabRep p) := by
   subst hN
   haveI : Fact p.Prime := ⟨hp⟩
+  have hpq : p ≠ 3 := by omega
+  have hpdvd : ¬ p ∣ 2 := by
+    intro h; have := Nat.le_of_dvd (by norm_num) h; omega
   have hcop : Nat.Coprime p 3 :=
     (Nat.coprime_primes hp Nat.prime_three).mpr (by omega)
   obtain ⟨P, K, φ, _, hPcard, hKcard, ⟨e⟩⟩ :=
@@ -663,7 +666,7 @@ theorem psq_prime_nonab_classification {p : ℕ} (hp : p.Prime) (hp3 : ¬ (3 : �
 
 /-- `IsClassif` packaging for the three classes. -/
 theorem psq_prime_nonab_isClassif {p : ℕ} (hp : p.Prime) (hp3 : ¬ (3 : ℕ) ∣ p - 1)
-    (hpdvd : ¬ p ∣ 2) (hpq : p ≠ 3) {N : ℕ} (hN : p ^ 2 * 3 = N) :
+    (hpgt : 3 < p) {N : ℕ} (hN : p ^ 2 * 3 = N) :
     IsClassif N (rep3 (psqPrimeRep1 p 3) (psqPrimeRep2 p 3)
       (psqPrimeNonabRep p)) := by
   subst hN
@@ -674,7 +677,7 @@ theorem psq_prime_nonab_isClassif {p : ℕ} (hp : p.Prime) (hp3 : ¬ (3 : ℕ) �
     (fun G _ hG => by
       haveI : Finite G := Nat.finite_of_card_ne_zero
         (by rw [hG]; exact Nat.mul_ne_zero (pow_ne_zero 2 hp.ne_zero) (by norm_num))
-      exact psq_prime_nonab_classification hp hp3 hpdvd hpq rfl hG)
+      exact psq_prime_nonab_classification hp hp3 hpgt rfl hG)
     (psq_prime_distinct hp Nat.prime_three)
     (psq_prime_nonab_distinct_ab1 hp hp3)
     (psq_prime_nonab_distinct_ab2 hp hp3)
