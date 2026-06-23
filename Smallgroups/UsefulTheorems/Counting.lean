@@ -161,6 +161,44 @@ theorem isClassif_three {N : ℕ} (A B C : Type) [Group A] [Group B] [Group C]
         | exact absurd hiso ‹_›
         | exact absurd (Nonempty.intro hiso.some.symm) ‹_›
 
+/-! ### Constructor for the four-class case -/
+
+/-- The four-element representative family. -/
+def rep4 (A B C D : Type) : Fin 4 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+
+instance instGroupRep4 (A B C D : Type) [Group A] [Group B] [Group C] [Group D] :
+    ∀ i, Group (rep4 A B C D i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+
+/-- Four representatives of order `N` that together exhaust the groups of order `N` and are pairwise
+non-isomorphic give a four-class classification. -/
+theorem isClassif_four {N : ℕ} (A B C D : Type)
+    [Group A] [Group B] [Group C] [Group D]
+    (hA : Nat.card A = N) (hB : Nat.card B = N) (hC : Nat.card C = N) (hD : Nat.card D = N)
+    (hcomplete : ∀ (G : Type) [Group G], Nat.card G = N → Nonempty (G ≃* A) ∨ Nonempty (G ≃* B) ∨
+      Nonempty (G ≃* C) ∨ Nonempty (G ≃* D))
+    (hAB : ¬ Nonempty (A ≃* B)) (hAC : ¬ Nonempty (A ≃* C)) (hAD : ¬ Nonempty (A ≃* D))
+    (hBC : ¬ Nonempty (B ≃* C)) (hBD : ¬ Nonempty (B ≃* D))
+    (hCD : ¬ Nonempty (C ≃* D)) :
+    IsClassif N (rep4 A B C D) where
+  card i := by fin_cases i <;> assumption
+  complete G _ hG := by
+    rcases hcomplete G hG with h | h | h | h
+    exacts [⟨0, h⟩, ⟨1, h⟩, ⟨2, h⟩, ⟨3, h⟩]
+  distinct i j hiso := by
+    fin_cases i <;> fin_cases j <;>
+      first
+        | rfl
+        | exact absurd hiso ‹_›
+        | exact absurd (Nonempty.intro hiso.some.symm) ‹_›
+
 /-! ### Constructor for the five-class case (used for orders `p³`) -/
 
 /-- The five-element representative family. -/

@@ -117,6 +117,25 @@ theorem not_isCyclic_nonabRep [NeZero p] [NeZero q] (hq : 1 < q)
   rw [actionHom_apply, ZMod.val_one, pow_one, mul_one] at hfix
   exact hc1 (Units.val_eq_one.mp (Multiplicative.ofAdd.injective hfix))
 
+/-- For a non-trivial action (`c ≠ 1`) the representative is **not commutative**. -/
+theorem nonabRep_not_comm [NeZero p] [NeZero q] (hq : 1 < q)
+    (c : (ZMod p)ˣ) (hc : c ^ q = 1) (hc1 : c ≠ 1) :
+    ¬ ∀ a b : NonabRep c hc, a * b = b * a := by
+  haveI : Fact (1 < q) := ⟨hq⟩
+  intro hcomm
+  have hfix : actionHom c hc (Multiplicative.ofAdd (1 : ZMod q))
+      (Multiplicative.ofAdd (1 : ZMod p)) = Multiplicative.ofAdd (1 : ZMod p) := by
+    have h := hcomm (SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod q)))
+      (SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod p)))
+    have heq : (SemidirectProduct.inl (actionHom c hc (Multiplicative.ofAdd (1 : ZMod q))
+          (Multiplicative.ofAdd (1 : ZMod p))) : NonabRep c hc)
+        = SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod p)) := by
+      rw [SemidirectProduct.inl_aut, h, mul_assoc, ← map_mul, mul_inv_cancel]
+      simp
+    exact SemidirectProduct.inl_injective heq
+  rw [actionHom_apply, ZMod.val_one, pow_one, mul_one] at hfix
+  exact hc1 (Units.val_eq_one.mp (Multiplicative.ofAdd.injective hfix))
+
 /-- **Distinctness.** The cyclic group of order `p * q` is not isomorphic to the non-abelian
 representative (the latter is not cyclic). -/
 theorem cyclicRep_not_mulEquiv_nonabRep [NeZero p] [NeZero q] (hq : 1 < q)
