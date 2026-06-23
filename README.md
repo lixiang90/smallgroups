@@ -81,7 +81,9 @@ theorems:
     `G ≃* P ⋊[φ] K` with `|P| = p` and `|K| = 4` (`four_mul_prime_semidirectProduct`), setting up the
     still-missing classifications of orders such as `20`, `28`, `44`, `52`, `68`, `76`, and `92`.
     The complement is then reduced to the two order-`4` possibilities, `ℤ/4` and `ℤ/2 × ℤ/2`
-    (`four_mul_prime_semidirectProduct_complement_cases`).
+    (`four_mul_prime_semidirectProduct_complement_cases`), and the normal subgroup is replaced by
+    the standard `CyclicRep p`, leaving actions `ℤ/4 → Aut(ℤ/p)` and
+    `(ℤ/2 × ℤ/2) → Aut(ℤ/p)` (`four_mul_prime_semidirectProduct_standard_cases`).
 
   * `Order2PSq.lean` — the order-`2 p²` family (`p` an odd prime; the `q = 2` instance of the above),
     which has **five** classes: `ℤ/2p²`, `ℤ/p × ℤ/2p`, `D_{p²}`, `D_p × ℤ/p`, and the generalized

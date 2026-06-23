@@ -150,4 +150,21 @@ theorem four_mul_prime_semidirectProduct_complement_cases {p : ℕ} (hp : p.Prim
       ext n
       simp [φ'])
 
+/-- The order-`4p` reduction with both factors replaced by standard representatives. Since the
+normal Sylow `p`-subgroup has prime order, it is isomorphic to `CyclicRep p`; hence the remaining
+classification problem is exactly the classification of actions of either `CyclicRep 4` or
+`ElemAbelianRep 2` on `CyclicRep p`. -/
+theorem four_mul_prime_semidirectProduct_standard_cases {p : ℕ} (hp : p.Prime) (hp4 : 4 < p)
+    [Finite G] (hG : Nat.card G = 4 * p) :
+    (∃ φ : CyclicRep 4 →* MulAut (CyclicRep p),
+        Nonempty (G ≃* SemidirectProduct (CyclicRep p) (CyclicRep 4) φ)) ∨
+      (∃ φ : ElemAbelianRep 2 →* MulAut (CyclicRep p),
+        Nonempty (G ≃* SemidirectProduct (CyclicRep p) (ElemAbelianRep 2) φ)) := by
+  obtain ⟨P, _, hcardP, hcases⟩ :=
+    four_mul_prime_semidirectProduct_complement_cases hp hp4 hG
+  obtain ⟨eP⟩ := prime_classification hp hcardP
+  rcases hcases with ⟨φ, ⟨e⟩⟩ | ⟨φ, ⟨e⟩⟩
+  · exact Or.inl ⟨_, ⟨e.trans (SemidirectProduct.congr' eP (MulEquiv.refl (CyclicRep 4)))⟩⟩
+  · exact Or.inr ⟨_, ⟨e.trans (SemidirectProduct.congr' eP (MulEquiv.refl (ElemAbelianRep 2)))⟩⟩
+
 end Smallgroups.UsefulTheorems
