@@ -657,7 +657,7 @@ private theorem mulEquiv_eq_unitAutHom [Fact p.Prime] (σ : MulAut (Multiplicati
   intro x
   let n := Multiplicative.toAdd x
   have hx : Multiplicative.ofAdd n = x := by
-    simpa [n] using Multiplicative.ofAdd_toAdd x
+    exact ofAdd_toAdd x
   rw [← hx]
   calc
     σ (Multiplicative.ofAdd n) = σ ((Multiplicative.ofAdd (1 : ZMod p)) ^ n.val) := by
@@ -763,9 +763,9 @@ theorem fourP_classification_mod3 {p : ℕ} (hp : p.Prime) (hpge : 5 ≤ p)
         let ψ : MulAut (Multiplicative (ZMod p)) :=
           (iN.symm.trans (φ h₀)).trans iN
         let conj_iN : MulAut N →* MulAut (Multiplicative (ZMod p)) :=
-          { toFun := λ σ => (iN.symm.trans σ).trans iN
+          { toFun := fun σ => (iN.symm.trans σ).trans iN
             map_one' := by ext x; simp
-            map_mul' := λ σ τ => by ext x; simp }
+            map_mul' := fun σ τ => by ext x; simp }
         have hψ_eq : ψ = conj_iN (φ h₀) := rfl
         have h_ord_ψ : orderOf ψ ∣ 4 := by
           rw [hψ_eq]
@@ -777,7 +777,7 @@ theorem fourP_classification_mod3 {p : ℕ} (hp : p.Prime) (hpge : 5 ≤ p)
             intro u v h
             have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod p)) =
                      unitAutHom v (Multiplicative.ofAdd (1 : ZMod p)) := by rw [h]
-            simp [unitAutHom_apply, mul_one] at h1
+            simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
             apply Units.ext
             exact congrArg Multiplicative.toAdd h1
           have h_ord_u : orderOf u ∣ 4 := by
@@ -814,7 +814,7 @@ theorem fourP_classification_mod3 {p : ℕ} (hp : p.Prime) (hpge : 5 ≤ p)
                 _ = (φ h₀) ^ k := by rw [map_zpow]
                 _ = 1 ^ k := by rw [hφh₀1]
                 _ = 1 := by simp
-            simpa [hφh_eq_one]
+            simp [hφh_eq_one]
           -- φ = 1 implies SemidirectProduct is direct product, which is abelian
           have h_sd_comm : ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
             rw [hφ1]
@@ -824,8 +824,8 @@ theorem fourP_classification_mod3 {p : ℕ} (hp : p.Prime) (hpge : 5 ≤ p)
               intro n1 n2; apply iN.injective; simp [mul_comm]
             have hH_comm : ∀ h1 h2 : H, h1 * h2 = h2 * h1 := by
               intro h1 h2; apply iH.injective; simp [mul_comm]
-            simp only [MonoidHom.coe_coe, map_mul, SemidirectProduct.mulEquivProd_apply]
-            simp [hN_comm a.left b.left, hH_comm a.right b.right, mul_comm]
+            simp only [map_mul, SemidirectProduct.mulEquivProd_apply]
+            simp [hN_comm a.left b.left, hH_comm a.right b.right]
           have hG_comm : ∀ a b : G, a * b = b * a := by
             intro a b
             have h_eq := h_sd_comm (e a) (e b)
