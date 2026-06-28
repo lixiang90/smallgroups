@@ -12,6 +12,22 @@ theorems:
 2. **Counting** — count the isomorphism classes.
 3. **Distinctness** — prove the listed classes are pairwise non-isomorphic.
 
+## Done so far:
+
+  | Category | Orders | # | Representatives | Via |
+  |----------|--------|---|-----------------|-----|
+  | trivial | 1 | 1 | `ℤ/1` | — |
+  | prime | 2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97 | 1 | `ℤ/N` | prime classification |
+  | `p²` | 4,9,25,49 | 2 | `ℤ/N`, `ℤ/p × ℤ/p` | `PrimeSqClassification` |
+  | `p·q` (`q ∤ p−1`) | 15,33,35,51,65,69,77,85,87,91,95 | 1 | `ℤ/N` | `PrimePairCyclic` |
+  | `2p` | 6,10,14,22,26,34,38,46,58,62,74,82,86,94 | 2 | `ℤ/2p`, `D_p` | `PrimePairDihedral` |
+  | `p·q` (`q ∣ p−1`) | 21,39,55,57,93 | 2 | `ℤ/pq`, `ℤ/p ⋊ ℤ/q` | `PrimePairNonabelian` |
+  | `p³` | 8,27 | 5 | 5 types | `P3Group` |
+  | `2p²` | 18,50,98 | 5 | 5 types | `Order2PSq` |
+  | `p²q` (`p∤q−1`, `q∤p²−1`) | 45,99 | 2 | `ℤ/p²q`, `ℤ/p × ℤ/pq` | `PrimeSqPrimeAbelian` |
+  | `p²q` (`q ∣ p−1`) | 75 | 3 | `ℤ/p²q`, `ℤ/p × ℤ/pq`, `(ℤ/p)² ⋊ ℤ/q` | `PrimeSqPrimeNonabelian` |
+  | `4p` (`p ≥ 5`) | 20,28,44,52,68,76,92 | 4 or 5 | 5 types (mod 1) / 4 types (mod 3) | `Order4P` |
+
 ## Layout
 
 * `Smallgroups/UsefulTheorems/` — reusable tools for classification.
@@ -78,12 +94,37 @@ theorems:
     that the Sylow `p`-subgroup is unique and normal
     (`card_sylow_p_eq_one_of_card_four_mul_prime`, `sylow_p_normal_of_card_four_mul_prime`); it has
     order `p` (`card_sylow_p_subgroup_of_card_four_mul_prime`). Schur–Zassenhaus then splits
-    `G ≃* P ⋊[φ] K` with `|P| = p` and `|K| = 4` (`four_mul_prime_semidirectProduct`), setting up the
-    still-missing classifications of orders such as `20`, `28`, `44`, `52`, `68`, `76`, and `92`.
-    The complement is then reduced to the two order-`4` possibilities, `ℤ/4` and `ℤ/2 × ℤ/2`
+    `G ≃* P ⋊[φ] K` with `|P| = p` and `|K| = 4` (`four_mul_prime_semidirectProduct`). The complement
+    is then reduced to the two order-`4` possibilities, `ℤ/4` and `ℤ/2 × ℤ/2`
     (`four_mul_prime_semidirectProduct_complement_cases`), and the normal subgroup is replaced by
     the standard `CyclicRep p`, leaving actions `ℤ/4 → Aut(ℤ/p)` and
-    `(ℤ/2 × ℤ/2) → Aut(ℤ/p)` (`four_mul_prime_semidirectProduct_standard_cases`).
+    `(ℤ/2 × ℤ/2) → Aut(ℤ/p)` (`four_mul_prime_semidirectProduct_standard_cases`). This structural
+    reduction is the foundation for the full classification in `Order4P.lean`.
+
+  * `Order4P.lean` — the **complete classification** of groups of order `4p` for odd primes `p ≥ 5`.
+    Building on the Schur–Zassenhaus reduction from `Order4Prime`, the file classifies all
+    semidirect products `ℤ/p ⋊ H` with `|H| = 4` by the action `φ : H → Aut(ℤ/p) ≅ (ℤ/p)ˣ`, which is
+    cyclic of order `p-1`. The Sylow-2 subgroup `H` is either:
+
+    - **Cyclic** (`H ≅ ℤ/4`): the generator acts as a unit `m` with `m⁴ = 1` in `(ℤ/p)ˣ`.
+      `m = 1` gives the cyclic group `ℤ/4p` (**Type I**); `m = −1` gives the inversion semidirect
+      product `ℤ/p ⋊₋₁ ℤ/4` (**Type III**); when `p ≡ 1 mod 4`, there exist `m` with `m² = −1`,
+      giving `ℤ/p ⋊_m ℤ/4` (**Type IV**, only when `p ≡ 1 mod 4`).
+
+    - **Klein four** (`H ≅ ℤ/2 × ℤ/2`): each generator maps to `±1`. If both act trivially,
+      `ℤ/2 × ℤ/2p` (**Type II**). If at least one acts by inversion, `ℤ/2 × D_{2p}` (**Type V**).
+
+    The file proves **cardinalities** (`card_fourP_I`…`card_fourP_V`), **commutativity** facts
+    (`fourP_I_comm` / `fourP_II_comm` vs `fourP_III_not_comm` etc.), **pairwise non-isomorphism**
+    (`fourP_I_ne_II`…`fourP_IV_ne_V`), and the two capstone theorems:
+    - `fourP_classification_mod3` / `fourP_isClassif_mod3`: **4 classes** when `p ≡ 3 mod 4`
+      (I, II, III, V).
+    - `fourP_classification_mod1` / `fourP_isClassif_mod1`: **5 classes** when `p ≡ 1 mod 4`
+      (I, II, III, IV, V), requiring a unit `c` with `c² = −1` in `(ℤ/p)ˣ`.
+      Instantiated at the concrete orders **20** (`p=5`, 5 classes), **28** (`p=7`, 4 classes),
+      **44** (`p=11`, 4 classes), **52** (`p=13`, 5 classes), **68** (`p=17`, 5 classes),
+      **76** (`p=19`, 4 classes), **92** (`p=23`, 4 classes) in the `Classifications` decade
+      subfolders (each with `classification`, `isClassif`, `numIsoClasses_eq`).
 
   * `Order2PSq.lean` — the order-`2 p²` family (`p` an odd prime; the `q = 2` instance of the above),
     which has **five** classes: `ℤ/2p²`, `ℤ/p × ℤ/2p`, `D_{p²}`, `D_p × ℤ/p`, and the generalized
@@ -140,7 +181,7 @@ theorems:
     `ℤ/p² × ℤ/p`, `(ℤ/p)³`, and two non-abelian groups: Heisenberg / `D₄` and `ℤ/p² ⋊ ℤ/p` / `Q₈`).
     `P3Group.classification` gives exhaustiveness; the file also supplies the cards, non-abelianness,
     and pairwise non-isomorphism facts. (Imported from a companion development.) 
-The code is from [p3group](https://github.com/lixiang90/p3group).
+    The code is from [p3group](https://github.com/lixiang90/p3group).
     
   * `AbelianPa.lean` — the exhaustiveness engine for **abelian** groups of order `p^a`, organised by
     the partitions of `a`. `partitionGroup p lam` is the group `∏ ℤ/p^λᵢ` attached to a partition
@@ -184,19 +225,6 @@ The code is from [p3group](https://github.com/lixiang90/p3group).
     from (1) and (2) via the `Counting.lean` framework (`numIsoClasses_eq` shows any complete
     non-redundant representative list has the stated length).
 
-  Done so far: order `1` (trivial group); every prime order `≤ 100` (`2, 3, 5, 7, …, 97`), each
-  the single class `ℤ/N`; the prime-square orders `4, 9, 25, 49`, each with two classes `ℤ/N` and
-  `ℤ/p × ℤ/p`; and the cyclic-only products `p * q` with `q ∤ p - 1`
-  (`15, 33, 35, 51, 65, 69, 77, 85, 87, 91, 95`), each the single class `ℤ/N`; and the
-  even products `2p` (`6, 10, 14, 22, 26, 34, 38, 46, 58, 62, 74, 82, 86, 94`), each with two
-  classes `ℤ/2p` and `DihedralGroup p`; the odd products `pq` with `q ∣ p - 1`
-  (`21, 39, 55, 57, 93`), each with two classes `ℤ/pq` and the non-abelian `ℤ/p ⋊ ℤ/q`; the
-  prime-cubes `8` and `27`, each with five classes (via `P3Group`); the `2p²` orders
-  (`18, 50, 98`), each with five classes (via `Order2PSq*`); and the `p²q` orders with `p ∤ q − 1`
-  and `q ∤ p² − 1` (`45, 99`), each abelian with two classes `ℤ/p²q` and `ℤ/p × ℤ/pq`
-  (via `PrimeSqPrimeAbelian`); and the `p²q` orders with `q ∣ p − 1` (`75`), with three
-  classes `ℤ/p²q`, `ℤ/p × ℤ/pq`, and the nonabelian `(ℤ/p)² ⋊ ℤ/q` (via
-  `PrimeSqPrimeNonabelian`).
 
 ## Building
 
