@@ -51,11 +51,17 @@ theorem classification (h : Nat.card G = 52) :
     fourP_classification_mod1 (by norm_num : Nat.Prime 13) (by norm_num : 13 % 4 = 1)
       c13 hcsq13 (h.trans (by norm_num))
 
-/-- **(2) Distinctness & (3) Counting.** The five groups are a complete, non-redundant list of
-representatives of the groups of order `52`. -/
-theorem isClassif : IsClassif 52 (rep5 RA RB RC RD RE) := by
+private theorem classif_bundle : IsClassif 52 (rep5 RA RB RC RD RE) := by
   simpa [RA, RB, RC, RD, RE, show (4 : ℕ) * 13 = 52 by norm_num] using
     fourP_isClassif_mod1 (by norm_num : Nat.Prime 13) (by norm_num : 13 % 4 = 1) c13 hcsq13
+
+/-- **(2) Distinctness.** The five groups are pairwise non-isomorphic. -/
+theorem distinct : ∀ i j, Nonempty (rep5 RA RB RC RD RE i ≃* rep5 RA RB RC RD RE j) → i = j :=
+  classif_bundle.distinct
+
+/-- **(3) Counting.** The five groups are a complete, non-redundant list of
+representatives of the groups of order `52`. -/
+theorem isClassif : IsClassif 52 (rep5 RA RB RC RD RE) := classif_bundle
 
 /-- **The number of isomorphism classes of groups of order `52` is exactly `5`.** -/
 theorem numIsoClasses_eq {k : ℕ} {rep : Fin k → Type} [∀ i, Group (rep i)]

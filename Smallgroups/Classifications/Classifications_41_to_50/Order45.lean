@@ -38,7 +38,11 @@ theorem classification (h : Nat.card G = 45) : Nonempty (G ≃* RA) ∨ Nonempty
   exact psq_prime_abelian_classification (p := 3) (q := 5) (by norm_num) (by norm_num)
     (by norm_num) (by decide) (by decide) (h.trans (by norm_num))
 
-/-- **(2) Distinctness & (3) Counting.** The two groups are a complete, non-redundant list of
+/-- **(2) Distinctness.** `ℤ/45` and `ℤ/3 × ℤ/15` are not isomorphic. -/
+theorem distinct : ¬ Nonempty (RA ≃* RB) :=
+  psq_prime_distinct (by norm_num) (by norm_num)
+
+/-- **(3) Counting.** The two groups are a complete, non-redundant list of
 representatives of the groups of order 45. -/
 theorem isClassif : IsClassif 45 (rep2 RA RB) :=
   psq_prime_isClassif (p := 3) (q := 5) (by norm_num) (by norm_num) (by norm_num)

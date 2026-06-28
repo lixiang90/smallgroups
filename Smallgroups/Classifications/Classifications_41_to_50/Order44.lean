@@ -39,12 +39,18 @@ theorem classification (h : Nat.card G = 44) :
     fourP_classification_mod3 (by norm_num : Nat.Prime 11) (by omega)
       (by norm_num : 11 % 4 = 3) (h.trans (by norm_num))
 
-/-- **(2) Distinctness & (3) Counting.** The four groups are a complete, non-redundant list of
-representatives of the groups of order `44`. -/
-theorem isClassif : IsClassif 44 (rep4 RA RB RC RD) := by
+private theorem classif_bundle : IsClassif 44 (rep4 RA RB RC RD) := by
   simpa [RA, RB, RC, RD, show (4 : ℕ) * 11 = 44 by norm_num] using
     fourP_isClassif_mod3 (by norm_num : Nat.Prime 11) (by omega)
       (by norm_num : 11 % 4 = 3)
+
+/-- **(2) Distinctness.** The four groups are pairwise non-isomorphic. -/
+theorem distinct : ∀ i j, Nonempty (rep4 RA RB RC RD i ≃* rep4 RA RB RC RD j) → i = j :=
+  classif_bundle.distinct
+
+/-- **(3) Counting.** The four groups are a complete, non-redundant list of
+representatives of the groups of order `44`. -/
+theorem isClassif : IsClassif 44 (rep4 RA RB RC RD) := classif_bundle
 
 /-- **The number of isomorphism classes of groups of order `44` is exactly `4`.** -/
 theorem numIsoClasses_eq {k : ℕ} {rep : Fin k → Type} [∀ i, Group (rep i)]

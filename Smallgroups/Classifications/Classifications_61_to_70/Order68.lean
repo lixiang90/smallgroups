@@ -51,11 +51,17 @@ theorem classification (h : Nat.card G = 68) :
     fourP_classification_mod1 (by norm_num : Nat.Prime 17) (by norm_num : 17 % 4 = 1)
       c17 hcsq17 (h.trans (by norm_num))
 
-/-- **(2) Distinctness & (3) Counting.** The five groups are a complete, non-redundant list of
-representatives of the groups of order `68`. -/
-theorem isClassif : IsClassif 68 (rep5 RA RB RC RD RE) := by
+private theorem classif_bundle : IsClassif 68 (rep5 RA RB RC RD RE) := by
   simpa [RA, RB, RC, RD, RE, show (4 : ℕ) * 17 = 68 by norm_num] using
     fourP_isClassif_mod1 (by norm_num : Nat.Prime 17) (by norm_num : 17 % 4 = 1) c17 hcsq17
+
+/-- **(2) Distinctness.** The five groups are pairwise non-isomorphic. -/
+theorem distinct : ∀ i j, Nonempty (rep5 RA RB RC RD RE i ≃* rep5 RA RB RC RD RE j) → i = j :=
+  classif_bundle.distinct
+
+/-- **(3) Counting.** The five groups are a complete, non-redundant list of
+representatives of the groups of order `68`. -/
+theorem isClassif : IsClassif 68 (rep5 RA RB RC RD RE) := classif_bundle
 
 /-- **The number of isomorphism classes of groups of order `68` is exactly `5`.** -/
 theorem numIsoClasses_eq {k : ℕ} {rep : Fin k → Type} [∀ i, Group (rep i)]

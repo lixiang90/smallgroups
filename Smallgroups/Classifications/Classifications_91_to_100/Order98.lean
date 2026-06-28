@@ -40,11 +40,17 @@ theorem classification (h : Nat.card G = 98) :
   haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [h]; norm_num)
   exact order2psq_classification (p := 7) (by norm_num) (h.trans (by norm_num))
 
-/-- **(2) Distinctness & (3) Counting.** The five groups are a complete, non-redundant list of
-representatives of the groups of order `98`. -/
-theorem isClassif : IsClassif 98 (rep5 RA RB RC RD RE) := by
+private theorem classif_bundle : IsClassif 98 (rep5 RA RB RC RD RE) := by
   haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
   exact order2psq_isClassif (p := 7) (by norm_num) (by norm_num)
+
+/-- **(2) Distinctness.** The five groups are pairwise non-isomorphic. -/
+theorem distinct : ∀ i j, Nonempty (rep5 RA RB RC RD RE i ≃* rep5 RA RB RC RD RE j) → i = j :=
+  classif_bundle.distinct
+
+/-- **(3) Counting.** The five groups are a complete, non-redundant list of
+representatives of the groups of order `98`. -/
+theorem isClassif : IsClassif 98 (rep5 RA RB RC RD RE) := classif_bundle
 
 /-- **The number of isomorphism classes of groups of order `98` is exactly `5`.** -/
 theorem numIsoClasses_eq {k : ℕ} {rep : Fin k → Type} [∀ i, Group (rep i)]

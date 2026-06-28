@@ -38,11 +38,17 @@ theorem classification (h : Nat.card G = 75) :
   exact psq_prime_nonab_classification (p := 5) (by norm_num) (by decide) (by norm_num)
     (hN := by norm_num) h
 
-/-- **(2) Distinctness & (3) Counting.** The three groups are a complete, non-redundant list of
-representatives of the groups of order 75. -/
-theorem isClassif : IsClassif 75 (rep3 RA RB RC) :=
+private theorem classif_bundle : IsClassif 75 (rep3 RA RB RC) :=
   psq_prime_nonab_isClassif (p := 5) (by norm_num) (by decide) (by norm_num)
     (by norm_num)
+
+/-- **(2) Distinctness.** The three groups are pairwise non-isomorphic. -/
+theorem distinct : ∀ i j, Nonempty (rep3 RA RB RC i ≃* rep3 RA RB RC j) → i = j :=
+  classif_bundle.distinct
+
+/-- **(3) Counting.** The three groups are a complete, non-redundant list of
+representatives of the groups of order 75. -/
+theorem isClassif : IsClassif 75 (rep3 RA RB RC) := classif_bundle
 
 /-- **The number of isomorphism classes of groups of order 75 is exactly `3`.** -/
 theorem numIsoClasses_eq {k : ℕ} {rep : Fin k → Type} [∀ i, Group (rep i)]
