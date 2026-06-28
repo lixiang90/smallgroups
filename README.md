@@ -14,19 +14,19 @@ theorems:
 
 ## Done so far:
 
-  | Category | Orders | # | Representatives | Via |
-  |----------|--------|---|-----------------|-----|
-  | trivial | 1 | 1 | `ℤ/1` | — |
-  | prime | 2,3,5,7,11,13,17,19,23,29,31,37,41,<br>43,47,53,59,61,67,71,73,79,83,89,97 | 1 | `ℤ/N` | prime classification |
-  | `p²` | 4,9,25,49 | 2 | `ℤ/N`, `ℤ/p × ℤ/p` | `PrimeSqClassification` |
-  | `p·q` (`q ∤ p−1`) | 15,33,35,51,65,69,77,85,87,91,95 | 1 | `ℤ/N` | `PrimePairCyclic` |
-  | `2p` | 6,10,14,22,26,34,38,46,58,62,74,82,86,94 | 2 | `ℤ/2p`, `D_p` | `PrimePairDihedral` |
-  | `p·q` (`q ∣ p−1`) | 21,39,55,57,93 | 2 | `ℤ/pq`, `ℤ/p ⋊ ℤ/q` | `PrimePairNonabelian` |
-  | `p³` | 8,27 | 5 | 5 types | `P3Group` |
-  | `2p²` | 18,50,98 | 5 | 5 types | `Order2PSq` |
-  | `p²q` (`p∤q−1`, `q∤p²−1`) | 45,99 | 2 | `ℤ/p²q`, `ℤ/p × ℤ/pq` | `PrimeSqPrimeAbelian` |
-  | `p²q` (`q ∣ p−1`) | 75 | 3 | `ℤ/p²q`, `ℤ/p × ℤ/pq`, `(ℤ/p)² ⋊ ℤ/q` | `PrimeSqPrimeNonabelian` |
-  | `4p` (`p ≥ 5`) | 20,28,44,52,68,76,92 | 4 or 5 | 5 types (mod 1) / 4 types (mod 3) | `Order4P` |
+| Category | Orders | # | Representatives | Via |
+|----------|--------|---|-----------------|-----|
+| trivial | 1 | 1 | `ℤ/1` | — |
+| prime | 2,3,5,7,11,13,17,19,23,29,31,37,41,<br>43,47,53,59,61,67,71,73,79,83,89,97 | 1 | `ℤ/N` | `PrimeOrderCyclic` |
+| `p²` | 4,9,25,49 | 2 | `ℤ/N`, `ℤ/p × ℤ/p` | `PrimeSqClassification` |
+| `p·q` (`q ∤ p−1`) | 15,33,35,51,65,69,77,85,87,91,95 | 1 | `ℤ/N` | `PrimePairCyclic` |
+| `2p` | 6,10,14,22,26,34,38,46,<br>58,62,74,82,86,94 | 2 | `ℤ/2p`, `D_p` | `PrimePairDihedral` |
+| `p·q` (`q ∣ p−1`) | 21,39,55,57,93 | 2 | `ℤ/pq`, `ℤ/p ⋊ ℤ/q` | `PrimePairNonabelian` |
+| `p³` | 8,27 | 5 | 5 types | `P3Group` |
+| `2p²` | 18,50,98 | 5 | 5 types | `Order2PSq` |
+| `p²q` (`p∤q−1`, `q∤p²−1`) | 45,99 | 2 | `ℤ/p²q`, `ℤ/p × ℤ/pq` | `PrimeSqPrimeAbelian` |
+| `p²q` (`q ∣ p−1`) | 75 | 3 | `ℤ/p²q`, `ℤ/p × ℤ/pq`, `(ℤ/p)² ⋊ ℤ/q` | `PrimeSqPrimeNonabelian` |
+| `4p` (`p ≥ 5`) | 20,28,44,52,68,76,92 | 4 or 5 | 5 types (mod 1) / 4 types (mod 3) | `Order4P` |
 
 ## Layout
 
