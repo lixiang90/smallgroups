@@ -704,6 +704,685 @@ private theorem action_trivial_of_abelian {N H : Type*} [Group N] [Group H]
     SemidirectProduct.left_inl, SemidirectProduct.right_inl, map_one, mul_one, one_mul] at h_left
   simpa using h_left
 
+
+/-- Core of the mod-3 classification: given a non-cyclic group of order `4p` with a
+semidirect product decomposition, classifies the group as one of the four types.
+Does NOT require `5 ≤ p`, only `p.Prime` and `p ≠ 2`. -/
+theorem fourP_classification_mod3_aux {p : ℕ} (hp : p.Prime) (hp2 : p ≠ 2)
+    (hmod : p % 4 = 3) {G : Type*} [Group G] [Finite G]
+    (hG : Nat.card G = 4 * p) (hcyc : ¬ IsCyclic G)
+    (N H : Subgroup G) (φ : H →* MulAut N)
+    (hcardN : Nat.card N = p) (hcardH : Nat.card H = 4)
+    (e : G ≃* SemidirectProduct N H φ) :
+    Nonempty (G ≃* fourP_I p) ∨
+    Nonempty (G ≃* fourP_II p) ∨
+    Nonempty (G ≃* fourP_III p) ∨
+    Nonempty (G ≃* fourP_V p) := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hp_two_le : 2 ≤ p := hp.two_le
+  have hiN : Nonempty (N ≃* Multiplicative (ZMod p)) := prime_classification hp hcardN
+  have hp_cop_2 : Nat.Coprime 2 p :=
+    Nat.prime_two.coprime_iff_not_dvd.mpr fun h =>
+      have := hp.eq_one_or_self_of_dvd 2 h
+      this.elim (fun h1 => by omega) (fun h2 => hp2 h2.symm)
+  haveI : Fact (Nat.Prime 2) := ⟨by decide⟩
+  have hcardH_sq : Nat.card H = 2 ^ 2 := by
+    rw [show (2 : ℕ) ^ 2 = 4 by norm_num, hcardH]
+  rcases prime_sq_classification (p := 2) hcardH_sq with (hHcyc | hHk4)
+  · -- H ≅ C₄
+    obtain ⟨iH_cyc⟩ := hHcyc
+    have iH : H ≃* Multiplicative (ZMod 4) := by simpa [CyclicRep] using iH_cyc
+    obtain ⟨iN⟩ := hiN
+    have hN_cyc : IsCyclic N := isCyclic_of_card_eq_prime hp hcardN
+    have hh₀_ord : orderOf (iH.symm (Multiplicative.ofAdd (1 : ZMod 4))) = 4 := by
+      rw [MulEquiv.orderOf_eq iH.symm, orderOf_ofAdd_eq_addOrderOf,
+        ZMod.addOrderOf_one 4]
+    have hn₀_ord : orderOf (iN.symm (Multiplicative.ofAdd (1 : ZMod p))) = p := by
+      haveI : NeZero p := ⟨hp.ne_zero⟩
+      rw [MulEquiv.orderOf_eq iN.symm, orderOf_ofAdd_eq_addOrderOf,
+        ZMod.addOrderOf_one p]
+    set h₀ := iH.symm (Multiplicative.ofAdd (1 : ZMod 4)) with hh₀_def
+    set n₀ := iN.symm (Multiplicative.ofAdd (1 : ZMod p)) with hn₀_def
+    by_cases hcomm : ∀ a b : G, a * b = b * a
+    · -- Abelian C₄: φ trivial → G ≅ N×H ≅ Z/p×C₄ ≅ Z/(4p) → cyclic, contradiction with hcyc
+      haveI : CommGroup G := { mul_comm := hcomm }
+      have h_sd_comm : ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
+        intro a b
+        have h_eq := hcomm (e.symm a) (e.symm b)
+        apply_fun e at h_eq
+        simpa [map_mul e, MulEquiv.apply_symm_apply] using h_eq
+      have hφ : φ = 1 := action_trivial_of_abelian φ h_sd_comm
+      subst hφ
+      have hH_cyc : IsCyclic H :=
+        iH.isCyclic.mpr inferInstance
+      have h_cop : (Nat.card N).Coprime (Nat.card H) := by
+        rw [hcardN, hcardH]
+        have htemp := (Nat.coprime_pow_right_iff (by norm_num : 0 < 2) p 2).mpr hp_cop_2.symm
+        simpa [show (2 : ℕ) ^ 2 = 4 by norm_num] using htemp
+      have h_prod_cyc : IsCyclic (N × H) :=
+        (Group.isCyclic_prod_iff.2 ⟨hN_cyc, hH_cyc, h_cop⟩)
+      have hG_cyc : IsCyclic G :=
+        isCyclic_of_surjective ((e.trans SemidirectProduct.mulEquivProd).symm.toMonoidHom)
+          (MulEquiv.surjective _)
+      exact absurd hG_cyc hcyc
+    · -- Non-abelian C₄ → Type III
+      have hh₀4 : h₀ ^ 4 = 1 := by
+        rw [← hh₀_ord]; exact pow_orderOf_eq_one h₀
+      have hφh₀4 : (φ h₀) ^ 4 = 1 := by
+        rw [← map_pow, hh₀4, map_one]
+      -- Conjugate φ h₀ by iN to get an automorphism of Multiplicative (ZMod p)
+      let ψ : MulAut (Multiplicative (ZMod p)) :=
+        (iN.symm.trans (φ h₀)).trans iN
+      let conj_iN : MulAut N →* MulAut (Multiplicative (ZMod p)) :=
+        { toFun := fun σ => (iN.symm.trans σ).trans iN
+          map_one' := by ext x; simp
+          map_mul' := fun σ τ => by ext x; simp }
+      have hψ_eq : ψ = conj_iN (φ h₀) := rfl
+      have h_ord_ψ : orderOf ψ ∣ 4 := by
+        rw [hψ_eq]
+        apply orderOf_dvd_of_pow_eq_one
+        rw [← map_pow, hφh₀4, map_one]
+      obtain ⟨u, hu⟩ := mulEquiv_eq_unitAutHom (p := p) ψ
+      have hu4 : u ^ 4 = 1 := by
+        have hinj : Function.Injective (unitAutHom (p := p)) := by
+          intro u v h
+          have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod p)) =
+                   unitAutHom v (Multiplicative.ofAdd (1 : ZMod p)) := by rw [h]
+          simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
+          apply Units.ext
+          exact congrArg Multiplicative.toAdd h1
+        have h_ord_u : orderOf u ∣ 4 := by
+          have h_eq : orderOf (unitAutHom u) = orderOf u :=
+            orderOf_injective (unitAutHom (p := p)) hinj u
+          rw [← h_eq, ← hu]
+          exact h_ord_ψ
+        apply (orderOf_dvd_iff_pow_eq_one (x := u) (n := 4)).mp
+        exact h_ord_u
+      have hu_cases := units_pow_four_eq_one_iff hmod u hu4
+      rcases hu_cases with (hu1 | hun1)
+      · -- u = 1, so ψ = 1, so φ h₀ = 1
+        have hψ1 : ψ = 1 := by rw [hu, hu1, map_one]
+        have hφh₀1 : φ h₀ = 1 := by
+          apply MulEquiv.ext; intro n
+          apply iN.injective
+          have hψ1_eq : ∀ x, ψ x = x := by rw [hψ1]; simp
+          have htemp := hψ1_eq (iN n)
+          dsimp [ψ] at htemp
+          simpa using htemp
+        -- h₀ generates H since orderOf h₀ = 4 = card H
+        have hgen : ∀ h : H, h ∈ Subgroup.zpowers h₀ := by
+          have hcz : Nat.card (Subgroup.zpowers h₀ : Subgroup H) = Nat.card H := by
+            rw [Nat.card_zpowers, hh₀_ord, hcardH]
+          have hz_eq : Subgroup.zpowers h₀ = ⊤ :=
+            Subgroup.eq_top_of_card_eq _ hcz
+          intro h; rw [hz_eq]; trivial
+        have hφ1 : φ = 1 := by
+          ext h n
+          obtain ⟨k, hk⟩ := Subgroup.mem_zpowers_iff.mp (hgen h)
+          have hφh_eq_one : φ h = 1 := by
+            calc
+              φ h = φ (h₀ ^ k) := by rw [hk]
+              _ = (φ h₀) ^ k := by rw [map_zpow]
+              _ = 1 ^ k := by rw [hφh₀1]
+              _ = 1 := by simp
+          simp [hφh_eq_one]
+        -- φ = 1 implies SemidirectProduct is direct product, which is abelian
+        have h_sd_comm : ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
+          rw [hφ1]
+          intro a b
+          apply (SemidirectProduct.mulEquivProd).injective
+          have hN_comm : ∀ n1 n2 : N, n1 * n2 = n2 * n1 := by
+            intro n1 n2; apply iN.injective; simp [mul_comm]
+          have hH_comm : ∀ h1 h2 : H, h1 * h2 = h2 * h1 := by
+            intro h1 h2; apply iH.injective; simp [mul_comm]
+          simp only [map_mul, SemidirectProduct.mulEquivProd_apply]
+          simp [hN_comm a.left b.left, hH_comm a.right b.right]
+        have hG_comm : ∀ a b : G, a * b = b * a := by
+          intro a b
+          have h_eq := h_sd_comm (e a) (e b)
+          apply_fun e.symm at h_eq
+          simpa using h_eq
+        exact absurd hG_comm hcomm
+      · -- u = -1, so ψ = unitAutHom (-1) acts as inversion
+        -- Then φ h₀ n₀ = n₀⁻¹
+        have hψ_eq : ψ = unitAutHom (-1) := by rw [hu, hun1]
+        have hφh₀_inv : ∀ n : N, φ h₀ n = n⁻¹ := by
+          intro n
+          apply iN.injective
+          calc
+            iN (φ h₀ n) = ψ (iN n) := by dsimp [ψ]; simp
+            _ = unitAutHom (-1) (iN n) := by rw [hψ_eq]
+            _ = (iN n)⁻¹ := by
+              let m := Multiplicative.toAdd (iN n)
+              have hm : iN n = Multiplicative.ofAdd m :=
+                (ofAdd_toAdd _).symm
+              rw [hm]
+              simp [unitAutHom_apply]
+            _ = iN (n⁻¹) := by simp
+        -- Now construct a, b in G and apply nonempty_mulEquiv_nonabRep
+        set a := e.symm (SemidirectProduct.inl n₀) with ha_def
+        set b := e.symm (SemidirectProduct.inr h₀) with hb_def
+        have ha : orderOf a = p := by
+          rw [ha_def, MulEquiv.orderOf_eq e.symm,
+            orderOf_injective (SemidirectProduct.inl : N →* SemidirectProduct N H φ)
+              SemidirectProduct.inl_injective n₀, hn₀_ord]
+        have hb : orderOf b = 4 := by
+          rw [hb_def, MulEquiv.orderOf_eq e.symm,
+            orderOf_injective (SemidirectProduct.inr : H →* SemidirectProduct N H φ)
+              SemidirectProduct.inr_injective h₀, hh₀_ord]
+        have ha_pow_p : a ^ p = 1 := by rw [← ha]; exact pow_orderOf_eq_one a
+        have ha_inv_eq_pow_sub : a⁻¹ = a ^ (p - 1) := by
+          apply (eq_inv_of_mul_eq_one_left ?_).symm
+          calc
+            a ^ (p - 1) * a = a ^ ((p - 1) + 1) := by rw [pow_succ]
+            _ = a ^ p := by rw [Nat.sub_add_cancel (by omega : 1 ≤ p)]
+            _ = 1 := ha_pow_p
+        have h_val_neg_one : ((-1 : (ZMod p)ˣ).val : ZMod p).val = p - 1 := by
+          have hp_eq : ((p - 1 : ℕ).succ : ℕ) = p := by omega
+          have htemp : ((-1 : (ZMod p)ˣ).val : ZMod p) = (-1 : ZMod p) := by simp
+          rw [htemp]
+          have h := ZMod.val_neg_one (p - 1)
+          rw [hp_eq] at h
+          simpa using h
+        have hconj : b * a * b⁻¹ = a ^ (((-1 : (ZMod p)ˣ).val : ZMod p).val) := by
+          calc
+            b * a * b⁻¹ = e.symm (SemidirectProduct.inr h₀ * SemidirectProduct.inl n₀ *
+              (SemidirectProduct.inr h₀)⁻¹) := by simp [ha_def, hb_def]
+            _ = e.symm (SemidirectProduct.inl (φ h₀ n₀)) := by
+              simp [SemidirectProduct.inl_aut]
+            _ = e.symm (SemidirectProduct.inl (n₀⁻¹)) := by rw [hφh₀_inv n₀]
+            _ = e.symm ((SemidirectProduct.inl n₀)⁻¹) := by simp
+            _ = a⁻¹ := by simp [ha_def]
+            _ = a ^ (p - 1) := by rw [ha_inv_eq_pow_sub]
+            _ = a ^ (((-1 : (ZMod p)ˣ).val : ZMod p).val) := by rw [h_val_neg_one]
+        have hcop : Nat.Coprime p 4 := by
+          have htemp := (Nat.coprime_pow_right_iff (by norm_num : 0 < 2) p 2).mpr hp_cop_2.symm
+          simpa [show (2 : ℕ) ^ 2 = 4 by norm_num] using htemp
+        have hcardG : Nat.card G = p * 4 := by
+          rw [hG]; ring
+        haveI : NeZero p := ⟨hp.ne_zero⟩
+        haveI : NeZero 4 := ⟨by norm_num⟩
+        have h_nonab : Nonempty (G ≃* NonabRep (-1 : (ZMod p)ˣ) (neg_one_pow_four_units p)) :=
+          nonempty_mulEquiv_nonabRep a b ha hb (-1 : (ZMod p)ˣ) (neg_one_pow_four_units p)
+            hconj hcop hcardG
+        right; right; left
+        simpa [fourP_III] using h_nonab
+  · -- H ≅ K₄
+    by_cases hcomm : ∀ a b : G, a * b = b * a
+    · -- Abelian K₄ → Type II: G ≅ Z/2 × Z/(2p) = fourP_II p
+      haveI : CommGroup G := { mul_comm := hcomm }
+      have h_sd_comm : ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
+        intro a b
+        have h_eq := hcomm (e.symm a) (e.symm b)
+        apply_fun e at h_eq
+        simpa [map_mul e, MulEquiv.apply_symm_apply] using h_eq
+      have hφ : φ = 1 := action_trivial_of_abelian φ h_sd_comm
+      subst hφ
+      -- G ≃* N × H via SemidirectProduct.mulEquivProd
+      have hG_NH : Nonempty (G ≃* (N × H)) :=
+        ⟨e.trans SemidirectProduct.mulEquivProd⟩
+      obtain ⟨eG_NH⟩ := hG_NH
+      -- N ≅ Z/p, H ≅ Z/2 × Z/2
+      obtain ⟨iN⟩ := hiN
+      obtain ⟨iH⟩ := hHk4
+      let iH' : H ≃* (Multiplicative (ZMod 2) × Multiplicative (ZMod 2)) := by
+        simpa [ElemAbelianRep, CyclicRep] using iH
+      right; left
+      let A := Multiplicative (ZMod p)
+      let B := Multiplicative (ZMod 2)
+      let C := Multiplicative (ZMod 2)
+      let D := Multiplicative (ZMod (2 * p))
+      have h_crt : C × A ≃* D := crtProd 2 p hp_cop_2
+      have h_prod_iso : (N × H) ≃* (B × D) :=
+        let e1 := MulEquiv.prodCongr iN iH'
+        let e2 := (MulEquiv.prodAssoc (M := A) (N := B) (P := C)).symm
+        let e3 := MulEquiv.prodCongr (MulEquiv.prodComm (M := A) (N := B))
+          (MulEquiv.refl (M := C))
+        let e4 := MulEquiv.prodAssoc (M := B) (N := A) (P := C)
+        let e5 := MulEquiv.prodCongr (MulEquiv.refl (M := B))
+          (MulEquiv.prodComm (M := A) (N := C))
+        let e6 := MulEquiv.prodCongr (MulEquiv.refl (M := B)) h_crt
+        (e1.trans e2).trans e3 |>.trans e4 |>.trans e5 |>.trans e6
+      refine ⟨eG_NH.trans h_prod_iso⟩
+    · -- Non-abelian K₄ → Type V: G ≅ ℤ/2 × D_{2p}
+      -- Each generator of K₄ acts on N ≅ ℤ/p by ±1.
+      -- Since G non-abelian, at least one acts by -1.
+      -- If both act by -1, replace one generator to get one trivial / one inversion.
+      -- Result: G ≅ ℤ/2 × D_{2p}.
+      obtain ⟨iN⟩ := hiN
+      obtain ⟨iH⟩ := hHk4
+      let iH' : H ≃* (Multiplicative (ZMod 2) × Multiplicative (ZMod 2)) := by
+        simpa [ElemAbelianRep, CyclicRep] using iH
+      -- generators of H
+      set u₁ := iH'.symm (Multiplicative.ofAdd 1, 1) with hu₁_def
+      set u₂ := iH'.symm (1, Multiplicative.ofAdd 1) with hu₂_def
+      have hzmod2_add : (1 : ZMod 2) + 1 = 0 := by
+        have h2 : (2 : ZMod 2) = 0 := CharP.cast_eq_zero (ZMod 2) 2
+        calc (1 : ZMod 2) + 1 = 2 := by ring
+          _ = 0 := h2
+      have hu₁_sq : u₁ ^ 2 = 1 := by
+        have h : iH' u₁ = (Multiplicative.ofAdd 1, (1 : Multiplicative (ZMod 2))) :=
+          MulEquiv.apply_symm_apply iH' _
+        apply iH'.injective; simp only [map_pow, map_one, h]
+        ext <;> simp [sq, hzmod2_add]
+      have hu₂_sq : u₂ ^ 2 = 1 := by
+        have h : iH' u₂ = ((1 : Multiplicative (ZMod 2)), Multiplicative.ofAdd 1) :=
+          MulEquiv.apply_symm_apply iH' _
+        apply iH'.injective; simp only [map_pow, map_one, h]
+        ext <;> simp [sq, hzmod2_add]
+      -- φ(u₁)² = 1 and φ(u₂)² = 1 in Aut(N)
+      have hφu₁_sq : (φ u₁) ^ 2 = 1 := by rw [← map_pow, hu₁_sq, map_one]
+      have hφu₂_sq : (φ u₂) ^ 2 = 1 := by rw [← map_pow, hu₂_sq, map_one]
+      -- Conjugate to automorphisms of Multiplicative (ZMod p)
+      let ψ₁ := (iN.symm.trans (φ u₁)).trans iN
+      let ψ₂ := (iN.symm.trans (φ u₂)).trans iN
+      have hψ₁_sq : ψ₁ ^ 2 = 1 := by
+        have key : ∀ n : N, ψ₁ (ψ₁ (iN n)) = iN n := by
+          intro n; dsimp only [ψ₁, MulEquiv.trans_apply]
+          simp only [MulEquiv.symm_apply_apply]
+          congr 1
+          rw [← MulAut.mul_apply, ← sq, hφu₁_sq, MulAut.one_apply]
+        ext x
+        obtain ⟨n, rfl⟩ := iN.surjective x
+        simp only [MulAut.one_apply, pow_succ, pow_zero, MulAut.mul_apply, key]
+      have hψ₂_sq : ψ₂ ^ 2 = 1 := by
+        have key : ∀ n : N, ψ₂ (ψ₂ (iN n)) = iN n := by
+          intro n; dsimp only [ψ₂, MulEquiv.trans_apply]
+          simp only [MulEquiv.symm_apply_apply]
+          congr 1
+          rw [← MulAut.mul_apply, ← sq, hφu₂_sq, MulAut.one_apply]
+        ext x
+        obtain ⟨n, rfl⟩ := iN.surjective x
+        simp only [MulAut.one_apply, pow_succ, pow_zero, MulAut.mul_apply, key]
+      -- Each ψᵢ = unitAutHom(uᵢ) for some unit uᵢ with uᵢ² = 1
+      obtain ⟨v₁, hv₁⟩ := mulEquiv_eq_unitAutHom (p := p) ψ₁
+      obtain ⟨v₂, hv₂⟩ := mulEquiv_eq_unitAutHom (p := p) ψ₂
+      have hv₁_sq : v₁ ^ 2 = 1 := by
+        have hinj : Function.Injective (unitAutHom (p := p)) := by
+          intro u v h
+          have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod p)) =
+                   unitAutHom v (Multiplicative.ofAdd (1 : ZMod p)) := by rw [h]
+          simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
+          exact Units.ext (congrArg Multiplicative.toAdd h1)
+        have := hinj (by rw [map_pow, ← hv₁, hψ₁_sq, map_one] :
+          unitAutHom (v₁ ^ 2) = unitAutHom 1)
+        exact this
+      have hv₂_sq : v₂ ^ 2 = 1 := by
+        have hinj : Function.Injective (unitAutHom (p := p)) := by
+          intro u v h
+          have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod p)) =
+                   unitAutHom v (Multiplicative.ofAdd (1 : ZMod p)) := by rw [h]
+          simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
+          exact Units.ext (congrArg Multiplicative.toAdd h1)
+        have := hinj (by rw [map_pow, ← hv₂, hψ₂_sq, map_one] :
+          unitAutHom (v₂ ^ 2) = unitAutHom 1)
+        exact this
+      -- v₁, v₂ ∈ {1, -1} since x² = 1 in (ZMod p)ˣ iff x = ±1
+      have hv₁_cases : v₁ = 1 ∨ v₁ = -1 :=
+        units_sq_eq_one_of_prime v₁ hv₁_sq
+      have hv₂_cases : v₂ = 1 ∨ v₂ = -1 :=
+        units_sq_eq_one_of_prime v₂ hv₂_sq
+      -- φ(u) acts by inversion when the corresponding unit is -1
+      have unitAutHom_neg1_inv : ∀ x : Multiplicative (ZMod p),
+          unitAutHom (-1 : (ZMod p)ˣ) x = x⁻¹ := by
+        intro x
+        let m := Multiplicative.toAdd x
+        have hm : x = Multiplicative.ofAdd m := (ofAdd_toAdd _).symm
+        rw [hm]; simp [unitAutHom_apply]
+      have hφ_inv_of_neg1 : ∀ (u : H) (v : (ZMod p)ˣ),
+          (iN.symm.trans (φ u)).trans iN = unitAutHom v → v = -1 →
+          ∀ n : N, φ u n = n⁻¹ := by
+        intro u v hψ hv n
+        apply iN.injective
+        have h := MulEquiv.ext_iff.mp hψ (iN n)
+        simp only [MulEquiv.trans_apply, MulEquiv.symm_apply_apply] at h
+        rw [h, hv, unitAutHom_neg1_inv]; simp
+      have hφ_triv_of_1 : ∀ (u : H) (v : (ZMod p)ˣ),
+          (iN.symm.trans (φ u)).trans iN = unitAutHom v → v = 1 →
+          φ u = 1 := by
+        intro u v hψ hv
+        apply MulEquiv.ext; intro n
+        have h := MulEquiv.ext_iff.mp hψ (iN n)
+        simp only [MulEquiv.trans_apply, MulEquiv.symm_apply_apply] at h
+        have h2 : iN ((φ u) n) = iN n := by
+          rw [h, hv]; simp
+        exact iN.injective h2
+      -- Since G is non-abelian, φ ≠ 1. So at least one of v₁, v₂ is -1.
+      -- Find h_inv (inverts N) and h_triv (acts trivially).
+      -- If both invert: u₁u₂ acts trivially, so use h_inv = u₁, h_triv = u₁ * u₂.
+      -- Product u₁ * u₂ in H maps to (ofAdd 1, ofAdd 1) in K₄.
+      have hu₁u₂ : iH' (u₁ * u₂) = (Multiplicative.ofAdd 1, Multiplicative.ofAdd 1) := by
+        simp [hu₁_def, hu₂_def, map_mul, MulEquiv.apply_symm_apply]
+      have hu₁_comm_u₂ : Commute u₁ u₂ := by
+        change u₁ * u₂ = u₂ * u₁
+        apply iH'.injective; simp [map_mul, mul_comm]
+      have hu₁u₂_sq : (u₁ * u₂) ^ 2 = 1 := by
+        rw [hu₁_comm_u₂.mul_pow, hu₁_sq, hu₂_sq, one_mul]
+      have hφu₁u₂ : φ (u₁ * u₂) = φ u₁ * φ u₂ := map_mul φ u₁ u₂
+      -- Obtain h_inv (inverts) and h_triv (trivial), both order 2, h_triv ≠ 1
+      obtain ⟨h_inv, h_triv, hφ_inv, hφ_triv, h_inv_sq, h_triv_sq, h_triv_ne_1⟩ :
+          ∃ (h_inv h_triv : H),
+            (∀ n : N, φ h_inv n = n⁻¹) ∧ (φ h_triv = 1) ∧
+            h_inv ^ 2 = 1 ∧ h_triv ^ 2 = 1 ∧ h_triv ≠ 1 := by
+        rcases hv₁_cases with hv₁1 | hv₁neg1 <;> rcases hv₂_cases with hv₂1 | hv₂neg1
+        · -- v₁ = 1, v₂ = 1: both trivial → φ = 1 → G abelian, contradiction
+          exfalso; apply hcomm
+          have hφu₁_1 := hφ_triv_of_1 u₁ v₁ hv₁ hv₁1
+          have hφu₂_1 := hφ_triv_of_1 u₂ v₂ hv₂ hv₂1
+          -- φ u = 1 for all u since u₁, u₂ generate H
+          have hφ_all : ∀ h : H, φ h = 1 := by
+            intro h
+            have hu₁_im : iH' u₁ = (Multiplicative.ofAdd 1, 1) :=
+              MulEquiv.apply_symm_apply iH' _
+            have hu₂_im : iH' u₂ = (1, Multiplicative.ofAdd 1) :=
+              MulEquiv.apply_symm_apply iH' _
+            have hh_decomp : h = u₁ ^ (Multiplicative.toAdd (iH' h).1).val *
+                u₂ ^ (Multiplicative.toAdd (iH' h).2).val := by
+              apply iH'.injective
+              rw [map_mul, map_pow, map_pow, hu₁_im, hu₂_im]
+              ext
+              · simp
+              · simp
+            rw [hh_decomp, map_mul, map_pow, map_pow, hφu₁_1, hφu₂_1]; simp
+          have hφ1 : φ = 1 := by
+            ext h n; have := hφ_all h; simp [this]
+          -- φ = 1 → semidirect product is abelian → G is abelian
+          have h_sd_comm : ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
+            intro a b
+            have hl : a.left * b.left = b.left * a.left := by
+              apply iN.injective; simp [mul_comm]
+            have hr : a.right * b.right = b.right * a.right := by
+              apply iH'.injective; simp [mul_comm]
+            apply SemidirectProduct.ext
+            · simp [SemidirectProduct.mul_left, hφ_all, hl]
+            · simp [SemidirectProduct.mul_right, hr]
+          intro x y
+          have := h_sd_comm (e x) (e y)
+          apply_fun e.symm at this; simpa using this
+        · -- v₁ = 1, v₂ = -1
+          have hu₁_ne_1 : u₁ ≠ 1 := by
+            intro h; have := congrArg iH' h; simp [hu₁_def] at this
+          exact ⟨u₂, u₁, hφ_inv_of_neg1 u₂ v₂ hv₂ hv₂neg1,
+            hφ_triv_of_1 u₁ v₁ hv₁ hv₁1, hu₂_sq, hu₁_sq, hu₁_ne_1⟩
+        · -- v₁ = -1, v₂ = 1
+          have hu₂_ne_1 : u₂ ≠ 1 := by
+            intro h; have := congrArg iH' h; simp [hu₂_def] at this
+          exact ⟨u₁, u₂, hφ_inv_of_neg1 u₁ v₁ hv₁ hv₁neg1,
+            hφ_triv_of_1 u₂ v₂ hv₂ hv₂1, hu₁_sq, hu₂_sq, hu₂_ne_1⟩
+        · -- v₁ = -1, v₂ = -1: u₁u₂ acts trivially
+          have hφu₁u₂_triv : φ (u₁ * u₂) = 1 := by
+            apply MulEquiv.ext; intro n
+            rw [hφu₁u₂, MulAut.mul_apply,
+              hφ_inv_of_neg1 u₂ v₂ hv₂ hv₂neg1 n,
+              hφ_inv_of_neg1 u₁ v₁ hv₁ hv₁neg1 n⁻¹]
+            simp
+          have hu₁u₂_ne_1 : u₁ * u₂ ≠ 1 := by
+            intro h; have := congrArg iH' h; simp [map_mul, hu₁_def, hu₂_def] at this
+          exact ⟨u₁, u₁ * u₂, hφ_inv_of_neg1 u₁ v₁ hv₁ hv₁neg1,
+            hφu₁u₂_triv, hu₁_sq, hu₁u₂_sq, hu₁u₂_ne_1⟩
+      -- Now we have h_inv (inverts N) and h_triv (acts trivially), both order 2.
+      -- Build elements in G.
+      haveI : NeZero p := ⟨hp.ne_zero⟩
+      set n₀ := iN.symm (Multiplicative.ofAdd (1 : ZMod p)) with hn₀_def
+      have hn₀_ord : orderOf n₀ = p := by
+        rw [MulEquiv.orderOf_eq iN.symm, orderOf_ofAdd_eq_addOrderOf,
+          ZMod.addOrderOf_one p]
+      set a := e.symm (SemidirectProduct.inl n₀) with ha_def
+      set b := e.symm (SemidirectProduct.inr h_inv) with hb_def
+      set z := e.symm (SemidirectProduct.inr h_triv) with hz_def
+      -- orderOf a = p
+      have ha_ord : orderOf a = p := by
+        rw [ha_def, MulEquiv.orderOf_eq e.symm,
+          orderOf_injective SemidirectProduct.inl
+            SemidirectProduct.inl_injective n₀, hn₀_ord]
+      -- b² = 1
+      have hb_sq : b ^ 2 = 1 := by
+        apply e.injective; simp only [hb_def, map_pow, map_one, MulEquiv.apply_symm_apply]
+        rw [← map_pow]; simp [h_inv_sq]
+      -- b ≠ 1 (since φ h_inv ≠ 1, the action is non-trivial)
+      have hb_ne_1 : b ≠ 1 := by
+        intro hb1
+        -- φ h_inv is inversion but if b = 1, then h_inv = 1, so φ h_inv = 1
+        have hinv1 : h_inv = 1 := by
+          have hb1' := congrArg e hb1
+          simp only [hb_def, MulEquiv.apply_symm_apply, map_one] at hb1'
+          exact SemidirectProduct.inr_injective hb1'
+        have hφ_hinv_1 : φ h_inv = 1 := by rw [hinv1, map_one]
+        have h_n₀_sq : n₀ ^ 2 = 1 := by
+          have h1 : n₀ = n₀⁻¹ := by
+            have := hφ_inv n₀; rw [hφ_hinv_1] at this; simpa using this
+          rw [sq]; conv_lhs => lhs; rw [h1]
+          exact inv_mul_cancel n₀
+        have h_ord_dvd : orderOf n₀ ∣ 2 := orderOf_dvd_of_pow_eq_one h_n₀_sq
+        rw [hn₀_ord] at h_ord_dvd
+        exact absurd (Nat.le_of_dvd (by norm_num) h_ord_dvd) (by omega)
+      -- b * a * b⁻¹ = a⁻¹ (the dihedral relation)
+      have hba_inv : b * a * b⁻¹ = a⁻¹ := by
+        apply e.injective
+        have heb : e b = SemidirectProduct.inr h_inv := by
+          simp only [hb_def, MulEquiv.apply_symm_apply]
+        have hea : e a = SemidirectProduct.inl n₀ := by
+          simp only [ha_def, MulEquiv.apply_symm_apply]
+        have lhs_eq : e (b * a * b⁻¹) = SemidirectProduct.inl (φ h_inv n₀) := by
+          rw [map_mul, map_mul, map_inv, heb, hea]
+          simp [SemidirectProduct.inl_aut]
+        have rhs_eq : e (a⁻¹) = SemidirectProduct.inl (n₀⁻¹) := by
+          rw [map_inv, hea, map_inv]
+        rw [lhs_eq, rhs_eq, hφ_inv n₀]
+      -- z² = 1
+      have hz_sq : z ^ 2 = 1 := by
+        apply e.injective; simp only [hz_def, map_pow, map_one, MulEquiv.apply_symm_apply]
+        rw [← map_pow]; simp [h_triv_sq]
+      -- z commutes with a
+      have hza : z * a = a * z := by
+        apply e.injective
+        rw [map_mul, map_mul]
+        simp only [ha_def, hz_def, MulEquiv.apply_symm_apply]
+        apply SemidirectProduct.ext
+        · simp [SemidirectProduct.mul_left, hφ_triv]
+        · simp [SemidirectProduct.mul_right]
+      -- z commutes with b (both come from H, which is abelian)
+      have hzb : z * b = b * z := by
+        apply e.injective
+        rw [map_mul, map_mul]
+        simp only [hb_def, hz_def, MulEquiv.apply_symm_apply]
+        rw [← map_mul, ← map_mul]
+        congr 1
+        apply iH'.injective; simp [map_mul, mul_comm]
+      -- Now build the isomorphism G ≃* Multiplicative (ZMod 2) × DihedralGroup p
+      -- Use nonempty_mulEquiv_dihedral to get ⟨a, b⟩ → D_{2p} on a subgroup,
+      -- then extend with z.
+      -- Build the map fourP_V p → G
+      have ha_pow_p : a ^ p = 1 := by rw [← ha_ord]; exact pow_orderOf_eq_one a
+      have hodd : Odd p := hp.odd_of_ne_two (by omega)
+      -- The map DihedralGroup p → G sending r i ↦ a^i.val, sr i ↦ b * a^i.val
+      -- is a MonoidHom (reuse infrastructure from PrimePairDihedral)
+      -- Combined map: (j, d) ↦ z^j.val * f_dih(d)
+      -- where f_dih : DihedralGroup p → G is the dihedral embedding
+      -- First build f_dih using the same approach as nonempty_mulEquiv_dihedral
+      have hab : a * b = b * a⁻¹ := by
+        have h2 : b * a = a⁻¹ * b := by rw [← hba_inv]; group
+        calc a * b = a * b * a * a⁻¹ := by group
+          _ = a * (a⁻¹ * b) * a⁻¹ := by rw [← h2]; group
+          _ = b * a⁻¹ := by group
+      have hak : ∀ k : ℕ, a ^ k * b = b * (a⁻¹) ^ k := by
+        intro k; induction k with
+        | zero => simp
+        | succ n ih => rw [pow_succ, mul_assoc, hab, ← mul_assoc, ih, mul_assoc, ← pow_succ]
+      have hbb : b * b = 1 := by rw [← pow_two]; exact hb_sq
+      have hbinv : b⁻¹ = b := inv_eq_of_mul_eq_one_right hbb
+      have hcom : ∀ m n : ℕ, (a ^ m)⁻¹ * a ^ n = a ^ n * (a ^ m)⁻¹ :=
+        fun m n => ((((Commute.refl a).pow_pow n m).inv_right).eq).symm
+      have hc_add : ∀ i j : ZMod p, a ^ (i + j).val = a ^ i.val * a ^ j.val := by
+        intro i j; rw [← pow_add]; apply pow_eq_pow_iff_modEq.mpr
+        rw [ha_ord, ZMod.val_add]; exact Nat.mod_modEq _ _
+      have hc_sub : ∀ i j : ZMod p, a ^ (j - i).val = a ^ j.val * (a ^ i.val)⁻¹ := by
+        intro i j; have h := hc_add (j - i) i
+        rw [sub_add_cancel] at h; exact eq_mul_inv_iff_mul_eq.mpr h.symm
+      have hrsr : ∀ m n : ℕ, a ^ m * (b * a ^ n) = b * (a ^ n * (a ^ m)⁻¹) := by
+        intro m n; rw [← mul_assoc, hak, mul_assoc, inv_pow, hcom]
+      have hsrsr : ∀ m n : ℕ, b * a ^ m * (b * a ^ n) = a ^ n * (a ^ m)⁻¹ := by
+        intro m n; rw [mul_assoc, hrsr, ← mul_assoc, ← pow_two, hb_sq, one_mul]
+      let f_dih_fn : DihedralGroup p → G := fun x => match x with
+        | .r i => a ^ i.val
+        | .sr i => b * a ^ i.val
+      have hf_dih_mul : ∀ x y, f_dih_fn (x * y) = f_dih_fn x * f_dih_fn y := by
+        rintro (i | i) (j | j)
+        · exact hc_add i j
+        · change b * a ^ (j - i).val = a ^ i.val * (b * a ^ j.val)
+          rw [hc_sub, hrsr]
+        · change b * a ^ (i + j).val = b * a ^ i.val * a ^ j.val
+          rw [hc_add, mul_assoc]
+        · change a ^ (j - i).val = b * a ^ i.val * (b * a ^ j.val)
+          rw [hc_sub, hsrsr]
+      let f_dih : DihedralGroup p →* G := MonoidHom.mk' f_dih_fn hf_dih_mul
+      -- z commutes with everything in range of f_dih
+      have hza_pow : ∀ k : ℕ, z * a ^ k = a ^ k * z := by
+        intro k; induction k with
+        | zero => simp
+        | succ n ih =>
+          calc z * a ^ (n + 1) = z * (a ^ n * a) := by rw [pow_succ]
+            _ = (z * a ^ n) * a := by rw [mul_assoc]
+            _ = (a ^ n * z) * a := by rw [ih]
+            _ = a ^ n * (z * a) := by rw [mul_assoc]
+            _ = a ^ n * (a * z) := by rw [hza]
+            _ = a ^ (n + 1) * z := by rw [← mul_assoc, ← pow_succ]
+      have hz_comm_dih : ∀ d : DihedralGroup p, z * f_dih d = f_dih d * z := by
+        rintro (i | i)
+        · exact hza_pow i.val
+        · change z * (b * a ^ i.val) = (b * a ^ i.val) * z
+          calc z * (b * a ^ i.val) = (z * b) * a ^ i.val := by rw [mul_assoc]
+            _ = (b * z) * a ^ i.val := by rw [hzb]
+            _ = b * (z * a ^ i.val) := by rw [mul_assoc]
+            _ = b * (a ^ i.val * z) := by rw [hza_pow]
+            _ = (b * a ^ i.val) * z := by rw [mul_assoc]
+      -- Build the combined map fourP_V p → G: (j, d) ↦ z^j.val * f_dih(d)
+      let f_fn : fourP_V p → G := fun ⟨j, d⟩ => z ^ (Multiplicative.toAdd j).val * f_dih d
+      have hz_comm_f_dih : ∀ (k : ℕ) (d : DihedralGroup p),
+          z ^ k * f_dih d = f_dih d * z ^ k := by
+        intro k d; induction k with
+        | zero => simp
+        | succ n ih =>
+          calc z ^ (n + 1) * f_dih d = z ^ n * z * f_dih d := by rw [pow_succ]
+            _ = z ^ n * (z * f_dih d) := by rw [mul_assoc]
+            _ = z ^ n * (f_dih d * z) := by rw [hz_comm_dih]
+            _ = z ^ n * f_dih d * z := by rw [mul_assoc]
+            _ = f_dih d * z ^ n * z := by rw [ih]
+            _ = f_dih d * (z ^ n * z) := by rw [mul_assoc]
+            _ = f_dih d * z ^ (n + 1) := by rw [← pow_succ]
+      have hf_mul : ∀ x y, f_fn (x * y) = f_fn x * f_fn y := by
+        intro ⟨j₁, d₁⟩ ⟨j₂, d₂⟩
+        change z ^ (Multiplicative.toAdd (j₁ * j₂)).val * f_dih (d₁ * d₂) =
+          (z ^ (Multiplicative.toAdd j₁).val * f_dih d₁) *
+          (z ^ (Multiplicative.toAdd j₂).val * f_dih d₂)
+        rw [f_dih.map_mul d₁ d₂]
+        have hz_pow_eq : z ^ (Multiplicative.toAdd (j₁ * j₂)).val =
+            z ^ ((Multiplicative.toAdd j₁).val + (Multiplicative.toAdd j₂).val) := by
+          apply pow_eq_pow_iff_modEq.mpr
+          have hz_ord : orderOf z ∣ 2 := orderOf_dvd_of_pow_eq_one hz_sq
+          apply Nat.ModEq.of_dvd hz_ord
+          rw [toAdd_mul, ZMod.val_add]; exact Nat.mod_modEq _ _
+        rw [hz_pow_eq, pow_add]
+        calc z ^ (Multiplicative.toAdd j₁).val * z ^ (Multiplicative.toAdd j₂).val *
+            (f_dih d₁ * f_dih d₂)
+          = z ^ (Multiplicative.toAdd j₁).val *
+            (z ^ (Multiplicative.toAdd j₂).val * (f_dih d₁ * f_dih d₂)) := by
+              rw [mul_assoc]
+          _ = z ^ (Multiplicative.toAdd j₁).val *
+            (z ^ (Multiplicative.toAdd j₂).val * f_dih d₁ * f_dih d₂) := by
+              rw [mul_assoc]
+          _ = z ^ (Multiplicative.toAdd j₁).val *
+            (f_dih d₁ * z ^ (Multiplicative.toAdd j₂).val * f_dih d₂) := by
+              rw [hz_comm_f_dih _ d₁]
+          _ = z ^ (Multiplicative.toAdd j₁).val *
+            (f_dih d₁ * (z ^ (Multiplicative.toAdd j₂).val * f_dih d₂)) := by
+              rw [mul_assoc]
+          _ = (z ^ (Multiplicative.toAdd j₁).val * f_dih d₁) *
+            (z ^ (Multiplicative.toAdd j₂).val * f_dih d₂) := by
+              rw [← mul_assoc]
+      let f : fourP_V p →* G := MonoidHom.mk' f_fn hf_mul
+      haveI : Fintype G := Fintype.ofFinite G
+      -- Key semidirect product facts (computed once, avoiding simp timeouts)
+      have ez_eq : e z = SemidirectProduct.inr h_triv := by
+        simp only [hz_def, MulEquiv.apply_symm_apply]
+      have ea_eq : e a = SemidirectProduct.inl n₀ := by
+        simp only [ha_def, MulEquiv.apply_symm_apply]
+      have eb_eq : e b = SemidirectProduct.inr h_inv := by
+        simp only [hb_def, MulEquiv.apply_symm_apply]
+      have hinj : Function.Injective f := by
+        rw [injective_iff_map_eq_one]
+        intro ⟨j, d⟩ hx
+        change z ^ (Multiplicative.toAdd j).val * f_dih d = 1 at hx
+        have hx' : e (z ^ (Multiplicative.toAdd j).val * f_dih d) = 1 := by
+          rw [hx, map_one]
+        rw [map_mul] at hx'
+        -- Extract the right component
+        have hright := congrArg SemidirectProduct.right hx'
+        rw [SemidirectProduct.one_right] at hright
+        -- e(z^k).right = h_triv^k
+        have hezr : (e (z ^ (Multiplicative.toAdd j).val)).right =
+            h_triv ^ (Multiplicative.toAdd j).val := by
+          rw [map_pow, ez_eq, ← map_pow, SemidirectProduct.right_inr]
+        rw [SemidirectProduct.mul_right] at hright
+        rw [hezr] at hright
+        rcases d with (i | i)
+        · -- d = r i: e(a^i.val).right = 1
+          have hefr : (e (f_dih (DihedralGroup.r i))).right = 1 := by
+            change (e (a ^ i.val)).right = 1
+            rw [map_pow, ea_eq, ← map_pow, SemidirectProduct.right_inl]
+          rw [hefr, mul_one] at hright
+          have hjv : (Multiplicative.toAdd j).val = 0 := by
+            by_contra hjv_ne
+            have hjv_lt : (Multiplicative.toAdd j).val < 2 := ZMod.val_lt _
+            have hjv1 : (Multiplicative.toAdd j).val = 1 := by omega
+            rw [hjv1, pow_one] at hright
+            exact h_triv_ne_1 hright
+          rw [hjv] at hx; simp only [pow_zero, one_mul] at hx
+          change a ^ i.val = 1 at hx
+          have hi0 : i = 0 := by
+            rw [← ZMod.val_eq_zero]
+            have h_dvd : orderOf a ∣ i.val := orderOf_dvd_of_pow_eq_one hx
+            rw [ha_ord] at h_dvd
+            exact Nat.eq_zero_of_dvd_of_lt h_dvd (ZMod.val_lt i)
+          ext
+          · change j = 1
+            have hj_zero : Multiplicative.toAdd j = (0 : ZMod 2) := by
+              rwa [← ZMod.val_eq_zero]
+            change j = Multiplicative.ofAdd 0
+            rw [← hj_zero, ofAdd_toAdd]
+          · rw [hi0]; exact DihedralGroup.one_def.symm
+        · -- d = sr i: e(b * a^i.val).right = h_inv
+          have hefr : (e (f_dih (DihedralGroup.sr i))).right = h_inv := by
+            change (e (b * a ^ i.val)).right = h_inv
+            rw [map_mul, map_pow, eb_eq, ea_eq, ← map_pow,
+              SemidirectProduct.mul_right, SemidirectProduct.right_inr,
+              SemidirectProduct.right_inl, mul_one]
+          rw [hefr] at hright
+          exfalso
+          have h_inv_eq : h_inv = (h_triv ^ (Multiplicative.toAdd j).val)⁻¹ := by
+            have := mul_left_cancel (a := h_triv ^ (Multiplicative.toAdd j).val)
+              (b := h_inv) (c := (h_triv ^ (Multiplicative.toAdd j).val)⁻¹)
+              (by rw [hright, mul_inv_cancel])
+            exact this
+          have hφ_hinv_1 : φ h_inv = 1 := by
+            rw [h_inv_eq, map_inv, map_pow, hφ_triv]; simp
+          have h1 : n₀ = n₀⁻¹ := by
+            have := hφ_inv n₀; rw [hφ_hinv_1] at this; simpa using this
+          have h_n₀_sq : n₀ ^ 2 = 1 := by
+            rw [sq]; conv_lhs => lhs; rw [h1]
+            exact inv_mul_cancel n₀
+          have h_ord_dvd : orderOf n₀ ∣ 2 := orderOf_dvd_of_pow_eq_one h_n₀_sq
+          rw [hn₀_ord] at h_ord_dvd
+          exact absurd (Nat.le_of_dvd (by norm_num) h_ord_dvd) (by omega)
+      -- f bijective by cardinality
+      have hbij : Function.Bijective f :=
+        (Fintype.bijective_iff_injective_and_card f).mpr
+          ⟨hinj, by
+            rw [← Nat.card_eq_fintype_card, ← Nat.card_eq_fintype_card,
+              card_fourP_V, hG]⟩
+      right; right; right
+      exact ⟨(MulEquiv.ofBijective f hbij).symm⟩
+
 /-- When `p ≡ 3 [MOD 4]` and `p ≥ 5`, every group of order `4p` falls into one of 4 classes. -/
 theorem fourP_classification_mod3 {p : ℕ} (hp : p.Prime) (hpge : 5 ≤ p)
     (hmod : p % 4 = 3) {G : Type*} [Group G] [Finite G]
@@ -714,677 +1393,15 @@ theorem fourP_classification_mod3 {p : ℕ} (hp : p.Prime) (hpge : 5 ≤ p)
     Nonempty (G ≃* fourP_V p) := by
   have hp_ne_zero : 4 * p ≠ 0 := by
     have := hp.pos; positivity
-  haveI : Fact p.Prime := ⟨hp⟩
   have hp2 : p ≠ 2 := by omega
   by_cases hcyc : IsCyclic G
   · haveI := hcyc
     have hI : Nonempty (G ≃* CyclicRep (4 * p)) := cyclicRep_classification hp_ne_zero hG
     left
     simpa [fourP_I, CyclicRep] using hI
-  · -- Not cyclic. Decompose as semidirect product G ≃* N ⋊[φ] H where |N|=p, |H|=4
-    obtain ⟨N, H, φ, hnorm, hcardN, hcardH, ⟨e⟩⟩ := fourP_semidirectProduct hp hpge hG
-    have hiN : Nonempty (N ≃* Multiplicative (ZMod p)) := prime_classification hp hcardN
-    have hp_cop_2 : Nat.Coprime 2 p :=
-      Nat.prime_two.coprime_iff_not_dvd.mpr fun h =>
-        have := hp.eq_one_or_self_of_dvd 2 h
-        this.elim (fun h1 => by omega) (fun h2 => hp2 h2.symm)
-    haveI : Fact (Nat.Prime 2) := ⟨by decide⟩
-    have hcardH_sq : Nat.card H = 2 ^ 2 := by
-      rw [show (2 : ℕ) ^ 2 = 4 by norm_num, hcardH]
-    rcases prime_sq_classification (p := 2) hcardH_sq with (hHcyc | hHk4)
-    · -- H ≅ C₄
-      obtain ⟨iH_cyc⟩ := hHcyc
-      have iH : H ≃* Multiplicative (ZMod 4) := by simpa [CyclicRep] using iH_cyc
-      obtain ⟨iN⟩ := hiN
-      have hN_cyc : IsCyclic N := isCyclic_of_card_eq_prime hp hcardN
-      have hh₀_ord : orderOf (iH.symm (Multiplicative.ofAdd (1 : ZMod 4))) = 4 := by
-        rw [MulEquiv.orderOf_eq iH.symm, orderOf_ofAdd_eq_addOrderOf,
-          ZMod.addOrderOf_one 4]
-      have hn₀_ord : orderOf (iN.symm (Multiplicative.ofAdd (1 : ZMod p))) = p := by
-        haveI : NeZero p := ⟨hp.ne_zero⟩
-        rw [MulEquiv.orderOf_eq iN.symm, orderOf_ofAdd_eq_addOrderOf,
-          ZMod.addOrderOf_one p]
-      set h₀ := iH.symm (Multiplicative.ofAdd (1 : ZMod 4)) with hh₀_def
-      set n₀ := iN.symm (Multiplicative.ofAdd (1 : ZMod p)) with hn₀_def
-      by_cases hcomm : ∀ a b : G, a * b = b * a
-      · -- Abelian C₄: φ trivial → G ≅ N×H ≅ Z/p×C₄ ≅ Z/(4p) → cyclic, contradiction with hcyc
-        haveI : CommGroup G := { mul_comm := hcomm }
-        have h_sd_comm : ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
-          intro a b
-          have h_eq := hcomm (e.symm a) (e.symm b)
-          apply_fun e at h_eq
-          simpa [map_mul e, MulEquiv.apply_symm_apply] using h_eq
-        have hφ : φ = 1 := action_trivial_of_abelian φ h_sd_comm
-        subst hφ
-        have hH_cyc : IsCyclic H :=
-          iH.isCyclic.mpr inferInstance
-        have h_cop : (Nat.card N).Coprime (Nat.card H) := by
-          rw [hcardN, hcardH]
-          have htemp := (Nat.coprime_pow_right_iff (by norm_num : 0 < 2) p 2).mpr hp_cop_2.symm
-          simpa [show (2 : ℕ) ^ 2 = 4 by norm_num] using htemp
-        have h_prod_cyc : IsCyclic (N × H) :=
-          (Group.isCyclic_prod_iff.2 ⟨hN_cyc, hH_cyc, h_cop⟩)
-        have hG_cyc : IsCyclic G :=
-          isCyclic_of_surjective ((e.trans SemidirectProduct.mulEquivProd).symm.toMonoidHom)
-            (MulEquiv.surjective _)
-        exact absurd hG_cyc hcyc
-      · -- Non-abelian C₄ → Type III
-        have hh₀4 : h₀ ^ 4 = 1 := by
-          rw [← hh₀_ord]; exact pow_orderOf_eq_one h₀
-        have hφh₀4 : (φ h₀) ^ 4 = 1 := by
-          rw [← map_pow, hh₀4, map_one]
-        -- Conjugate φ h₀ by iN to get an automorphism of Multiplicative (ZMod p)
-        let ψ : MulAut (Multiplicative (ZMod p)) :=
-          (iN.symm.trans (φ h₀)).trans iN
-        let conj_iN : MulAut N →* MulAut (Multiplicative (ZMod p)) :=
-          { toFun := fun σ => (iN.symm.trans σ).trans iN
-            map_one' := by ext x; simp
-            map_mul' := fun σ τ => by ext x; simp }
-        have hψ_eq : ψ = conj_iN (φ h₀) := rfl
-        have h_ord_ψ : orderOf ψ ∣ 4 := by
-          rw [hψ_eq]
-          apply orderOf_dvd_of_pow_eq_one
-          rw [← map_pow, hφh₀4, map_one]
-        obtain ⟨u, hu⟩ := mulEquiv_eq_unitAutHom (p := p) ψ
-        have hu4 : u ^ 4 = 1 := by
-          have hinj : Function.Injective (unitAutHom (p := p)) := by
-            intro u v h
-            have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod p)) =
-                     unitAutHom v (Multiplicative.ofAdd (1 : ZMod p)) := by rw [h]
-            simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
-            apply Units.ext
-            exact congrArg Multiplicative.toAdd h1
-          have h_ord_u : orderOf u ∣ 4 := by
-            have h_eq : orderOf (unitAutHom u) = orderOf u :=
-              orderOf_injective (unitAutHom (p := p)) hinj u
-            rw [← h_eq, ← hu]
-            exact h_ord_ψ
-          apply (orderOf_dvd_iff_pow_eq_one (x := u) (n := 4)).mp
-          exact h_ord_u
-        have hu_cases := units_pow_four_eq_one_iff hmod u hu4
-        rcases hu_cases with (hu1 | hun1)
-        · -- u = 1, so ψ = 1, so φ h₀ = 1
-          have hψ1 : ψ = 1 := by rw [hu, hu1, map_one]
-          have hφh₀1 : φ h₀ = 1 := by
-            apply MulEquiv.ext; intro n
-            apply iN.injective
-            have hψ1_eq : ∀ x, ψ x = x := by rw [hψ1]; simp
-            have htemp := hψ1_eq (iN n)
-            dsimp [ψ] at htemp
-            simpa using htemp
-          -- h₀ generates H since orderOf h₀ = 4 = card H
-          have hgen : ∀ h : H, h ∈ Subgroup.zpowers h₀ := by
-            have hcz : Nat.card (Subgroup.zpowers h₀ : Subgroup H) = Nat.card H := by
-              rw [Nat.card_zpowers, hh₀_ord, hcardH]
-            have hz_eq : Subgroup.zpowers h₀ = ⊤ :=
-              Subgroup.eq_top_of_card_eq _ hcz
-            intro h; rw [hz_eq]; trivial
-          have hφ1 : φ = 1 := by
-            ext h n
-            obtain ⟨k, hk⟩ := Subgroup.mem_zpowers_iff.mp (hgen h)
-            have hφh_eq_one : φ h = 1 := by
-              calc
-                φ h = φ (h₀ ^ k) := by rw [hk]
-                _ = (φ h₀) ^ k := by rw [map_zpow]
-                _ = 1 ^ k := by rw [hφh₀1]
-                _ = 1 := by simp
-            simp [hφh_eq_one]
-          -- φ = 1 implies SemidirectProduct is direct product, which is abelian
-          have h_sd_comm : ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
-            rw [hφ1]
-            intro a b
-            apply (SemidirectProduct.mulEquivProd).injective
-            have hN_comm : ∀ n1 n2 : N, n1 * n2 = n2 * n1 := by
-              intro n1 n2; apply iN.injective; simp [mul_comm]
-            have hH_comm : ∀ h1 h2 : H, h1 * h2 = h2 * h1 := by
-              intro h1 h2; apply iH.injective; simp [mul_comm]
-            simp only [map_mul, SemidirectProduct.mulEquivProd_apply]
-            simp [hN_comm a.left b.left, hH_comm a.right b.right]
-          have hG_comm : ∀ a b : G, a * b = b * a := by
-            intro a b
-            have h_eq := h_sd_comm (e a) (e b)
-            apply_fun e.symm at h_eq
-            simpa using h_eq
-          exact absurd hG_comm hcomm
-        · -- u = -1, so ψ = unitAutHom (-1) acts as inversion
-          -- Then φ h₀ n₀ = n₀⁻¹
-          have hψ_eq : ψ = unitAutHom (-1) := by rw [hu, hun1]
-          have hφh₀_inv : ∀ n : N, φ h₀ n = n⁻¹ := by
-            intro n
-            apply iN.injective
-            calc
-              iN (φ h₀ n) = ψ (iN n) := by dsimp [ψ]; simp
-              _ = unitAutHom (-1) (iN n) := by rw [hψ_eq]
-              _ = (iN n)⁻¹ := by
-                let m := Multiplicative.toAdd (iN n)
-                have hm : iN n = Multiplicative.ofAdd m :=
-                  (ofAdd_toAdd _).symm
-                rw [hm]
-                simp [unitAutHom_apply]
-              _ = iN (n⁻¹) := by simp
-          -- Now construct a, b in G and apply nonempty_mulEquiv_nonabRep
-          set a := e.symm (SemidirectProduct.inl n₀) with ha_def
-          set b := e.symm (SemidirectProduct.inr h₀) with hb_def
-          have ha : orderOf a = p := by
-            rw [ha_def, MulEquiv.orderOf_eq e.symm,
-              orderOf_injective (SemidirectProduct.inl : N →* SemidirectProduct N H φ)
-                SemidirectProduct.inl_injective n₀, hn₀_ord]
-          have hb : orderOf b = 4 := by
-            rw [hb_def, MulEquiv.orderOf_eq e.symm,
-              orderOf_injective (SemidirectProduct.inr : H →* SemidirectProduct N H φ)
-                SemidirectProduct.inr_injective h₀, hh₀_ord]
-          have ha_pow_p : a ^ p = 1 := by rw [← ha]; exact pow_orderOf_eq_one a
-          have ha_inv_eq_pow_sub : a⁻¹ = a ^ (p - 1) := by
-            apply (eq_inv_of_mul_eq_one_left ?_).symm
-            calc
-              a ^ (p - 1) * a = a ^ ((p - 1) + 1) := by rw [pow_succ]
-              _ = a ^ p := by rw [Nat.sub_add_cancel (by omega : 1 ≤ p)]
-              _ = 1 := ha_pow_p
-          have h_val_neg_one : ((-1 : (ZMod p)ˣ).val : ZMod p).val = p - 1 := by
-            have hp_eq : ((p - 1 : ℕ).succ : ℕ) = p := by omega
-            have htemp : ((-1 : (ZMod p)ˣ).val : ZMod p) = (-1 : ZMod p) := by simp
-            rw [htemp]
-            have h := ZMod.val_neg_one (p - 1)
-            rw [hp_eq] at h
-            simpa using h
-          have hconj : b * a * b⁻¹ = a ^ (((-1 : (ZMod p)ˣ).val : ZMod p).val) := by
-            calc
-              b * a * b⁻¹ = e.symm (SemidirectProduct.inr h₀ * SemidirectProduct.inl n₀ *
-                (SemidirectProduct.inr h₀)⁻¹) := by simp [ha_def, hb_def]
-              _ = e.symm (SemidirectProduct.inl (φ h₀ n₀)) := by
-                simp [SemidirectProduct.inl_aut]
-              _ = e.symm (SemidirectProduct.inl (n₀⁻¹)) := by rw [hφh₀_inv n₀]
-              _ = e.symm ((SemidirectProduct.inl n₀)⁻¹) := by simp
-              _ = a⁻¹ := by simp [ha_def]
-              _ = a ^ (p - 1) := by rw [ha_inv_eq_pow_sub]
-              _ = a ^ (((-1 : (ZMod p)ˣ).val : ZMod p).val) := by rw [h_val_neg_one]
-          have hcop : Nat.Coprime p 4 := by
-            have htemp := (Nat.coprime_pow_right_iff (by norm_num : 0 < 2) p 2).mpr hp_cop_2.symm
-            simpa [show (2 : ℕ) ^ 2 = 4 by norm_num] using htemp
-          have hcardG : Nat.card G = p * 4 := by
-            rw [hG]; ring
-          haveI : NeZero p := ⟨hp.ne_zero⟩
-          haveI : NeZero 4 := ⟨by norm_num⟩
-          have h_nonab : Nonempty (G ≃* NonabRep (-1 : (ZMod p)ˣ) (neg_one_pow_four_units p)) :=
-            nonempty_mulEquiv_nonabRep a b ha hb (-1 : (ZMod p)ˣ) (neg_one_pow_four_units p)
-              hconj hcop hcardG
-          right; right; left
-          simpa [fourP_III] using h_nonab
-    · -- H ≅ K₄
-      by_cases hcomm : ∀ a b : G, a * b = b * a
-      · -- Abelian K₄ → Type II: G ≅ Z/2 × Z/(2p) = fourP_II p
-        haveI : CommGroup G := { mul_comm := hcomm }
-        have h_sd_comm : ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
-          intro a b
-          have h_eq := hcomm (e.symm a) (e.symm b)
-          apply_fun e at h_eq
-          simpa [map_mul e, MulEquiv.apply_symm_apply] using h_eq
-        have hφ : φ = 1 := action_trivial_of_abelian φ h_sd_comm
-        subst hφ
-        -- G ≃* N × H via SemidirectProduct.mulEquivProd
-        have hG_NH : Nonempty (G ≃* (N × H)) :=
-          ⟨e.trans SemidirectProduct.mulEquivProd⟩
-        obtain ⟨eG_NH⟩ := hG_NH
-        -- N ≅ Z/p, H ≅ Z/2 × Z/2
-        obtain ⟨iN⟩ := hiN
-        obtain ⟨iH⟩ := hHk4
-        let iH' : H ≃* (Multiplicative (ZMod 2) × Multiplicative (ZMod 2)) := by
-          simpa [ElemAbelianRep, CyclicRep] using iH
-        right; left
-        let A := Multiplicative (ZMod p)
-        let B := Multiplicative (ZMod 2)
-        let C := Multiplicative (ZMod 2)
-        let D := Multiplicative (ZMod (2 * p))
-        have h_crt : C × A ≃* D := crtProd 2 p hp_cop_2
-        have h_prod_iso : (N × H) ≃* (B × D) :=
-          let e1 := MulEquiv.prodCongr iN iH'
-          let e2 := (MulEquiv.prodAssoc (M := A) (N := B) (P := C)).symm
-          let e3 := MulEquiv.prodCongr (MulEquiv.prodComm (M := A) (N := B))
-            (MulEquiv.refl (M := C))
-          let e4 := MulEquiv.prodAssoc (M := B) (N := A) (P := C)
-          let e5 := MulEquiv.prodCongr (MulEquiv.refl (M := B))
-            (MulEquiv.prodComm (M := A) (N := C))
-          let e6 := MulEquiv.prodCongr (MulEquiv.refl (M := B)) h_crt
-          (e1.trans e2).trans e3 |>.trans e4 |>.trans e5 |>.trans e6
-        refine ⟨eG_NH.trans h_prod_iso⟩
-      · -- Non-abelian K₄ → Type V: G ≅ ℤ/2 × D_{2p}
-        -- Each generator of K₄ acts on N ≅ ℤ/p by ±1.
-        -- Since G non-abelian, at least one acts by -1.
-        -- If both act by -1, replace one generator to get one trivial / one inversion.
-        -- Result: G ≅ ℤ/2 × D_{2p}.
-        obtain ⟨iN⟩ := hiN
-        obtain ⟨iH⟩ := hHk4
-        let iH' : H ≃* (Multiplicative (ZMod 2) × Multiplicative (ZMod 2)) := by
-          simpa [ElemAbelianRep, CyclicRep] using iH
-        -- generators of H
-        set u₁ := iH'.symm (Multiplicative.ofAdd 1, 1) with hu₁_def
-        set u₂ := iH'.symm (1, Multiplicative.ofAdd 1) with hu₂_def
-        have hzmod2_add : (1 : ZMod 2) + 1 = 0 := by
-          have h2 : (2 : ZMod 2) = 0 := CharP.cast_eq_zero (ZMod 2) 2
-          calc (1 : ZMod 2) + 1 = 2 := by ring
-            _ = 0 := h2
-        have hu₁_sq : u₁ ^ 2 = 1 := by
-          have h : iH' u₁ = (Multiplicative.ofAdd 1, (1 : Multiplicative (ZMod 2))) :=
-            MulEquiv.apply_symm_apply iH' _
-          apply iH'.injective; simp only [map_pow, map_one, h]
-          ext <;> simp [sq, hzmod2_add]
-        have hu₂_sq : u₂ ^ 2 = 1 := by
-          have h : iH' u₂ = ((1 : Multiplicative (ZMod 2)), Multiplicative.ofAdd 1) :=
-            MulEquiv.apply_symm_apply iH' _
-          apply iH'.injective; simp only [map_pow, map_one, h]
-          ext <;> simp [sq, hzmod2_add]
-        -- φ(u₁)² = 1 and φ(u₂)² = 1 in Aut(N)
-        have hφu₁_sq : (φ u₁) ^ 2 = 1 := by rw [← map_pow, hu₁_sq, map_one]
-        have hφu₂_sq : (φ u₂) ^ 2 = 1 := by rw [← map_pow, hu₂_sq, map_one]
-        -- Conjugate to automorphisms of Multiplicative (ZMod p)
-        let ψ₁ := (iN.symm.trans (φ u₁)).trans iN
-        let ψ₂ := (iN.symm.trans (φ u₂)).trans iN
-        have hψ₁_sq : ψ₁ ^ 2 = 1 := by
-          have key : ∀ n : N, ψ₁ (ψ₁ (iN n)) = iN n := by
-            intro n; dsimp only [ψ₁, MulEquiv.trans_apply]
-            simp only [MulEquiv.symm_apply_apply]
-            congr 1
-            rw [← MulAut.mul_apply, ← sq, hφu₁_sq, MulAut.one_apply]
-          ext x
-          obtain ⟨n, rfl⟩ := iN.surjective x
-          simp only [MulAut.one_apply, pow_succ, pow_zero, MulAut.mul_apply, key]
-        have hψ₂_sq : ψ₂ ^ 2 = 1 := by
-          have key : ∀ n : N, ψ₂ (ψ₂ (iN n)) = iN n := by
-            intro n; dsimp only [ψ₂, MulEquiv.trans_apply]
-            simp only [MulEquiv.symm_apply_apply]
-            congr 1
-            rw [← MulAut.mul_apply, ← sq, hφu₂_sq, MulAut.one_apply]
-          ext x
-          obtain ⟨n, rfl⟩ := iN.surjective x
-          simp only [MulAut.one_apply, pow_succ, pow_zero, MulAut.mul_apply, key]
-        -- Each ψᵢ = unitAutHom(uᵢ) for some unit uᵢ with uᵢ² = 1
-        obtain ⟨v₁, hv₁⟩ := mulEquiv_eq_unitAutHom (p := p) ψ₁
-        obtain ⟨v₂, hv₂⟩ := mulEquiv_eq_unitAutHom (p := p) ψ₂
-        have hv₁_sq : v₁ ^ 2 = 1 := by
-          have hinj : Function.Injective (unitAutHom (p := p)) := by
-            intro u v h
-            have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod p)) =
-                     unitAutHom v (Multiplicative.ofAdd (1 : ZMod p)) := by rw [h]
-            simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
-            exact Units.ext (congrArg Multiplicative.toAdd h1)
-          have := hinj (by rw [map_pow, ← hv₁, hψ₁_sq, map_one] :
-            unitAutHom (v₁ ^ 2) = unitAutHom 1)
-          exact this
-        have hv₂_sq : v₂ ^ 2 = 1 := by
-          have hinj : Function.Injective (unitAutHom (p := p)) := by
-            intro u v h
-            have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod p)) =
-                     unitAutHom v (Multiplicative.ofAdd (1 : ZMod p)) := by rw [h]
-            simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
-            exact Units.ext (congrArg Multiplicative.toAdd h1)
-          have := hinj (by rw [map_pow, ← hv₂, hψ₂_sq, map_one] :
-            unitAutHom (v₂ ^ 2) = unitAutHom 1)
-          exact this
-        -- v₁, v₂ ∈ {1, -1} since x² = 1 in (ZMod p)ˣ iff x = ±1
-        have hv₁_cases : v₁ = 1 ∨ v₁ = -1 :=
-          units_sq_eq_one_of_prime v₁ hv₁_sq
-        have hv₂_cases : v₂ = 1 ∨ v₂ = -1 :=
-          units_sq_eq_one_of_prime v₂ hv₂_sq
-        -- φ(u) acts by inversion when the corresponding unit is -1
-        have unitAutHom_neg1_inv : ∀ x : Multiplicative (ZMod p),
-            unitAutHom (-1 : (ZMod p)ˣ) x = x⁻¹ := by
-          intro x
-          let m := Multiplicative.toAdd x
-          have hm : x = Multiplicative.ofAdd m := (ofAdd_toAdd _).symm
-          rw [hm]; simp [unitAutHom_apply]
-        have hφ_inv_of_neg1 : ∀ (u : H) (v : (ZMod p)ˣ),
-            (iN.symm.trans (φ u)).trans iN = unitAutHom v → v = -1 →
-            ∀ n : N, φ u n = n⁻¹ := by
-          intro u v hψ hv n
-          apply iN.injective
-          have h := MulEquiv.ext_iff.mp hψ (iN n)
-          simp only [MulEquiv.trans_apply, MulEquiv.symm_apply_apply] at h
-          rw [h, hv, unitAutHom_neg1_inv]; simp
-        have hφ_triv_of_1 : ∀ (u : H) (v : (ZMod p)ˣ),
-            (iN.symm.trans (φ u)).trans iN = unitAutHom v → v = 1 →
-            φ u = 1 := by
-          intro u v hψ hv
-          apply MulEquiv.ext; intro n
-          have h := MulEquiv.ext_iff.mp hψ (iN n)
-          simp only [MulEquiv.trans_apply, MulEquiv.symm_apply_apply] at h
-          have h2 : iN ((φ u) n) = iN n := by
-            rw [h, hv]; simp
-          exact iN.injective h2
-        -- Since G is non-abelian, φ ≠ 1. So at least one of v₁, v₂ is -1.
-        -- Find h_inv (inverts N) and h_triv (acts trivially).
-        -- If both invert: u₁u₂ acts trivially, so use h_inv = u₁, h_triv = u₁ * u₂.
-        -- Product u₁ * u₂ in H maps to (ofAdd 1, ofAdd 1) in K₄.
-        have hu₁u₂ : iH' (u₁ * u₂) = (Multiplicative.ofAdd 1, Multiplicative.ofAdd 1) := by
-          simp [hu₁_def, hu₂_def, map_mul, MulEquiv.apply_symm_apply]
-        have hu₁_comm_u₂ : Commute u₁ u₂ := by
-          change u₁ * u₂ = u₂ * u₁
-          apply iH'.injective; simp [map_mul, mul_comm]
-        have hu₁u₂_sq : (u₁ * u₂) ^ 2 = 1 := by
-          rw [hu₁_comm_u₂.mul_pow, hu₁_sq, hu₂_sq, one_mul]
-        have hφu₁u₂ : φ (u₁ * u₂) = φ u₁ * φ u₂ := map_mul φ u₁ u₂
-        -- Obtain h_inv (inverts) and h_triv (trivial), both order 2, h_triv ≠ 1
-        obtain ⟨h_inv, h_triv, hφ_inv, hφ_triv, h_inv_sq, h_triv_sq, h_triv_ne_1⟩ :
-            ∃ (h_inv h_triv : H),
-              (∀ n : N, φ h_inv n = n⁻¹) ∧ (φ h_triv = 1) ∧
-              h_inv ^ 2 = 1 ∧ h_triv ^ 2 = 1 ∧ h_triv ≠ 1 := by
-          rcases hv₁_cases with hv₁1 | hv₁neg1 <;> rcases hv₂_cases with hv₂1 | hv₂neg1
-          · -- v₁ = 1, v₂ = 1: both trivial → φ = 1 → G abelian, contradiction
-            exfalso; apply hcomm
-            have hφu₁_1 := hφ_triv_of_1 u₁ v₁ hv₁ hv₁1
-            have hφu₂_1 := hφ_triv_of_1 u₂ v₂ hv₂ hv₂1
-            -- φ u = 1 for all u since u₁, u₂ generate H
-            have hφ_all : ∀ h : H, φ h = 1 := by
-              intro h
-              have hu₁_im : iH' u₁ = (Multiplicative.ofAdd 1, 1) :=
-                MulEquiv.apply_symm_apply iH' _
-              have hu₂_im : iH' u₂ = (1, Multiplicative.ofAdd 1) :=
-                MulEquiv.apply_symm_apply iH' _
-              have hh_decomp : h = u₁ ^ (Multiplicative.toAdd (iH' h).1).val *
-                  u₂ ^ (Multiplicative.toAdd (iH' h).2).val := by
-                apply iH'.injective
-                rw [map_mul, map_pow, map_pow, hu₁_im, hu₂_im]
-                ext
-                · simp
-                · simp
-              rw [hh_decomp, map_mul, map_pow, map_pow, hφu₁_1, hφu₂_1]; simp
-            have hφ1 : φ = 1 := by
-              ext h n; have := hφ_all h; simp [this]
-            -- φ = 1 → semidirect product is abelian → G is abelian
-            have h_sd_comm : ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
-              intro a b
-              have hl : a.left * b.left = b.left * a.left := by
-                apply iN.injective; simp [mul_comm]
-              have hr : a.right * b.right = b.right * a.right := by
-                apply iH'.injective; simp [mul_comm]
-              apply SemidirectProduct.ext
-              · simp [SemidirectProduct.mul_left, hφ_all, hl]
-              · simp [SemidirectProduct.mul_right, hr]
-            intro x y
-            have := h_sd_comm (e x) (e y)
-            apply_fun e.symm at this; simpa using this
-          · -- v₁ = 1, v₂ = -1
-            have hu₁_ne_1 : u₁ ≠ 1 := by
-              intro h; have := congrArg iH' h; simp [hu₁_def] at this
-            exact ⟨u₂, u₁, hφ_inv_of_neg1 u₂ v₂ hv₂ hv₂neg1,
-              hφ_triv_of_1 u₁ v₁ hv₁ hv₁1, hu₂_sq, hu₁_sq, hu₁_ne_1⟩
-          · -- v₁ = -1, v₂ = 1
-            have hu₂_ne_1 : u₂ ≠ 1 := by
-              intro h; have := congrArg iH' h; simp [hu₂_def] at this
-            exact ⟨u₁, u₂, hφ_inv_of_neg1 u₁ v₁ hv₁ hv₁neg1,
-              hφ_triv_of_1 u₂ v₂ hv₂ hv₂1, hu₁_sq, hu₂_sq, hu₂_ne_1⟩
-          · -- v₁ = -1, v₂ = -1: u₁u₂ acts trivially
-            have hφu₁u₂_triv : φ (u₁ * u₂) = 1 := by
-              apply MulEquiv.ext; intro n
-              rw [hφu₁u₂, MulAut.mul_apply,
-                hφ_inv_of_neg1 u₂ v₂ hv₂ hv₂neg1 n,
-                hφ_inv_of_neg1 u₁ v₁ hv₁ hv₁neg1 n⁻¹]
-              simp
-            have hu₁u₂_ne_1 : u₁ * u₂ ≠ 1 := by
-              intro h; have := congrArg iH' h; simp [map_mul, hu₁_def, hu₂_def] at this
-            exact ⟨u₁, u₁ * u₂, hφ_inv_of_neg1 u₁ v₁ hv₁ hv₁neg1,
-              hφu₁u₂_triv, hu₁_sq, hu₁u₂_sq, hu₁u₂_ne_1⟩
-        -- Now we have h_inv (inverts N) and h_triv (acts trivially), both order 2.
-        -- Build elements in G.
-        haveI : NeZero p := ⟨hp.ne_zero⟩
-        set n₀ := iN.symm (Multiplicative.ofAdd (1 : ZMod p)) with hn₀_def
-        have hn₀_ord : orderOf n₀ = p := by
-          rw [MulEquiv.orderOf_eq iN.symm, orderOf_ofAdd_eq_addOrderOf,
-            ZMod.addOrderOf_one p]
-        set a := e.symm (SemidirectProduct.inl n₀) with ha_def
-        set b := e.symm (SemidirectProduct.inr h_inv) with hb_def
-        set z := e.symm (SemidirectProduct.inr h_triv) with hz_def
-        -- orderOf a = p
-        have ha_ord : orderOf a = p := by
-          rw [ha_def, MulEquiv.orderOf_eq e.symm,
-            orderOf_injective SemidirectProduct.inl
-              SemidirectProduct.inl_injective n₀, hn₀_ord]
-        -- b² = 1
-        have hb_sq : b ^ 2 = 1 := by
-          apply e.injective; simp only [hb_def, map_pow, map_one, MulEquiv.apply_symm_apply]
-          rw [← map_pow]; simp [h_inv_sq]
-        -- b ≠ 1 (since φ h_inv ≠ 1, the action is non-trivial)
-        have hb_ne_1 : b ≠ 1 := by
-          intro hb1
-          -- φ h_inv is inversion but if b = 1, then h_inv = 1, so φ h_inv = 1
-          have hinv1 : h_inv = 1 := by
-            have hb1' := congrArg e hb1
-            simp only [hb_def, MulEquiv.apply_symm_apply, map_one] at hb1'
-            exact SemidirectProduct.inr_injective hb1'
-          have hφ_hinv_1 : φ h_inv = 1 := by rw [hinv1, map_one]
-          have h_n₀_sq : n₀ ^ 2 = 1 := by
-            have h1 : n₀ = n₀⁻¹ := by
-              have := hφ_inv n₀; rw [hφ_hinv_1] at this; simpa using this
-            rw [sq]; conv_lhs => lhs; rw [h1]
-            exact inv_mul_cancel n₀
-          have h_ord_dvd : orderOf n₀ ∣ 2 := orderOf_dvd_of_pow_eq_one h_n₀_sq
-          rw [hn₀_ord] at h_ord_dvd
-          exact absurd (Nat.le_of_dvd (by norm_num) h_ord_dvd) (by omega)
-        -- b * a * b⁻¹ = a⁻¹ (the dihedral relation)
-        have hba_inv : b * a * b⁻¹ = a⁻¹ := by
-          apply e.injective
-          have heb : e b = SemidirectProduct.inr h_inv := by
-            simp only [hb_def, MulEquiv.apply_symm_apply]
-          have hea : e a = SemidirectProduct.inl n₀ := by
-            simp only [ha_def, MulEquiv.apply_symm_apply]
-          have lhs_eq : e (b * a * b⁻¹) = SemidirectProduct.inl (φ h_inv n₀) := by
-            rw [map_mul, map_mul, map_inv, heb, hea]
-            simp [SemidirectProduct.inl_aut]
-          have rhs_eq : e (a⁻¹) = SemidirectProduct.inl (n₀⁻¹) := by
-            rw [map_inv, hea, map_inv]
-          rw [lhs_eq, rhs_eq, hφ_inv n₀]
-        -- z² = 1
-        have hz_sq : z ^ 2 = 1 := by
-          apply e.injective; simp only [hz_def, map_pow, map_one, MulEquiv.apply_symm_apply]
-          rw [← map_pow]; simp [h_triv_sq]
-        -- z commutes with a
-        have hza : z * a = a * z := by
-          apply e.injective
-          rw [map_mul, map_mul]
-          simp only [ha_def, hz_def, MulEquiv.apply_symm_apply]
-          apply SemidirectProduct.ext
-          · simp [SemidirectProduct.mul_left, hφ_triv]
-          · simp [SemidirectProduct.mul_right]
-        -- z commutes with b (both come from H, which is abelian)
-        have hzb : z * b = b * z := by
-          apply e.injective
-          rw [map_mul, map_mul]
-          simp only [hb_def, hz_def, MulEquiv.apply_symm_apply]
-          rw [← map_mul, ← map_mul]
-          congr 1
-          apply iH'.injective; simp [map_mul, mul_comm]
-        -- Now build the isomorphism G ≃* Multiplicative (ZMod 2) × DihedralGroup p
-        -- Use nonempty_mulEquiv_dihedral to get ⟨a, b⟩ → D_{2p} on a subgroup,
-        -- then extend with z.
-        -- Build the map fourP_V p → G
-        have ha_pow_p : a ^ p = 1 := by rw [← ha_ord]; exact pow_orderOf_eq_one a
-        have hodd : Odd p := hp.odd_of_ne_two (by omega)
-        -- The map DihedralGroup p → G sending r i ↦ a^i.val, sr i ↦ b * a^i.val
-        -- is a MonoidHom (reuse infrastructure from PrimePairDihedral)
-        -- Combined map: (j, d) ↦ z^j.val * f_dih(d)
-        -- where f_dih : DihedralGroup p → G is the dihedral embedding
-        -- First build f_dih using the same approach as nonempty_mulEquiv_dihedral
-        have hab : a * b = b * a⁻¹ := by
-          have h2 : b * a = a⁻¹ * b := by rw [← hba_inv]; group
-          calc a * b = a * b * a * a⁻¹ := by group
-            _ = a * (a⁻¹ * b) * a⁻¹ := by rw [← h2]; group
-            _ = b * a⁻¹ := by group
-        have hak : ∀ k : ℕ, a ^ k * b = b * (a⁻¹) ^ k := by
-          intro k; induction k with
-          | zero => simp
-          | succ n ih => rw [pow_succ, mul_assoc, hab, ← mul_assoc, ih, mul_assoc, ← pow_succ]
-        have hbb : b * b = 1 := by rw [← pow_two]; exact hb_sq
-        have hbinv : b⁻¹ = b := inv_eq_of_mul_eq_one_right hbb
-        have hcom : ∀ m n : ℕ, (a ^ m)⁻¹ * a ^ n = a ^ n * (a ^ m)⁻¹ :=
-          fun m n => ((((Commute.refl a).pow_pow n m).inv_right).eq).symm
-        have hc_add : ∀ i j : ZMod p, a ^ (i + j).val = a ^ i.val * a ^ j.val := by
-          intro i j; rw [← pow_add]; apply pow_eq_pow_iff_modEq.mpr
-          rw [ha_ord, ZMod.val_add]; exact Nat.mod_modEq _ _
-        have hc_sub : ∀ i j : ZMod p, a ^ (j - i).val = a ^ j.val * (a ^ i.val)⁻¹ := by
-          intro i j; have h := hc_add (j - i) i
-          rw [sub_add_cancel] at h; exact eq_mul_inv_iff_mul_eq.mpr h.symm
-        have hrsr : ∀ m n : ℕ, a ^ m * (b * a ^ n) = b * (a ^ n * (a ^ m)⁻¹) := by
-          intro m n; rw [← mul_assoc, hak, mul_assoc, inv_pow, hcom]
-        have hsrsr : ∀ m n : ℕ, b * a ^ m * (b * a ^ n) = a ^ n * (a ^ m)⁻¹ := by
-          intro m n; rw [mul_assoc, hrsr, ← mul_assoc, ← pow_two, hb_sq, one_mul]
-        let f_dih_fn : DihedralGroup p → G := fun x => match x with
-          | .r i => a ^ i.val
-          | .sr i => b * a ^ i.val
-        have hf_dih_mul : ∀ x y, f_dih_fn (x * y) = f_dih_fn x * f_dih_fn y := by
-          rintro (i | i) (j | j)
-          · exact hc_add i j
-          · change b * a ^ (j - i).val = a ^ i.val * (b * a ^ j.val)
-            rw [hc_sub, hrsr]
-          · change b * a ^ (i + j).val = b * a ^ i.val * a ^ j.val
-            rw [hc_add, mul_assoc]
-          · change a ^ (j - i).val = b * a ^ i.val * (b * a ^ j.val)
-            rw [hc_sub, hsrsr]
-        let f_dih : DihedralGroup p →* G := MonoidHom.mk' f_dih_fn hf_dih_mul
-        -- z commutes with everything in range of f_dih
-        have hza_pow : ∀ k : ℕ, z * a ^ k = a ^ k * z := by
-          intro k; induction k with
-          | zero => simp
-          | succ n ih =>
-            calc z * a ^ (n + 1) = z * (a ^ n * a) := by rw [pow_succ]
-              _ = (z * a ^ n) * a := by rw [mul_assoc]
-              _ = (a ^ n * z) * a := by rw [ih]
-              _ = a ^ n * (z * a) := by rw [mul_assoc]
-              _ = a ^ n * (a * z) := by rw [hza]
-              _ = a ^ (n + 1) * z := by rw [← mul_assoc, ← pow_succ]
-        have hz_comm_dih : ∀ d : DihedralGroup p, z * f_dih d = f_dih d * z := by
-          rintro (i | i)
-          · exact hza_pow i.val
-          · change z * (b * a ^ i.val) = (b * a ^ i.val) * z
-            calc z * (b * a ^ i.val) = (z * b) * a ^ i.val := by rw [mul_assoc]
-              _ = (b * z) * a ^ i.val := by rw [hzb]
-              _ = b * (z * a ^ i.val) := by rw [mul_assoc]
-              _ = b * (a ^ i.val * z) := by rw [hza_pow]
-              _ = (b * a ^ i.val) * z := by rw [mul_assoc]
-        -- Build the combined map fourP_V p → G: (j, d) ↦ z^j.val * f_dih(d)
-        let f_fn : fourP_V p → G := fun ⟨j, d⟩ => z ^ (Multiplicative.toAdd j).val * f_dih d
-        have hz_comm_f_dih : ∀ (k : ℕ) (d : DihedralGroup p),
-            z ^ k * f_dih d = f_dih d * z ^ k := by
-          intro k d; induction k with
-          | zero => simp
-          | succ n ih =>
-            calc z ^ (n + 1) * f_dih d = z ^ n * z * f_dih d := by rw [pow_succ]
-              _ = z ^ n * (z * f_dih d) := by rw [mul_assoc]
-              _ = z ^ n * (f_dih d * z) := by rw [hz_comm_dih]
-              _ = z ^ n * f_dih d * z := by rw [mul_assoc]
-              _ = f_dih d * z ^ n * z := by rw [ih]
-              _ = f_dih d * (z ^ n * z) := by rw [mul_assoc]
-              _ = f_dih d * z ^ (n + 1) := by rw [← pow_succ]
-        have hf_mul : ∀ x y, f_fn (x * y) = f_fn x * f_fn y := by
-          intro ⟨j₁, d₁⟩ ⟨j₂, d₂⟩
-          change z ^ (Multiplicative.toAdd (j₁ * j₂)).val * f_dih (d₁ * d₂) =
-            (z ^ (Multiplicative.toAdd j₁).val * f_dih d₁) *
-            (z ^ (Multiplicative.toAdd j₂).val * f_dih d₂)
-          rw [f_dih.map_mul d₁ d₂]
-          have hz_pow_eq : z ^ (Multiplicative.toAdd (j₁ * j₂)).val =
-              z ^ ((Multiplicative.toAdd j₁).val + (Multiplicative.toAdd j₂).val) := by
-            apply pow_eq_pow_iff_modEq.mpr
-            have hz_ord : orderOf z ∣ 2 := orderOf_dvd_of_pow_eq_one hz_sq
-            apply Nat.ModEq.of_dvd hz_ord
-            rw [toAdd_mul, ZMod.val_add]; exact Nat.mod_modEq _ _
-          rw [hz_pow_eq, pow_add]
-          calc z ^ (Multiplicative.toAdd j₁).val * z ^ (Multiplicative.toAdd j₂).val *
-              (f_dih d₁ * f_dih d₂)
-            = z ^ (Multiplicative.toAdd j₁).val *
-              (z ^ (Multiplicative.toAdd j₂).val * (f_dih d₁ * f_dih d₂)) := by
-                rw [mul_assoc]
-            _ = z ^ (Multiplicative.toAdd j₁).val *
-              (z ^ (Multiplicative.toAdd j₂).val * f_dih d₁ * f_dih d₂) := by
-                rw [mul_assoc]
-            _ = z ^ (Multiplicative.toAdd j₁).val *
-              (f_dih d₁ * z ^ (Multiplicative.toAdd j₂).val * f_dih d₂) := by
-                rw [hz_comm_f_dih _ d₁]
-            _ = z ^ (Multiplicative.toAdd j₁).val *
-              (f_dih d₁ * (z ^ (Multiplicative.toAdd j₂).val * f_dih d₂)) := by
-                rw [mul_assoc]
-            _ = (z ^ (Multiplicative.toAdd j₁).val * f_dih d₁) *
-              (z ^ (Multiplicative.toAdd j₂).val * f_dih d₂) := by
-                rw [← mul_assoc]
-        let f : fourP_V p →* G := MonoidHom.mk' f_fn hf_mul
-        haveI : Fintype G := Fintype.ofFinite G
-        -- Key semidirect product facts (computed once, avoiding simp timeouts)
-        have ez_eq : e z = SemidirectProduct.inr h_triv := by
-          simp only [hz_def, MulEquiv.apply_symm_apply]
-        have ea_eq : e a = SemidirectProduct.inl n₀ := by
-          simp only [ha_def, MulEquiv.apply_symm_apply]
-        have eb_eq : e b = SemidirectProduct.inr h_inv := by
-          simp only [hb_def, MulEquiv.apply_symm_apply]
-        have hinj : Function.Injective f := by
-          rw [injective_iff_map_eq_one]
-          intro ⟨j, d⟩ hx
-          change z ^ (Multiplicative.toAdd j).val * f_dih d = 1 at hx
-          have hx' : e (z ^ (Multiplicative.toAdd j).val * f_dih d) = 1 := by
-            rw [hx, map_one]
-          rw [map_mul] at hx'
-          -- Extract the right component
-          have hright := congrArg SemidirectProduct.right hx'
-          rw [SemidirectProduct.one_right] at hright
-          -- e(z^k).right = h_triv^k
-          have hezr : (e (z ^ (Multiplicative.toAdd j).val)).right =
-              h_triv ^ (Multiplicative.toAdd j).val := by
-            rw [map_pow, ez_eq, ← map_pow, SemidirectProduct.right_inr]
-          rw [SemidirectProduct.mul_right] at hright
-          rw [hezr] at hright
-          rcases d with (i | i)
-          · -- d = r i: e(a^i.val).right = 1
-            have hefr : (e (f_dih (DihedralGroup.r i))).right = 1 := by
-              change (e (a ^ i.val)).right = 1
-              rw [map_pow, ea_eq, ← map_pow, SemidirectProduct.right_inl]
-            rw [hefr, mul_one] at hright
-            have hjv : (Multiplicative.toAdd j).val = 0 := by
-              by_contra hjv_ne
-              have hjv_lt : (Multiplicative.toAdd j).val < 2 := ZMod.val_lt _
-              have hjv1 : (Multiplicative.toAdd j).val = 1 := by omega
-              rw [hjv1, pow_one] at hright
-              exact h_triv_ne_1 hright
-            rw [hjv] at hx; simp only [pow_zero, one_mul] at hx
-            change a ^ i.val = 1 at hx
-            have hi0 : i = 0 := by
-              rw [← ZMod.val_eq_zero]
-              have h_dvd : orderOf a ∣ i.val := orderOf_dvd_of_pow_eq_one hx
-              rw [ha_ord] at h_dvd
-              exact Nat.eq_zero_of_dvd_of_lt h_dvd (ZMod.val_lt i)
-            ext
-            · change j = 1
-              have hj_zero : Multiplicative.toAdd j = (0 : ZMod 2) := by
-                rwa [← ZMod.val_eq_zero]
-              change j = Multiplicative.ofAdd 0
-              rw [← hj_zero, ofAdd_toAdd]
-            · rw [hi0]; exact DihedralGroup.one_def.symm
-          · -- d = sr i: e(b * a^i.val).right = h_inv
-            have hefr : (e (f_dih (DihedralGroup.sr i))).right = h_inv := by
-              change (e (b * a ^ i.val)).right = h_inv
-              rw [map_mul, map_pow, eb_eq, ea_eq, ← map_pow,
-                SemidirectProduct.mul_right, SemidirectProduct.right_inr,
-                SemidirectProduct.right_inl, mul_one]
-            rw [hefr] at hright
-            exfalso
-            have h_inv_eq : h_inv = (h_triv ^ (Multiplicative.toAdd j).val)⁻¹ := by
-              have := mul_left_cancel (a := h_triv ^ (Multiplicative.toAdd j).val)
-                (b := h_inv) (c := (h_triv ^ (Multiplicative.toAdd j).val)⁻¹)
-                (by rw [hright, mul_inv_cancel])
-              exact this
-            have hφ_hinv_1 : φ h_inv = 1 := by
-              rw [h_inv_eq, map_inv, map_pow, hφ_triv]; simp
-            have h1 : n₀ = n₀⁻¹ := by
-              have := hφ_inv n₀; rw [hφ_hinv_1] at this; simpa using this
-            have h_n₀_sq : n₀ ^ 2 = 1 := by
-              rw [sq]; conv_lhs => lhs; rw [h1]
-              exact inv_mul_cancel n₀
-            have h_ord_dvd : orderOf n₀ ∣ 2 := orderOf_dvd_of_pow_eq_one h_n₀_sq
-            rw [hn₀_ord] at h_ord_dvd
-            exact absurd (Nat.le_of_dvd (by norm_num) h_ord_dvd) (by omega)
-        -- f bijective by cardinality
-        have hbij : Function.Bijective f :=
-          (Fintype.bijective_iff_injective_and_card f).mpr
-            ⟨hinj, by
-              rw [← Nat.card_eq_fintype_card, ← Nat.card_eq_fintype_card,
-                card_fourP_V, hG]⟩
-        right; right; right
-        exact ⟨(MulEquiv.ofBijective f hbij).symm⟩
+  · obtain ⟨N, H, φ, _, hcardN, hcardH, ⟨e⟩⟩ := fourP_semidirectProduct hp hpge hG
+    exact fourP_classification_mod3_aux hp hp2 hmod hG hcyc N H φ hcardN hcardH e
+
 
 /-- `IsClassif` packaging for `p ≡ 3 [MOD 4]`, `p ≥ 5`. -/
 theorem fourP_isClassif_mod3 {p : ℕ} (hp : p.Prime) (hpge : 5 ≤ p) (hmod : p % 4 = 3) :

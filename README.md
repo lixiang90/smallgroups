@@ -27,6 +27,7 @@ theorems:
 | `p²q` (`p∤q−1`, `q∤p²−1`) | 45,99 | 2 | `ℤ/p²q`, `ℤ/p × ℤ/pq` | `PrimeSqPrimeAbelian` |
 | `p²q` (`q ∣ p−1`) | 75 | 3 | `ℤ/p²q`, `ℤ/p × ℤ/pq`, `(ℤ/p)² ⋊ ℤ/q` | `PrimeSqPrimeNonabelian` |
 | `4p` (`p ≥ 5`) | 20,28,44,52,68,76,92 | 4 or 5 | 5 types (mod 1) / 4 types (mod 3) | `Order4P` |
+| `4·3` | 12 | 5 | `ℤ/12`, `ℤ/2×ℤ/6`, `Dic₃`, `ℤ/2×S₃`, `A₄` | `Order4P_12` |
 
 ## Layout
 
@@ -125,6 +126,17 @@ theorems:
       **44** (`p=11`, 4 classes), **52** (`p=13`, 5 classes), **68** (`p=17`, 5 classes),
       **76** (`p=19`, 4 classes), **92** (`p=23`, 4 classes) in the `Classifications` decade
       subfolders (each with `classification`, `isClassif`, `numIsoClasses_eq`).
+
+  * `Order4P_12.lean` — the **special case `p = 3`** of the `4p` classification (order **12**),
+    which cannot use the `p ≥ 5` Sylow argument. When `n₃ = 1` (Sylow-3 normal), the proof
+    reuses `fourP_classification_mod3_aux` (extracted from `Order4P.lean` to remove the `5 ≤ p`
+    requirement) to obtain the same four types I/II/III/V. When `n₃ = 4` (Sylow-3 not normal),
+    the conjugation action on the four Sylow-3 subgroups gives an injective homomorphism
+    `G → S₄` whose image has index 2, hence equals `A₄` (via `eq_alternatingGroup_of_index_eq_two`).
+    This yields the fifth type `fourP_A4 = alternatingGroup (Fin 4)`. The file also proves
+    element-order witnesses (`fourP_III_3_has_order4`, `fourP_V_3_has_order6`), non-abelianness of
+    `A₄` (`fourP_A4_not_comm`), and pairwise non-isomorphism of all five types. The capstone
+    `fourP_12_isClassif` packages an `IsClassif 12`. Instantiated at `Classifications_11_to_20/Order12`.
 
   * `Order2PSq.lean` — the order-`2 p²` family (`p` an odd prime; the `q = 2` instance of the above),
     which has **five** classes: `ℤ/2p²`, `ℤ/p × ℤ/2p`, `D_{p²}`, `D_p × ℤ/p`, and the generalized

@@ -27,3 +27,4 @@ import Smallgroups.Classifications.Classifications_91_to_100
 import Smallgroups.UsefulTheorems.Order2PSqExhaustive
 import Smallgroups.UsefulTheorems.Order2PSqElem
 import Smallgroups.UsefulTheorems.Order4P
+import Smallgroups.UsefulTheorems.Order4P_12
