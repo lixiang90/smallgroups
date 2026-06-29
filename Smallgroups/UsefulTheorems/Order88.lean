@@ -611,6 +611,60 @@ noncomputable def order88_chiD8_ref : order88_D8 →* Multiplicative (ZMod 2) wh
     · simp only [DihedralGroup.sr_mul_sr]
       decide
 
+/-- The product of the rotation and reflection characters on `D₈`. -/
+noncomputable abbrev order88_chiD8_prod : order88_D8 →* Multiplicative (ZMod 2) :=
+  order88_chiD8_rot * order88_chiD8_ref
+
+/-- Characters `D₈ → C₂` are determined by `r 1` and `sr 0`. -/
+theorem order88_d8_hom_ext {χ ψ : order88_D8 →* Multiplicative (ZMod 2)}
+    (hr : χ (DihedralGroup.r (1 : ZMod 4)) = ψ (DihedralGroup.r (1 : ZMod 4)))
+    (hs : χ (DihedralGroup.sr (0 : ZMod 4)) = ψ (DihedralGroup.sr (0 : ZMod 4))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  rcases x with i | i
+  · have hi : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 4) * (i.val : ZMod 4)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by rw [DihedralGroup.r_pow]
+    rw [hi, map_pow, map_pow, hr]
+  · have hri : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 4) * (i.val : ZMod 4)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by rw [DihedralGroup.r_pow]
+    have hi : DihedralGroup.sr i =
+        DihedralGroup.sr (0 : ZMod 4) * (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by
+      rw [← hri]
+      simp [DihedralGroup.sr_mul_r]
+    rw [hi, map_mul, map_mul, map_pow, map_pow, hs, hr]
+
+/-- A character `D₈ → C₂` is one of the four rotation/reflection characters. -/
+theorem order88_d8_character_cases (χ : order88_D8 →* Multiplicative (ZMod 2)) :
+    χ = 1 ∨ χ = order88_chiD8_rot ∨ χ = order88_chiD8_ref ∨
+      χ = order88_chiD8_prod := by
+  let r1 : order88_D8 := DihedralGroup.r (1 : ZMod 4)
+  let s0 : order88_D8 := DihedralGroup.sr (0 : ZMod 4)
+  rcases order88_c2_element_cases (χ r1) with hr | hr <;>
+    rcases order88_c2_element_cases (χ s0) with hs | hs
+  · left
+    apply order88_d8_hom_ext <;> simp [r1, s0, hr, hs]
+  · right
+    right
+    left
+    apply order88_d8_hom_ext <;> simp [r1, s0, hr, hs, order88_chiD8_ref]
+  · right
+    left
+    apply order88_d8_hom_ext <;> simp [r1, s0, hr, hs, order88_chiD8_rot]
+  · right
+    right
+    right
+    apply order88_d8_hom_ext <;> simp [r1, s0, hr, hs, order88_chiD8_prod,
+      order88_chiD8_rot, order88_chiD8_ref]
+
 /-- A representative non-trivial `Q₈ → C₂` character. -/
 noncomputable def order88_chiQ8 : order88_Q8 →* Multiplicative (ZMod 2) where
   toFun
@@ -746,6 +800,30 @@ theorem order88_c2c2c2_action_cases (φ : order88_C2C2C2 →* MulAut order88_C11
     right
     right
     right
+    right
+    right
+    rw [hφ, hχ]
+
+/-- An action `D₈ → Aut(C₁₁)` is induced by one of the four characters. -/
+theorem order88_d8_action_cases (φ : order88_D8 →* MulAut order88_C11) :
+    φ = 1 ∨ φ = order88_action order88_chiD8_rot ∨
+      φ = order88_action order88_chiD8_ref ∨
+      φ = order88_action order88_chiD8_prod := by
+  have hcard : Nat.card order88_D8 = 8 := by
+    rw [DihedralGroup.nat_card]
+  have hφ := order88_action_eq_actionCharacter hcard φ
+  rcases order88_d8_character_cases (order88_actionCharacter hcard φ) with hχ | hχ | hχ | hχ
+  · left
+    rw [hφ, hχ]
+    rfl
+  · right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    left
+    rw [hφ, hχ]
+  · right
     right
     right
     rw [hφ, hχ]
