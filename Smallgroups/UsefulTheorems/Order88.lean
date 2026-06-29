@@ -6,6 +6,7 @@ Authors: Smallgroups contributors
 import Smallgroups.UsefulTheorems.Order2PSq
 import Smallgroups.UsefulTheorems.P3Group
 import Smallgroups.UsefulTheorems.SchurZassenhaus
+import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Mathlib.GroupTheory.SpecificGroups.Quaternion
 import Mathlib.GroupTheory.Sylow
 import Mathlib.Tactic.NormNum.Prime
@@ -665,6 +666,28 @@ theorem order88_d8_character_cases (χ : order88_D8 →* Multiplicative (ZMod 2)
     apply order88_d8_hom_ext <;> simp [r1, s0, hr, hs, order88_chiD8_prod,
       order88_chiD8_rot, order88_chiD8_ref]
 
+/-- The automorphism of `D₈` fixing rotations and shifting reflections. -/
+noncomputable def order88_D8_shear : order88_D8 ≃* order88_D8 where
+  toFun
+    | DihedralGroup.r i => DihedralGroup.r i
+    | DihedralGroup.sr i => DihedralGroup.sr (i + 1)
+  invFun
+    | DihedralGroup.r i => DihedralGroup.r i
+    | DihedralGroup.sr i => DihedralGroup.sr (i - 1)
+  left_inv := by
+    rintro (i | i) <;> simp
+  right_inv := by
+    rintro (i | i) <;> simp
+  map_mul' := by
+    rintro (i | i) (j | j) <;> simp [add_assoc, sub_eq_add_neg]
+    · ring_nf
+    · ring_nf
+
+/-- The product character lies in the same automorphism orbit as the rotation character. -/
+theorem order88_chiD8_rot_comp_shear :
+    order88_chiD8_rot.comp order88_D8_shear.toMonoidHom = order88_chiD8_prod := by
+  apply order88_d8_hom_ext <;> rfl
+
 /-- A representative non-trivial `Q₈ → C₂` character. -/
 noncomputable def order88_chiQ8 : order88_Q8 →* Multiplicative (ZMod 2) where
   toFun
@@ -755,10 +778,62 @@ theorem order88_q8_character_cases (χ : order88_Q8 →* Multiplicative (ZMod 2)
     apply order88_q8_hom_ext <;> simp [a1, x0, ha, hx, order88_chiQ8_prod,
       order88_chiQ8, order88_chiQ8_xa]
 
+/-- The automorphism of `Q₈` fixing `a` and shifting the `xa` coset. -/
+noncomputable def order88_Q8_shear : order88_Q8 ≃* order88_Q8 where
+  toFun
+    | QuaternionGroup.a i => QuaternionGroup.a i
+    | QuaternionGroup.xa i => QuaternionGroup.xa (i + 1)
+  invFun
+    | QuaternionGroup.a i => QuaternionGroup.a i
+    | QuaternionGroup.xa i => QuaternionGroup.xa (i - 1)
+  left_inv := by
+    rintro (i | i) <;> simp
+  right_inv := by
+    rintro (i | i) <;> simp
+  map_mul' := by
+    rintro (i | i) (j | j) <;> simp [add_assoc, sub_eq_add_neg]
+    · ring_nf
+    · ring_nf
+
+/-- The product character lies in the same automorphism orbit as `order88_chiQ8`. -/
+theorem order88_chiQ8_comp_shear :
+    order88_chiQ8.comp order88_Q8_shear.toMonoidHom = order88_chiQ8_prod := by
+  apply order88_q8_hom_ext <;> rfl
+
+/-- The automorphism of `Q₈` exchanging the displayed four-order generators. -/
+noncomputable def order88_Q8_swap : order88_Q8 ≃* order88_Q8 where
+  toFun
+    | QuaternionGroup.a i => (QuaternionGroup.xa (0 : ZMod 4) : order88_Q8) ^ i.val
+    | QuaternionGroup.xa i => (QuaternionGroup.a (1 : ZMod 4) : order88_Q8) *
+        (QuaternionGroup.xa (0 : ZMod 4) : order88_Q8) ^ i.val
+  invFun
+    | QuaternionGroup.a i => (QuaternionGroup.xa (0 : ZMod 4) : order88_Q8) ^ i.val
+    | QuaternionGroup.xa i => (QuaternionGroup.a (1 : ZMod 4) : order88_Q8) *
+        (QuaternionGroup.xa (0 : ZMod 4) : order88_Q8) ^ i.val
+  left_inv := by
+    rintro (i | i) <;> fin_cases i <;> decide
+  right_inv := by
+    rintro (i | i) <;> fin_cases i <;> decide
+  map_mul' := by
+    rintro (i | i) (j | j) <;> fin_cases i <;> fin_cases j <;> decide
+
+/-- The `xa` character lies in the same automorphism orbit as `order88_chiQ8`. -/
+theorem order88_chiQ8_comp_swap :
+    order88_chiQ8.comp order88_Q8_swap.toMonoidHom = order88_chiQ8_xa := by
+  apply order88_q8_hom_ext <;> rfl
+
 /-- Turn a character `H → C₂` into the corresponding inversion action on `C₁₁`. -/
 noncomputable abbrev order88_action {H : Type} [Group H]
     (χ : H →* Multiplicative (ZMod 2)) : H →* MulAut order88_C11 :=
   (invActionHom order88_C11).comp χ
+
+/-- Precomposing a character by an automorphism precomposes the corresponding action. -/
+theorem order88_action_comp {H : Type} [Group H] {χ ψ : H →* Multiplicative (ZMod 2)}
+    (σ : H ≃* H) (hχ : χ.comp σ.toMonoidHom = ψ) :
+    (order88_action χ).comp σ.toMonoidHom = order88_action ψ := by
+  ext h x
+  change (invActionHom order88_C11) (χ (σ h)) x = (invActionHom order88_C11) (ψ h) x
+  rw [show χ (σ h) = ψ h from congrArg (fun f : H →* Multiplicative (ZMod 2) => f h) hχ]
 
 /-- Every action `H → Aut(C₁₁)` with `|H| = 8` is induced by its character `H → C₂`. -/
 theorem order88_action_eq_actionCharacter {H : Type} [Group H] [Finite H]
@@ -926,6 +1001,54 @@ theorem order88_q8_action_cases (φ : order88_Q8 →* MulAut order88_C11) :
 noncomputable abbrev order88_SD (H : Type) [Group H] (χ : H →* Multiplicative (ZMod 2)) :
     Type :=
   SemidirectProduct order88_C11 H (order88_action χ)
+
+/-- The extra `C₄ × C₂` product-character semidirect product is isomorphic to the `snd` case. -/
+noncomputable def order88_c4c2_prod_equiv_snd :
+    order88_SD order88_C4C2 order88_chiC4C2_prod ≃*
+      order88_SD order88_C4C2 order88_chiC4C2_snd := by
+  have haction :
+      (order88_action order88_chiC4C2_snd).comp order88_C4C2_shear.toMonoidHom =
+        order88_action order88_chiC4C2_prod :=
+    order88_action_comp order88_C4C2_shear order88_chiC4C2_snd_comp_shear
+  exact (semidirectProductCongr_eq haction.symm).trans
+    (semidirectProductCongrAut (N := order88_C11) (φ := order88_action order88_chiC4C2_snd)
+      order88_C4C2_shear)
+
+/-- The extra `D₈` product-character semidirect product is isomorphic to the rotation case. -/
+noncomputable def order88_d8_prod_equiv_rot :
+    order88_SD order88_D8 order88_chiD8_prod ≃*
+      order88_SD order88_D8 order88_chiD8_rot := by
+  have haction :
+      (order88_action order88_chiD8_rot).comp order88_D8_shear.toMonoidHom =
+        order88_action order88_chiD8_prod :=
+    order88_action_comp order88_D8_shear order88_chiD8_rot_comp_shear
+  exact (semidirectProductCongr_eq haction.symm).trans
+    (semidirectProductCongrAut (N := order88_C11) (φ := order88_action order88_chiD8_rot)
+      order88_D8_shear)
+
+/-- The extra `Q₈` product-character semidirect product is isomorphic to the displayed `Q₈` case. -/
+noncomputable def order88_q8_prod_equiv_q8 :
+    order88_SD order88_Q8 order88_chiQ8_prod ≃*
+      order88_SD order88_Q8 order88_chiQ8 := by
+  have haction :
+      (order88_action order88_chiQ8).comp order88_Q8_shear.toMonoidHom =
+        order88_action order88_chiQ8_prod :=
+    order88_action_comp order88_Q8_shear order88_chiQ8_comp_shear
+  exact (semidirectProductCongr_eq haction.symm).trans
+    (semidirectProductCongrAut (N := order88_C11) (φ := order88_action order88_chiQ8)
+      order88_Q8_shear)
+
+/-- The extra `Q₈` `xa`-character semidirect product is isomorphic to the displayed `Q₈` case. -/
+noncomputable def order88_q8_xa_equiv_q8 :
+    order88_SD order88_Q8 order88_chiQ8_xa ≃*
+      order88_SD order88_Q8 order88_chiQ8 := by
+  have haction :
+      (order88_action order88_chiQ8).comp order88_Q8_swap.toMonoidHom =
+        order88_action order88_chiQ8_xa :=
+    order88_action_comp order88_Q8_swap order88_chiQ8_comp_swap
+  exact (semidirectProductCongr_eq haction.symm).trans
+    (semidirectProductCongrAut (N := order88_C11) (φ := order88_action order88_chiQ8)
+      order88_Q8_swap)
 
 /-- Direct-product representative with complement `H`. -/
 abbrev order88_DP (H : Type) : Type := order88_C11 × H
