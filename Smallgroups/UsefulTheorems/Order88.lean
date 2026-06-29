@@ -120,6 +120,122 @@ noncomputable def zmodCastMulHom {m n : ℕ} (h : m ∣ n) :
     Multiplicative (ZMod n) →* Multiplicative (ZMod m) :=
   AddMonoidHom.toMultiplicative (ZMod.castHom h (ZMod m)).toAddMonoidHom
 
+/-! ### Automorphisms of `C₁₁` with 8-power equal to one -/
+
+/-- The standard map from units of `ZMod 11` to automorphisms of `C₁₁` is injective. -/
+theorem order88_unitAutHom_injective :
+    Function.Injective (unitAutHom (p := 11)) := by
+  intro u v h
+  have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod 11)) =
+      unitAutHom v (Multiplicative.ofAdd (1 : ZMod 11)) := by rw [h]
+  simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
+  exact Units.ext h1
+
+/-- Every automorphism of `C₁₁` is multiplication by a unit of `ZMod 11`. -/
+theorem order88_mulAut_eq_unitAutHom (σ : MulAut order88_C11) :
+    ∃ u : (ZMod 11)ˣ, σ = unitAutHom u := by
+  haveI : Fact (Nat.Prime 11) := ⟨by norm_num⟩
+  let u_val : ZMod 11 := (σ (Multiplicative.ofAdd (1 : ZMod 11))).toAdd
+  have hu_ne_zero : u_val ≠ 0 := by
+    intro hz
+    have h0 : σ (Multiplicative.ofAdd (0 : ZMod 11)) = Multiplicative.ofAdd (0 : ZMod 11) := by
+      calc
+        σ (Multiplicative.ofAdd (0 : ZMod 11)) = σ 1 := by simp
+        _ = 1 := map_one σ
+        _ = Multiplicative.ofAdd (0 : ZMod 11) := by simp
+    have h1 : σ (Multiplicative.ofAdd (1 : ZMod 11)) = Multiplicative.ofAdd (0 : ZMod 11) := by
+      calc
+        σ (Multiplicative.ofAdd (1 : ZMod 11)) = Multiplicative.ofAdd u_val := rfl
+        _ = Multiplicative.ofAdd (0 : ZMod 11) := by rw [hz]
+    have h01 : Multiplicative.ofAdd (0 : ZMod 11) ≠ Multiplicative.ofAdd (1 : ZMod 11) := by
+      intro h
+      apply_fun Multiplicative.toAdd at h
+      simp at h
+    apply h01
+    exact σ.injective (h0.trans h1.symm)
+  have h_inv : u_val⁻¹ * u_val = 1 := inv_mul_cancel₀ hu_ne_zero
+  have h_mul : u_val * u_val⁻¹ = 1 := mul_inv_cancel₀ hu_ne_zero
+  let u : (ZMod 11)ˣ := Units.mk u_val (u_val⁻¹) h_mul h_inv
+  refine ⟨u, ?_⟩
+  apply MulEquiv.ext
+  intro x
+  let n := Multiplicative.toAdd x
+  have hx : Multiplicative.ofAdd n = x := ofAdd_toAdd x
+  rw [← hx]
+  calc
+    σ (Multiplicative.ofAdd n) = σ ((Multiplicative.ofAdd (1 : ZMod 11)) ^ n.val) := by
+      rw [show (Multiplicative.ofAdd n : Multiplicative (ZMod 11)) =
+          (Multiplicative.ofAdd (1 : ZMod 11)) ^ n.val from by
+        calc
+          Multiplicative.ofAdd n = Multiplicative.ofAdd ((n.val : ZMod 11)) := by
+            rw [ZMod.natCast_zmod_val]
+          _ = Multiplicative.ofAdd (n.val • (1 : ZMod 11)) := by simp
+          _ = (Multiplicative.ofAdd (1 : ZMod 11)) ^ n.val := by
+            rw [ofAdd_nsmul]]
+    _ = (σ (Multiplicative.ofAdd (1 : ZMod 11))) ^ n.val := by rw [map_pow]
+    _ = (Multiplicative.ofAdd u_val) ^ n.val := rfl
+    _ = Multiplicative.ofAdd (n.val • u_val) := by rw [← ofAdd_nsmul]
+    _ = Multiplicative.ofAdd (u_val * (n.val : ZMod 11)) := by
+      rw [nsmul_eq_mul, mul_comm]
+    _ = Multiplicative.ofAdd (u_val * n) := by rw [ZMod.natCast_zmod_val]
+    _ = unitAutHom u (Multiplicative.ofAdd n) := by rw [unitAutHom_apply]
+
+/-- Multiplication by `-1` on `C₁₁` is inversion. -/
+theorem order88_unitAutHom_neg_one :
+    unitAutHom (-1 : (ZMod 11)ˣ) = invAut order88_C11 := by
+  ext x
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+  rw [unitAutHom_apply, invAut_apply]
+  simp
+
+/-- A unit of `ZMod 11` whose eighth power is `1` is `1` or `-1`. -/
+theorem order88_unit_pow8_eq_one (u : (ZMod 11)ˣ) (hu : u ^ 8 = 1) :
+    u = 1 ∨ u = -1 := by
+  haveI : Fact (Nat.Prime 11) := ⟨by norm_num⟩
+  have horder_dvd8 : orderOf u ∣ 8 := by
+    rw [orderOf_dvd_iff_pow_eq_one]
+    exact hu
+  have horder_dvd10 : orderOf u ∣ 10 := by
+    have h := orderOf_dvd_card (x := u)
+    rw [ZMod.card_units 11] at h
+    norm_num at h ⊢
+    exact h
+  have horder_dvd2 : orderOf u ∣ 2 := by
+    exact Nat.dvd_gcd horder_dvd8 horder_dvd10
+  have horder_pos : 0 < orderOf u := orderOf_pos u
+  have horder_cases : orderOf u = 1 ∨ orderOf u = 2 := by
+    have hle : orderOf u ≤ 2 := Nat.le_of_dvd (by norm_num) horder_dvd2
+    omega
+  rcases horder_cases with h1 | h2
+  · exact Or.inl (orderOf_eq_one_iff.mp h1)
+  · right
+    have hu2 : u ^ 2 = 1 := by
+      rw [← orderOf_dvd_iff_pow_eq_one, h2]
+    have hval_sq : ((u : ZMod 11) ^ 2) = 1 := by
+      exact congrArg Units.val hu2
+    have hprod : ((u : ZMod 11) - 1) * ((u : ZMod 11) + 1) = 0 := by
+      calc
+        ((u : ZMod 11) - 1) * ((u : ZMod 11) + 1) = (u : ZMod 11) ^ 2 - 1 := by ring
+        _ = 0 := by rw [hval_sq]; ring
+    rcases mul_eq_zero.mp hprod with hu_one | hu_neg
+    · have : u = 1 := Units.ext (sub_eq_zero.mp hu_one)
+      have hnot : orderOf u ≠ 1 := by omega
+      exact (hnot (by rw [this]; simp)).elim
+    · exact Units.ext (eq_neg_of_add_eq_zero_left hu_neg)
+
+/-- Any automorphism of `C₁₁` whose eighth power is `1` is trivial or inversion. -/
+theorem order88_mulAut_pow8_eq_one_or_inv (α : MulAut order88_C11) (hα : α ^ 8 = 1) :
+    α = 1 ∨ α = invAut order88_C11 := by
+  obtain ⟨u, hu⟩ := order88_mulAut_eq_unitAutHom α
+  have hu8 : u ^ 8 = 1 := by
+    apply order88_unitAutHom_injective
+    rw [map_pow, ← hu, hα, map_one]
+  rcases order88_unit_pow8_eq_one u hu8 with h1 | hneg
+  · left
+    rw [hu, h1, map_one]
+  · right
+    rw [hu, hneg, order88_unitAutHom_neg_one]
+
 /-- The unique non-trivial `C₈ → C₂` character, up to automorphism of `C₈`. -/
 noncomputable abbrev order88_chiC8 : order88_C8 →* Multiplicative (ZMod 2) :=
   zmodCastMulHom (by norm_num : 2 ∣ 8)
