@@ -298,6 +298,356 @@ noncomputable def order63_trivialElem_mulEquiv_RB :
       (1 : ElemAbelianRep 3 →* MulAut (CyclicRep 7)) ≃* order63_RB :=
   SemidirectProduct.mulEquivProd
 
+/-! ### Elementary-abelian complements -/
+
+/-- The first standard generator of `C₃ × C₃`. -/
+abbrev order63_elemE1 : ElemAbelianRep 3 := (Multiplicative.ofAdd (1 : ZMod 3), 1)
+
+/-- The second standard generator of `C₃ × C₃`. -/
+abbrev order63_elemE2 : ElemAbelianRep 3 := (1, Multiplicative.ofAdd (1 : ZMod 3))
+
+theorem order63_elemE1_pow3 : order63_elemE1 ^ 3 = 1 := by
+  ext
+  · change (Multiplicative.ofAdd ((3 : ℕ) : ZMod 3)) = 1
+    rw [CharP.cast_eq_zero (ZMod 3) 3]
+    rfl
+  · simp [order63_elemE1]
+
+theorem order63_elemE2_pow3 : order63_elemE2 ^ 3 = 1 := by
+  ext
+  · simp [order63_elemE2]
+  · change (Multiplicative.ofAdd ((3 : ℕ) : ZMod 3)) = 1
+    rw [CharP.cast_eq_zero (ZMod 3) 3]
+    rfl
+
+theorem order63_elemHom_ext {M : Type*} [Monoid M] {f g : ElemAbelianRep 3 →* M}
+    (h1 : f order63_elemE1 = g order63_elemE1)
+    (h2 : f order63_elemE2 = g order63_elemE2) : f = g := by
+  apply MonoidHom.ext
+  intro x
+  obtain ⟨x1, x2⟩ := x
+  have hdecomp : ((x1, x2) : ElemAbelianRep 3) = (x1, 1) * (1, x2) := by
+    ext <;> simp
+  rw [hdecomp, map_mul, map_mul]
+  congr 1
+  · let j : ZMod 3 := Multiplicative.toAdd x1
+    have hx0 : Multiplicative.ofAdd j = x1 := by exact ofAdd_toAdd x1
+    rw [← hx0]
+    have hp : ((Multiplicative.ofAdd j, 1) : ElemAbelianRep 3) =
+        order63_elemE1 ^ j.val := by
+      ext
+      · simp only [order63_elemE1, Prod.pow_fst]
+        rw [← ofAdd_nsmul]
+        simp
+      · simp [order63_elemE1]
+    rw [hp, map_pow, map_pow, h1]
+  · let j : ZMod 3 := Multiplicative.toAdd x2
+    have hx0 : Multiplicative.ofAdd j = x2 := by exact ofAdd_toAdd x2
+    rw [← hx0]
+    have hp : ((1, Multiplicative.ofAdd j) : ElemAbelianRep 3) =
+        order63_elemE2 ^ j.val := by
+      ext
+      · simp [order63_elemE2]
+      · simp only [order63_elemE2, Prod.pow_snd]
+        rw [← ofAdd_nsmul]
+        simp
+    rw [hp, map_pow, map_pow, h2]
+
+theorem order63_elemAction_gen1 :
+    order63_elemAction order63_elemE1 = unitAutHom order63_c₀ := by
+  haveI : Fact (1 < 3) := ⟨by norm_num⟩
+  change (actionHom order63_c₀ order63_hc₀pow3 (Multiplicative.ofAdd (1 : ZMod 3))) =
+    unitAutHom order63_c₀
+  apply MulEquiv.ext
+  intro x
+  rw [← ofAdd_toAdd x]
+  rw [actionHom_apply, ZMod.val_one, pow_one, unitAutHom_apply]
+
+theorem order63_elemAction_gen2 : order63_elemAction order63_elemE2 = 1 := by
+  change (actionHom order63_c₀ order63_hc₀pow3 (1 : CyclicRep 3)) = 1
+  exact map_one (actionHom order63_c₀ order63_hc₀pow3)
+
+theorem order63_unit_pow3_cases (u : (ZMod 7)ˣ) (hu3 : u ^ 3 = 1) :
+    u = 1 ∨ u = order63_c₀ ∨ u = order63_c₀ ^ 2 := by
+  have hmem : u ∈ Subgroup.zpowers order63_c₀ :=
+    unit_mem_zpowers_of_pow_eq order63_prime7 (by norm_num : 0 < 3)
+      order63_c₀ u order63_hc₀order hu3
+  rcases Subgroup.mem_zpowers_iff.mp hmem with ⟨k, hk⟩
+  have hmod : k ≡ k % 3 [ZMOD (3 : ℤ)] := by
+    rw [Int.modEq_iff_dvd]
+    refine ⟨-(k / 3), ?_⟩
+    have h := Int.emod_add_mul_ediv k 3
+    omega
+  have hpow : order63_c₀ ^ k = order63_c₀ ^ (k % 3) := by
+    apply zpow_eq_zpow_iff_modEq.mpr
+    rw [order63_hc₀order]
+    exact hmod
+  have hcases : k % 3 = 0 ∨ k % 3 = 1 ∨ k % 3 = 2 := by
+    have hnonneg : 0 ≤ k % 3 := Int.emod_nonneg k (by norm_num)
+    have hlt : k % 3 < 3 := Int.emod_lt_of_pos k (by norm_num)
+    omega
+  rcases hcases with h0 | h1 | h2
+  · left
+    rw [← hk, hpow, h0]
+    simp
+  · right; left
+    rw [← hk, hpow, h1]
+    simp
+  · right; right
+    rw [← hk, hpow, h2]
+    rfl
+
+theorem order63_precomp_eq_elemAction (φ : ElemAbelianRep 3 →* MulAut (CyclicRep 7))
+    (σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3)
+    (h1 : φ (σ order63_elemE1) = unitAutHom order63_c₀)
+    (h2 : φ (σ order63_elemE2) = 1) :
+    φ.comp σ.toMonoidHom = order63_elemAction := by
+  apply order63_elemHom_ext
+  · change φ (σ order63_elemE1) = order63_elemAction order63_elemE1
+    rw [h1, order63_elemAction_gen1]
+  · change φ (σ order63_elemE2) = order63_elemAction order63_elemE2
+    rw [h2, order63_elemAction_gen2]
+
+/-- Multiply the first `C₃` coordinate by `2`. -/
+noncomputable def order63_scaleFirst2 : ElemAbelianRep 3 ≃* ElemAbelianRep 3 :=
+  MulEquiv.prodCongr
+    (unitAutHom (p := 3) (ZMod.unitOfCoprime 2 (by norm_num : Nat.Coprime 2 3)))
+    (MulEquiv.refl _)
+
+/-- Multiply the second `C₃` coordinate by `2`. -/
+noncomputable def order63_scaleSecond2 : ElemAbelianRep 3 ≃* ElemAbelianRep 3 :=
+  MulEquiv.prodCongr (MulEquiv.refl _)
+    (unitAutHom (p := 3) (ZMod.unitOfCoprime 2 (by norm_num : Nat.Coprime 2 3)))
+
+/-- Swap the two `C₃` coordinates. -/
+noncomputable def order63_swapElem : ElemAbelianRep 3 ≃* ElemAbelianRep 3 where
+  toFun x := (x.2, x.1)
+  invFun x := (x.2, x.1)
+  left_inv x := by cases x; rfl
+  right_inv x := by cases x; rfl
+  map_mul' x y := by rfl
+
+/-- The shear `(x, y) ↦ (xy, y)`. -/
+noncomputable def order63_shearPlus : ElemAbelianRep 3 ≃* ElemAbelianRep 3 where
+  toFun x := (x.1 * x.2, x.2)
+  invFun x := (x.1 * x.2⁻¹, x.2)
+  left_inv x := by ext <;> simp [mul_assoc]
+  right_inv x := by ext <;> simp [mul_assoc]
+  map_mul' x y := by ext <;> simp [mul_left_comm, mul_comm]
+
+theorem order63_scaleFirst2_e1 :
+    order63_scaleFirst2 order63_elemE1 = order63_elemE1 ^ 2 := by
+  ext
+  · change unitAutHom (p := 3) (ZMod.unitOfCoprime 2 (by norm_num : Nat.Coprime 2 3))
+      (Multiplicative.ofAdd (1 : ZMod 3)) =
+        (Multiplicative.ofAdd (1 : ZMod 3)) ^ 2
+    rw [unitAutHom_apply, ← ofAdd_nsmul]
+    apply Multiplicative.ofAdd.injective
+    norm_num [ZMod.unitOfCoprime]
+  · rfl
+
+theorem order63_scaleFirst2_e2 : order63_scaleFirst2 order63_elemE2 = order63_elemE2 := by
+  ext <;> rfl
+
+theorem order63_scaleSecond2_e1 : order63_scaleSecond2 order63_elemE1 = order63_elemE1 := by
+  ext <;> rfl
+
+theorem order63_scaleSecond2_e2 :
+    order63_scaleSecond2 order63_elemE2 = order63_elemE2 ^ 2 := by
+  ext
+  · rfl
+  · change unitAutHom (p := 3) (ZMod.unitOfCoprime 2 (by norm_num : Nat.Coprime 2 3))
+      (Multiplicative.ofAdd (1 : ZMod 3)) =
+        (Multiplicative.ofAdd (1 : ZMod 3)) ^ 2
+    rw [unitAutHom_apply, ← ofAdd_nsmul]
+    apply Multiplicative.ofAdd.injective
+    norm_num [ZMod.unitOfCoprime]
+
+theorem order63_swapElem_e1 : order63_swapElem order63_elemE1 = order63_elemE2 := rfl
+
+theorem order63_swapElem_e2 : order63_swapElem order63_elemE2 = order63_elemE1 := rfl
+
+theorem order63_shearPlus_e1 : order63_shearPlus order63_elemE1 = order63_elemE1 := by
+  ext <;> simp [order63_shearPlus, order63_elemE1]
+
+theorem order63_shearPlus_e2 :
+    order63_shearPlus order63_elemE2 = order63_elemE1 * order63_elemE2 := by
+  ext <;> simp [order63_shearPlus, order63_elemE1, order63_elemE2]
+
+theorem order63_shearMinus_e1 : order63_shearPlus.symm order63_elemE1 = order63_elemE1 := by
+  ext <;> simp [order63_shearPlus, order63_elemE1]
+
+theorem order63_shearMinus_e2 :
+    order63_shearPlus.symm order63_elemE2 = order63_elemE1 ^ 2 * order63_elemE2 := by
+  ext
+  · change -(1 : ZMod 3) = 2
+    decide
+  · rfl
+
+theorem order63_hc₀sq_sq : (order63_c₀ ^ 2) ^ 2 = order63_c₀ := by
+  rw [show (order63_c₀ ^ 2) ^ 2 = order63_c₀ ^ 3 * order63_c₀ by group,
+    order63_hc₀pow3, one_mul]
+
+theorem order63_unitAutHom_c_mul_sq :
+    unitAutHom (p := 7) (order63_c₀ * order63_c₀ ^ 2) = 1 := by
+  rw [show order63_c₀ * order63_c₀ ^ 2 = 1 by
+    rw [show order63_c₀ * order63_c₀ ^ 2 = order63_c₀ ^ 3 by group, order63_hc₀pow3]]
+  exact map_one (unitAutHom (p := 7))
+
+theorem order63_unitAutHom_sq_mul_c :
+    unitAutHom (p := 7) (order63_c₀ ^ 2 * order63_c₀) = 1 := by
+  rw [show order63_c₀ ^ 2 * order63_c₀ = 1 by
+    rw [show order63_c₀ ^ 2 * order63_c₀ = order63_c₀ ^ 3 by group, order63_hc₀pow3]]
+  exact map_one (unitAutHom (p := 7))
+
+noncomputable def order63_rcEquivOfPrecomp
+    (φ : ElemAbelianRep 3 →* MulAut (CyclicRep 7))
+    (σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3)
+    (h : φ.comp σ.toMonoidHom = order63_elemAction) :
+    SemidirectProduct (CyclicRep 7) (ElemAbelianRep 3) φ ≃* order63_RC :=
+  (semidirectProductCongrAut (N := CyclicRep 7) (H := ElemAbelianRep 3) (φ := φ) σ).symm.trans
+    ((semidirectProductCongr_eq h).trans order63_elemAction_mulEquiv_RC)
+
+/-- For an elementary-abelian complement `C₃ × C₃`, every action gives either the abelian
+representative `RB` or the non-abelian representative `RC`. -/
+theorem order63_elemAction_cases (φ : ElemAbelianRep 3 →* MulAut (CyclicRep 7)) :
+    (φ = 1 ∧
+        Nonempty (SemidirectProduct (CyclicRep 7) (ElemAbelianRep 3) φ ≃* order63_RB)) ∨
+      Nonempty (SemidirectProduct (CyclicRep 7) (ElemAbelianRep 3) φ ≃* order63_RC) := by
+  haveI : Fact (Nat.Prime 7) := ⟨order63_prime7⟩
+  obtain ⟨u, hφ1⟩ := exists_unitAutHom_eq (p := 7) (φ order63_elemE1)
+  obtain ⟨v, hφ2⟩ := exists_unitAutHom_eq (p := 7) (φ order63_elemE2)
+  have hu3 : u ^ 3 = 1 := by
+    apply unitAutHom_injective (p := 7)
+    rw [map_pow, ← hφ1, ← map_pow, order63_elemE1_pow3, map_one]
+    exact (map_one (unitAutHom (p := 7))).symm
+  have hv3 : v ^ 3 = 1 := by
+    apply unitAutHom_injective (p := 7)
+    rw [map_pow, ← hφ2, ← map_pow, order63_elemE2_pow3, map_one]
+    exact (map_one (unitAutHom (p := 7))).symm
+  rcases order63_unit_pow3_cases u hu3 with hu1 | huc | huc2
+  · subst u
+    rcases order63_unit_pow3_cases v hv3 with hv1 | hvc | hvc2
+    · subst v
+      left
+      have hφtriv : φ = 1 := by
+        apply order63_elemHom_ext
+        · change φ order63_elemE1 = 1
+          exact hφ1.trans (map_one (unitAutHom (p := 7)))
+        · change φ order63_elemE2 = 1
+          exact hφ2.trans (map_one (unitAutHom (p := 7)))
+      refine ⟨hφtriv, ?_⟩
+      exact ⟨(semidirectProductCongr_eq hφtriv).trans order63_trivialElem_mulEquiv_RB⟩
+    · subst v
+      right
+      let σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3 := order63_swapElem
+      have h1 : φ (σ order63_elemE1) = unitAutHom order63_c₀ := by
+        rw [show σ order63_elemE1 = order63_elemE2 by exact order63_swapElem_e1]
+        exact hφ2
+      have h2 : φ (σ order63_elemE2) = 1 := by
+        rw [show σ order63_elemE2 = order63_elemE1 by exact order63_swapElem_e2]
+        exact hφ1.trans (map_one (unitAutHom (p := 7)))
+      exact ⟨order63_rcEquivOfPrecomp φ σ (order63_precomp_eq_elemAction φ σ h1 h2)⟩
+    · subst v
+      right
+      let σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3 :=
+        order63_swapElem.trans order63_scaleSecond2
+      have h1 : φ (σ order63_elemE1) = unitAutHom order63_c₀ := by
+        rw [show σ order63_elemE1 = order63_elemE2 ^ 2 by
+          change order63_scaleSecond2 (order63_swapElem order63_elemE1) = _
+          rw [order63_swapElem_e1, order63_scaleSecond2_e2]]
+        rw [map_pow, hφ2]
+        rw [← map_pow, order63_hc₀sq_sq]
+      have h2 : φ (σ order63_elemE2) = 1 := by
+        rw [show σ order63_elemE2 = order63_elemE1 by
+          change order63_scaleSecond2 (order63_swapElem order63_elemE2) = _
+          rw [order63_swapElem_e2, order63_scaleSecond2_e1]]
+        exact hφ1.trans (map_one (unitAutHom (p := 7)))
+      exact ⟨order63_rcEquivOfPrecomp φ σ (order63_precomp_eq_elemAction φ σ h1 h2)⟩
+  · subst u
+    rcases order63_unit_pow3_cases v hv3 with hv1 | hvc | hvc2
+    · subst v
+      right
+      let σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3 := MulEquiv.refl _
+      have h1 : φ (σ order63_elemE1) = unitAutHom order63_c₀ := by
+        simpa [σ] using hφ1
+      have h2 : φ (σ order63_elemE2) = 1 := by
+        simpa [σ] using hφ2.trans (map_one (unitAutHom (p := 7)))
+      exact ⟨order63_rcEquivOfPrecomp φ σ (order63_precomp_eq_elemAction φ σ h1 h2)⟩
+    · subst v
+      right
+      let σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3 := order63_shearPlus.symm
+      have h1 : φ (σ order63_elemE1) = unitAutHom order63_c₀ := by
+        rw [show σ order63_elemE1 = order63_elemE1 by exact order63_shearMinus_e1]
+        exact hφ1
+      have h2 : φ (σ order63_elemE2) = 1 := by
+        rw [show σ order63_elemE2 = order63_elemE1 ^ 2 * order63_elemE2 by
+          exact order63_shearMinus_e2]
+        rw [map_mul, map_pow, hφ1, hφ2]
+        rw [← map_pow, ← map_mul, order63_unitAutHom_sq_mul_c]
+      exact ⟨order63_rcEquivOfPrecomp φ σ (order63_precomp_eq_elemAction φ σ h1 h2)⟩
+    · subst v
+      right
+      let σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3 := order63_shearPlus
+      have h1 : φ (σ order63_elemE1) = unitAutHom order63_c₀ := by
+        rw [show σ order63_elemE1 = order63_elemE1 by exact order63_shearPlus_e1]
+        exact hφ1
+      have h2 : φ (σ order63_elemE2) = 1 := by
+        rw [show σ order63_elemE2 = order63_elemE1 * order63_elemE2 by
+          exact order63_shearPlus_e2]
+        rw [map_mul, hφ1, hφ2]
+        rw [← map_mul, order63_unitAutHom_c_mul_sq]
+      exact ⟨order63_rcEquivOfPrecomp φ σ (order63_precomp_eq_elemAction φ σ h1 h2)⟩
+  · subst u
+    rcases order63_unit_pow3_cases v hv3 with hv1 | hvc | hvc2
+    · subst v
+      right
+      let σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3 := order63_scaleFirst2
+      have h1 : φ (σ order63_elemE1) = unitAutHom order63_c₀ := by
+        rw [show σ order63_elemE1 = order63_elemE1 ^ 2 by exact order63_scaleFirst2_e1]
+        rw [map_pow, hφ1]
+        rw [← map_pow, order63_hc₀sq_sq]
+      have h2 : φ (σ order63_elemE2) = 1 := by
+        rw [show σ order63_elemE2 = order63_elemE2 by exact order63_scaleFirst2_e2]
+        exact hφ2.trans (map_one (unitAutHom (p := 7)))
+      exact ⟨order63_rcEquivOfPrecomp φ σ (order63_precomp_eq_elemAction φ σ h1 h2)⟩
+    · subst v
+      right
+      let σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3 :=
+        order63_scaleFirst2.trans order63_shearPlus
+      have h1 : φ (σ order63_elemE1) = unitAutHom order63_c₀ := by
+        rw [show σ order63_elemE1 = order63_elemE1 ^ 2 by
+          change order63_shearPlus (order63_scaleFirst2 order63_elemE1) = _
+          rw [order63_scaleFirst2_e1, map_pow, order63_shearPlus_e1]]
+        rw [map_pow, hφ1]
+        rw [← map_pow, order63_hc₀sq_sq]
+      have h2 : φ (σ order63_elemE2) = 1 := by
+        rw [show σ order63_elemE2 = order63_elemE1 * order63_elemE2 by
+          change order63_shearPlus (order63_scaleFirst2 order63_elemE2) = _
+          rw [order63_scaleFirst2_e2, order63_shearPlus_e2]]
+        rw [map_mul, hφ1, hφ2]
+        rw [← map_mul, order63_unitAutHom_sq_mul_c]
+      exact ⟨order63_rcEquivOfPrecomp φ σ (order63_precomp_eq_elemAction φ σ h1 h2)⟩
+    · subst v
+      right
+      let σ : ElemAbelianRep 3 ≃* ElemAbelianRep 3 :=
+        (order63_scaleFirst2.trans order63_shearPlus).trans order63_scaleSecond2
+      have h1 : φ (σ order63_elemE1) = unitAutHom order63_c₀ := by
+        rw [show σ order63_elemE1 = order63_elemE1 ^ 2 by
+          change order63_scaleSecond2 (order63_shearPlus (order63_scaleFirst2 order63_elemE1)) = _
+          rw [order63_scaleFirst2_e1, map_pow, order63_shearPlus_e1, map_pow,
+            order63_scaleSecond2_e1]]
+        rw [map_pow, hφ1]
+        rw [← map_pow, order63_hc₀sq_sq]
+      have h2 : φ (σ order63_elemE2) = 1 := by
+        rw [show σ order63_elemE2 = order63_elemE1 * order63_elemE2 ^ 2 by
+          change order63_scaleSecond2 (order63_shearPlus (order63_scaleFirst2 order63_elemE2)) = _
+          rw [order63_scaleFirst2_e2, order63_shearPlus_e2, map_mul,
+            order63_scaleSecond2_e1, order63_scaleSecond2_e2]]
+        rw [map_mul, map_pow, hφ1, hφ2]
+        rw [← map_pow, order63_hc₀sq_sq, ← map_mul, order63_unitAutHom_sq_mul_c]
+      exact ⟨order63_rcEquivOfPrecomp φ σ (order63_precomp_eq_elemAction φ σ h1 h2)⟩
+
 /-! ### Cyclic complements and the two non-trivial actions -/
 
 theorem cyclicRep9_hom_ext {M : Type*} [Monoid M] {φ ψ : CyclicRep 9 →* M}
@@ -468,5 +818,34 @@ theorem order63_cyclicAction_cases (φ : CyclicRep 9 →* MulAut (CyclicRep 7)) 
         actionHom (p := 7) (q := 9) (order63_c₀ ^ 2) hu = order63_altCyclicAction := by
       rfl
     exact ⟨(semidirectProductCongr_eq (hφ.trans halt)).trans order63_altCyclicAction_mulEquiv_RD⟩
+
+/-! ### Classification -/
+
+/-- Every group of order `63` is isomorphic to exactly one of the four representatives listed
+above.  This theorem proves the exhaustive direction; pairwise distinctness is
+`order63_pairwise`. -/
+theorem order63_classification {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 63) :
+    Nonempty (G ≃* order63_RA) ∨ Nonempty (G ≃* order63_RB) ∨
+      Nonempty (G ≃* order63_RC) ∨ Nonempty (G ≃* order63_RD) := by
+  obtain ⟨N, K, φ, _, hNcard, hKcard, ⟨e⟩⟩ := order63_semidirect (G := G) hG
+  obtain ⟨eN⟩ := prime_classification order63_prime7 hNcard
+  have hK9 : Nat.card K = 3 ^ 2 := by rw [hKcard]; norm_num
+  rcases (by simpa using (prime_sq_classification (G := K) (p := 3) hK9)) with hKcyc | hKelem
+  · obtain ⟨eK⟩ := hKcyc
+    let φstd : CyclicRep 9 →* MulAut (CyclicRep 7) :=
+      (MulAut.congr eN).toMonoidHom.comp (φ.comp eK.symm.toMonoidHom)
+    have eStd : G ≃* SemidirectProduct (CyclicRep 7) (CyclicRep 9) φstd :=
+      e.trans (SemidirectProduct.congr' eN eK)
+    rcases order63_cyclicAction_cases φstd with hRA | hRD
+    · exact Or.inl ⟨eStd.trans hRA.2.some⟩
+    · exact Or.inr (Or.inr (Or.inr ⟨eStd.trans hRD.some⟩))
+  · obtain ⟨eK⟩ := hKelem
+    let φstd : ElemAbelianRep 3 →* MulAut (CyclicRep 7) :=
+      (MulAut.congr eN).toMonoidHom.comp (φ.comp eK.symm.toMonoidHom)
+    have eStd : G ≃* SemidirectProduct (CyclicRep 7) (ElemAbelianRep 3) φstd :=
+      e.trans (SemidirectProduct.congr' eN eK)
+    rcases order63_elemAction_cases φstd with hRB | hRC
+    · exact Or.inr (Or.inl ⟨eStd.trans hRB.2.some⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨eStd.trans hRC.some⟩))
 
 end Smallgroups.UsefulTheorems
