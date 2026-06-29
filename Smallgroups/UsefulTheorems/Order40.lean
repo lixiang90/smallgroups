@@ -135,6 +135,92 @@ noncomputable abbrev order40_chiC8_two : order40_C8 →* (ZMod 5)ˣ :=
 noncomputable abbrev order40_chiC8_four : order40_C8 →* (ZMod 5)ˣ :=
   powHom (p := 5) (q := 8) order40_u4 (by decide)
 
+/-- The second order-`4` character on `C₈`, later identified with `order40_chiC8_four`
+up to an automorphism of `C₈`. -/
+noncomputable abbrev order40_chiC8_four_inv : order40_C8 →* (ZMod 5)ˣ :=
+  powHom (p := 5) (q := 8) (order40_u4 ^ 3) (by decide)
+
+/-- Homomorphisms out of `C₈` are determined by the additive generator `1`. -/
+theorem order40_c8_unit_hom_ext {χ ψ : order40_C8 →* (ZMod 5)ˣ}
+    (hgen : χ (Multiplicative.ofAdd (1 : ZMod 8)) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 8))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  let n : ZMod 8 := Multiplicative.toAdd x
+  have hx : x = (Multiplicative.ofAdd (1 : ZMod 8)) ^ n.val := by
+    rw [show x = Multiplicative.ofAdd n from (ofAdd_toAdd _).symm]
+    calc
+      Multiplicative.ofAdd n = Multiplicative.ofAdd ((n.val : ZMod 8)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (n.val • (1 : ZMod 8)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 8)) ^ n.val := by rw [ofAdd_nsmul]
+  rw [hx, map_pow, map_pow, hgen]
+
+/-- Actions out of `C₈` are determined by the additive generator `1`. -/
+theorem order40_c8_action_hom_ext {φ ψ : order40_C8 →* MulAut order40_C5}
+    (hgen : φ (Multiplicative.ofAdd (1 : ZMod 8)) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 8))) :
+    φ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  let n : ZMod 8 := Multiplicative.toAdd x
+  have hx : x = (Multiplicative.ofAdd (1 : ZMod 8)) ^ n.val := by
+    rw [show x = Multiplicative.ofAdd n from (ofAdd_toAdd _).symm]
+    calc
+      Multiplicative.ofAdd n = Multiplicative.ofAdd ((n.val : ZMod 8)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (n.val • (1 : ZMod 8)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 8)) ^ n.val := by rw [ofAdd_nsmul]
+  rw [hx, map_pow, map_pow, hgen]
+
+theorem order40_chiC8_four_gen :
+    order40_chiC8_four (Multiplicative.ofAdd (1 : ZMod 8)) = order40_u4 := by
+  decide
+
+theorem order40_chiC8_two_gen :
+    order40_chiC8_two (Multiplicative.ofAdd (1 : ZMod 8)) = order40_u4 ^ 2 := by
+  decide
+
+theorem order40_chiC8_four_inv_gen :
+    order40_chiC8_four_inv (Multiplicative.ofAdd (1 : ZMod 8)) = order40_u4 ^ 3 := by
+  decide
+
+/-- Characters `C₈ → (ZMod 5)ˣ` are one of the four displayed characters. -/
+theorem order40_c8_unit_character_cases (χ : order40_C8 →* (ZMod 5)ˣ) :
+    χ = 1 ∨ χ = order40_chiC8_four ∨ χ = order40_chiC8_two ∨
+      χ = order40_chiC8_four_inv := by
+  let g : order40_C8 := Multiplicative.ofAdd (1 : ZMod 8)
+  rcases order40_unit_cases (χ g) with h | h | h | h
+  · left
+    apply order40_c8_unit_hom_ext
+    simp [g, h]
+  · right
+    left
+    apply order40_c8_unit_hom_ext
+    rw [h, order40_chiC8_four_gen]
+  · right
+    right
+    left
+    apply order40_c8_unit_hom_ext
+    rw [h, order40_chiC8_two_gen]
+  · right
+    right
+    right
+    apply order40_c8_unit_hom_ext
+    rw [h, order40_chiC8_four_inv_gen]
+
+/-- The automorphism of `C₈` sending the additive generator to three times itself. -/
+noncomputable def order40_C8_mulThree : order40_C8 ≃* order40_C8 :=
+  unitAutHom (p := 8) (ZMod.unitOfCoprime 3 (by norm_num : Nat.Coprime 3 8))
+
+/-- The two order-`4` characters of `C₈` lie in the same automorphism orbit. -/
+theorem order40_chiC8_four_comp_mulThree :
+    order40_chiC8_four.comp order40_C8_mulThree.toMonoidHom =
+      order40_chiC8_four_inv := by
+  apply order40_c8_unit_hom_ext
+  decide
+
 noncomputable abbrev order40_chiC4C2_fst_two : order40_C4C2 →* (ZMod 5)ˣ :=
   order40_c2UnitHom.comp order88_chiC4C2_fst
 
@@ -164,6 +250,17 @@ abbrev order40_DP (H : Type) : Type := order40_C5 × H
 noncomputable abbrev order40_SD (H : Type) [Group H] (χ : H →* (ZMod 5)ˣ) : Type :=
   SemidirectProduct order40_C5 H (order40_action χ)
 
+noncomputable def order40_SD_equiv_of_character_comp {H : Type} [Group H]
+    (χ ψ : H →* (ZMod 5)ˣ) (σ : H ≃* H)
+    (hχ : χ.comp σ.toMonoidHom = ψ) :
+    order40_SD H ψ ≃* order40_SD H χ := by
+  have haction : (order40_action χ).comp σ.toMonoidHom = order40_action ψ := by
+    ext h x
+    change unitAutHom (χ (σ h)) x = unitAutHom (ψ h) x
+    rw [show χ (σ h) = ψ h from congrArg (fun f : H →* (ZMod 5)ˣ => f h) hχ]
+  exact (semidirectProductCongr_eq haction.symm).trans
+    (semidirectProductCongrAut (N := order40_C5) (φ := order40_action χ) σ)
+
 noncomputable instance instFintypeOrder40SD {H : Type} [Group H] [Fintype H]
     (χ : H →* (ZMod 5)ˣ) : Fintype (order40_SD H χ) :=
   Fintype.ofEquiv (order40_C5 × H) SemidirectProduct.equivProd.symm
@@ -182,6 +279,80 @@ noncomputable abbrev order40_RK : Type := order40_SD order40_D8 order40_chiD8_ro
 noncomputable abbrev order40_RL : Type := order40_SD order40_D8 order40_chiD8_ref
 noncomputable abbrev order40_RM : Type := order40_DP order40_Q8
 noncomputable abbrev order40_RN : Type := order40_SD order40_Q8 order40_chiQ8
+
+noncomputable def order40_c8_four_inv_equiv_four :
+    order40_SD order40_C8 order40_chiC8_four_inv ≃* order40_RC :=
+  order40_SD_equiv_of_character_comp order40_chiC8_four order40_chiC8_four_inv
+    order40_C8_mulThree order40_chiC8_four_comp_mulThree
+
+theorem order40_c8_character_semidirect_cases (χ : order40_C8 →* (ZMod 5)ˣ) :
+    Nonempty (order40_SD order40_C8 χ ≃* order40_RA) ∨
+      Nonempty (order40_SD order40_C8 χ ≃* order40_RB) ∨
+      Nonempty (order40_SD order40_C8 χ ≃* order40_RC) := by
+  rcases order40_c8_unit_character_cases χ with hχ | hχ | hχ | hχ
+  · left
+    have haction : order40_action χ = 1 := by
+      rw [hχ]
+      ext h x
+      simp [order40_action]
+    exact ⟨(semidirectProductCongr_eq haction).trans SemidirectProduct.mulEquivProd⟩
+  · right
+    right
+    have haction : order40_action χ = order40_action order40_chiC8_four := by
+      rw [hχ]
+    exact ⟨semidirectProductCongr_eq haction⟩
+  · right
+    left
+    have haction : order40_action χ = order40_action order40_chiC8_two := by
+      rw [hχ]
+    exact ⟨semidirectProductCongr_eq haction⟩
+  · right
+    right
+    have haction : order40_action χ = order40_action order40_chiC8_four_inv := by
+      rw [hχ]
+    exact ⟨(semidirectProductCongr_eq haction).trans order40_c8_four_inv_equiv_four⟩
+
+theorem order40_c8_action_semidirect_cases (φ : order40_C8 →* MulAut order40_C5) :
+    Nonempty (SemidirectProduct order40_C5 order40_C8 φ ≃* order40_RA) ∨
+      Nonempty (SemidirectProduct order40_C5 order40_C8 φ ≃* order40_RB) ∨
+      Nonempty (SemidirectProduct order40_C5 order40_C8 φ ≃* order40_RC) := by
+  haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+  let g : order40_C8 := Multiplicative.ofAdd (1 : ZMod 8)
+  obtain ⟨u, hu⟩ := exists_unitAutHom_eq (p := 5) (φ g)
+  rcases order40_unit_cases u with h | h | h | h
+  · left
+    have hφ : φ = 1 := by
+      apply order40_c8_action_hom_ext
+      rw [hu, h]
+      exact map_one (unitAutHom (p := 5))
+    exact ⟨(semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd⟩
+  · right
+    right
+    have hφ : φ = order40_action order40_chiC8_four := by
+      apply order40_c8_action_hom_ext
+      rw [hu, h]
+      change unitAutHom order40_u4 =
+        unitAutHom (order40_chiC8_four (Multiplicative.ofAdd (1 : ZMod 8)))
+      rw [order40_chiC8_four_gen]
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right
+    left
+    have hφ : φ = order40_action order40_chiC8_two := by
+      apply order40_c8_action_hom_ext
+      rw [hu, h]
+      change unitAutHom (order40_u4 ^ 2) =
+        unitAutHom (order40_chiC8_two (Multiplicative.ofAdd (1 : ZMod 8)))
+      rw [order40_chiC8_two_gen]
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right
+    right
+    have hφ : φ = order40_action order40_chiC8_four_inv := by
+      apply order40_c8_action_hom_ext
+      rw [hu, h]
+      change unitAutHom (order40_u4 ^ 3) =
+        unitAutHom (order40_chiC8_four_inv (Multiplicative.ofAdd (1 : ZMod 8)))
+      rw [order40_chiC8_four_inv_gen]
+    exact ⟨(semidirectProductCongr_eq hφ).trans order40_c8_four_inv_equiv_four⟩
 
 /-- The fourteen displayed representatives, indexed for the counting framework. -/
 noncomputable abbrev order40_reps : Fin 14 → Type
