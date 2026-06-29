@@ -297,6 +297,10 @@ theorem order88_c2_element_cases (x : Multiplicative (ZMod 2)) :
   · right
     rfl
 
+/-- Every element of `C₂` squares to one. -/
+theorem order88_c2_mul_self (x : Multiplicative (ZMod 2)) : x * x = 1 := by
+  rcases order88_c2_element_cases x with h | h <;> rw [h] <;> decide
+
 /-- Homomorphisms out of `C₈` are determined by the additive generator `1`. -/
 theorem order88_c8_hom_ext {χ ψ : order88_C8 →* Multiplicative (ZMod 2)}
     (hgen : χ (Multiplicative.ofAdd (1 : ZMod 8)) =
@@ -338,6 +342,96 @@ noncomputable abbrev order88_chiC4C2_fst : order88_C4C2 →* Multiplicative (ZMo
 /-- The `C₄ × C₂ → C₂` character non-trivial on the `C₂` factor. -/
 noncomputable abbrev order88_chiC4C2_snd : order88_C4C2 →* Multiplicative (ZMod 2) :=
   MonoidHom.snd (Multiplicative (ZMod 4)) (Multiplicative (ZMod 2))
+
+/-- The product of the two non-trivial coordinate characters on `C₄ × C₂`. -/
+noncomputable abbrev order88_chiC4C2_prod : order88_C4C2 →* Multiplicative (ZMod 2) :=
+  order88_chiC4C2_fst * order88_chiC4C2_snd
+
+/-- Characters `C₄ × C₂ → C₂` are determined by the two standard generators. -/
+theorem order88_c4c2_hom_ext {χ ψ : order88_C4C2 →* Multiplicative (ZMod 2)}
+    (h4 : χ (Multiplicative.ofAdd (1 : ZMod 4), 1) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 4), 1))
+    (h2 : χ (1, Multiplicative.ofAdd (1 : ZMod 2)) =
+      ψ (1, Multiplicative.ofAdd (1 : ZMod 2))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  rintro ⟨x4, x2⟩
+  obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x4
+  obtain ⟨b, rfl⟩ := Multiplicative.ofAdd.surjective x2
+  let g4 : order88_C4C2 := (Multiplicative.ofAdd (1 : ZMod 4), 1)
+  let g2 : order88_C4C2 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+  have ha : Multiplicative.ofAdd a = (Multiplicative.ofAdd (1 : ZMod 4)) ^ a.val := by
+    calc
+      Multiplicative.ofAdd a = Multiplicative.ofAdd ((a.val : ZMod 4)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (a.val • (1 : ZMod 4)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 4)) ^ a.val := by rw [ofAdd_nsmul]
+  have hb : Multiplicative.ofAdd b = (Multiplicative.ofAdd (1 : ZMod 2)) ^ b.val := by
+    calc
+      Multiplicative.ofAdd b = Multiplicative.ofAdd ((b.val : ZMod 2)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (b.val • (1 : ZMod 2)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 2)) ^ b.val := by rw [ofAdd_nsmul]
+  have hx : (Multiplicative.ofAdd a, Multiplicative.ofAdd b) = g4 ^ a.val * g2 ^ b.val := by
+    simp [g4, g2, Prod.pow_mk, ha, hb]
+  rw [hx, map_mul, map_mul, map_pow, map_pow, map_pow, map_pow, h4, h2]
+
+/-- A character `C₄ × C₂ → C₂` is one of the four coordinate characters. -/
+theorem order88_c4c2_character_cases (χ : order88_C4C2 →* Multiplicative (ZMod 2)) :
+    χ = 1 ∨ χ = order88_chiC4C2_fst ∨ χ = order88_chiC4C2_snd ∨
+      χ = order88_chiC4C2_prod := by
+  let g4 : order88_C4C2 := (Multiplicative.ofAdd (1 : ZMod 4), 1)
+  let g2 : order88_C4C2 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+  rcases order88_c2_element_cases (χ g4) with h4 | h4 <;>
+    rcases order88_c2_element_cases (χ g2) with h2 | h2
+  · left
+    apply order88_c4c2_hom_ext <;> simp [g4, g2, h4, h2]
+  · right
+    right
+    left
+    apply order88_c4c2_hom_ext <;> simp [g4, g2, h4, h2, order88_chiC4C2_snd]
+  · right
+    left
+    apply order88_c4c2_hom_ext <;> simp [g4, g2, h4, h2, order88_chiC4C2_fst,
+      zmodCastMulHom]
+  · right
+    right
+    right
+    apply order88_c4c2_hom_ext <;> simp [g4, g2, h4, h2, order88_chiC4C2_prod,
+      order88_chiC4C2_fst, order88_chiC4C2_snd, zmodCastMulHom]
+
+/-- The shear automorphism of `C₄ × C₂` sending the second factor by the first character. -/
+noncomputable def order88_C4C2_shear : order88_C4C2 ≃* order88_C4C2 where
+  toFun x := (x.1, order88_chiC4C2_fst x * x.2)
+  invFun x := (x.1, order88_chiC4C2_fst x * x.2)
+  left_inv := by
+    intro x
+    ext
+    · rfl
+    · change order88_chiC4C2_fst x * (order88_chiC4C2_fst x * x.2) = x.2
+      have hsquare := order88_c2_mul_self (order88_chiC4C2_fst x)
+      rw [← mul_assoc, hsquare, one_mul]
+  right_inv := by
+    intro x
+    ext
+    · rfl
+    · change order88_chiC4C2_fst x * (order88_chiC4C2_fst x * x.2) = x.2
+      have hsquare := order88_c2_mul_self (order88_chiC4C2_fst x)
+      rw [← mul_assoc, hsquare, one_mul]
+  map_mul' := by
+    intro x y
+    ext
+    · rfl
+    · change order88_chiC4C2_fst (x * y) * (x.2 * y.2) =
+        (order88_chiC4C2_fst x * x.2) * (order88_chiC4C2_fst y * y.2)
+      rw [map_mul]
+      ac_rfl
+
+/-- The product character lies in the same automorphism orbit as the second projection. -/
+theorem order88_chiC4C2_snd_comp_shear :
+    order88_chiC4C2_snd.comp order88_C4C2_shear.toMonoidHom =
+      order88_chiC4C2_prod := by
+  apply order88_c4c2_hom_ext <;> rfl
 
 /-- A representative non-trivial `C₂³ → C₂` character. -/
 noncomputable abbrev order88_chiC2C2C2 : order88_C2C2C2 →* Multiplicative (ZMod 2) :=
@@ -430,6 +524,32 @@ theorem order88_c8_action_cases (φ : order88_C8 →* MulAut order88_C11) :
     rw [hφ, hχ]
     rfl
   · right
+    rw [hφ, hχ]
+
+/-- An action `C₄ × C₂ → Aut(C₁₁)` is induced by one of the four characters. -/
+theorem order88_c4c2_action_cases (φ : order88_C4C2 →* MulAut order88_C11) :
+    φ = 1 ∨ φ = order88_action order88_chiC4C2_fst ∨
+      φ = order88_action order88_chiC4C2_snd ∨
+      φ = order88_action order88_chiC4C2_prod := by
+  have hcard : Nat.card order88_C4C2 = 8 := by
+    rw [Nat.card_prod, card_cyclicRep (by norm_num : 4 ≠ 0),
+      card_cyclicRep (by norm_num : 2 ≠ 0)]
+  have hφ := order88_action_eq_actionCharacter hcard φ
+  rcases order88_c4c2_character_cases (order88_actionCharacter hcard φ) with
+    hχ | hχ | hχ | hχ
+  · left
+    rw [hφ, hχ]
+    rfl
+  · right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    right
     rw [hφ, hχ]
 
 /-- Semidirect-product representative attached to a character `χ : H → C₂`. -/
