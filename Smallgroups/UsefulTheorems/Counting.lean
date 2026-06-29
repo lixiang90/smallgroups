@@ -389,4 +389,54 @@ theorem pairwise_disjoint_of_comm_noncomm {ι κ : Type*} {A : ι → Type} {B :
     ∀ i j, ¬ Nonempty (A i ≃* B j) :=
   fun i j => isEmpty_mulEquiv_of_comm_noncomm (hA i) (hB j)
 
+/-- **Combining distinct abelian and distinct non-abelian families.** If `A` is a pairwise
+non-isomorphic family of abelian groups and `B` is a pairwise non-isomorphic family of non-abelian
+groups, then `Sum.elim A B` is pairwise non-isomorphic. -/
+theorem PairwiseNonMulEquiv.sum_of_comm_noncomm {ι κ : Type*} {A : ι → Type} {B : κ → Type}
+    [∀ i, Group (A i)] [∀ j, Group (B j)]
+    (hA : PairwiseNonMulEquiv A) (hB : PairwiseNonMulEquiv B)
+    (hAcomm : ∀ i, ∀ a b : A i, a * b = b * a)
+    (hBnoncomm : ∀ j, ¬ ∀ a b : B j, a * b = b * a) :
+    PairwiseNonMulEquiv (Sum.elim A B) :=
+  hA.sum hB (pairwise_disjoint_of_comm_noncomm hAcomm hBnoncomm)
+
+/-! ### Partition-based distinctness
+
+When a family of representatives can be partitioned by a group invariant (e.g. commutativity,
+center cardinality), it suffices to prove pairwise non-isomorphism *within* each part. The
+invariant handles all cross-part pairs automatically.
+
+The master theorem is `PairwiseNonMulEquiv.of_invariant`: given any function `inv : ι → α` that
+is preserved by isomorphisms (`rep i ≃* rep j → inv i = inv j`), distinctness reduces to checking
+pairs with the same `inv`-value. -/
+
+/-- **Partition by invariant.** If `inv` is a group-isomorphism invariant on the index and each
+fiber of `inv` is pairwise non-isomorphic, then the whole family is pairwise non-isomorphic.
+
+Use this to reduce `C(n,2)` distinctness checks to the sum of `C(nᵢ,2)` within each invariant
+class. Typical invariants: commutativity, center cardinality, abelianization size. -/
+theorem PairwiseNonMulEquiv.of_invariant {ι : Type*} {rep : ι → Type}
+    [∀ i, Group (rep i)] {α : Type*}
+    (inv : ι → α)
+    (hinv : ∀ i j, Nonempty (rep i ≃* rep j) → inv i = inv j)
+    (hfiber : ∀ i j, inv i = inv j → Nonempty (rep i ≃* rep j) → i = j) :
+    PairwiseNonMulEquiv rep :=
+  fun i j h => hfiber i j (hinv i j h) h
+
+/-- **Multi-way sum via invariant.** Concatenate arbitrarily many internally-distinct families
+indexed by `Sigma`, where families with different `a`-indices are guaranteed non-isomorphic by an
+invariant. -/
+theorem PairwiseNonMulEquiv.sigma {α : Type*} {ι : α → Type*}
+    {rep : (a : α) → ι a → Type}
+    [∀ a i, Group (rep a i)]
+    (hparts : ∀ a, PairwiseNonMulEquiv (rep a))
+    (hdisj : ∀ a₁ a₂, a₁ ≠ a₂ → ∀ i j,
+      ¬ Nonempty (rep a₁ i ≃* rep a₂ j)) :
+    PairwiseNonMulEquiv (fun (s : Σ a, ι a) => rep s.1 s.2) := by
+  rintro ⟨a₁, i₁⟩ ⟨a₂, i₂⟩ ⟨e⟩
+  by_cases h : a₁ = a₂
+  · subst h
+    exact congrArg (Sigma.mk a₁) (hparts a₁ i₁ i₂ ⟨e⟩)
+  · exact absurd ⟨e⟩ (hdisj a₁ a₂ h i₁ i₂)
+
 end Smallgroups.UsefulTheorems

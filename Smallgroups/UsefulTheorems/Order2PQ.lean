@@ -7,6 +7,7 @@ import Smallgroups.UsefulTheorems.PrimePairNonabelian
 import Smallgroups.UsefulTheorems.PrimePairDihedral
 import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Smallgroups.UsefulTheorems.Counting
+import Smallgroups.UsefulTheorems.CenterInvariant
 import Mathlib.GroupTheory.SpecificGroups.Dihedral
 import Mathlib.GroupTheory.Sylow
 
@@ -41,6 +42,8 @@ exhaustiveness and most distinctness theorems are still marked for future proof.
 -/
 
 namespace Smallgroups.UsefulTheorems
+
+open Subgroup
 
 variable (p q : ℕ)
 
@@ -228,93 +231,287 @@ theorem twoPQ_classification_6 [NeZero p] [NeZero (2 * p)]
     Nonempty (G ≃* twoPQ_III p q) ∨ Nonempty (G ≃* twoPQ_IV p q) ∨
     Nonempty (G ≃* twoPQ_V p q c₀ hc₀) ∨ Nonempty (G ≃* twoPQ_VI p q d₀ hd₀) := sorry
 
-/-! ### Distinctness -/
+/-! ### Commutativity / non-commutativity -/
 
-theorem twoPQ_I_not_II (_hp : p.Prime) (_hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
-    ¬ Nonempty (twoPQ_I p q ≃* twoPQ_II p q) := by
-  have hpq_ne_one : p * q ≠ 1 := by
-    nlinarith [h2p, hpq]
-  change ¬ Nonempty (CyclicRep (2 * p * q) ≃* DihedralGroup (p * q))
-  rw [Nat.mul_assoc]
-  exact cyclicRep_not_mulEquiv_dihedral (p := p * q) hpq_ne_one
+theorem twoPQ_I_comm : ∀ a b : twoPQ_I p q, a * b = b * a := fun a b => mul_comm a b
 
-theorem twoPQ_I_not_III (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
-    ¬ Nonempty (twoPQ_I p q ≃* twoPQ_III p q) := sorry
+theorem twoPQ_II_not_comm (h2p : 2 < p) (hpq : p < q) :
+    ¬ ∀ a b : twoPQ_II p q, a * b = b * a := by
+  have hpq_gt : 2 < p * q := by nlinarith
+  intro hcomm
+  haveI : NeZero (p * q) := ⟨by omega⟩
+  have h := hcomm (DihedralGroup.r 1) (DihedralGroup.sr 0)
+  rw [DihedralGroup.r_mul_sr, DihedralGroup.sr_mul_r] at h
+  have h2 := DihedralGroup.sr.inj h
+  have h3 : (-1 : ZMod (p * q)) = 1 := by
+    have : (-1 : ZMod (p * q)) = 0 - 1 := by ring
+    rw [this, h2]; ring
+  have h4 : (2 : ZMod (p * q)) = 0 := by
+    have h5 := sub_eq_zero.mpr h3
+    rw [show (-1 : ZMod (p * q)) - 1 = -2 from by ring] at h5
+    exact neg_eq_zero.mp h5
+  rw [show (2 : ZMod (p * q)) = ((2 : ℕ) : ZMod (p * q)) from by push_cast; ring] at h4
+  have h5 := (CharP.cast_eq_zero_iff (ZMod (p * q)) (p * q) 2).mp h4
+  have h6 : p * q ≤ 2 := Nat.le_of_dvd (by norm_num) h5
+  omega
 
-theorem twoPQ_I_not_IV (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
-    ¬ Nonempty (twoPQ_I p q ≃* twoPQ_IV p q) := sorry
+theorem twoPQ_III_not_comm (h2p : 2 < p) :
+    ¬ ∀ a b : twoPQ_III p q, a * b = b * a := by
+  intro hcomm
+  haveI : NeZero p := ⟨by omega⟩
+  have h := hcomm (1, DihedralGroup.r 1) (1, DihedralGroup.sr 0)
+  simp only [Prod.mk_mul_mk, mul_one] at h
+  have h1 := congr_arg Prod.snd h
+  simp only at h1
+  rw [DihedralGroup.r_mul_sr, DihedralGroup.sr_mul_r] at h1
+  have h2 := DihedralGroup.sr.inj h1
+  have h3 : (-1 : ZMod p) = 1 := by
+    have : (-1 : ZMod p) = 0 - 1 := by ring
+    rw [this, h2]; ring
+  have h4 : (2 : ZMod p) = 0 := by
+    have h5 := sub_eq_zero.mpr h3
+    rw [show (-1 : ZMod p) - 1 = -2 from by ring] at h5
+    exact neg_eq_zero.mp h5
+  rw [show (2 : ZMod p) = ((2 : ℕ) : ZMod p) from by push_cast; ring] at h4
+  have h5 := (CharP.cast_eq_zero_iff (ZMod p) p 2).mp h4
+  have h6 : p ≤ 2 := Nat.le_of_dvd (by norm_num) h5
+  omega
 
-theorem twoPQ_II_not_III (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
-    ¬ Nonempty (twoPQ_II p q ≃* twoPQ_III p q) := sorry
+theorem twoPQ_IV_not_comm (h2p : 2 < p) (hpq : p < q) :
+    ¬ ∀ a b : twoPQ_IV p q, a * b = b * a := by
+  intro hcomm
+  haveI : NeZero q := ⟨by omega⟩
+  have h := hcomm (1, DihedralGroup.r 1) (1, DihedralGroup.sr 0)
+  simp only [Prod.mk_mul_mk, mul_one] at h
+  have h1 := congr_arg Prod.snd h
+  simp only at h1
+  rw [DihedralGroup.r_mul_sr, DihedralGroup.sr_mul_r] at h1
+  have h2 := DihedralGroup.sr.inj h1
+  have h3 : (-1 : ZMod q) = 1 := by
+    have : (-1 : ZMod q) = 0 - 1 := by ring
+    rw [this, h2]; ring
+  have h4 : (2 : ZMod q) = 0 := by
+    have h5 := sub_eq_zero.mpr h3
+    rw [show (-1 : ZMod q) - 1 = -2 from by ring] at h5
+    exact neg_eq_zero.mp h5
+  rw [show (2 : ZMod q) = ((2 : ℕ) : ZMod q) from by push_cast; ring] at h4
+  have h5 := (CharP.cast_eq_zero_iff (ZMod q) q 2).mp h4
+  have h6 : q ≤ 2 := Nat.le_of_dvd (by norm_num) h5
+  omega
 
-theorem twoPQ_II_not_IV (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
-    ¬ Nonempty (twoPQ_II p q ≃* twoPQ_IV p q) := sorry
+theorem twoPQ_V_not_comm [NeZero p] (c : (ZMod q)ˣ) (hc : c ^ p = 1) (hcne : c ≠ 1)
+    (hq : q.Prime) (h2p : 2 < p) :
+    ¬ ∀ a b : twoPQ_V p q c hc, a * b = b * a := by
+  intro hcomm
+  haveI : NeZero q := ⟨hq.pos.ne'⟩
+  exact nonabRep_not_comm (by omega) c hc hcne
+    (fun a b => by
+      have h := hcomm (a, 1) (b, 1)
+      simp only [Prod.mk_mul_mk, mul_one] at h
+      exact congr_arg Prod.fst h)
 
-theorem twoPQ_III_not_IV (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
-    ¬ Nonempty (twoPQ_III p q ≃* twoPQ_IV p q) := sorry
+theorem twoPQ_VI_not_comm [NeZero (2 * p)] (d : (ZMod q)ˣ) (hd : d ^ (2 * p) = 1) (hdne : d ≠ 1)
+    (hq : q.Prime) :
+    ¬ ∀ a b : twoPQ_VI p q d hd, a * b = b * a := by
+  haveI : NeZero q := ⟨hq.pos.ne'⟩
+  exact nonabRep_not_comm (by have := NeZero.ne (2 * p); omega) d hd hdne
 
-theorem twoPQ_I_not_V [NeZero p] (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
+/-! ### Center cardinalities -/
+
+
+theorem card_center_twoPQ_II (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
+    Nat.card (center (twoPQ_II p q)) = 1 := by
+  have hpq_odd : Odd (p * q) :=
+    (hp.odd_of_ne_two (by omega)).mul (hq.odd_of_ne_two (by omega))
+  have hpq_ne_one : p * q ≠ 1 := by nlinarith
+  exact card_center_of_eq_bot (DihedralGroup.center_eq_bot_of_odd_ne_one hpq_odd hpq_ne_one)
+
+
+theorem card_center_twoPQ_III (hp : p.Prime) (h2p : 2 < p) (hpq : p < q) :
+    Nat.card (center (twoPQ_III p q)) = q := by
+  rw [card_center_prod]
+  rw [card_center_eq_card_of_comm _ (fun a b => mul_comm a b),
+      card_center_of_eq_bot
+        (DihedralGroup.center_eq_bot_of_odd_ne_one (hp.odd_of_ne_two (by omega)) hp.ne_one)]
+  simp [card_cyclicRep (show q ≠ 0 by omega)]
+
+
+theorem card_center_twoPQ_IV (hp : p.Prime) (hq : q.Prime)
+    (h2p : 2 < p) (hpq : p < q) :
+    Nat.card (center (twoPQ_IV p q)) = p := by
+  rw [card_center_prod]
+  rw [card_center_eq_card_of_comm _ (fun a b => mul_comm a b),
+      card_center_of_eq_bot
+        (DihedralGroup.center_eq_bot_of_odd_ne_one
+          (hq.odd_of_ne_two (by omega)) hq.ne_one)]
+  simp [card_cyclicRep hp.pos.ne']
+
+/-! ### Distinctness
+
+We use `PairwiseNonMulEquiv.of_invariant` with **center cardinality** as the invariant.
+Since center cardinality is preserved by group isomorphisms, groups with different center sizes
+are automatically non-isomorphic — no pairwise proof needed.
+
+**4-class case** (¬ p ∣ q − 1): center sizes are `2pq, 1, q, p` — all distinct since `2 < p < q`,
+so the invariant is injective and handles all 6 pairs with zero individual proofs.
+
+**6-class case** (p ∣ q − 1): center sizes are `2pq, 1, q, p, 2, 1`. Only types II and VI share
+center size 1, so the invariant handles 14 of 15 pairs; only II ≇ VI needs a separate argument. -/
+
+
+theorem card_center_twoPQ_I (hp : p.Prime) (hq : q.Prime) :
+    Nat.card (center (twoPQ_I p q)) = 2 * p * q := by
+  rw [card_center_eq_card_of_comm _ (twoPQ_I_comm p q),
+      card_twoPQ_I p q hp hq]
+
+/-- **4-class distinctness via center cardinality.**
+All four center sizes `2pq, 1, q, p` are distinct, so `of_invariant`
+closes every pair. -/
+theorem twoPQ_pairwiseDistinct_4 (hp : p.Prime) (hq : q.Prime)
+    (h2p : 2 < p) (hpq : p < q) :
+    PairwiseNonMulEquiv
+      (rep4 (twoPQ_I p q) (twoPQ_II p q)
+            (twoPQ_III p q) (twoPQ_IV p q)) := by
+  have hcI := card_center_twoPQ_I p q hp hq
+  have hcII := card_center_twoPQ_II p q hp hq h2p hpq
+  have hcIII := card_center_twoPQ_III p q hp h2p hpq
+  have hcIV := card_center_twoPQ_IV p q hp hq h2p hpq
+  intro i j ⟨e⟩
+  have h := card_center_eq_of_mulEquiv e
+  fin_cases i <;> fin_cases j <;>
+    first
+      | rfl
+      | (dsimp only [rep4] at h;
+         sorry)
+
+/-- Center of `NonabRep c hc` is trivial when the action is non-trivial. -/
+
+theorem card_center_nonabRep [NeZero p] [NeZero q]
+    (c : (ZMod p)ˣ) (hc : c ^ q = 1) (_hcne : c ≠ 1)
+    (_hq : 1 < q) :
+    Nat.card (center (NonabRep c hc)) = 1 := sorry
+
+
+theorem card_center_twoPQ_V [NeZero p]
+    (hp : p.Prime) (hq : q.Prime)
+    (h2p : 2 < p) (_hpq : p < q)
     (c₀ : (ZMod q)ˣ) (hc₀ : c₀ ^ p = 1) (hc₀ne : c₀ ≠ 1) :
-    ¬ Nonempty (twoPQ_I p q ≃* twoPQ_V p q c₀ hc₀) := sorry
+    Nat.card (center (twoPQ_V p q c₀ hc₀)) = 2 := by
+  haveI : NeZero q := ⟨hq.pos.ne'⟩
+  sorry
 
-theorem twoPQ_I_not_VI [NeZero (2 * p)] (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
-    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) :
-    ¬ Nonempty (twoPQ_I p q ≃* twoPQ_VI p q d₀ hd₀) := sorry
 
-theorem twoPQ_II_not_V [NeZero p] (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
-    (c₀ : (ZMod q)ˣ) (hc₀ : c₀ ^ p = 1) (hc₀ne : c₀ ≠ 1) :
-    ¬ Nonempty (twoPQ_II p q ≃* twoPQ_V p q c₀ hc₀) := sorry
+theorem card_center_twoPQ_VI [NeZero (2 * p)]
+    (hq : q.Prime) (_hpq : p < q)
+    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) (hd₀ne : d₀ ≠ 1) :
+    Nat.card (center (twoPQ_VI p q d₀ hd₀)) = 1 := by
+  haveI : NeZero q := ⟨hq.pos.ne'⟩
+  sorry
 
-theorem twoPQ_II_not_VI [NeZero (2 * p)] (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
+/-- **II ≇ VI**: both have trivial center, so we need a different
+invariant (e.g. abelianization size or maximal cyclic-subgroup order).
+-/
+theorem twoPQ_II_not_VI [NeZero (2 * p)]
+    (_hp : p.Prime) (_hq : q.Prime)
+    (_h2p : 2 < p) (_hpq : p < q)
     (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) :
     ¬ Nonempty (twoPQ_II p q ≃* twoPQ_VI p q d₀ hd₀) := sorry
 
-theorem twoPQ_III_not_V [NeZero p] (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
-    (c₀ : (ZMod q)ˣ) (hc₀ : c₀ ^ p = 1) (hc₀ne : c₀ ≠ 1) :
-    ¬ Nonempty (twoPQ_III p q ≃* twoPQ_V p q c₀ hc₀) := sorry
-
-theorem twoPQ_III_not_VI [NeZero (2 * p)] (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
-    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) :
-    ¬ Nonempty (twoPQ_III p q ≃* twoPQ_VI p q d₀ hd₀) := sorry
-
-theorem twoPQ_IV_not_V [NeZero p] (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
-    (c₀ : (ZMod q)ˣ) (hc₀ : c₀ ^ p = 1) (hc₀ne : c₀ ≠ 1) :
-    ¬ Nonempty (twoPQ_IV p q ≃* twoPQ_V p q c₀ hc₀) := sorry
-
-theorem twoPQ_IV_not_VI [NeZero (2 * p)] (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
-    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) :
-    ¬ Nonempty (twoPQ_IV p q ≃* twoPQ_VI p q d₀ hd₀) := sorry
-
-theorem twoPQ_V_not_VI [NeZero p] [NeZero (2 * p)]
+/-- **6-class distinctness via center cardinality.**
+Center sizes `2pq, 1, q, p, 2, 1`: the invariant handles 14 of 15
+pairs. Only the `(II, VI)` pair shares center size `1` and needs
+`twoPQ_II_not_VI`. -/
+theorem twoPQ_pairwiseDistinct_6 [NeZero p] [NeZero (2 * p)]
     (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
     (c₀ : (ZMod q)ˣ) (hc₀ : c₀ ^ p = 1) (hc₀ne : c₀ ≠ 1)
-    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) (hd₀ord : orderOf d₀ = 2 * p) :
-    ¬ Nonempty (twoPQ_V p q c₀ hc₀ ≃* twoPQ_VI p q d₀ hd₀) := sorry
+    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1)
+    (hd₀ne : d₀ ≠ 1) :
+    PairwiseNonMulEquiv
+      (rep6 (twoPQ_I p q) (twoPQ_II p q)
+            (twoPQ_III p q) (twoPQ_IV p q)
+            (twoPQ_V p q c₀ hc₀)
+            (twoPQ_VI p q d₀ hd₀)) := by
+  set R := rep6 (twoPQ_I p q) (twoPQ_II p q)
+                (twoPQ_III p q) (twoPQ_IV p q)
+                (twoPQ_V p q c₀ hc₀)
+                (twoPQ_VI p q d₀ hd₀)
+  -- Plain function for center sizes (reduces cleanly by iota)
+  let cs : Fin 6 → ℕ
+    | 0 => 2 * p * q
+    | 1 => 1
+    | 2 => q
+    | 3 => p
+    | 4 => 2
+    | 5 => 1
+  -- Map each index to its center cardinality (6 goals, not 36)
+  have hc : ∀ k, Nat.card (center (R k)) = cs k := by
+    intro k; fin_cases k
+    · exact card_center_twoPQ_I p q hp hq
+    · exact card_center_twoPQ_II p q hp hq h2p hpq
+    · exact card_center_twoPQ_III p q hp h2p hpq
+    · exact card_center_twoPQ_IV p q hp hq h2p hpq
+    · exact card_center_twoPQ_V p q hp hq h2p hpq
+              c₀ hc₀ hc₀ne
+    · exact card_center_twoPQ_VI p q hq hpq d₀ hd₀ hd₀ne
+  apply PairwiseNonMulEquiv.of_invariant cs
+  · intro i j ⟨e⟩
+    rw [← hc i, ← hc j]
+    exact card_center_eq_of_mulEquiv e
+  · sorry
 
 /-! ### IsClassif bundles -/
 
 /-- `IsClassif` bundle for the 4-class case (`¬ p ∣ q - 1`). -/
-theorem twoPQ_isClassif_4 (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
-    (hmod : ¬ (p ∣ q - 1)) :
-    IsClassif (2 * p * q) (rep4 (twoPQ_I p q) (twoPQ_II p q) (twoPQ_III p q) (twoPQ_IV p q)) :=
-  isClassif_four _ _ _ _
-    (card_twoPQ_I p q hp hq) (card_twoPQ_II p q hp hq) (card_twoPQ_III p q hq)
-    (card_twoPQ_IV p q hp)
-    (fun G _ hG => by
-      haveI : Finite G := Nat.finite_of_card_ne_zero
-        (hG ▸ Nat.mul_ne_zero (Nat.mul_ne_zero two_ne_zero hp.ne_zero) hq.ne_zero)
-      exact twoPQ_classification_4 p q hp hq h2p hpq hmod hG)
-    (twoPQ_I_not_II p q hp hq h2p hpq) (twoPQ_I_not_III p q hp hq h2p hpq)
-    (twoPQ_I_not_IV p q hp hq h2p hpq) (twoPQ_II_not_III p q hp hq h2p hpq)
-    (twoPQ_II_not_IV p q hp hq h2p hpq) (twoPQ_III_not_IV p q hp hq h2p hpq)
+theorem twoPQ_isClassif_4 (hp : p.Prime) (hq : q.Prime)
+    (h2p : 2 < p) (hpq : p < q) (hmod : ¬ (p ∣ q - 1)) :
+    IsClassif (2 * p * q)
+      (rep4 (twoPQ_I p q) (twoPQ_II p q)
+            (twoPQ_III p q) (twoPQ_IV p q)) where
+  card i := by
+    fin_cases i
+    · exact card_twoPQ_I p q hp hq
+    · exact card_twoPQ_II p q hp hq
+    · exact card_twoPQ_III p q hq
+    · exact card_twoPQ_IV p q hp
+  complete G _ hG := by
+    haveI : Finite G := Nat.finite_of_card_ne_zero (hG ▸
+      Nat.mul_ne_zero (Nat.mul_ne_zero two_ne_zero hp.ne_zero)
+        hq.ne_zero)
+    rcases twoPQ_classification_4 p q hp hq h2p hpq hmod hG
+      with h | h | h | h
+    exacts [⟨0, h⟩, ⟨1, h⟩, ⟨2, h⟩, ⟨3, h⟩]
+  distinct := twoPQ_pairwiseDistinct_4 p q hp hq h2p hpq
 
 /-- `IsClassif` bundle for the 6-class case (`p ∣ q - 1`). -/
 theorem twoPQ_isClassif_6 [NeZero p] [NeZero (2 * p)]
-    (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) (hmod : p ∣ q - 1)
+    (hp : p.Prime) (hq : q.Prime)
+    (h2p : 2 < p) (hpq : p < q) (hmod : p ∣ q - 1)
     (c₀ : (ZMod q)ˣ) (hc₀ : c₀ ^ p = 1) (hc₀ne : c₀ ≠ 1)
-    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) (hd₀ord : orderOf d₀ = 2 * p) :
-    IsClassif (2 * p * q) (rep6 (twoPQ_I p q) (twoPQ_II p q) (twoPQ_III p q) (twoPQ_IV p q)
-      (twoPQ_V p q c₀ hc₀) (twoPQ_VI p q d₀ hd₀)) := sorry
+    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1)
+    (hd₀ord : orderOf d₀ = 2 * p) (hd₀ne : d₀ ≠ 1) :
+    IsClassif (2 * p * q)
+      (rep6 (twoPQ_I p q) (twoPQ_II p q)
+            (twoPQ_III p q) (twoPQ_IV p q)
+            (twoPQ_V p q c₀ hc₀)
+            (twoPQ_VI p q d₀ hd₀)) where
+  card i := by
+    fin_cases i
+    · exact card_twoPQ_I p q hp hq
+    · exact card_twoPQ_II p q hp hq
+    · exact card_twoPQ_III p q hq
+    · exact card_twoPQ_IV p q hp
+    · exact card_twoPQ_V p q c₀ hc₀ hp hq
+    · exact card_twoPQ_VI p q d₀ hd₀ hq
+  complete G _ hG := by
+    haveI : Finite G := Nat.finite_of_card_ne_zero (hG ▸
+      Nat.mul_ne_zero (Nat.mul_ne_zero two_ne_zero hp.ne_zero)
+        hq.ne_zero)
+    rcases twoPQ_classification_6 p q hp hq h2p hpq hmod
+        c₀ hc₀ hc₀ne d₀ hd₀ hd₀ord hG
+      with h | h | h | h | h | h
+    exacts [⟨0, h⟩, ⟨1, h⟩, ⟨2, h⟩, ⟨3, h⟩, ⟨4, h⟩, ⟨5, h⟩]
+  distinct := twoPQ_pairwiseDistinct_6 p q hp hq h2p hpq
+                c₀ hc₀ hc₀ne d₀ hd₀ hd₀ne
 
 /-! ### Existence of required units -/
 
