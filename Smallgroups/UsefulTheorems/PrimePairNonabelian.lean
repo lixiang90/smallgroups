@@ -63,6 +63,67 @@ noncomputable def unitAutHom : (ZMod p)ˣ →* MulAut (Multiplicative (ZMod p)) 
     unitAutHom u (Multiplicative.ofAdd m) = Multiplicative.ofAdd ((u : ZMod p) * m) := by
   simp [unitAutHom, Units.smul_def]
 
+/-- Multiplication by units embeds into the automorphism group of the additive cyclic group
+`ZMod p`, written multiplicatively. -/
+theorem unitAutHom_injective [Fact p.Prime] : Function.Injective (unitAutHom (p := p)) := by
+  intro u v h
+  have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod p)) =
+      unitAutHom v (Multiplicative.ofAdd (1 : ZMod p)) := by rw [h]
+  simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
+  exact Units.ext (congrArg Multiplicative.toAdd h1)
+
+/-- Every automorphism of the cyclic group `ZMod p` is multiplication by a unit. -/
+theorem exists_unitAutHom_eq [Fact p.Prime] (σ : MulAut (Multiplicative (ZMod p))) :
+    ∃ u : (ZMod p)ˣ, σ = unitAutHom u := by
+  let u_val : ZMod p := (σ (Multiplicative.ofAdd (1 : ZMod p))).toAdd
+  have hu_ne_zero : u_val ≠ 0 := by
+    intro hz
+    have h0 : σ (Multiplicative.ofAdd (0 : ZMod p)) = Multiplicative.ofAdd (0 : ZMod p) := by
+      calc
+        σ (Multiplicative.ofAdd (0 : ZMod p)) = σ 1 := by simp
+        _ = 1 := map_one σ
+        _ = Multiplicative.ofAdd (0 : ZMod p) := by simp
+    have h1 : σ (Multiplicative.ofAdd (1 : ZMod p)) = Multiplicative.ofAdd (0 : ZMod p) := by
+      calc
+        σ (Multiplicative.ofAdd (1 : ZMod p)) = Multiplicative.ofAdd u_val := rfl
+        _ = Multiplicative.ofAdd (0 : ZMod p) := by rw [hz]
+    have h01 : Multiplicative.ofAdd (0 : ZMod p) ≠ Multiplicative.ofAdd (1 : ZMod p) := by
+      intro h
+      apply_fun Multiplicative.toAdd at h
+      simp at h
+    apply h01
+    exact σ.injective (h0.trans h1.symm)
+  have h_inv : u_val⁻¹ * u_val = 1 := by field_simp [hu_ne_zero]
+  have h_mul : u_val * u_val⁻¹ = 1 := by field_simp [hu_ne_zero]
+  let u : (ZMod p)ˣ := Units.mk u_val (u_val⁻¹) h_mul h_inv
+  refine ⟨u, ?_⟩
+  apply MulEquiv.ext
+  intro x
+  let n := Multiplicative.toAdd x
+  have hx : Multiplicative.ofAdd n = x := by
+    exact ofAdd_toAdd x
+  rw [← hx]
+  calc
+    σ (Multiplicative.ofAdd n) = σ ((Multiplicative.ofAdd (1 : ZMod p)) ^ n.val) := by
+      rw [show (Multiplicative.ofAdd n : Multiplicative (ZMod p)) =
+          (Multiplicative.ofAdd (1 : ZMod p)) ^ n.val from by
+        calc
+          Multiplicative.ofAdd n = Multiplicative.ofAdd ((n.val : ZMod p)) := by
+            rw [ZMod.natCast_zmod_val]
+          _ = Multiplicative.ofAdd (n.val • (1 : ZMod p)) := by simp
+          _ = (Multiplicative.ofAdd (1 : ZMod p)) ^ n.val := by
+            rw [ofAdd_nsmul]
+      ]
+    _ = (σ (Multiplicative.ofAdd (1 : ZMod p))) ^ n.val := by rw [map_pow]
+    _ = (Multiplicative.ofAdd u_val) ^ n.val := rfl
+    _ = Multiplicative.ofAdd (n.val • u_val) := by
+      rw [← ofAdd_nsmul]
+    _ = Multiplicative.ofAdd (u_val * (n.val : ZMod p)) := by
+      rw [nsmul_eq_mul, mul_comm]
+    _ = Multiplicative.ofAdd (u_val * n) := by rw [ZMod.natCast_zmod_val]
+    _ = unitAutHom u (Multiplicative.ofAdd n) := by
+      rw [unitAutHom_apply]
+
 variable {q : ℕ}
 
 /-- The hom `Multiplicative (ZMod q) →* (ZMod p)ˣ` sending the generator to a unit `c` with
