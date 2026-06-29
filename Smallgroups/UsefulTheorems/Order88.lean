@@ -1527,6 +1527,33 @@ theorem not_nonempty_mulEquiv_of_card_center_ne {H K : Type*} [Group H] [Group K
   rintro ⟨e⟩
   exact h (card_center_eq_of_mulEquiv e)
 
+noncomputable def pow_eq_one_card (H : Type*) [Group H] (n : ℕ) : ℕ :=
+  Nat.card {x : H // x ^ n = 1}
+
+noncomputable def powEqOneEquivOfMulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) : {x : H // x ^ n = 1} ≃ {x : K // x ^ n = 1} where
+  toFun x := ⟨e x.1, by rw [← map_pow, x.2, map_one]⟩
+  invFun x := ⟨e.symm x.1, by
+    rw [← map_pow]
+    exact e.injective (by simp [x.2])⟩
+  left_inv x := by
+    ext
+    simp
+  right_inv x := by
+    ext
+    simp
+
+theorem pow_eq_one_card_eq_of_mulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) :
+    pow_eq_one_card H n = pow_eq_one_card K n := by
+  exact Nat.card_congr (powEqOneEquivOfMulEquiv n e)
+
+theorem not_nonempty_mulEquiv_of_pow_eq_one_card_ne {H K : Type*} [Group H] [Group K]
+    {n : ℕ} (h : pow_eq_one_card H n ≠ pow_eq_one_card K n) :
+    ¬ Nonempty (H ≃* K) := by
+  rintro ⟨e⟩
+  exact h (pow_eq_one_card_eq_of_mulEquiv n e)
+
 theorem card_order88_C11 : Nat.card order88_C11 = 11 := card_cyclicRep (by norm_num)
 
 theorem card_order88_C8 : Nat.card order88_C8 = 8 := card_cyclicRep (by norm_num)
@@ -1683,6 +1710,128 @@ theorem not_nonempty_mulEquiv_order88_reps_of_center_card_ne {i j : Fin 12}
     rw [card_center_order88_reps i, card_center_order88_reps j]
     exact h)
 
+theorem card_pow_two_eq_one_order88_RA : pow_eq_one_card order88_RA 2 = 2 := by
+  have hcard : Fintype.card {x : order88_RA // x ^ 2 = 1} = 2 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RB : pow_eq_one_card order88_RB 2 = 4 := by
+  have hcard : Fintype.card {x : order88_RB // x ^ 2 = 1} = 4 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RC : pow_eq_one_card order88_RC 2 = 8 := by
+  have hcard : Fintype.card {x : order88_RC // x ^ 2 = 1} = 8 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RD : pow_eq_one_card order88_RD 2 = 6 := by
+  have hcard : Fintype.card {x : order88_RD // x ^ 2 = 1} = 6 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RE : pow_eq_one_card order88_RE 2 = 2 := by
+  have hcard : Fintype.card {x : order88_RE // x ^ 2 = 1} = 2 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RF : pow_eq_one_card order88_RF 2 = 2 := by
+  have hcard : Fintype.card {x : order88_RF // x ^ 2 = 1} = 2 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RG : pow_eq_one_card order88_RG 2 = 4 := by
+  have hcard : Fintype.card {x : order88_RG // x ^ 2 = 1} = 4 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RH : pow_eq_one_card order88_RH 2 = 24 := by
+  have hcard : Fintype.card {x : order88_RH // x ^ 2 = 1} = 24 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RI : pow_eq_one_card order88_RI 2 = 48 := by
+  have hcard : Fintype.card {x : order88_RI // x ^ 2 = 1} = 48 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RJ : pow_eq_one_card order88_RJ 2 = 26 := by
+  have hcard : Fintype.card {x : order88_RJ // x ^ 2 = 1} = 26 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RK : pow_eq_one_card order88_RK 2 = 46 := by
+  have hcard : Fintype.card {x : order88_RK // x ^ 2 = 1} = 46 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_pow_two_eq_one_order88_RL : pow_eq_one_card order88_RL 2 = 2 := by
+  have hcard : Fintype.card {x : order88_RL // x ^ 2 = 1} = 2 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+/-- Cardinalities of `{x | x ^ 2 = 1}` in the twelve displayed representatives. -/
+def order88_pow_two_eq_one_card : Fin 12 → Nat
+  | 0 => 2
+  | 1 => 4
+  | 2 => 8
+  | 3 => 6
+  | 4 => 2
+  | 5 => 2
+  | 6 => 4
+  | 7 => 24
+  | 8 => 48
+  | 9 => 26
+  | 10 => 46
+  | 11 => 2
+
+theorem card_pow_two_eq_one_order88_reps (i : Fin 12) :
+    pow_eq_one_card (order88_reps i) 2 = order88_pow_two_eq_one_card i := by
+  fin_cases i
+  · exact card_pow_two_eq_one_order88_RA
+  · exact card_pow_two_eq_one_order88_RB
+  · exact card_pow_two_eq_one_order88_RC
+  · exact card_pow_two_eq_one_order88_RD
+  · exact card_pow_two_eq_one_order88_RE
+  · exact card_pow_two_eq_one_order88_RF
+  · exact card_pow_two_eq_one_order88_RG
+  · exact card_pow_two_eq_one_order88_RH
+  · exact card_pow_two_eq_one_order88_RI
+  · exact card_pow_two_eq_one_order88_RJ
+  · exact card_pow_two_eq_one_order88_RK
+  · exact card_pow_two_eq_one_order88_RL
+
+theorem not_nonempty_mulEquiv_order88_reps_of_pow_two_card_ne {i j : Fin 12}
+    (h : order88_pow_two_eq_one_card i ≠ order88_pow_two_eq_one_card j) :
+    ¬ Nonempty (order88_reps i ≃* order88_reps j) := by
+  exact not_nonempty_mulEquiv_of_pow_eq_one_card_ne (n := 2) (by
+    rw [card_pow_two_eq_one_order88_reps i, card_pow_two_eq_one_order88_reps j]
+    exact h)
+
+def order88_reps_invariant (i : Fin 12) : Nat × Nat :=
+  (order88_center_card i, order88_pow_two_eq_one_card i)
+
+theorem order88_reps_invariant_injective : Function.Injective order88_reps_invariant := by
+  intro i j h
+  fin_cases i <;> fin_cases j <;>
+    simp [order88_reps_invariant, order88_center_card, order88_pow_two_eq_one_card] at h ⊢
+
+theorem order88_reps_invariant_eq_of_mulEquiv {i j : Fin 12}
+    (hiso : Nonempty (order88_reps i ≃* order88_reps j)) :
+    order88_reps_invariant i = order88_reps_invariant j := by
+  rcases hiso with ⟨e⟩
+  apply Prod.ext
+  · change order88_center_card i = order88_center_card j
+    rw [← card_center_order88_reps i, ← card_center_order88_reps j]
+    exact card_center_eq_of_mulEquiv e
+  · change order88_pow_two_eq_one_card i = order88_pow_two_eq_one_card j
+    rw [← card_pow_two_eq_one_order88_reps i, ← card_pow_two_eq_one_order88_reps j]
+    exact pow_eq_one_card_eq_of_mulEquiv 2 e
+
+theorem order88_reps_pairwise : PairwiseNonMulEquiv order88_reps := by
+  intro i j hiso
+  exact order88_reps_invariant_injective (order88_reps_invariant_eq_of_mulEquiv hiso)
+
 theorem card_order88_reps (i : Fin 12) : Nat.card (order88_reps i) = 88 := by
   fin_cases i
   · exact card_order88_RA
@@ -1723,5 +1872,8 @@ theorem order88_isClassif_of_pairwise (hdistinct : PairwiseNonMulEquiv order88_r
   card := card_order88_reps
   complete := order88_complete
   distinct := hdistinct
+
+theorem order88_isClassif : IsClassif 88 order88_reps :=
+  order88_isClassif_of_pairwise order88_reps_pairwise
 
 end Smallgroups.UsefulTheorems
