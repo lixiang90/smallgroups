@@ -236,6 +236,15 @@ theorem order88_mulAut_pow8_eq_one_or_inv (α : MulAut order88_C11) (hα : α ^ 
   · right
     rw [hu, hneg, order88_unitAutHom_neg_one]
 
+/-- If `H` has order `8`, every value of an action `H → Aut(C₁₁)` is trivial or inversion. -/
+theorem order88_action_value_eq_one_or_inv {H : Type} [Group H] [Finite H]
+    (hH : Nat.card H = 8) (φ : H →* MulAut order88_C11) (h : H) :
+    φ h = 1 ∨ φ h = invAut order88_C11 := by
+  apply order88_mulAut_pow8_eq_one_or_inv
+  have hh8 : h ^ 8 = 1 := by
+    simpa [hH] using (pow_card_eq_one' (x := h))
+  rw [← map_pow, hh8, map_one]
+
 /-- The unique non-trivial `C₈ → C₂` character, up to automorphism of `C₈`. -/
 noncomputable abbrev order88_chiC8 : order88_C8 →* Multiplicative (ZMod 2) :=
   zmodCastMulHom (by norm_num : 2 ∣ 8)
