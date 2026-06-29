@@ -7,6 +7,7 @@ import Mathlib.Algebra.Group.Equiv.Basic
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Fintype.Card
 import Mathlib.Tactic.FinCases
+import Smallgroups.UsefulTheorems.CenterInvariant
 
 /-!
 # Counting isomorphism classes
@@ -438,5 +439,45 @@ theorem PairwiseNonMulEquiv.sigma {α : Type*} {ι : α → Type*}
   · subst h
     exact congrArg (Sigma.mk a₁) (hparts a₁ i₁ i₂ ⟨e⟩)
   · exact absurd ⟨e⟩ (hdisj a₁ a₂ h i₁ i₂)
+
+/-! ### Center-cardinality specialisations
+
+The center cardinality `|Z(G)|` is a group-isomorphism invariant. Combining this fact with the
+generic `of_invariant` and `sigma` theorems gives ready-to-use distinctness tools that only require:
+
+* a center-size map `cs : ι → ℕ` with proofs that each `rep i` has center of size `cs i`, and
+* within-fiber distinctness for indices that share the same center size. -/
+
+open Subgroup in
+/-- **Partition by center cardinality.** Specialises `of_invariant` with `|Z(−)|` as the
+invariant. Most pairs are separated by having different center sizes; only pairs sharing a center
+size need an explicit non-isomorphism proof (the `hfiber` hypothesis). -/
+theorem PairwiseNonMulEquiv.of_center_card {ι : Type*} {rep : ι → Type}
+    [∀ i, Group (rep i)]
+    (cs : ι → ℕ)
+    (hc : ∀ i, Nat.card (center (rep i)) = cs i)
+    (hfiber : ∀ i j, cs i = cs j → Nonempty (rep i ≃* rep j) → i = j) :
+    PairwiseNonMulEquiv rep :=
+  PairwiseNonMulEquiv.of_invariant cs
+    (fun i j ⟨e⟩ => by rw [← hc i, ← hc j]; exact card_center_eq_of_mulEquiv e)
+    hfiber
+
+open Subgroup in
+/-- **Multi-way sum by center cardinality.** Specialises `sigma` using `|Z(−)|` to prove
+cross-family disjointness. Each family is internally pairwise non-isomorphic, and families at
+different `α`-indices have provably different center sizes, so no cross-family pair can be
+isomorphic. -/
+theorem PairwiseNonMulEquiv.sigma_of_center_card {α : Type*} {ι : α → Type*}
+    {rep : (a : α) → ι a → Type}
+    [∀ a i, Group (rep a i)]
+    (cs : (a : α) → ι a → ℕ)
+    (hc : ∀ a i, Nat.card (center (rep a i)) = cs a i)
+    (hparts : ∀ a, PairwiseNonMulEquiv (rep a))
+    (hdisj : ∀ a₁ a₂, a₁ ≠ a₂ → ∀ i j, cs a₁ i ≠ cs a₂ j) :
+    PairwiseNonMulEquiv (fun (s : Σ a, ι a) => rep s.1 s.2) :=
+  PairwiseNonMulEquiv.sigma hparts
+    (fun a₁ a₂ hne i j =>
+      pairwise_disjoint_of_card_center_ne
+        (cs a₁) (cs a₂) (fun k => hc a₁ k) (fun k => hc a₂ k) (hdisj a₁ a₂ hne) i j)
 
 end Smallgroups.UsefulTheorems

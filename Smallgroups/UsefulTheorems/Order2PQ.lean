@@ -348,7 +348,7 @@ theorem card_center_twoPQ_IV (hp : p.Prime) (hq : q.Prime)
 
 /-! ### Distinctness
 
-We use `PairwiseNonMulEquiv.of_invariant` with **center cardinality** as the invariant.
+We use `PairwiseNonMulEquiv.of_center_card` with **center cardinality** as the invariant.
 Since center cardinality is preserved by group isomorphisms, groups with different center sizes
 are automatically non-isomorphic — no pairwise proof needed.
 
@@ -358,6 +358,20 @@ so the invariant is injective and handles all 6 pairs with zero individual proof
 **6-class case** (p ∣ q − 1): center sizes are `2pq, 1, q, p, 2, 1`. Only types II and VI share
 center size 1, so the invariant handles 14 of 15 pairs; only II ≇ VI needs a separate argument. -/
 
+def twoPQ_center_sizes_4 : Fin 4 → ℕ
+  | 0 => 2 * p * q
+  | 1 => 1
+  | 2 => q
+  | 3 => p
+
+def twoPQ_center_sizes_6 : Fin 6 → ℕ
+  | 0 => 2 * p * q
+  | 1 => 1
+  | 2 => q
+  | 3 => p
+  | 4 => 2
+  | 5 => 1
+
 
 theorem card_center_twoPQ_I (hp : p.Prime) (hq : q.Prime) :
     Nat.card (center (twoPQ_I p q)) = 2 * p * q := by
@@ -365,24 +379,22 @@ theorem card_center_twoPQ_I (hp : p.Prime) (hq : q.Prime) :
       card_twoPQ_I p q hp hq]
 
 /-- **4-class distinctness via center cardinality.**
-All four center sizes `2pq, 1, q, p` are distinct, so `of_invariant`
+All four center sizes `2pq, 1, q, p` are distinct, so `of_center_card`
 closes every pair. -/
 theorem twoPQ_pairwiseDistinct_4 (hp : p.Prime) (hq : q.Prime)
     (h2p : 2 < p) (hpq : p < q) :
     PairwiseNonMulEquiv
       (rep4 (twoPQ_I p q) (twoPQ_II p q)
             (twoPQ_III p q) (twoPQ_IV p q)) := by
-  have hcI := card_center_twoPQ_I p q hp hq
-  have hcII := card_center_twoPQ_II p q hp hq h2p hpq
-  have hcIII := card_center_twoPQ_III p q hp h2p hpq
-  have hcIV := card_center_twoPQ_IV p q hp hq h2p hpq
-  intro i j ⟨e⟩
-  have h := card_center_eq_of_mulEquiv e
-  fin_cases i <;> fin_cases j <;>
-    first
-      | rfl
-      | (dsimp only [rep4] at h;
-         sorry)
+  apply PairwiseNonMulEquiv.of_center_card (twoPQ_center_sizes_4 p q)
+  · intro k; fin_cases k
+    · exact card_center_twoPQ_I p q hp hq
+    · exact card_center_twoPQ_II p q hp hq h2p hpq
+    · exact card_center_twoPQ_III p q hp h2p hpq
+    · exact card_center_twoPQ_IV p q hp hq h2p hpq
+  · intro i j heq _
+    fin_cases i <;> fin_cases j <;>
+      first | rfl | (dsimp [twoPQ_center_sizes_4] at heq; first | omega | nlinarith)
 
 /-- Center of `NonabRep c hc` is trivial when the action is non-trivial. -/
 
@@ -431,33 +443,24 @@ theorem twoPQ_pairwiseDistinct_6 [NeZero p] [NeZero (2 * p)]
             (twoPQ_III p q) (twoPQ_IV p q)
             (twoPQ_V p q c₀ hc₀)
             (twoPQ_VI p q d₀ hd₀)) := by
-  set R := rep6 (twoPQ_I p q) (twoPQ_II p q)
-                (twoPQ_III p q) (twoPQ_IV p q)
-                (twoPQ_V p q c₀ hc₀)
-                (twoPQ_VI p q d₀ hd₀)
-  -- Plain function for center sizes (reduces cleanly by iota)
-  let cs : Fin 6 → ℕ
-    | 0 => 2 * p * q
-    | 1 => 1
-    | 2 => q
-    | 3 => p
-    | 4 => 2
-    | 5 => 1
-  -- Map each index to its center cardinality (6 goals, not 36)
-  have hc : ∀ k, Nat.card (center (R k)) = cs k := by
-    intro k; fin_cases k
+  apply PairwiseNonMulEquiv.of_center_card (twoPQ_center_sizes_6 p q)
+  · intro k; fin_cases k
     · exact card_center_twoPQ_I p q hp hq
     · exact card_center_twoPQ_II p q hp hq h2p hpq
     · exact card_center_twoPQ_III p q hp h2p hpq
     · exact card_center_twoPQ_IV p q hp hq h2p hpq
-    · exact card_center_twoPQ_V p q hp hq h2p hpq
-              c₀ hc₀ hc₀ne
+    · exact card_center_twoPQ_V p q hp hq h2p hpq c₀ hc₀ hc₀ne
     · exact card_center_twoPQ_VI p q hq hpq d₀ hd₀ hd₀ne
-  apply PairwiseNonMulEquiv.of_invariant cs
-  · intro i j ⟨e⟩
-    rw [← hc i, ← hc j]
-    exact card_center_eq_of_mulEquiv e
-  · sorry
+  · intro i j heq hiso
+    fin_cases i <;> fin_cases j <;>
+      first
+        | rfl
+        | (unfold twoPQ_center_sizes_6 at heq; first | omega | nlinarith)
+        | (dsimp [rep6] at hiso;
+           exact absurd hiso (twoPQ_II_not_VI p q hp hq h2p hpq d₀ hd₀))
+        | (dsimp [rep6] at hiso;
+           exact absurd (hiso.map MulEquiv.symm)
+             (twoPQ_II_not_VI p q hp hq h2p hpq d₀ hd₀))
 
 /-! ### IsClassif bundles -/
 
