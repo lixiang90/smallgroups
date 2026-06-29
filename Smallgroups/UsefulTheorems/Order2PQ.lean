@@ -35,10 +35,9 @@ Types I–IV remain, and two additional groups arise from `N ≅ ℤ/q ⋊ ℤ/p
 
 ## Status
 
-**Skeleton in progress.** The representative cardinalities, the Schur--Zassenhaus semidirect
-reduction from a normal subgroup of order `pq`, and the required unit-existence lemmas are proved;
-the normal-subgroup existence, exhaustiveness, and distinctness theorems are still marked for
-future proof.
+**Skeleton in progress.** The representative cardinalities, the normal subgroup of order `pq`, the
+Schur--Zassenhaus semidirect reduction, and the required unit-existence lemmas are proved; the
+exhaustiveness and most distinctness theorems are still marked for future proof.
 -/
 
 namespace Smallgroups.UsefulTheorems
@@ -110,12 +109,77 @@ theorem card_twoPQ_VI [NeZero (2 * p)] (d : (ZMod q)ˣ) (hd : d ^ (2 * p) = 1)
 
 variable {G : Type*} [Group G]
 
+private lemma sign_mulLeft_of_orderOf_two [Fintype G] [DecidableEq G]
+    (a : G) (ha : orderOf a = 2) (hcard : Odd (Nat.card G / 2)) :
+    Equiv.Perm.sign (Equiv.mulLeft a) = -1 := by
+  classical
+  have ha2 : a ^ 2 = 1 := by
+    rw [← orderOf_dvd_iff_pow_eq_one, ha]
+  have hperm2 : (Equiv.mulLeft a : Equiv.Perm G) ^ 2 = 1 := by
+    ext x
+    change a * (a * x) = x
+    rw [← mul_assoc, ← pow_two, ha2, one_mul]
+  rw [Equiv.Perm.sign_of_pow_two_eq_one hperm2]
+  have hfixed : Fintype.card (Function.fixedPoints (Equiv.mulLeft a : Equiv.Perm G)) = 0 := by
+    rw [Fintype.card_eq_zero_iff]
+    constructor
+    rintro ⟨x, hx⟩
+    have : a * x = x := hx
+    have ha1 : a = 1 := by
+      simpa using congr_arg (fun y => y * x⁻¹) this
+    have : orderOf a = 1 := by simp [ha1]
+    omega
+  rw [hfixed, tsub_zero]
+  rw [Nat.card_eq_fintype_card] at hcard
+  exact hcard.neg_one_pow
+
 /-- Every group of order `2pq` (`2 < p < q`, `p`, `q` odd primes) has a normal subgroup of
-    order `pq`. (Proof sketch: Sylow counting forces at least one of `n_q = 1` or `n_p ∈ {1, q}`;
-    in every case either the Sylow-`q` or a product of Sylow subgroups is normal of index `2`.) -/
+    order `pq`.
+
+The proof uses the sign of the left regular action. Since `|G|` is even, Cauchy's theorem gives an
+element of order `2`; left multiplication by this element is a fixed-point-free involution, hence an
+odd permutation because `|G| / 2 = pq` is odd. Thus the sign homomorphism is onto `ℤˣ`, and its
+kernel has index `2`. -/
 theorem twoPQ_normal_pq_subgroup (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
     [Finite G] (hG : Nat.card G = 2 * p * q) :
-    ∃ N : Subgroup G, N.Normal ∧ Nat.card N = p * q := sorry
+    ∃ N : Subgroup G, N.Normal ∧ Nat.card N = p * q := by
+  classical
+  haveI : Fintype G := Fintype.ofFinite G
+  let χ : G →* ℤˣ := Equiv.Perm.sign.comp (MulAction.toPermHom G G)
+  have hpodd : Odd p := hp.odd_of_ne_two (by omega)
+  have hqodd : Odd q := hq.odd_of_ne_two (by omega)
+  have hhalf : Nat.card G / 2 = p * q := by
+    rw [hG]
+    rw [show 2 * p * q = p * q * 2 by ring]
+    exact Nat.mul_div_left (p * q) (by norm_num : 0 < 2)
+  have hhalfodd : Odd (Nat.card G / 2) := hhalf.symm ▸ hpodd.mul hqodd
+  have htwo_dvd : 2 ∣ Nat.card G := by
+    refine ⟨p * q, ?_⟩
+    rw [hG]
+    ring
+  obtain ⟨a, ha⟩ := exists_prime_orderOf_dvd_card' (G := G) 2 htwo_dvd
+  have hχa : χ a = -1 := by
+    change Equiv.Perm.sign (MulAction.toPermHom G G a) = -1
+    have hperm : MulAction.toPermHom G G a = Equiv.mulLeft a := by
+      ext x
+      rfl
+    rw [hperm]
+    exact sign_mulLeft_of_orderOf_two a ha hhalfodd
+  have hχsurj : Function.Surjective χ := by
+    intro u
+    rcases Int.units_eq_one_or u with rfl | rfl
+    · exact ⟨1, map_one χ⟩
+    · exact ⟨a, hχa⟩
+  have hindex : χ.ker.index = 2 := by
+    rw [Subgroup.index_ker, MonoidHom.range_eq_top_of_surjective χ hχsurj]
+    simp [Nat.card_eq_fintype_card, Fintype.card_units_int]
+  have hNcard : Nat.card χ.ker = p * q := by
+    have hmul : Nat.card χ.ker * 2 = Nat.card G := by
+      simpa [hindex] using χ.ker.card_mul_index
+    apply Nat.mul_right_cancel (m := 2) (by norm_num : 0 < 2)
+    rw [hmul, hG]
+    ring
+  exact ⟨χ.ker, inferInstance, hNcard⟩
 
 /-- Every group of order `2pq` is a semidirect product `N ⋊ ℤ/2` where `|N| = pq`. -/
 theorem twoPQ_semidirect (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
