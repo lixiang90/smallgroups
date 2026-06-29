@@ -396,29 +396,102 @@ theorem twoPQ_pairwiseDistinct_4 (hp : p.Prime) (hq : q.Prime)
     fin_cases i <;> fin_cases j <;>
       first | rfl | (dsimp [twoPQ_center_sizes_4] at heq; first | omega | nlinarith)
 
-/-- Center of `NonabRep c hc` is trivial when the action is non-trivial. -/
-
+/-- Center of `NonabRep c hc` is trivial when the action is faithful.
+    Requires `p` prime (so `ZMod p` is a field) and `orderOf c = q` (action is faithful). -/
 theorem card_center_nonabRep [NeZero p] [NeZero q]
-    (c : (ZMod p)ˣ) (hc : c ^ q = 1) (_hcne : c ≠ 1)
-    (_hq : 1 < q) :
-    Nat.card (center (NonabRep c hc)) = 1 := sorry
-
+    (hp : p.Prime) (c : (ZMod p)ˣ) (hc : c ^ q = 1) (hcne : c ≠ 1)
+    (hord : orderOf c = q) :
+    Nat.card (center (NonabRep c hc)) = 1 := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hq1 : 1 < q := by
+    have h1 : q ≠ 0 := NeZero.ne q
+    have h2 : q ≠ 1 := by rw [← hord]; exact fun h => hcne (orderOf_eq_one_iff.mp h)
+    omega
+  haveI : Fact (1 < q) := ⟨hq1⟩
+  apply card_center_of_eq_bot
+  rw [eq_bot_iff]
+  intro g hg
+  simp only [Subgroup.mem_bot]
+  rw [Subgroup.mem_center_iff] at hg
+  -- For any central element g, both components must be 1
+  -- Step 1: g.left is fixed by all actions → g.left = 1
+  have hfixed : ∀ h, actionHom c hc h g.left = g.left := by
+    intro h
+    have key := congrArg SemidirectProduct.left (hg (SemidirectProduct.inr h))
+    simp only [SemidirectProduct.mul_left, SemidirectProduct.left_inr,
+      SemidirectProduct.right_inr, one_mul, map_one, mul_one] at key
+    exact key
+  have hleft : g.left = 1 := by
+    have h1 := hfixed (Multiplicative.ofAdd (1 : ZMod q))
+    rw [show g.left = Multiplicative.ofAdd (Multiplicative.toAdd g.left) from
+      (ofAdd_toAdd g.left).symm] at h1
+    rw [actionHom_apply, ZMod.val_one, pow_one] at h1
+    have h2 := Multiplicative.ofAdd.injective h1
+    have hcsub : (↑c : ZMod p) - 1 ≠ 0 := by
+      rw [sub_ne_zero]
+      intro heq; exact hcne (Units.val_injective (heq.trans Units.val_one.symm))
+    have h3 : ((↑c : ZMod p) - 1) * Multiplicative.toAdd g.left = 0 := by
+      rw [sub_mul, one_mul, sub_eq_zero]; exact h2
+    rcases mul_eq_zero.mp h3 with h | h
+    · exact absurd h hcsub
+    · exact (ofAdd_toAdd g.left).symm.trans (congrArg Multiplicative.ofAdd h)
+  -- Step 2: g.right acts trivially → g.right = 1
+  have htriv : ∀ n, actionHom c hc g.right n = n := by
+    intro n
+    have key := congrArg SemidirectProduct.left (hg (SemidirectProduct.inl n))
+    simp only [SemidirectProduct.mul_left, SemidirectProduct.left_inl,
+      SemidirectProduct.right_inl] at key
+    -- key : n * (actionHom c hc 1) g.left = g.left * (actionHom c hc g.right) n
+    -- Simplify (actionHom c hc 1) g.left → g.left via map_one + identity
+    have hmone : (actionHom c hc 1 : MulAut (Multiplicative (ZMod p))) g.left = g.left := by
+      rw [map_one]; rfl
+    rw [hmone, mul_comm n g.left] at key
+    exact (mul_left_cancel key).symm
+  have hright : g.right = 1 := by
+    have h1 := htriv (Multiplicative.ofAdd (1 : ZMod p))
+    rw [show g.right = Multiplicative.ofAdd (Multiplicative.toAdd g.right) from
+      (ofAdd_toAdd g.right).symm] at h1
+    rw [actionHom_apply, mul_one] at h1
+    have h2 := Multiplicative.ofAdd.injective h1
+    have h3 : c ^ (Multiplicative.toAdd g.right).val = 1 :=
+      Units.val_injective (by rw [h2, Units.val_one])
+    have h4 : q ∣ (Multiplicative.toAdd g.right).val := by
+      have := orderOf_dvd_of_pow_eq_one h3; rwa [hord] at this
+    have h5 : (Multiplicative.toAdd g.right).val < q := ZMod.val_lt _
+    have h6 : (Multiplicative.toAdd g.right).val = 0 := by
+      rcases Nat.eq_zero_or_pos (Multiplicative.toAdd g.right).val with h | h
+      · exact h
+      · exact absurd h5 (Nat.not_lt.mpr (Nat.le_of_dvd h h4))
+    have h7 : Multiplicative.toAdd g.right = 0 := (ZMod.val_eq_zero _).mp h6
+    exact (ofAdd_toAdd g.right).symm.trans (congrArg Multiplicative.ofAdd h7)
+  exact SemidirectProduct.ext hleft hright
 
 theorem card_center_twoPQ_V [NeZero p]
     (hp : p.Prime) (hq : q.Prime)
-    (h2p : 2 < p) (_hpq : p < q)
+    (_h2p : 2 < p) (_hpq : p < q)
     (c₀ : (ZMod q)ˣ) (hc₀ : c₀ ^ p = 1) (hc₀ne : c₀ ≠ 1) :
     Nat.card (center (twoPQ_V p q c₀ hc₀)) = 2 := by
   haveI : NeZero q := ⟨hq.pos.ne'⟩
-  sorry
-
+  have hord : orderOf c₀ = p := by
+    rcases hp.eq_one_or_self_of_dvd _ (orderOf_dvd_of_pow_eq_one hc₀) with h | h
+    · exact absurd (orderOf_eq_one_iff.mp h) hc₀ne
+    · exact h
+  change Nat.card (center (NonabRep c₀ hc₀ × Multiplicative (ZMod 2))) = 2
+  rw [card_center_prod,
+      card_center_nonabRep q p hq c₀ hc₀ hc₀ne hord,
+      card_center_eq_card_of_comm _ (fun a b => mul_comm a b)]
+  simp [Nat.card_eq_fintype_card, ZMod.card]
 
 theorem card_center_twoPQ_VI [NeZero (2 * p)]
     (hq : q.Prime) (_hpq : p < q)
-    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) (hd₀ne : d₀ ≠ 1) :
+    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) (_hd₀ne : d₀ ≠ 1)
+    (hd₀ord : orderOf d₀ = 2 * p) :
     Nat.card (center (twoPQ_VI p q d₀ hd₀)) = 1 := by
   haveI : NeZero q := ⟨hq.pos.ne'⟩
-  sorry
+  have hd₀ne' : d₀ ≠ 1 := by
+    intro h; rw [h, orderOf_one] at hd₀ord
+    have := NeZero.ne (2 * p); omega
+  exact card_center_nonabRep q (2 * p) hq d₀ hd₀ hd₀ne' hd₀ord
 
 /-- **II ≇ VI**: both have trivial center, so we need a different
 invariant (e.g. abelianization size or maximal cyclic-subgroup order).
@@ -437,7 +510,7 @@ theorem twoPQ_pairwiseDistinct_6 [NeZero p] [NeZero (2 * p)]
     (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
     (c₀ : (ZMod q)ˣ) (hc₀ : c₀ ^ p = 1) (hc₀ne : c₀ ≠ 1)
     (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1)
-    (hd₀ne : d₀ ≠ 1) :
+    (hd₀ne : d₀ ≠ 1) (hd₀ord : orderOf d₀ = 2 * p) :
     PairwiseNonMulEquiv
       (rep6 (twoPQ_I p q) (twoPQ_II p q)
             (twoPQ_III p q) (twoPQ_IV p q)
@@ -450,7 +523,7 @@ theorem twoPQ_pairwiseDistinct_6 [NeZero p] [NeZero (2 * p)]
     · exact card_center_twoPQ_III p q hp h2p hpq
     · exact card_center_twoPQ_IV p q hp hq h2p hpq
     · exact card_center_twoPQ_V p q hp hq h2p hpq c₀ hc₀ hc₀ne
-    · exact card_center_twoPQ_VI p q hq hpq d₀ hd₀ hd₀ne
+    · exact card_center_twoPQ_VI p q hq hpq d₀ hd₀ hd₀ne hd₀ord
   · intro i j heq hiso
     fin_cases i <;> fin_cases j <;>
       first
@@ -514,7 +587,7 @@ theorem twoPQ_isClassif_6 [NeZero p] [NeZero (2 * p)]
       with h | h | h | h | h | h
     exacts [⟨0, h⟩, ⟨1, h⟩, ⟨2, h⟩, ⟨3, h⟩, ⟨4, h⟩, ⟨5, h⟩]
   distinct := twoPQ_pairwiseDistinct_6 p q hp hq h2p hpq
-                c₀ hc₀ hc₀ne d₀ hd₀ hd₀ne
+                c₀ hc₀ hc₀ne d₀ hd₀ hd₀ne hd₀ord
 
 /-! ### Existence of required units -/
 

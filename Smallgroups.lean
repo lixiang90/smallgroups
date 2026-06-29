@@ -8,6 +8,7 @@ import Smallgroups.UsefulTheorems.PrimeSqPrimeNonabelian
 import Smallgroups.UsefulTheorems.P3Group
 import Smallgroups.UsefulTheorems.AbelianPa
 import Smallgroups.UsefulTheorems.AbelianPaUniqueness
+import Smallgroups.UsefulTheorems.CenterInvariant
 import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Smallgroups.UsefulTheorems.PrimeSqPrime
