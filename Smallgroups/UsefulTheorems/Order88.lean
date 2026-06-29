@@ -1129,6 +1129,10 @@ noncomputable abbrev order88_SD (H : Type) [Group H] (χ : H →* Multiplicative
     Type :=
   SemidirectProduct order88_C11 H (order88_action χ)
 
+noncomputable instance instFintypeOrder88SD {H : Type} [Group H] [Fintype H]
+    (χ : H →* Multiplicative (ZMod 2)) : Fintype (order88_SD H χ) :=
+  Fintype.ofEquiv (order88_C11 × H) SemidirectProduct.equivProd.symm
+
 /-- Precomposing a character by an automorphism gives an isomorphic semidirect product. -/
 noncomputable def order88_SD_equiv_of_character_comp {H : Type} [Group H]
     (χ ψ : H →* Multiplicative (ZMod 2)) (σ : H ≃* H)
@@ -1605,6 +1609,79 @@ theorem card_center_order88_RE : Nat.card (Subgroup.center order88_RE) = 22 := b
   change Nat.card (Subgroup.center (order88_C11 × order88_Q8)) = 22
   rw [card_center_prod, card_center_eq_card_of_comm order88_C11
     (fun a b => mul_comm a b), card_order88_C11, card_center_order88_Q8]
+
+theorem card_center_order88_RF : Nat.card (Subgroup.center order88_RF) = 4 := by
+  have hcard : Fintype.card (Subgroup.center order88_RF) = 4 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_center_order88_RG : Nat.card (Subgroup.center order88_RG) = 4 := by
+  have hcard : Fintype.card (Subgroup.center order88_RG) = 4 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_center_order88_RH : Nat.card (Subgroup.center order88_RH) = 4 := by
+  have hcard : Fintype.card (Subgroup.center order88_RH) = 4 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_center_order88_RI : Nat.card (Subgroup.center order88_RI) = 4 := by
+  have hcard : Fintype.card (Subgroup.center order88_RI) = 4 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_center_order88_RJ : Nat.card (Subgroup.center order88_RJ) = 2 := by
+  have hcard : Fintype.card (Subgroup.center order88_RJ) = 2 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_center_order88_RK : Nat.card (Subgroup.center order88_RK) = 2 := by
+  have hcard : Fintype.card (Subgroup.center order88_RK) = 2 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+theorem card_center_order88_RL : Nat.card (Subgroup.center order88_RL) = 2 := by
+  have hcard : Fintype.card (Subgroup.center order88_RL) = 2 := by
+    decide +kernel
+  exact Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq hcard)
+
+/-- Center cardinalities of the twelve displayed representatives. -/
+def order88_center_card : Fin 12 → Nat
+  | 0 => 88
+  | 1 => 88
+  | 2 => 88
+  | 3 => 22
+  | 4 => 22
+  | 5 => 4
+  | 6 => 4
+  | 7 => 4
+  | 8 => 4
+  | 9 => 2
+  | 10 => 2
+  | 11 => 2
+
+theorem card_center_order88_reps (i : Fin 12) :
+    Nat.card (Subgroup.center (order88_reps i)) = order88_center_card i := by
+  fin_cases i
+  · exact card_center_order88_RA
+  · exact card_center_order88_RB
+  · exact card_center_order88_RC
+  · exact card_center_order88_RD
+  · exact card_center_order88_RE
+  · exact card_center_order88_RF
+  · exact card_center_order88_RG
+  · exact card_center_order88_RH
+  · exact card_center_order88_RI
+  · exact card_center_order88_RJ
+  · exact card_center_order88_RK
+  · exact card_center_order88_RL
+
+theorem not_nonempty_mulEquiv_order88_reps_of_center_card_ne {i j : Fin 12}
+    (h : order88_center_card i ≠ order88_center_card j) :
+    ¬ Nonempty (order88_reps i ≃* order88_reps j) := by
+  exact not_nonempty_mulEquiv_of_card_center_ne (by
+    rw [card_center_order88_reps i, card_center_order88_reps j]
+    exact h)
 
 theorem card_order88_reps (i : Fin 12) : Nat.card (order88_reps i) = 88 := by
   fin_cases i
