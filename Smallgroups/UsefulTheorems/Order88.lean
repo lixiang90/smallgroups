@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order2PSq
 import Smallgroups.UsefulTheorems.P3Group
+import Smallgroups.UsefulTheorems.Counting
 import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Mathlib.GroupTheory.SpecificGroups.Quaternion
@@ -1245,6 +1246,25 @@ noncomputable abbrev order88_RJ : Type := order88_SD order88_D8 order88_chiD8_ro
 noncomputable abbrev order88_RK : Type := order88_SD order88_D8 order88_chiD8_ref
 noncomputable abbrev order88_RL : Type := order88_SD order88_Q8 order88_chiQ8
 
+/-- The twelve displayed representatives, indexed for the counting framework. -/
+noncomputable abbrev order88_reps : Fin 12 → Type :=
+  rep12 order88_RA order88_RB order88_RC order88_RD order88_RE order88_RF
+    order88_RG order88_RH order88_RI order88_RJ order88_RK order88_RL
+
+noncomputable instance instGroupOrder88Reps : ∀ i, Group (order88_reps i)
+  | 0 => inferInstanceAs (Group order88_RA)
+  | 1 => inferInstanceAs (Group order88_RB)
+  | 2 => inferInstanceAs (Group order88_RC)
+  | 3 => inferInstanceAs (Group order88_RD)
+  | 4 => inferInstanceAs (Group order88_RE)
+  | 5 => inferInstanceAs (Group order88_RF)
+  | 6 => inferInstanceAs (Group order88_RG)
+  | 7 => inferInstanceAs (Group order88_RH)
+  | 8 => inferInstanceAs (Group order88_RI)
+  | 9 => inferInstanceAs (Group order88_RJ)
+  | 10 => inferInstanceAs (Group order88_RK)
+  | 11 => inferInstanceAs (Group order88_RL)
+
 /-! ### Exhaustiveness -/
 
 /-- The twelve representative cases for groups of order `88`. -/
@@ -1522,5 +1542,46 @@ theorem card_order88_RK : Nat.card order88_RK = 88 :=
   card_order88_SD order88_chiD8_ref card_order88_D8
 theorem card_order88_RL : Nat.card order88_RL = 88 :=
   card_order88_SD order88_chiQ8 card_order88_Q8
+
+theorem card_order88_reps (i : Fin 12) : Nat.card (order88_reps i) = 88 := by
+  fin_cases i
+  · exact card_order88_RA
+  · exact card_order88_RB
+  · exact card_order88_RC
+  · exact card_order88_RD
+  · exact card_order88_RE
+  · exact card_order88_RF
+  · exact card_order88_RG
+  · exact card_order88_RH
+  · exact card_order88_RI
+  · exact card_order88_RJ
+  · exact card_order88_RK
+  · exact card_order88_RL
+
+/-- The displayed representatives exhaust the groups of order `88`, in `IsClassif` form. -/
+theorem order88_complete (G : Type) [Group G] (hG : Nat.card G = 88) :
+    ∃ i, Nonempty (G ≃* order88_reps i) := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hG]; norm_num)
+  rcases order88_classification (G := G) hG with h | h | h | h | h | h | h | h | h | h | h | h
+  exacts [⟨0, by simpa [order88_reps, rep12] using h⟩,
+    ⟨1, by simpa [order88_reps, rep12] using h⟩,
+    ⟨2, by simpa [order88_reps, rep12] using h⟩,
+    ⟨3, by simpa [order88_reps, rep12] using h⟩,
+    ⟨4, by simpa [order88_reps, rep12] using h⟩,
+    ⟨5, by simpa [order88_reps, rep12] using h⟩,
+    ⟨6, by simpa [order88_reps, rep12] using h⟩,
+    ⟨7, by simpa [order88_reps, rep12] using h⟩,
+    ⟨8, by simpa [order88_reps, rep12] using h⟩,
+    ⟨9, by simpa [order88_reps, rep12] using h⟩,
+    ⟨10, by simpa [order88_reps, rep12] using h⟩,
+    ⟨11, by simpa [order88_reps, rep12] using h⟩]
+
+/-- Once pairwise non-isomorphism of the displayed representatives is known, they form a complete
+classification of groups of order `88`. -/
+theorem order88_isClassif_of_pairwise (hdistinct : PairwiseNonMulEquiv order88_reps) :
+    IsClassif 88 order88_reps where
+  card := card_order88_reps
+  complete := order88_complete
+  distinct := hdistinct
 
 end Smallgroups.UsefulTheorems
