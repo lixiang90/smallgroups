@@ -35,7 +35,10 @@ Types I–IV remain, and two additional groups arise from `N ≅ ℤ/q ⋊ ℤ/p
 
 ## Status
 
-**Skeleton only.** All theorems are `sorry`'d and marked for future proof.
+**Skeleton in progress.** The representative cardinalities, the Schur--Zassenhaus semidirect
+reduction from a normal subgroup of order `pq`, and the required unit-existence lemmas are proved;
+the normal-subgroup existence, exhaustiveness, and distinctness theorems are still marked for
+future proof.
 -/
 
 namespace Smallgroups.UsefulTheorems
@@ -90,7 +93,7 @@ theorem card_twoPQ_IV (hp : p.Prime) : Nat.card (twoPQ_IV p q) = 2 * p * q := by
   ring
 
 theorem card_twoPQ_V [NeZero p] (c : (ZMod q)ˣ) (hc : c ^ p = 1)
-    (hp : p.Prime) (hq : q.Prime) :
+    (_hp : p.Prime) (hq : q.Prime) :
     Nat.card (twoPQ_V p q c hc) = 2 * p * q := by
   haveI : NeZero q := ⟨hq.pos.ne'⟩
   rw [Nat.card_prod, card_nonabRep, card_cyclicRep (by norm_num : (2 : ℕ) ≠ 0)]
@@ -119,7 +122,25 @@ theorem twoPQ_semidirect (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < 
     [Finite G] (hG : Nat.card G = 2 * p * q) :
     ∃ (N : Subgroup G) (_ : N.Normal) (_ : Nat.card N = p * q)
       (K : Subgroup G) (φ : K →* MulAut N),
-      Nonempty (G ≃* SemidirectProduct N K φ) := sorry
+      Nonempty (G ≃* SemidirectProduct N K φ) := by
+  obtain ⟨N, hNnormal, hNcard⟩ := twoPQ_normal_pq_subgroup p q hp hq h2p hpq hG
+  haveI : N.Normal := hNnormal
+  have hpodd : Odd p := hp.odd_of_ne_two (by omega)
+  have hqodd : Odd q := hq.odd_of_ne_two (by omega)
+  have hp_coprime_two : Nat.Coprime p 2 := by
+    refine (Nat.prime_two.coprime_iff_not_dvd.mpr ?_).symm
+    intro h
+    exact (Nat.not_even_iff_odd.mpr hpodd) ((even_iff_two_dvd).mpr h)
+  have hq_coprime_two : Nat.Coprime q 2 := by
+    refine (Nat.prime_two.coprime_iff_not_dvd.mpr ?_).symm
+    intro h
+    exact (Nat.not_even_iff_odd.mpr hqodd) ((even_iff_two_dvd).mpr h)
+  have hcop : Nat.Coprime (p * q) 2 := hp_coprime_two.mul_left hq_coprime_two
+  have hcard : Nat.card G = (p * q) * 2 := by
+    rw [hG]
+    ring
+  obtain ⟨K, φ, hiso⟩ := schurZassenhaus_of_card hcard hcop N hNcard
+  exact ⟨N, hNnormal, hNcard, K, φ, hiso⟩
 
 /-! ### Exhaustiveness: `¬ p ∣ q - 1` case (4 classes) -/
 
@@ -145,8 +166,13 @@ theorem twoPQ_classification_6 [NeZero p] [NeZero (2 * p)]
 
 /-! ### Distinctness -/
 
-theorem twoPQ_I_not_II (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
-    ¬ Nonempty (twoPQ_I p q ≃* twoPQ_II p q) := sorry
+theorem twoPQ_I_not_II (_hp : p.Prime) (_hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
+    ¬ Nonempty (twoPQ_I p q ≃* twoPQ_II p q) := by
+  have hpq_ne_one : p * q ≠ 1 := by
+    nlinarith [h2p, hpq]
+  change ¬ Nonempty (CyclicRep (2 * p * q) ≃* DihedralGroup (p * q))
+  rw [Nat.mul_assoc]
+  exact cyclicRep_not_mulEquiv_dihedral (p := p * q) hpq_ne_one
 
 theorem twoPQ_I_not_III (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) :
     ¬ Nonempty (twoPQ_I p q ≃* twoPQ_III p q) := sorry
@@ -231,13 +257,38 @@ theorem twoPQ_isClassif_6 [NeZero p] [NeZero (2 * p)]
 /-- When `p ∣ q - 1`, there exists a unit `c₀ : (ZMod q)ˣ` of order `p` with `c₀ ^ p = 1`. -/
 theorem twoPQ_exists_unit_p (hp : p.Prime) (hq : q.Prime) (hmod : p ∣ q - 1) :
     ∃ (c₀ : (ZMod q)ˣ), orderOf c₀ = p ∧ c₀ ^ p = 1 ∧ c₀ ≠ 1 :=
-  sorry
+  by
+    obtain ⟨c₀, hc₀ord, hc₀pow⟩ := exists_unit_orderOf_eq (p := q) (q := p) hq hmod
+    refine ⟨c₀, hc₀ord, hc₀pow, ?_⟩
+    intro hc₀eq
+    have horder : orderOf c₀ = 1 := by rw [hc₀eq, orderOf_one]
+    have hpone : p = 1 := by rw [← hc₀ord, horder]
+    exact hp.ne_one hpone
 
 /-- When `p ∣ q - 1`, there exists a unit `d₀ : (ZMod q)ˣ` of order `2p` with
     `d₀ ^ (2 * p) = 1`. (Since `q` is odd, `2 ∣ q - 1`, and `gcd(2, p) = 1` gives
     `2p ∣ q - 1`.) -/
 theorem twoPQ_exists_unit_2p (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hmod : p ∣ q - 1) :
     ∃ (d₀ : (ZMod q)ˣ), orderOf d₀ = 2 * p ∧ d₀ ^ (2 * p) = 1 :=
-  sorry
+  by
+    have hpne2 : p ≠ 2 := by omega
+    have hpodd : Odd p := hp.odd_of_ne_two hpne2
+    have hnot_two_dvd_p : ¬ 2 ∣ p := by
+      intro h
+      exact (Nat.not_even_iff_odd.mpr hpodd) ((even_iff_two_dvd).mpr h)
+    have hcop : Nat.Coprime 2 p := Nat.prime_two.coprime_iff_not_dvd.mpr hnot_two_dvd_p
+    have hqne2 : q ≠ 2 := by
+      intro hqeq
+      have hp_dvd_one : p ∣ 1 := by simpa [hqeq] using hmod
+      have hple : p ≤ 1 := Nat.le_of_dvd (by norm_num) hp_dvd_one
+      omega
+    have hqodd : Odd q := hq.odd_of_ne_two hqne2
+    have htwo_dvd_qsub : 2 ∣ q - 1 := by
+      obtain ⟨k, hk⟩ := hqodd
+      refine ⟨k, ?_⟩
+      omega
+    have htwop_dvd : 2 * p ∣ q - 1 :=
+      hcop.mul_dvd_of_dvd_of_dvd htwo_dvd_qsub hmod
+    exact exists_unit_orderOf_eq (p := q) (q := 2 * p) hq htwop_dvd
 
 end Smallgroups.UsefulTheorems
