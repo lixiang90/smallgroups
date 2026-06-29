@@ -14,6 +14,7 @@ import Smallgroups.UsefulTheorems.PrimeSqPrime
 import Smallgroups.UsefulTheorems.Order4Prime
 import Smallgroups.UsefulTheorems.Order2PSq
 import Smallgroups.UsefulTheorems.Order2PQ
+import Smallgroups.UsefulTheorems.Order63
 import Smallgroups.UsefulTheorems.Counting
 import Smallgroups.Classifications.Classifications_1_to_10
 import Smallgroups.Classifications.Classifications_11_to_20
