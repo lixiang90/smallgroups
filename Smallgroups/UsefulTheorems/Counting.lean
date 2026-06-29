@@ -278,6 +278,54 @@ theorem PairwiseNonMulEquiv.reindex {ι κ : Type*} {rep : ι → Type} [∀ i, 
     PairwiseNonMulEquiv (fun k => rep (e k)) :=
   fun i j hiso => e.injective (h (e i) (e j) hiso)
 
+/-! ### Constructor for the six-class case (used for orders `2pq` with `p ∣ q - 1`) -/
+
+/-- The six-element representative family. -/
+def rep6 (A B C D E F : Type) : Fin 6 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+  | 5 => F
+
+instance instGroupRep6 (A B C D E F : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F] :
+    ∀ i, Group (rep6 A B C D E F i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+  | 5 => ‹Group F›
+
+/-- Six representatives of order `N` that together exhaust the groups of order `N` and are pairwise
+non-isomorphic give a six-class classification. -/
+theorem isClassif_six {N : ℕ} (A B C D E F : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F]
+    (hA : Nat.card A = N) (hB : Nat.card B = N) (hC : Nat.card C = N) (hD : Nat.card D = N)
+    (hE : Nat.card E = N) (hF : Nat.card F = N)
+    (hcomplete : ∀ (G : Type) [Group G], Nat.card G = N → Nonempty (G ≃* A) ∨ Nonempty (G ≃* B) ∨
+      Nonempty (G ≃* C) ∨ Nonempty (G ≃* D) ∨ Nonempty (G ≃* E) ∨ Nonempty (G ≃* F))
+    (hAB : ¬ Nonempty (A ≃* B)) (hAC : ¬ Nonempty (A ≃* C)) (hAD : ¬ Nonempty (A ≃* D))
+    (hAE : ¬ Nonempty (A ≃* E)) (hAF : ¬ Nonempty (A ≃* F))
+    (hBC : ¬ Nonempty (B ≃* C)) (hBD : ¬ Nonempty (B ≃* D))
+    (hBE : ¬ Nonempty (B ≃* E)) (hBF : ¬ Nonempty (B ≃* F))
+    (hCD : ¬ Nonempty (C ≃* D)) (hCE : ¬ Nonempty (C ≃* E)) (hCF : ¬ Nonempty (C ≃* F))
+    (hDE : ¬ Nonempty (D ≃* E)) (hDF : ¬ Nonempty (D ≃* F))
+    (hEF : ¬ Nonempty (E ≃* F)) :
+    IsClassif N (rep6 A B C D E F) where
+  card i := by fin_cases i <;> assumption
+  complete G _ hG := by
+    rcases hcomplete G hG with h | h | h | h | h | h
+    exacts [⟨0, h⟩, ⟨1, h⟩, ⟨2, h⟩, ⟨3, h⟩, ⟨4, h⟩, ⟨5, h⟩]
+  distinct i j hiso := by
+    fin_cases i <;> fin_cases j <;>
+      first
+        | rfl
+        | exact absurd hiso ‹_›
+        | exact absurd (Nonempty.intro hiso.some.symm) ‹_›
+
 /-- **Abelian and non-abelian families are disjoint.** Supplies the disjointness hypothesis of
 `PairwiseNonMulEquiv.sum` when every `A i` is commutative and every `B j` is not. -/
 theorem pairwise_disjoint_of_comm_noncomm {ι κ : Type*} {A : ι → Type} {B : κ → Type}
