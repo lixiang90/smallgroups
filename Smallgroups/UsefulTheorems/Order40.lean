@@ -113,6 +113,13 @@ abbrev order40_Q8 : Type := QuaternionGroup 2
 noncomputable abbrev order40_u4 : (ZMod 5)ˣ :=
   ZMod.unitOfCoprime 2 (by norm_num : Nat.Coprime 2 5)
 
+theorem order40_u4_pow_four : order40_u4 ^ 4 = 1 := by
+  decide
+
+theorem order40_unit_cases (u : (ZMod 5)ˣ) :
+    u = 1 ∨ u = order40_u4 ∨ u = order40_u4 ^ 2 ∨ u = order40_u4 ^ 3 := by
+  decide +revert
+
 /-- The quotient map `C₂ → (ZMod 5)ˣ` sending the generator to `order40_u4 ^ 2`. -/
 noncomputable abbrev order40_c2UnitHom : Multiplicative (ZMod 2) →* (ZMod 5)ˣ :=
   powHom (p := 5) (q := 2) (order40_u4 ^ 2) (by decide)
