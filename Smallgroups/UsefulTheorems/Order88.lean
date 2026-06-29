@@ -287,9 +287,48 @@ noncomputable def order88_actionCharacter {H : Type} [Group H] [Finite H]
       simp only [hab, ha, hb, order88_invAut_ne_one, if_true, if_false]
       decide
 
+/-- Every element of `C₂` is either `0` or `1`, multiplicatively. -/
+theorem order88_c2_element_cases (x : Multiplicative (ZMod 2)) :
+    x = 1 ∨ x = Multiplicative.ofAdd (1 : ZMod 2) := by
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+  fin_cases m
+  · left
+    rfl
+  · right
+    rfl
+
+/-- Homomorphisms out of `C₈` are determined by the additive generator `1`. -/
+theorem order88_c8_hom_ext {χ ψ : order88_C8 →* Multiplicative (ZMod 2)}
+    (hgen : χ (Multiplicative.ofAdd (1 : ZMod 8)) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 8))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  let n : ZMod 8 := Multiplicative.toAdd x
+  have hx : x = (Multiplicative.ofAdd (1 : ZMod 8)) ^ n.val := by
+    rw [show x = Multiplicative.ofAdd n from (ofAdd_toAdd _).symm]
+    calc
+      Multiplicative.ofAdd n = Multiplicative.ofAdd ((n.val : ZMod 8)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (n.val • (1 : ZMod 8)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 8)) ^ n.val := by rw [ofAdd_nsmul]
+  rw [hx, map_pow, map_pow, hgen]
+
 /-- The unique non-trivial `C₈ → C₂` character, up to automorphism of `C₈`. -/
 noncomputable abbrev order88_chiC8 : order88_C8 →* Multiplicative (ZMod 2) :=
   zmodCastMulHom (by norm_num : 2 ∣ 8)
+
+/-- A character `C₈ → C₂` is trivial or the standard quotient map. -/
+theorem order88_c8_character_cases (χ : order88_C8 →* Multiplicative (ZMod 2)) :
+    χ = 1 ∨ χ = order88_chiC8 := by
+  rcases order88_c2_element_cases (χ (Multiplicative.ofAdd (1 : ZMod 8))) with hgen | hgen
+  · left
+    apply order88_c8_hom_ext
+    simp [hgen]
+  · right
+    apply order88_c8_hom_ext
+    rw [hgen]
+    rfl
 
 /-- The `C₄ × C₂ → C₂` character non-trivial on the `C₄` factor. -/
 noncomputable abbrev order88_chiC4C2_fst : order88_C4C2 →* Multiplicative (ZMod 2) :=
@@ -380,6 +419,18 @@ theorem order88_action_eq_actionCharacter {H : Type} [Group H] [Finite H]
       classical
       simp [order88_actionCharacter, hh, order88_invAut_ne_one]
     simp [order88_action, hchi, hh, invActionHom_gen]
+
+/-- An action `C₈ → Aut(C₁₁)` is trivial or the standard inversion action. -/
+theorem order88_c8_action_cases (φ : order88_C8 →* MulAut order88_C11) :
+    φ = 1 ∨ φ = order88_action order88_chiC8 := by
+  have hcard : Nat.card order88_C8 = 8 := card_cyclicRep (by norm_num)
+  have hφ := order88_action_eq_actionCharacter hcard φ
+  rcases order88_c8_character_cases (order88_actionCharacter hcard φ) with hχ | hχ
+  · left
+    rw [hφ, hχ]
+    rfl
+  · right
+    rw [hφ, hχ]
 
 /-- Semidirect-product representative attached to a character `χ : H → C₂`. -/
 noncomputable abbrev order88_SD (H : Type) [Group H] (χ : H →* Multiplicative (ZMod 2)) :
