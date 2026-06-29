@@ -326,6 +326,61 @@ theorem isClassif_six {N : ℕ} (A B C D E F : Type)
         | exact absurd hiso ‹_›
         | exact absurd (Nonempty.intro hiso.some.symm) ‹_›
 
+/-- The twelve-element representative family. -/
+def rep12 (A B C D E F G H I J K L : Type) : Fin 12 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+  | 5 => F
+  | 6 => G
+  | 7 => H
+  | 8 => I
+  | 9 => J
+  | 10 => K
+  | 11 => L
+
+instance instGroupRep12 (A B C D E F G H I J K L : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F]
+    [Group G] [Group H] [Group I] [Group J] [Group K] [Group L] :
+    ∀ i, Group (rep12 A B C D E F G H I J K L i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+  | 5 => ‹Group F›
+  | 6 => ‹Group G›
+  | 7 => ‹Group H›
+  | 8 => ‹Group I›
+  | 9 => ‹Group J›
+  | 10 => ‹Group K›
+  | 11 => ‹Group L›
+
+/-- Twelve representatives of order `N` that together exhaust the groups of order `N` and are
+pairwise non-isomorphic give a twelve-class classification. -/
+theorem isClassif_twelve {N : ℕ} (A B C D E F G H I J K L : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F]
+    [Group G] [Group H] [Group I] [Group J] [Group K] [Group L]
+    (hA : Nat.card A = N) (hB : Nat.card B = N) (hC : Nat.card C = N)
+    (hD : Nat.card D = N) (hE : Nat.card E = N) (hF : Nat.card F = N)
+    (hG : Nat.card G = N) (hH : Nat.card H = N) (hI : Nat.card I = N)
+    (hJ : Nat.card J = N) (hK : Nat.card K = N) (hL : Nat.card L = N)
+    (hcomplete : ∀ (X : Type) [Group X], Nat.card X = N →
+      Nonempty (X ≃* A) ∨ Nonempty (X ≃* B) ∨ Nonempty (X ≃* C) ∨
+        Nonempty (X ≃* D) ∨ Nonempty (X ≃* E) ∨ Nonempty (X ≃* F) ∨
+        Nonempty (X ≃* G) ∨ Nonempty (X ≃* H) ∨ Nonempty (X ≃* I) ∨
+        Nonempty (X ≃* J) ∨ Nonempty (X ≃* K) ∨ Nonempty (X ≃* L))
+    (hdistinct : PairwiseNonMulEquiv (rep12 A B C D E F G H I J K L)) :
+    IsClassif N (rep12 A B C D E F G H I J K L) where
+  card i := by fin_cases i <;> assumption
+  complete X _ hX := by
+    rcases hcomplete X hX with h | h | h | h | h | h | h | h | h | h | h | h
+    exacts [⟨0, h⟩, ⟨1, h⟩, ⟨2, h⟩, ⟨3, h⟩, ⟨4, h⟩, ⟨5, h⟩,
+      ⟨6, h⟩, ⟨7, h⟩, ⟨8, h⟩, ⟨9, h⟩, ⟨10, h⟩, ⟨11, h⟩]
+  distinct i j hiso := hdistinct i j hiso
+
 /-- **Abelian and non-abelian families are disjoint.** Supplies the disjointness hypothesis of
 `PairwiseNonMulEquiv.sum` when every `A i` is commutative and every `B j` is not. -/
 theorem pairwise_disjoint_of_comm_noncomm {ι κ : Type*} {A : ι → Type} {B : κ → Type}
