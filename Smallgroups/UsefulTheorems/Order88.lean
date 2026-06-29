@@ -6,6 +6,7 @@ Authors: Smallgroups contributors
 import Smallgroups.UsefulTheorems.Order2PSq
 import Smallgroups.UsefulTheorems.P3Group
 import Smallgroups.UsefulTheorems.Counting
+import Smallgroups.UsefulTheorems.CenterInvariant
 import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Mathlib.GroupTheory.SpecificGroups.Quaternion
@@ -1500,32 +1501,7 @@ theorem order88_classification [Finite G] (hG : Nat.card G = 88) :
 
 /-! ### Cardinalities of the representatives -/
 
-/-- The center of a commutative group has the same cardinality as the group. -/
-theorem card_center_eq_card_of_comm (H : Type*) [Group H] (hcomm : ∀ a b : H, a * b = b * a) :
-    Nat.card (Subgroup.center H) = Nat.card H := by
-  haveI : IsMulCommutative H := IsMulCommutative.of_comm hcomm
-  rw [Subgroup.center_eq_top]
-  exact Nat.card_congr Subgroup.topEquiv.toEquiv
 
-/-- The center of a product has cardinality the product of the center cardinalities. -/
-theorem card_center_prod (H K : Type*) [Group H] [Group K] :
-    Nat.card (Subgroup.center (H × K)) =
-      Nat.card (Subgroup.center H) * Nat.card (Subgroup.center K) := by
-  rw [Subgroup.center_prod]
-  rw [Nat.card_congr (Subgroup.prodEquiv (Subgroup.center H) (Subgroup.center K)).toEquiv]
-  rw [Nat.card_prod]
-
-/-- Isomorphic groups have centers of the same cardinality. -/
-theorem card_center_eq_of_mulEquiv {H K : Type*} [Group H] [Group K] (e : H ≃* K) :
-    Nat.card (Subgroup.center H) = Nat.card (Subgroup.center K) := by
-  exact Nat.card_congr (Subgroup.centerCongr e).toEquiv
-
-/-- Groups with centers of different cardinalities are not isomorphic. -/
-theorem not_nonempty_mulEquiv_of_card_center_ne {H K : Type*} [Group H] [Group K]
-    (h : Nat.card (Subgroup.center H) ≠ Nat.card (Subgroup.center K)) :
-    ¬ Nonempty (H ≃* K) := by
-  rintro ⟨e⟩
-  exact h (card_center_eq_of_mulEquiv e)
 
 noncomputable def pow_eq_one_card (H : Type*) [Group H] (n : ℕ) : ℕ :=
   Nat.card {x : H // x ^ n = 1}
