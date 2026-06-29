@@ -686,6 +686,75 @@ noncomputable def order88_chiQ8 : order88_Q8 →* Multiplicative (ZMod 2) where
       simp [toAdd_mul, sub_eq_add_neg, CharTwo.neg_eq]
       ac_rfl
 
+/-- The `Q₈ → C₂` character non-trivial on `xa 0`. -/
+noncomputable def order88_chiQ8_xa : order88_Q8 →* Multiplicative (ZMod 2) where
+  toFun
+    | QuaternionGroup.a _ => 1
+    | QuaternionGroup.xa _ => Multiplicative.ofAdd (1 : ZMod 2)
+  map_one' := rfl
+  map_mul' := by
+    rintro (i | i) (j | j)
+    · rfl
+    · rfl
+    · rfl
+    · simp only [QuaternionGroup.xa_mul_xa]
+      decide
+
+/-- The product of the two displayed `Q₈ → C₂` characters. -/
+noncomputable abbrev order88_chiQ8_prod : order88_Q8 →* Multiplicative (ZMod 2) :=
+  order88_chiQ8 * order88_chiQ8_xa
+
+/-- Characters `Q₈ → C₂` are determined by `a 1` and `xa 0`. -/
+theorem order88_q8_hom_ext {χ ψ : order88_Q8 →* Multiplicative (ZMod 2)}
+    (ha : χ (QuaternionGroup.a (1 : ZMod 4)) = ψ (QuaternionGroup.a (1 : ZMod 4)))
+    (hx : χ (QuaternionGroup.xa (0 : ZMod 4)) = ψ (QuaternionGroup.xa (0 : ZMod 4))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  rcases x with i | i
+  · have hi : QuaternionGroup.a i = (QuaternionGroup.a (1 : ZMod 4) : order88_Q8) ^ i.val := by
+      calc
+        QuaternionGroup.a i = QuaternionGroup.a ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = (QuaternionGroup.a (1 : ZMod 4) : order88_Q8) ^ i.val := by
+          rw [QuaternionGroup.a_one_pow]
+    rw [hi, map_pow, map_pow, ha]
+  · have hai : QuaternionGroup.a i = (QuaternionGroup.a (1 : ZMod 4) : order88_Q8) ^ i.val := by
+      calc
+        QuaternionGroup.a i = QuaternionGroup.a ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = (QuaternionGroup.a (1 : ZMod 4) : order88_Q8) ^ i.val := by
+          rw [QuaternionGroup.a_one_pow]
+    have hi : QuaternionGroup.xa i =
+        QuaternionGroup.xa (0 : ZMod 4) *
+          (QuaternionGroup.a (1 : ZMod 4) : order88_Q8) ^ i.val := by
+      rw [← hai]
+      simp [QuaternionGroup.xa_mul_a]
+    rw [hi, map_mul, map_mul, map_pow, map_pow, hx, ha]
+
+/-- A character `Q₈ → C₂` is one of the four displayed characters. -/
+theorem order88_q8_character_cases (χ : order88_Q8 →* Multiplicative (ZMod 2)) :
+    χ = 1 ∨ χ = order88_chiQ8 ∨ χ = order88_chiQ8_xa ∨
+      χ = order88_chiQ8_prod := by
+  let a1 : order88_Q8 := QuaternionGroup.a (1 : ZMod 4)
+  let x0 : order88_Q8 := QuaternionGroup.xa (0 : ZMod 4)
+  rcases order88_c2_element_cases (χ a1) with ha | ha <;>
+    rcases order88_c2_element_cases (χ x0) with hx | hx
+  · left
+    apply order88_q8_hom_ext <;> simp [a1, x0, ha, hx]
+  · right
+    right
+    left
+    apply order88_q8_hom_ext <;> simp [a1, x0, ha, hx, order88_chiQ8_xa]
+  · right
+    left
+    apply order88_q8_hom_ext <;> simp [a1, x0, ha, hx, order88_chiQ8]
+  · right
+    right
+    right
+    apply order88_q8_hom_ext <;> simp [a1, x0, ha, hx, order88_chiQ8_prod,
+      order88_chiQ8, order88_chiQ8_xa]
+
 /-- Turn a character `H → C₂` into the corresponding inversion action on `C₁₁`. -/
 noncomputable abbrev order88_action {H : Type} [Group H]
     (χ : H →* Multiplicative (ZMod 2)) : H →* MulAut order88_C11 :=
@@ -813,6 +882,31 @@ theorem order88_d8_action_cases (φ : order88_D8 →* MulAut order88_C11) :
     rw [DihedralGroup.nat_card]
   have hφ := order88_action_eq_actionCharacter hcard φ
   rcases order88_d8_character_cases (order88_actionCharacter hcard φ) with hχ | hχ | hχ | hχ
+  · left
+    rw [hφ, hχ]
+    rfl
+  · right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    right
+    rw [hφ, hχ]
+
+/-- An action `Q₈ → Aut(C₁₁)` is induced by one of the four characters. -/
+theorem order88_q8_action_cases (φ : order88_Q8 →* MulAut order88_C11) :
+    φ = 1 ∨ φ = order88_action order88_chiQ8 ∨
+      φ = order88_action order88_chiQ8_xa ∨
+      φ = order88_action order88_chiQ8_prod := by
+  have hcard : Nat.card order88_Q8 = 8 := by
+    rw [P3Group.card_quaternion8]
+    norm_num
+  have hφ := order88_action_eq_actionCharacter hcard φ
+  rcases order88_q8_character_cases (order88_actionCharacter hcard φ) with hχ | hχ | hχ | hχ
   · left
     rw [hφ, hχ]
     rfl
