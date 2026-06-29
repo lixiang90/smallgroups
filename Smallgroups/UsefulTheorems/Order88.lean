@@ -245,6 +245,48 @@ theorem order88_action_value_eq_one_or_inv {H : Type} [Group H] [Finite H]
     simpa [hH] using (pow_card_eq_one' (x := h))
   rw [← map_pow, hh8, map_one]
 
+/-- Inversion is not the identity automorphism of `C₁₁`. -/
+theorem order88_invAut_ne_one : invAut order88_C11 ≠ 1 := by
+  haveI : Fact (1 < 11) := ⟨by norm_num⟩
+  intro h
+  have hx := congrArg
+    (fun f : MulAut order88_C11 => f (Multiplicative.ofAdd (1 : ZMod 11))) h
+  have hx' : (Multiplicative.ofAdd (1 : ZMod 11))⁻¹ =
+      Multiplicative.ofAdd (1 : ZMod 11) := by
+    simpa [invAut_apply] using hx
+  clear hx
+  have hxadd : (-1 : ZMod 11) = 1 := by
+    simpa using congrArg Multiplicative.toAdd hx'
+  have hv := congrArg ZMod.val hxadd
+  rw [ZMod.val_one] at hv
+  norm_num at hv
+
+/-- The character `H → C₂` attached to an order-`88` action `H → Aut(C₁₁)`. -/
+noncomputable def order88_actionCharacter {H : Type} [Group H] [Finite H]
+    (hH : Nat.card H = 8) (φ : H →* MulAut order88_C11) :
+    H →* Multiplicative (ZMod 2) where
+  toFun h := by
+    classical
+    exact if φ h = 1 then 1 else Multiplicative.ofAdd (1 : ZMod 2)
+  map_one' := by
+    classical
+    simp
+  map_mul' := by
+    classical
+    intro a b
+    rcases order88_action_value_eq_one_or_inv hH φ a with ha | ha <;>
+      rcases order88_action_value_eq_one_or_inv hH φ b with hb | hb
+    · have hab : φ (a * b) = 1 := by rw [map_mul, ha, hb, mul_one]
+      simp [hab, ha, hb]
+    · have hab : φ (a * b) = invAut order88_C11 := by rw [map_mul, ha, hb, one_mul]
+      simp [hab, ha, hb, order88_invAut_ne_one]
+    · have hab : φ (a * b) = invAut order88_C11 := by rw [map_mul, ha, hb, mul_one]
+      simp [hab, ha, hb, order88_invAut_ne_one]
+    · have hab : φ (a * b) = 1 := by
+        rw [map_mul, ha, hb, ← sq, invAut_sq]
+      simp only [hab, ha, hb, order88_invAut_ne_one, if_true, if_false]
+      decide
+
 /-- The unique non-trivial `C₈ → C₂` character, up to automorphism of `C₈`. -/
 noncomputable abbrev order88_chiC8 : order88_C8 →* Multiplicative (ZMod 2) :=
   zmodCastMulHom (by norm_num : 2 ∣ 8)
@@ -323,6 +365,21 @@ noncomputable def order88_chiQ8 : order88_Q8 →* Multiplicative (ZMod 2) where
 noncomputable abbrev order88_action {H : Type} [Group H]
     (χ : H →* Multiplicative (ZMod 2)) : H →* MulAut order88_C11 :=
   (invActionHom order88_C11).comp χ
+
+/-- Every action `H → Aut(C₁₁)` with `|H| = 8` is induced by its character `H → C₂`. -/
+theorem order88_action_eq_actionCharacter {H : Type} [Group H] [Finite H]
+    (hH : Nat.card H = 8) (φ : H →* MulAut order88_C11) :
+    φ = order88_action (order88_actionCharacter hH φ) := by
+  ext h x
+  rcases order88_action_value_eq_one_or_inv hH φ h with hh | hh
+  · have hchi : order88_actionCharacter hH φ h = 1 := by
+      classical
+      simp [order88_actionCharacter, hh]
+    simp [order88_action, hchi, hh]
+  · have hchi : order88_actionCharacter hH φ h = Multiplicative.ofAdd (1 : ZMod 2) := by
+      classical
+      simp [order88_actionCharacter, hh, order88_invAut_ne_one]
+    simp [order88_action, hchi, hh, invActionHom_gen]
 
 /-- Semidirect-product representative attached to a character `χ : H → C₂`. -/
 noncomputable abbrev order88_SD (H : Type) [Group H] (χ : H →* Multiplicative (ZMod 2)) :
