@@ -1245,6 +1245,235 @@ noncomputable abbrev order88_RJ : Type := order88_SD order88_D8 order88_chiD8_ro
 noncomputable abbrev order88_RK : Type := order88_SD order88_D8 order88_chiD8_ref
 noncomputable abbrev order88_RL : Type := order88_SD order88_Q8 order88_chiQ8
 
+/-! ### Exhaustiveness -/
+
+/-- The twelve representative cases for groups of order `88`. -/
+abbrev order88RepCases (G : Type*) [Group G] : Prop :=
+  Nonempty (G ≃* order88_RA) ∨ Nonempty (G ≃* order88_RB) ∨
+    Nonempty (G ≃* order88_RC) ∨ Nonempty (G ≃* order88_RD) ∨
+    Nonempty (G ≃* order88_RE) ∨ Nonempty (G ≃* order88_RF) ∨
+    Nonempty (G ≃* order88_RG) ∨ Nonempty (G ≃* order88_RH) ∨
+    Nonempty (G ≃* order88_RI) ∨ Nonempty (G ≃* order88_RJ) ∨
+    Nonempty (G ≃* order88_RK) ∨ Nonempty (G ≃* order88_RL)
+
+private theorem order88RepCases_ra {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RA)) :
+    order88RepCases G := by
+  left
+  exact h
+
+private theorem order88RepCases_rb {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RB)) :
+    order88RepCases G := by
+  right
+  left
+  exact h
+
+private theorem order88RepCases_rc {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RC)) :
+    order88RepCases G := by
+  right
+  right
+  left
+  exact h
+
+private theorem order88RepCases_rd {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RD)) :
+    order88RepCases G := by
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order88RepCases_re {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RE)) :
+    order88RepCases G := by
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order88RepCases_rf {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RF)) :
+    order88RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order88RepCases_rg {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RG)) :
+    order88RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order88RepCases_rh {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RH)) :
+    order88RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order88RepCases_ri {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RI)) :
+    order88RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order88RepCases_rj {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RJ)) :
+    order88RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order88RepCases_rk {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RK)) :
+    order88RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order88RepCases_rl {G : Type*} [Group G] (h : Nonempty (G ≃* order88_RL)) :
+    order88RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  exact h
+
+private theorem order88_classification_of_c8_action {G : Type*} [Group G]
+    {φ : order88_C8 →* MulAut order88_C11}
+    (e : G ≃* SemidirectProduct order88_C11 order88_C8 φ) :
+    order88RepCases G := by
+  rcases order88_c8_action_cases φ with hφ | hφ
+  · exact order88RepCases_ra
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd)⟩
+  · exact order88RepCases_rf ⟨e.trans (semidirectProductCongr_eq hφ)⟩
+
+private theorem order88_classification_of_c4c2_action {G : Type*} [Group G]
+    {φ : order88_C4C2 →* MulAut order88_C11}
+    (e : G ≃* SemidirectProduct order88_C11 order88_C4C2 φ) :
+    order88RepCases G := by
+  rcases order88_c4c2_action_cases φ with hφ | hφ | hφ | hφ
+  · exact order88RepCases_rb
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd)⟩
+  · exact order88RepCases_rg ⟨e.trans (semidirectProductCongr_eq hφ)⟩
+  · exact order88RepCases_rh ⟨e.trans (semidirectProductCongr_eq hφ)⟩
+  · exact order88RepCases_rh
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_c4c2_prod_equiv_snd)⟩
+
+private theorem order88_classification_of_c2c2c2_action {G : Type*} [Group G]
+    {φ : order88_C2C2C2 →* MulAut order88_C11}
+    (e : G ≃* SemidirectProduct order88_C11 order88_C2C2C2 φ) :
+    order88RepCases G := by
+  rcases order88_c2c2c2_action_cases φ with
+    hφ | hφ | hφ | hφ | hφ | hφ | hφ | hφ
+  · exact order88RepCases_rc
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd)⟩
+  · exact order88RepCases_ri ⟨e.trans (semidirectProductCongr_eq hφ)⟩
+  · exact order88RepCases_ri
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_c2c2c2_snd_equiv)⟩
+  · exact order88RepCases_ri
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_c2c2c2_trd_equiv)⟩
+  · exact order88RepCases_ri
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_c2c2c2_fst_snd_equiv)⟩
+  · exact order88RepCases_ri
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_c2c2c2_fst_trd_equiv)⟩
+  · exact order88RepCases_ri
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_c2c2c2_snd_trd_equiv)⟩
+  · exact order88RepCases_ri
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_c2c2c2_fst_snd_trd_equiv)⟩
+
+private theorem order88_classification_of_d8_action {G : Type*} [Group G]
+    {φ : order88_D8 →* MulAut order88_C11}
+    (e : G ≃* SemidirectProduct order88_C11 order88_D8 φ) :
+    order88RepCases G := by
+  rcases order88_d8_action_cases φ with hφ | hφ | hφ | hφ
+  · exact order88RepCases_rd
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd)⟩
+  · exact order88RepCases_rj ⟨e.trans (semidirectProductCongr_eq hφ)⟩
+  · exact order88RepCases_rk ⟨e.trans (semidirectProductCongr_eq hφ)⟩
+  · exact order88RepCases_rj
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_d8_prod_equiv_rot)⟩
+
+private theorem order88_classification_of_q8_action {G : Type*} [Group G]
+    {φ : order88_Q8 →* MulAut order88_C11}
+    (e : G ≃* SemidirectProduct order88_C11 order88_Q8 φ) :
+    order88RepCases G := by
+  rcases order88_q8_action_cases φ with hφ | hφ | hφ | hφ
+  · exact order88RepCases_re
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd)⟩
+  · exact order88RepCases_rl ⟨e.trans (semidirectProductCongr_eq hφ)⟩
+  · exact order88RepCases_rl
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_q8_xa_equiv_q8)⟩
+  · exact order88RepCases_rl
+      ⟨e.trans ((semidirectProductCongr_eq hφ).trans order88_q8_prod_equiv_q8)⟩
+
+/-- Every group of order `88` is isomorphic to one of the twelve displayed representatives. -/
+theorem order88_classification [Finite G] (hG : Nat.card G = 88) :
+    order88RepCases G := by
+  obtain ⟨N, H, φ, _, hcardN, hcardH, ⟨e⟩⟩ := order88_semidirectProduct hG
+  obtain ⟨eN⟩ := prime_classification (by norm_num : Nat.Prime 11) hcardN
+  haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+  haveI : Fintype H := Fintype.ofFinite H
+  rcases P3Group.classification 2 H (hcardH.trans (by norm_num)) with
+    hH | hH | hH | hH | hH | hH | hH
+  · change Nonempty (H ≃* order88_C8) at hH
+    obtain ⟨eH⟩ := hH
+    exact order88_classification_of_c8_action (e.trans (SemidirectProduct.congr' eN eH))
+  · change Nonempty (H ≃* order88_C4C2) at hH
+    obtain ⟨eH⟩ := hH
+    exact order88_classification_of_c4c2_action (e.trans (SemidirectProduct.congr' eN eH))
+  · change Nonempty (H ≃* order88_C2C2C2) at hH
+    obtain ⟨eH⟩ := hH
+    exact order88_classification_of_c2c2c2_action (e.trans (SemidirectProduct.congr' eN eH))
+  · exact (hH.1 rfl).elim
+  · exact (hH.1 rfl).elim
+  · obtain ⟨eH⟩ := hH.2
+    exact order88_classification_of_d8_action (e.trans (SemidirectProduct.congr' eN eH))
+  · obtain ⟨eH⟩ := hH.2
+    exact order88_classification_of_q8_action (e.trans (SemidirectProduct.congr' eN eH))
+
 /-! ### Cardinalities of the representatives -/
 
 theorem card_order88_C11 : Nat.card order88_C11 = 11 := card_cyclicRep (by norm_num)
