@@ -1496,6 +1496,33 @@ theorem order88_classification [Finite G] (hG : Nat.card G = 88) :
 
 /-! ### Cardinalities of the representatives -/
 
+/-- The center of a commutative group has the same cardinality as the group. -/
+theorem card_center_eq_card_of_comm (H : Type*) [Group H] (hcomm : ∀ a b : H, a * b = b * a) :
+    Nat.card (Subgroup.center H) = Nat.card H := by
+  haveI : IsMulCommutative H := IsMulCommutative.of_comm hcomm
+  rw [Subgroup.center_eq_top]
+  exact Nat.card_congr Subgroup.topEquiv.toEquiv
+
+/-- The center of a product has cardinality the product of the center cardinalities. -/
+theorem card_center_prod (H K : Type*) [Group H] [Group K] :
+    Nat.card (Subgroup.center (H × K)) =
+      Nat.card (Subgroup.center H) * Nat.card (Subgroup.center K) := by
+  rw [Subgroup.center_prod]
+  rw [Nat.card_congr (Subgroup.prodEquiv (Subgroup.center H) (Subgroup.center K)).toEquiv]
+  rw [Nat.card_prod]
+
+/-- Isomorphic groups have centers of the same cardinality. -/
+theorem card_center_eq_of_mulEquiv {H K : Type*} [Group H] [Group K] (e : H ≃* K) :
+    Nat.card (Subgroup.center H) = Nat.card (Subgroup.center K) := by
+  exact Nat.card_congr (Subgroup.centerCongr e).toEquiv
+
+/-- Groups with centers of different cardinalities are not isomorphic. -/
+theorem not_nonempty_mulEquiv_of_card_center_ne {H K : Type*} [Group H] [Group K]
+    (h : Nat.card (Subgroup.center H) ≠ Nat.card (Subgroup.center K)) :
+    ¬ Nonempty (H ≃* K) := by
+  rintro ⟨e⟩
+  exact h (card_center_eq_of_mulEquiv e)
+
 theorem card_order88_C11 : Nat.card order88_C11 = 11 := card_cyclicRep (by norm_num)
 
 theorem card_order88_C8 : Nat.card order88_C8 = 8 := card_cyclicRep (by norm_num)
@@ -1542,6 +1569,42 @@ theorem card_order88_RK : Nat.card order88_RK = 88 :=
   card_order88_SD order88_chiD8_ref card_order88_D8
 theorem card_order88_RL : Nat.card order88_RL = 88 :=
   card_order88_SD order88_chiQ8 card_order88_Q8
+
+/-! ### Center cardinalities of the representatives -/
+
+theorem card_center_order88_RA : Nat.card (Subgroup.center order88_RA) = 88 := by
+  rw [card_center_eq_card_of_comm order88_RA (fun a b => mul_comm a b)]
+  exact card_order88_RA
+
+theorem card_center_order88_RB : Nat.card (Subgroup.center order88_RB) = 88 := by
+  rw [card_center_eq_card_of_comm order88_RB (fun a b => mul_comm a b)]
+  exact card_order88_RB
+
+theorem card_center_order88_RC : Nat.card (Subgroup.center order88_RC) = 88 := by
+  rw [card_center_eq_card_of_comm order88_RC (fun a b => mul_comm a b)]
+  exact card_order88_RC
+
+theorem card_center_order88_D8 : Nat.card (Subgroup.center order88_D8) = 2 := by
+  haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+  exact P3Group.center_card_eq_p_of_nonabelian
+    (p := 2) (G := order88_D8) (by simpa using P3Group.card_dihedral4)
+    P3Group.dihedral4_nonabelian
+
+theorem card_center_order88_Q8 : Nat.card (Subgroup.center order88_Q8) = 2 := by
+  haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+  exact P3Group.center_card_eq_p_of_nonabelian
+    (p := 2) (G := order88_Q8) (by simpa using P3Group.card_quaternion8)
+    P3Group.quaternion8_nonabelian
+
+theorem card_center_order88_RD : Nat.card (Subgroup.center order88_RD) = 22 := by
+  change Nat.card (Subgroup.center (order88_C11 × order88_D8)) = 22
+  rw [card_center_prod, card_center_eq_card_of_comm order88_C11
+    (fun a b => mul_comm a b), card_order88_C11, card_center_order88_D8]
+
+theorem card_center_order88_RE : Nat.card (Subgroup.center order88_RE) = 22 := by
+  change Nat.card (Subgroup.center (order88_C11 × order88_Q8)) = 22
+  rw [card_center_prod, card_center_eq_card_of_comm order88_C11
+    (fun a b => mul_comm a b), card_order88_C11, card_center_order88_Q8]
 
 theorem card_order88_reps (i : Fin 12) : Nat.card (order88_reps i) = 88 := by
   fin_cases i
