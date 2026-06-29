@@ -438,6 +438,144 @@ noncomputable abbrev order88_chiC2C2C2 : order88_C2C2C2 →* Multiplicative (ZMo
   MonoidHom.fst (Multiplicative (ZMod 2))
     (Multiplicative (ZMod 2) × Multiplicative (ZMod 2))
 
+/-- The second-coordinate character on `C₂³`. -/
+noncomputable abbrev order88_chiC2C2C2_snd : order88_C2C2C2 →* Multiplicative (ZMod 2) :=
+  (MonoidHom.fst (Multiplicative (ZMod 2)) (Multiplicative (ZMod 2))).comp
+    (MonoidHom.snd (Multiplicative (ZMod 2))
+      (Multiplicative (ZMod 2) × Multiplicative (ZMod 2)))
+
+/-- The third-coordinate character on `C₂³`. -/
+noncomputable abbrev order88_chiC2C2C2_trd : order88_C2C2C2 →* Multiplicative (ZMod 2) :=
+  (MonoidHom.snd (Multiplicative (ZMod 2)) (Multiplicative (ZMod 2))).comp
+    (MonoidHom.snd (Multiplicative (ZMod 2))
+      (Multiplicative (ZMod 2) × Multiplicative (ZMod 2)))
+
+/-- The product of the first two coordinate characters on `C₂³`. -/
+noncomputable abbrev order88_chiC2C2C2_fst_snd :
+    order88_C2C2C2 →* Multiplicative (ZMod 2) :=
+  order88_chiC2C2C2 * order88_chiC2C2C2_snd
+
+/-- The product of the first and third coordinate characters on `C₂³`. -/
+noncomputable abbrev order88_chiC2C2C2_fst_trd :
+    order88_C2C2C2 →* Multiplicative (ZMod 2) :=
+  order88_chiC2C2C2 * order88_chiC2C2C2_trd
+
+/-- The product of the last two coordinate characters on `C₂³`. -/
+noncomputable abbrev order88_chiC2C2C2_snd_trd :
+    order88_C2C2C2 →* Multiplicative (ZMod 2) :=
+  order88_chiC2C2C2_snd * order88_chiC2C2C2_trd
+
+/-- The product of all three coordinate characters on `C₂³`. -/
+noncomputable abbrev order88_chiC2C2C2_fst_snd_trd :
+    order88_C2C2C2 →* Multiplicative (ZMod 2) :=
+  order88_chiC2C2C2 * order88_chiC2C2C2_snd * order88_chiC2C2C2_trd
+
+/-- Characters `C₂³ → C₂` are determined by the three standard generators. -/
+theorem order88_c2c2c2_hom_ext {χ ψ : order88_C2C2C2 →* Multiplicative (ZMod 2)}
+    (h1 : χ (Multiplicative.ofAdd (1 : ZMod 2), 1) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 2), 1))
+    (h2 : χ (1, (Multiplicative.ofAdd (1 : ZMod 2), 1)) =
+      ψ (1, (Multiplicative.ofAdd (1 : ZMod 2), 1)))
+    (h3 : χ (1, (1, Multiplicative.ofAdd (1 : ZMod 2))) =
+      ψ (1, (1, Multiplicative.ofAdd (1 : ZMod 2)))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  rintro ⟨x1, x23⟩
+  rcases x23 with ⟨x2, x3⟩
+  obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x1
+  obtain ⟨b, rfl⟩ := Multiplicative.ofAdd.surjective x2
+  obtain ⟨c, rfl⟩ := Multiplicative.ofAdd.surjective x3
+  let g1 : order88_C2C2C2 := (Multiplicative.ofAdd (1 : ZMod 2), 1)
+  let g2 : order88_C2C2C2 := (1, (Multiplicative.ofAdd (1 : ZMod 2), 1))
+  let g3 : order88_C2C2C2 := (1, (1, Multiplicative.ofAdd (1 : ZMod 2)))
+  have ha : Multiplicative.ofAdd a = (Multiplicative.ofAdd (1 : ZMod 2)) ^ a.val := by
+    calc
+      Multiplicative.ofAdd a = Multiplicative.ofAdd ((a.val : ZMod 2)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (a.val • (1 : ZMod 2)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 2)) ^ a.val := by rw [ofAdd_nsmul]
+  have hb : Multiplicative.ofAdd b = (Multiplicative.ofAdd (1 : ZMod 2)) ^ b.val := by
+    calc
+      Multiplicative.ofAdd b = Multiplicative.ofAdd ((b.val : ZMod 2)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (b.val • (1 : ZMod 2)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 2)) ^ b.val := by rw [ofAdd_nsmul]
+  have hc : Multiplicative.ofAdd c = (Multiplicative.ofAdd (1 : ZMod 2)) ^ c.val := by
+    calc
+      Multiplicative.ofAdd c = Multiplicative.ofAdd ((c.val : ZMod 2)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (c.val • (1 : ZMod 2)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 2)) ^ c.val := by rw [ofAdd_nsmul]
+  have hx : (Multiplicative.ofAdd a, (Multiplicative.ofAdd b, Multiplicative.ofAdd c)) =
+      g1 ^ a.val * g2 ^ b.val * g3 ^ c.val := by
+    simp [g1, g2, g3, Prod.pow_mk, ha, hb, hc]
+  rw [hx, map_mul, map_mul, map_mul, map_mul, map_pow, map_pow, map_pow, map_pow,
+    map_pow, map_pow, h1, h2, h3]
+
+/-- A character `C₂³ → C₂` is one of the eight coordinate products. -/
+theorem order88_c2c2c2_character_cases (χ : order88_C2C2C2 →* Multiplicative (ZMod 2)) :
+    χ = 1 ∨ χ = order88_chiC2C2C2 ∨ χ = order88_chiC2C2C2_snd ∨
+      χ = order88_chiC2C2C2_trd ∨ χ = order88_chiC2C2C2_fst_snd ∨
+      χ = order88_chiC2C2C2_fst_trd ∨ χ = order88_chiC2C2C2_snd_trd ∨
+      χ = order88_chiC2C2C2_fst_snd_trd := by
+  let g1 : order88_C2C2C2 := (Multiplicative.ofAdd (1 : ZMod 2), 1)
+  let g2 : order88_C2C2C2 := (1, (Multiplicative.ofAdd (1 : ZMod 2), 1))
+  let g3 : order88_C2C2C2 := (1, (1, Multiplicative.ofAdd (1 : ZMod 2)))
+  rcases order88_c2_element_cases (χ g1) with h1 | h1 <;>
+    rcases order88_c2_element_cases (χ g2) with h2 | h2 <;>
+      rcases order88_c2_element_cases (χ g3) with h3 | h3
+  · left
+    apply order88_c2c2c2_hom_ext <;> simp [g1, g2, g3, h1, h2, h3]
+  · right
+    right
+    right
+    left
+    apply order88_c2c2c2_hom_ext <;> simp [g1, g2, g3, h1, h2, h3,
+      order88_chiC2C2C2_trd]
+  · right
+    right
+    left
+    apply order88_c2c2c2_hom_ext <;> simp [g1, g2, g3, h1, h2, h3,
+      order88_chiC2C2C2_snd]
+  · right
+    right
+    right
+    right
+    right
+    right
+    left
+    apply order88_c2c2c2_hom_ext <;> simp [g1, g2, g3, h1, h2, h3,
+      order88_chiC2C2C2_snd_trd, order88_chiC2C2C2_snd, order88_chiC2C2C2_trd]
+  · right
+    left
+    apply order88_c2c2c2_hom_ext <;> simp [g1, g2, g3, h1, h2, h3,
+      order88_chiC2C2C2]
+  · right
+    right
+    right
+    right
+    right
+    left
+    apply order88_c2c2c2_hom_ext <;> simp [g1, g2, g3, h1, h2, h3,
+      order88_chiC2C2C2_fst_trd, order88_chiC2C2C2, order88_chiC2C2C2_trd]
+  · right
+    right
+    right
+    right
+    left
+    apply order88_c2c2c2_hom_ext <;> simp [g1, g2, g3, h1, h2, h3,
+      order88_chiC2C2C2_fst_snd, order88_chiC2C2C2, order88_chiC2C2C2_snd]
+  · right
+    right
+    right
+    right
+    right
+    right
+    right
+    apply order88_c2c2c2_hom_ext <;> simp [g1, g2, g3, h1, h2, h3,
+      order88_chiC2C2C2_fst_snd_trd, order88_chiC2C2C2, order88_chiC2C2C2_snd,
+      order88_chiC2C2C2_trd]
+
 /-- The `D₈ → C₂` character non-trivial on rotations. -/
 noncomputable def order88_chiD8_rot : order88_D8 →* Multiplicative (ZMod 2) where
   toFun
@@ -548,6 +686,66 @@ theorem order88_c4c2_action_cases (φ : order88_C4C2 →* MulAut order88_C11) :
     left
     rw [hφ, hχ]
   · right
+    right
+    right
+    rw [hφ, hχ]
+
+/-- An action `C₂³ → Aut(C₁₁)` is induced by one of the eight characters. -/
+theorem order88_c2c2c2_action_cases (φ : order88_C2C2C2 →* MulAut order88_C11) :
+    φ = 1 ∨ φ = order88_action order88_chiC2C2C2 ∨
+      φ = order88_action order88_chiC2C2C2_snd ∨
+      φ = order88_action order88_chiC2C2C2_trd ∨
+      φ = order88_action order88_chiC2C2C2_fst_snd ∨
+      φ = order88_action order88_chiC2C2C2_fst_trd ∨
+      φ = order88_action order88_chiC2C2C2_snd_trd ∨
+      φ = order88_action order88_chiC2C2C2_fst_snd_trd := by
+  have hcard : Nat.card order88_C2C2C2 = 8 := by
+    rw [Nat.card_prod, Nat.card_prod]
+    norm_num [card_cyclicRep (by norm_num : 2 ≠ 0)]
+  have hφ := order88_action_eq_actionCharacter hcard φ
+  rcases order88_c2c2c2_character_cases (order88_actionCharacter hcard φ) with
+    hχ | hχ | hχ | hχ | hχ | hχ | hχ | hχ
+  · left
+    rw [hφ, hχ]
+    rfl
+  · right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    right
+    right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    right
+    right
+    right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    right
+    right
+    right
+    right
+    left
+    rw [hφ, hχ]
+  · right
+    right
+    right
+    right
+    right
     right
     right
     rw [hφ, hχ]
