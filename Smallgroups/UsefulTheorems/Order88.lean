@@ -577,6 +577,132 @@ theorem order88_c2c2c2_character_cases (χ : order88_C2C2C2 →* Multiplicative 
       order88_chiC2C2C2_fst_snd_trd, order88_chiC2C2C2, order88_chiC2C2C2_snd,
       order88_chiC2C2C2_trd]
 
+/-- Swap the first and second coordinates of `C₂³`. -/
+noncomputable def order88_C2C2C2_swap12 : order88_C2C2C2 ≃* order88_C2C2C2 where
+  toFun x := (x.2.1, (x.1, x.2.2))
+  invFun x := (x.2.1, (x.1, x.2.2))
+  left_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  right_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  map_mul' := by
+    rintro ⟨a, b, c⟩ ⟨a', b', c'⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;>
+      fin_cases a' <;> fin_cases b' <;> fin_cases c' <;> decide
+
+/-- Swap the first and third coordinates of `C₂³`. -/
+noncomputable def order88_C2C2C2_swap13 : order88_C2C2C2 ≃* order88_C2C2C2 where
+  toFun x := (x.2.2, (x.2.1, x.1))
+  invFun x := (x.2.2, (x.2.1, x.1))
+  left_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  right_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  map_mul' := by
+    rintro ⟨a, b, c⟩ ⟨a', b', c'⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;>
+      fin_cases a' <;> fin_cases b' <;> fin_cases c' <;> decide
+
+/-- Add the second coordinate to the first coordinate of `C₂³`. -/
+noncomputable def order88_C2C2C2_shear12 : order88_C2C2C2 ≃* order88_C2C2C2 where
+  toFun x := (x.1 * x.2.1, (x.2.1, x.2.2))
+  invFun x := (x.1 * x.2.1, (x.2.1, x.2.2))
+  left_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  right_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  map_mul' := by
+    rintro ⟨a, b, c⟩ ⟨a', b', c'⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;>
+      fin_cases a' <;> fin_cases b' <;> fin_cases c' <;> decide
+
+/-- Add the third coordinate to the first coordinate of `C₂³`. -/
+noncomputable def order88_C2C2C2_shear13 : order88_C2C2C2 ≃* order88_C2C2C2 where
+  toFun x := (x.1 * x.2.2, (x.2.1, x.2.2))
+  invFun x := (x.1 * x.2.2, (x.2.1, x.2.2))
+  left_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  right_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  map_mul' := by
+    rintro ⟨a, b, c⟩ ⟨a', b', c'⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;>
+      fin_cases a' <;> fin_cases b' <;> fin_cases c' <;> decide
+
+/-- Put the product of the second and third coordinates in the first coordinate of `C₂³`. -/
+noncomputable def order88_C2C2C2_shear23 : order88_C2C2C2 ≃* order88_C2C2C2 where
+  toFun x := (x.2.1 * x.2.2, (x.2.1, x.1))
+  invFun x := (x.2.2, (x.2.1, x.1 * x.2.1))
+  left_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  right_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  map_mul' := by
+    rintro ⟨a, b, c⟩ ⟨a', b', c'⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;>
+      fin_cases a' <;> fin_cases b' <;> fin_cases c' <;> decide
+
+/-- Put the product of all three coordinates in the first coordinate of `C₂³`. -/
+noncomputable def order88_C2C2C2_shear123 : order88_C2C2C2 ≃* order88_C2C2C2 where
+  toFun x := (x.1 * x.2.1 * x.2.2, (x.2.1, x.2.2))
+  invFun x := (x.1 * x.2.1 * x.2.2, (x.2.1, x.2.2))
+  left_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  right_inv := by
+    rintro ⟨a, b, c⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;> decide
+  map_mul' := by
+    rintro ⟨a, b, c⟩ ⟨a', b', c'⟩
+    fin_cases a <;> fin_cases b <;> fin_cases c <;>
+      fin_cases a' <;> fin_cases b' <;> fin_cases c' <;> decide
+
+/-- The second-coordinate character lies in the orbit of the first-coordinate character. -/
+theorem order88_chiC2C2C2_comp_swap12 :
+    order88_chiC2C2C2.comp order88_C2C2C2_swap12.toMonoidHom =
+      order88_chiC2C2C2_snd := by
+  apply order88_c2c2c2_hom_ext <;> rfl
+
+/-- The third-coordinate character lies in the orbit of the first-coordinate character. -/
+theorem order88_chiC2C2C2_comp_swap13 :
+    order88_chiC2C2C2.comp order88_C2C2C2_swap13.toMonoidHom =
+      order88_chiC2C2C2_trd := by
+  apply order88_c2c2c2_hom_ext <;> rfl
+
+/-- The first-second product character lies in the orbit of the first-coordinate character. -/
+theorem order88_chiC2C2C2_comp_shear12 :
+    order88_chiC2C2C2.comp order88_C2C2C2_shear12.toMonoidHom =
+      order88_chiC2C2C2_fst_snd := by
+  apply order88_c2c2c2_hom_ext <;> rfl
+
+/-- The first-third product character lies in the orbit of the first-coordinate character. -/
+theorem order88_chiC2C2C2_comp_shear13 :
+    order88_chiC2C2C2.comp order88_C2C2C2_shear13.toMonoidHom =
+      order88_chiC2C2C2_fst_trd := by
+  apply order88_c2c2c2_hom_ext <;> rfl
+
+/-- The second-third product character lies in the orbit of the first-coordinate character. -/
+theorem order88_chiC2C2C2_comp_shear23 :
+    order88_chiC2C2C2.comp order88_C2C2C2_shear23.toMonoidHom =
+      order88_chiC2C2C2_snd_trd := by
+  apply order88_c2c2c2_hom_ext <;> rfl
+
+/-- The product of all three characters lies in the orbit of the first-coordinate character. -/
+theorem order88_chiC2C2C2_comp_shear123 :
+    order88_chiC2C2C2.comp order88_C2C2C2_shear123.toMonoidHom =
+      order88_chiC2C2C2_fst_snd_trd := by
+  apply order88_c2c2c2_hom_ext <;> rfl
+
 /-- The `D₈ → C₂` character non-trivial on rotations. -/
 noncomputable def order88_chiD8_rot : order88_D8 →* Multiplicative (ZMod 2) where
   toFun
@@ -1002,6 +1128,17 @@ noncomputable abbrev order88_SD (H : Type) [Group H] (χ : H →* Multiplicative
     Type :=
   SemidirectProduct order88_C11 H (order88_action χ)
 
+/-- Precomposing a character by an automorphism gives an isomorphic semidirect product. -/
+noncomputable def order88_SD_equiv_of_character_comp {H : Type} [Group H]
+    (χ ψ : H →* Multiplicative (ZMod 2)) (σ : H ≃* H)
+    (hχ : χ.comp σ.toMonoidHom = ψ) :
+    order88_SD H ψ ≃* order88_SD H χ := by
+  have haction :
+      (order88_action χ).comp σ.toMonoidHom = order88_action ψ :=
+    order88_action_comp σ hχ
+  exact (semidirectProductCongr_eq haction.symm).trans
+    (semidirectProductCongrAut (N := order88_C11) (φ := order88_action χ) σ)
+
 /-- The extra `C₄ × C₂` product-character semidirect product is isomorphic to the `snd` case. -/
 noncomputable def order88_c4c2_prod_equiv_snd :
     order88_SD order88_C4C2 order88_chiC4C2_prod ≃*
@@ -1049,6 +1186,48 @@ noncomputable def order88_q8_xa_equiv_q8 :
   exact (semidirectProductCongr_eq haction.symm).trans
     (semidirectProductCongrAut (N := order88_C11) (φ := order88_action order88_chiQ8)
       order88_Q8_swap)
+
+/-- The second-coordinate `C₂³` semidirect product is isomorphic to the first-coordinate case. -/
+noncomputable def order88_c2c2c2_snd_equiv :
+    order88_SD order88_C2C2C2 order88_chiC2C2C2_snd ≃*
+      order88_SD order88_C2C2C2 order88_chiC2C2C2 :=
+  order88_SD_equiv_of_character_comp order88_chiC2C2C2 order88_chiC2C2C2_snd
+    order88_C2C2C2_swap12 order88_chiC2C2C2_comp_swap12
+
+/-- The third-coordinate `C₂³` semidirect product is isomorphic to the first-coordinate case. -/
+noncomputable def order88_c2c2c2_trd_equiv :
+    order88_SD order88_C2C2C2 order88_chiC2C2C2_trd ≃*
+      order88_SD order88_C2C2C2 order88_chiC2C2C2 :=
+  order88_SD_equiv_of_character_comp order88_chiC2C2C2 order88_chiC2C2C2_trd
+    order88_C2C2C2_swap13 order88_chiC2C2C2_comp_swap13
+
+/-- The `fst*snd` `C₂³` semidirect product is isomorphic to the first-coordinate case. -/
+noncomputable def order88_c2c2c2_fst_snd_equiv :
+    order88_SD order88_C2C2C2 order88_chiC2C2C2_fst_snd ≃*
+      order88_SD order88_C2C2C2 order88_chiC2C2C2 :=
+  order88_SD_equiv_of_character_comp order88_chiC2C2C2 order88_chiC2C2C2_fst_snd
+    order88_C2C2C2_shear12 order88_chiC2C2C2_comp_shear12
+
+/-- The `fst*trd` `C₂³` semidirect product is isomorphic to the first-coordinate case. -/
+noncomputable def order88_c2c2c2_fst_trd_equiv :
+    order88_SD order88_C2C2C2 order88_chiC2C2C2_fst_trd ≃*
+      order88_SD order88_C2C2C2 order88_chiC2C2C2 :=
+  order88_SD_equiv_of_character_comp order88_chiC2C2C2 order88_chiC2C2C2_fst_trd
+    order88_C2C2C2_shear13 order88_chiC2C2C2_comp_shear13
+
+/-- The `snd*trd` `C₂³` semidirect product is isomorphic to the first-coordinate case. -/
+noncomputable def order88_c2c2c2_snd_trd_equiv :
+    order88_SD order88_C2C2C2 order88_chiC2C2C2_snd_trd ≃*
+      order88_SD order88_C2C2C2 order88_chiC2C2C2 :=
+  order88_SD_equiv_of_character_comp order88_chiC2C2C2 order88_chiC2C2C2_snd_trd
+    order88_C2C2C2_shear23 order88_chiC2C2C2_comp_shear23
+
+/-- The `fst*snd*trd` `C₂³` semidirect product is isomorphic to the first-coordinate case. -/
+noncomputable def order88_c2c2c2_fst_snd_trd_equiv :
+    order88_SD order88_C2C2C2 order88_chiC2C2C2_fst_snd_trd ≃*
+      order88_SD order88_C2C2C2 order88_chiC2C2C2 :=
+  order88_SD_equiv_of_character_comp order88_chiC2C2C2 order88_chiC2C2C2_fst_snd_trd
+    order88_C2C2C2_shear123 order88_chiC2C2C2_comp_shear123
 
 /-- Direct-product representative with complement `H`. -/
 abbrev order88_DP (H : Type) : Type := order88_C11 × H
