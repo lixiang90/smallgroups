@@ -146,6 +146,25 @@ theorem order100_E25_snd_pow (s : Multiplicative (ZMod 5)) :
   · simp only [order100_E25_e2, Prod.pow_snd, order100_ofAdd_one_pow,
       ZMod.natCast_zmod_val, ofAdd_toAdd]
 
+theorem order100_E25_vec_decomp (x y : ZMod 5) :
+    ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order100_E25) =
+      order100_E25_e1 ^ x.val * order100_E25_e2 ^ y.val := by
+  rw [show ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order100_E25) =
+      ((Multiplicative.ofAdd x, 1) : order100_E25) * (1, Multiplicative.ofAdd y) by
+    ext <;> simp]
+  rw [order100_E25_fst_pow, order100_E25_snd_pow]
+  simp [toAdd_ofAdd]
+
+theorem order100_E25_vec_ne_one {x y : ZMod 5} (hxy : (x, y) ≠ (0, 0)) :
+    ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order100_E25) ≠ 1 := by
+  intro h
+  apply hxy
+  apply Prod.ext
+  · have h1 := congrArg (fun z : order100_E25 => z.1.toAdd) h
+    simpa using h1
+  · have h2 := congrArg (fun z : order100_E25 => z.2.toAdd) h
+    simpa using h2
+
 theorem order100_E25_hom_ext {M : Type*} [Monoid M] {f g : order100_E25 →* M}
     (h1 : f order100_E25_e1 = g order100_E25_e1)
     (h2 : f order100_E25_e2 = g order100_E25_e2) : f = g := by
@@ -231,6 +250,56 @@ theorem order100_E25_matrixAut_e2 (a b c d : ZMod 5) (hdet : a * d - b * c ≠ 0
     order100_E25_matrixAut a b c d hdet order100_E25_e2 =
       (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
   ext <;> simp [order100_E25_matrixAut, order100_E25_e2]
+
+theorem order100_singular_matrix_has_nonzero_kernel
+    (a b c d : ZMod 5) (hdet : a * d - b * c = 0) :
+    ∃ x y : ZMod 5, (x, y) ≠ (0, 0) ∧
+      a * x + b * y = 0 ∧ c * x + d * y = 0 := by
+  decide +revert
+
+theorem order100_E25_mulAut_det_ne_zero (α : MulAut order100_E25) :
+    (α order100_E25_e1).1.toAdd * (α order100_E25_e2).2.toAdd -
+      (α order100_E25_e2).1.toAdd * (α order100_E25_e1).2.toAdd ≠ 0 := by
+  intro hdet
+  let a := (α order100_E25_e1).1.toAdd
+  let b := (α order100_E25_e2).1.toAdd
+  let c := (α order100_E25_e1).2.toAdd
+  let d := (α order100_E25_e2).2.toAdd
+  have hdet' : a * d - b * c = 0 := by simpa [a, b, c, d] using hdet
+  obtain ⟨x, y, hxy, hx, hy⟩ := order100_singular_matrix_has_nonzero_kernel a b c d hdet'
+  let z : order100_E25 := (Multiplicative.ofAdd x, Multiplicative.ofAdd y)
+  have hz_ne : z ≠ 1 := order100_E25_vec_ne_one hxy
+  have he1 : α order100_E25_e1 = (Multiplicative.ofAdd a, Multiplicative.ofAdd c) := by
+    ext <;> simp [a, c]
+  have he2 : α order100_E25_e2 = (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
+    ext <;> simp [b, d]
+  have hz_decomp : z = order100_E25_e1 ^ x.val * order100_E25_e2 ^ y.val :=
+    order100_E25_vec_decomp x y
+  have hαz : α z = 1 := by
+    rw [hz_decomp, map_mul, map_pow, map_pow, he1, he2]
+    apply Prod.ext
+    · change (Multiplicative.ofAdd a) ^ x.val * (Multiplicative.ofAdd b) ^ y.val = 1
+      rw [order100_ofAdd_pow_nat, order100_ofAdd_pow_nat, ← ofAdd_add]
+      change Multiplicative.ofAdd (↑x.val * a + ↑y.val * b) = Multiplicative.ofAdd 0
+      apply congrArg Multiplicative.ofAdd
+      simpa [ZMod.natCast_zmod_val, add_comm, mul_comm] using hx
+    · change (Multiplicative.ofAdd c) ^ x.val * (Multiplicative.ofAdd d) ^ y.val = 1
+      rw [order100_ofAdd_pow_nat, order100_ofAdd_pow_nat, ← ofAdd_add]
+      change Multiplicative.ofAdd (↑x.val * c + ↑y.val * d) = Multiplicative.ofAdd 0
+      apply congrArg Multiplicative.ofAdd
+      simpa [ZMod.natCast_zmod_val, add_comm, mul_comm] using hy
+  exact hz_ne (α.injective (by simpa using hαz))
+
+theorem order100_E25_mulAut_eq_matrixAut (α : MulAut order100_E25) :
+    α = order100_E25_matrixAut
+      (α order100_E25_e1).1.toAdd (α order100_E25_e2).1.toAdd
+      (α order100_E25_e1).2.toAdd (α order100_E25_e2).2.toAdd
+      (order100_E25_mulAut_det_ne_zero α) := by
+  apply order100_E25_mulAut_ext
+  · rw [order100_E25_matrixAut_e1]
+    ext <;> simp
+  · rw [order100_E25_matrixAut_e2]
+    ext <;> simp
 
 theorem order100_E25_diag_det_ne_zero (u v : (ZMod 5)ˣ) :
     (u : ZMod 5) * (v : ZMod 5) - 0 * 0 ≠ 0 := by
