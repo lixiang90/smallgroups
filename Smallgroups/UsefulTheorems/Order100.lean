@@ -911,6 +911,22 @@ theorem order100_matrix_pow_four_has_eigenbasis (a b c d : ZMod 5)
 noncomputable abbrev order100_e25DiagAut (u v : (ZMod 5)ˣ) : MulAut order100_E25 :=
   MulEquiv.prodCongr (unitAutHom u) (unitAutHom v)
 
+@[simp]
+theorem order100_e25DiagAut_e1 (u v : (ZMod 5)ˣ) :
+    order100_e25DiagAut u v order100_E25_e1 =
+      (Multiplicative.ofAdd (u : ZMod 5), 1) := by
+  change (unitAutHom u (Multiplicative.ofAdd (1 : ZMod 5)), unitAutHom v 1) = _
+  rw [unitAutHom_apply]
+  ext <;> simp
+
+@[simp]
+theorem order100_e25DiagAut_e2 (u v : (ZMod 5)ˣ) :
+    order100_e25DiagAut u v order100_E25_e2 =
+      (1, Multiplicative.ofAdd (v : ZMod 5)) := by
+  change (unitAutHom u 1, unitAutHom v (Multiplicative.ofAdd (1 : ZMod 5))) = _
+  rw [unitAutHom_apply]
+  ext <;> simp
+
 theorem order100_E25_matrixAut_diag_eq (u v : (ZMod 5)ˣ)
     (hdet : (u : ZMod 5) * (v : ZMod 5) - 0 * 0 ≠ 0) :
     order100_E25_matrixAut (u : ZMod 5) 0 0 (v : ZMod 5) hdet =
@@ -1272,6 +1288,98 @@ theorem order100_E25_commuting_diag_distinct_is_diag
   · rw [hβe2]
     ext <;> simp [hb]
 
+/-- Scalar diagonal automorphisms commute with every automorphism of `(C₅)²`. -/
+theorem order100_e25DiagAut_same_comm (θ : MulAut order100_E25) (u : (ZMod 5)ˣ) :
+    θ * order100_e25DiagAut u u = order100_e25DiagAut u u * θ := by
+  let a := (θ order100_E25_e1).1.toAdd
+  let b := (θ order100_E25_e2).1.toAdd
+  let c := (θ order100_E25_e1).2.toAdd
+  let d := (θ order100_E25_e2).2.toAdd
+  have hθe1 : θ order100_E25_e1 = (Multiplicative.ofAdd a, Multiplicative.ofAdd c) := by
+    ext <;> simp [a, c]
+  have hθe2 : θ order100_E25_e2 = (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
+    ext <;> simp [b, d]
+  apply order100_E25_mulAut_ext
+  · change θ (order100_e25DiagAut u u order100_E25_e1) =
+      order100_e25DiagAut u u (θ order100_E25_e1)
+    rw [order100_e25DiagAut_e1]
+    change θ (Multiplicative.ofAdd (u : ZMod 5), Multiplicative.ofAdd 0) = _
+    rw [order100_E25_mulAut_apply_matrix θ (u : ZMod 5) 0]
+    rw [hθe1, hθe2]
+    rw [order100_E25_mulAut_apply_matrix (order100_e25DiagAut u u) a c]
+    rw [order100_e25DiagAut_e1, order100_e25DiagAut_e2]
+    ext <;> simp [mul_comm]
+  · change θ (order100_e25DiagAut u u order100_E25_e2) =
+      order100_e25DiagAut u u (θ order100_E25_e2)
+    rw [order100_e25DiagAut_e2]
+    change θ (Multiplicative.ofAdd 0, Multiplicative.ofAdd (u : ZMod 5)) = _
+    rw [order100_E25_mulAut_apply_matrix θ 0 (u : ZMod 5)]
+    rw [hθe1, hθe2]
+    rw [order100_E25_mulAut_apply_matrix (order100_e25DiagAut u u) b d]
+    rw [order100_e25DiagAut_e1, order100_e25DiagAut_e2]
+    ext <;> simp [mul_comm]
+
+theorem order100_E25_mulAut_eq_scalar_of_same_eigenbasis
+    (α θ : MulAut order100_E25) (u : (ZMod 5)ˣ)
+    (h1 : α (θ order100_E25_e1) = θ (order100_e25DiagAut u u order100_E25_e1))
+    (h2 : α (θ order100_E25_e2) = θ (order100_e25DiagAut u u order100_E25_e2)) :
+    α = order100_e25DiagAut u u := by
+  have hθθ : θ * θ.symm = 1 := by
+    ext x <;> simp
+  have hαθ : α * θ = θ * order100_e25DiagAut u u := by
+    apply order100_E25_mulAut_ext
+    · exact h1
+    · exact h2
+  have hcomm := order100_e25DiagAut_same_comm θ u
+  have hαθ' : α * θ = order100_e25DiagAut u u * θ := by
+    rw [hαθ, hcomm]
+  calc
+    α = α * 1 := by rw [mul_one]
+    _ = α * (θ * θ.symm) := by rw [hθθ]
+    _ = (α * θ) * θ.symm := by rw [mul_assoc]
+    _ = (order100_e25DiagAut u u * θ) * θ.symm := by rw [hαθ']
+    _ = order100_e25DiagAut u u * (θ * θ.symm) := by rw [mul_assoc]
+    _ = order100_e25DiagAut u u * 1 := by rw [hθθ]
+    _ = order100_e25DiagAut u u := by rw [mul_one]
+
+theorem order100_E25_eigenbasis_units_sq_eq_one
+    (α θ : MulAut order100_E25) (u v : (ZMod 5)ˣ) (hα2 : α ^ 2 = 1)
+    (h1 : α (θ order100_E25_e1) = θ (order100_e25DiagAut u v order100_E25_e1))
+    (h2 : α (θ order100_E25_e2) = θ (order100_e25DiagAut u v order100_E25_e2)) :
+    u ^ 2 = 1 ∧ v ^ 2 = 1 := by
+  have hconj := order100_E25_conj_symm_eq_diag_of_eigenbasis θ α u v h1 h2
+  have hdiag2 : (order100_e25DiagAut u v) ^ 2 = 1 := by
+    rw [← hconj]
+    rw [← map_pow (MulAut.conj θ.symm) α 2, hα2]
+    exact map_one (MulAut.conj θ.symm)
+  constructor
+  · have h := congrArg (fun γ : MulAut order100_E25 => γ order100_E25_e1) hdiag2
+    rw [pow_two] at h
+    change order100_e25DiagAut u v (order100_e25DiagAut u v order100_E25_e1) =
+      order100_E25_e1 at h
+    rw [order100_e25DiagAut_e1] at h
+    change order100_e25DiagAut u v
+        (Multiplicative.ofAdd (u : ZMod 5), Multiplicative.ofAdd 0) =
+      order100_E25_e1 at h
+    rw [order100_E25_mulAut_apply_matrix (order100_e25DiagAut u v) (u : ZMod 5) 0,
+      order100_e25DiagAut_e1, order100_e25DiagAut_e2] at h
+    have hcoord := congrArg (fun z : order100_E25 => z.1.toAdd) h
+    apply Units.ext
+    simpa [pow_two] using hcoord
+  · have h := congrArg (fun γ : MulAut order100_E25 => γ order100_E25_e2) hdiag2
+    rw [pow_two] at h
+    change order100_e25DiagAut u v (order100_e25DiagAut u v order100_E25_e2) =
+      order100_E25_e2 at h
+    rw [order100_e25DiagAut_e2] at h
+    change order100_e25DiagAut u v
+        (Multiplicative.ofAdd 0, Multiplicative.ofAdd (v : ZMod 5)) =
+      order100_E25_e2 at h
+    rw [order100_E25_mulAut_apply_matrix (order100_e25DiagAut u v) 0 (v : ZMod 5),
+      order100_e25DiagAut_e1, order100_e25DiagAut_e2] at h
+    have hcoord := congrArg (fun z : order100_E25 => z.2.toAdd) h
+    apply Units.ext
+    simpa [pow_two] using hcoord
+
 /-- Every `C₄`-action on `(C₅)²` is isomorphic to a diagonal action. -/
 theorem order100_e25C4_action_has_diagonal_form
     (φ : order100_C4 →* MulAut order100_E25) :
@@ -1382,6 +1490,28 @@ noncomputable abbrev order100_chi5V4_snd : order100_V4 →* (ZMod 5)ˣ :=
 noncomputable abbrev order100_chi5V4_prod : order100_V4 →* (ZMod 5)ˣ :=
   order100_chi5V4_fst * order100_chi5V4_snd
 
+noncomputable abbrev order100_chi5V4_ofUnits
+    (u v : (ZMod 5)ˣ) (hu : u ^ 2 = 1) (hv : v ^ 2 = 1) :
+    order100_V4 →* (ZMod 5)ˣ :=
+  (powHom (p := 5) (q := 2) u hu).comp (MonoidHom.fst (CyclicRep 2) (CyclicRep 2)) *
+    (powHom (p := 5) (q := 2) v hv).comp (MonoidHom.snd (CyclicRep 2) (CyclicRep 2))
+
+@[simp]
+theorem order100_chi5V4_ofUnits_g1
+    (u v : (ZMod 5)ˣ) (hu : u ^ 2 = 1) (hv : v ^ 2 = 1) :
+    order100_chi5V4_ofUnits u v hu hv (Multiplicative.ofAdd (1 : ZMod 2), 1) = u := by
+  change u ^ (1 : ZMod 2).val * v ^ (0 : ZMod 2).val = u
+  rw [show (1 : ZMod 2).val = 1 by decide, show (0 : ZMod 2).val = 0 by decide]
+  simp
+
+@[simp]
+theorem order100_chi5V4_ofUnits_g2
+    (u v : (ZMod 5)ˣ) (hu : u ^ 2 = 1) (hv : v ^ 2 = 1) :
+    order100_chi5V4_ofUnits u v hu hv (1, Multiplicative.ofAdd (1 : ZMod 2)) = v := by
+  change u ^ (0 : ZMod 2).val * v ^ (1 : ZMod 2).val = v
+  rw [show (1 : ZMod 2).val = 1 by decide, show (0 : ZMod 2).val = 0 by decide]
+  simp
+
 @[simp]
 theorem order100_chi5V4_fst_g1 :
     order100_chi5V4_fst (Multiplicative.ofAdd (1 : ZMod 2), 1) =
@@ -1444,6 +1574,161 @@ theorem order100_v4_zmod5_character_cases (χ : order100_V4 →* (ZMod 5)ˣ) :
     right
     apply order100_v4_hom_ext <;>
       simp [g1, g2, h1, h2]
+
+/-- For a `V₄`-action, a common eigenbasis for the two standard generators diagonalizes
+the whole action. -/
+theorem order100_e25V4_action_conj_symm_eq_diag_of_generator_eigenbasis
+    (φ : order100_V4 →* MulAut order100_E25) (θ : MulAut order100_E25)
+    (u₁ u₂ v₁ v₂ : (ZMod 5)ˣ)
+    (hu₁ : u₁ ^ 2 = 1) (hu₂ : u₂ ^ 2 = 1)
+    (hv₁ : v₁ ^ 2 = 1) (hv₂ : v₂ ^ 2 = 1)
+    (h11 : φ (Multiplicative.ofAdd (1 : ZMod 2), 1) (θ order100_E25_e1) =
+      θ (order100_e25DiagAut u₁ u₂ order100_E25_e1))
+    (h12 : φ (Multiplicative.ofAdd (1 : ZMod 2), 1) (θ order100_E25_e2) =
+      θ (order100_e25DiagAut u₁ u₂ order100_E25_e2))
+    (h21 : φ (1, Multiplicative.ofAdd (1 : ZMod 2)) (θ order100_E25_e1) =
+      θ (order100_e25DiagAut v₁ v₂ order100_E25_e1))
+    (h22 : φ (1, Multiplicative.ofAdd (1 : ZMod 2)) (θ order100_E25_e2) =
+      θ (order100_e25DiagAut v₁ v₂ order100_E25_e2)) :
+    (MulAut.conj θ.symm).toMonoidHom.comp φ =
+      order100_e25DiagAction (order100_chi5V4_ofUnits u₁ v₁ hu₁ hv₁)
+        (order100_chi5V4_ofUnits u₂ v₂ hu₂ hv₂) := by
+  apply order100_v4_hom_ext
+  · change (MulAut.conj θ.symm) (φ (Multiplicative.ofAdd (1 : ZMod 2), 1)) =
+      order100_e25DiagAut
+        (order100_chi5V4_ofUnits u₁ v₁ hu₁ hv₁
+          (Multiplicative.ofAdd (1 : ZMod 2), 1))
+        (order100_chi5V4_ofUnits u₂ v₂ hu₂ hv₂
+          (Multiplicative.ofAdd (1 : ZMod 2), 1))
+    rw [order100_chi5V4_ofUnits_g1, order100_chi5V4_ofUnits_g1]
+    exact order100_E25_conj_symm_eq_diag_of_eigenbasis θ
+      (φ (Multiplicative.ofAdd (1 : ZMod 2), 1)) u₁ u₂ h11 h12
+  · change (MulAut.conj θ.symm) (φ (1, Multiplicative.ofAdd (1 : ZMod 2))) =
+      order100_e25DiagAut
+        (order100_chi5V4_ofUnits u₁ v₁ hu₁ hv₁
+          (1, Multiplicative.ofAdd (1 : ZMod 2)))
+        (order100_chi5V4_ofUnits u₂ v₂ hu₂ hv₂
+          (1, Multiplicative.ofAdd (1 : ZMod 2)))
+    rw [order100_chi5V4_ofUnits_g2, order100_chi5V4_ofUnits_g2]
+    exact order100_E25_conj_symm_eq_diag_of_eigenbasis θ
+      (φ (1, Multiplicative.ofAdd (1 : ZMod 2))) v₁ v₂ h21 h22
+
+/-- The semidirect-product form of diagonalizing a `V₄`-action from a common eigenbasis
+of its two standard generators. -/
+noncomputable def order100_e25V4_action_eigenbasis_mulEquiv
+    (φ : order100_V4 →* MulAut order100_E25) (θ : MulAut order100_E25)
+    (u₁ u₂ v₁ v₂ : (ZMod 5)ˣ)
+    (hu₁ : u₁ ^ 2 = 1) (hu₂ : u₂ ^ 2 = 1)
+    (hv₁ : v₁ ^ 2 = 1) (hv₂ : v₂ ^ 2 = 1)
+    (h11 : φ (Multiplicative.ofAdd (1 : ZMod 2), 1) (θ order100_E25_e1) =
+      θ (order100_e25DiagAut u₁ u₂ order100_E25_e1))
+    (h12 : φ (Multiplicative.ofAdd (1 : ZMod 2), 1) (θ order100_E25_e2) =
+      θ (order100_e25DiagAut u₁ u₂ order100_E25_e2))
+    (h21 : φ (1, Multiplicative.ofAdd (1 : ZMod 2)) (θ order100_E25_e1) =
+      θ (order100_e25DiagAut v₁ v₂ order100_E25_e1))
+    (h22 : φ (1, Multiplicative.ofAdd (1 : ZMod 2)) (θ order100_E25_e2) =
+      θ (order100_e25DiagAut v₁ v₂ order100_E25_e2)) :
+    SemidirectProduct order100_E25 order100_V4 φ ≃*
+      SemidirectProduct order100_E25 order100_V4
+        (order100_e25DiagAction (order100_chi5V4_ofUnits u₁ v₁ hu₁ hv₁)
+          (order100_chi5V4_ofUnits u₂ v₂ hu₂ hv₂)) :=
+  (semidirectProductCongrConj (N := order100_E25) (H := order100_V4) (φ := φ) θ.symm).trans
+    (semidirectProductCongr_eq
+      (order100_e25V4_action_conj_symm_eq_diag_of_generator_eigenbasis φ θ
+        u₁ u₂ v₁ v₂ hu₁ hu₂ hv₁ hv₂ h11 h12 h21 h22))
+
+/-- Every `V₄`-action on `(C₅)²` is isomorphic to a diagonal action. -/
+theorem order100_e25V4_action_has_diagonal_form
+    (φ : order100_V4 →* MulAut order100_E25) :
+    ∃ χ₁ χ₂ : order100_V4 →* (ZMod 5)ˣ,
+      Nonempty (SemidirectProduct order100_E25 order100_V4 φ ≃*
+        SemidirectProduct order100_E25 order100_V4 (order100_e25DiagAction χ₁ χ₂)) := by
+  let g1 : order100_V4 := (Multiplicative.ofAdd (1 : ZMod 2), 1)
+  let g2 : order100_V4 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+  have hg1sq : g1 ^ 2 = 1 := by decide
+  have hg2sq : g2 ^ 2 = 1 := by decide
+  have hφg1sq : (φ g1) ^ 2 = 1 := by rw [← map_pow, hg1sq, map_one]
+  have hφg2sq : (φ g2) ^ 2 = 1 := by rw [← map_pow, hg2sq, map_one]
+  have hφg1four : (φ g1) ^ 4 = 1 := by
+    rw [show (φ g1) ^ 4 = ((φ g1) ^ 2) ^ 2 by group, hφg1sq]
+    simp
+  obtain ⟨θ, u₁, u₂, h11, h12⟩ :=
+    order100_E25_mulAut_pow_four_has_eigenbasis (φ g1) hφg1four
+  obtain ⟨hu₁, hu₂⟩ :=
+    order100_E25_eigenbasis_units_sq_eq_one (φ g1) θ u₁ u₂ hφg1sq h11 h12
+  by_cases hdiff : (u₁ : ZMod 5) ≠ (u₂ : ZMod 5)
+  · have hdiag_g1 : (MulAut.conj θ.symm) (φ g1) = order100_e25DiagAut u₁ u₂ :=
+      order100_E25_conj_symm_eq_diag_of_eigenbasis θ (φ g1) u₁ u₂ h11 h12
+    let β : MulAut order100_E25 := (MulAut.conj θ.symm) (φ g2)
+    have hgcomm : g2 * g1 = g1 * g2 := by
+      ext <;> simp [g1, g2, mul_comm]
+    have hcomm_orig : φ g2 * φ g1 = φ g1 * φ g2 := by
+      rw [← map_mul, ← map_mul, hgcomm]
+    have hcommβ : β * order100_e25DiagAut u₁ u₂ = order100_e25DiagAut u₁ u₂ * β := by
+      calc
+        β * order100_e25DiagAut u₁ u₂ =
+            (MulAut.conj θ.symm) (φ g2) * (MulAut.conj θ.symm) (φ g1) := by
+          rw [hdiag_g1]
+        _ = (MulAut.conj θ.symm) (φ g2 * φ g1) := by rw [map_mul]
+        _ = (MulAut.conj θ.symm) (φ g1 * φ g2) := by rw [hcomm_orig]
+        _ = (MulAut.conj θ.symm) (φ g1) * (MulAut.conj θ.symm) (φ g2) := by
+          rw [map_mul]
+        _ = order100_e25DiagAut u₁ u₂ * β := by rw [hdiag_g1]
+    obtain ⟨v₁, v₂, hβe1, hβe2⟩ :=
+      order100_E25_commuting_diag_distinct_is_diag β u₁ u₂ hdiff hcommβ
+    have h21 : φ g2 (θ order100_E25_e1) =
+        θ (order100_e25DiagAut v₁ v₂ order100_E25_e1) := by
+      change θ.symm (φ g2 (θ order100_E25_e1)) =
+        (Multiplicative.ofAdd (v₁ : ZMod 5), 1) at hβe1
+      have h := congrArg θ hβe1
+      simpa using h
+    have h22 : φ g2 (θ order100_E25_e2) =
+        θ (order100_e25DiagAut v₁ v₂ order100_E25_e2) := by
+      change θ.symm (φ g2 (θ order100_E25_e2)) =
+        (1, Multiplicative.ofAdd (v₂ : ZMod 5)) at hβe2
+      have h := congrArg θ hβe2
+      simpa using h
+    obtain ⟨hv₁, hv₂⟩ :=
+      order100_E25_eigenbasis_units_sq_eq_one (φ g2) θ v₁ v₂ hφg2sq h21 h22
+    refine ⟨order100_chi5V4_ofUnits u₁ v₁ hu₁ hv₁,
+      order100_chi5V4_ofUnits u₂ v₂ hu₂ hv₂, ?_⟩
+    exact ⟨order100_e25V4_action_eigenbasis_mulEquiv φ θ u₁ u₂ v₁ v₂
+      hu₁ hu₂ hv₁ hv₂
+      (by simpa [g1] using h11) (by simpa [g1] using h12)
+      (by simpa [g2] using h21) (by simpa [g2] using h22)⟩
+  · have hunit : u₁ = u₂ := Units.ext (not_not.mp hdiff)
+    subst u₂
+    have hscalar : φ g1 = order100_e25DiagAut u₁ u₁ :=
+      order100_E25_mulAut_eq_scalar_of_same_eigenbasis (φ g1) θ u₁ h11 h12
+    have hφg2four : (φ g2) ^ 4 = 1 := by
+      rw [show (φ g2) ^ 4 = ((φ g2) ^ 2) ^ 2 by group, hφg2sq]
+      simp
+    obtain ⟨η, v₁, v₂, h21, h22⟩ :=
+      order100_E25_mulAut_pow_four_has_eigenbasis (φ g2) hφg2four
+    obtain ⟨hv₁, hv₂⟩ :=
+      order100_E25_eigenbasis_units_sq_eq_one (φ g2) η v₁ v₂ hφg2sq h21 h22
+    have h11' : φ g1 (η order100_E25_e1) =
+        η (order100_e25DiagAut u₁ u₁ order100_E25_e1) := by
+      have hcommη := order100_e25DiagAut_same_comm η u₁
+      have h := congrArg (fun γ : MulAut order100_E25 => γ order100_E25_e1) hcommη
+      change η (order100_e25DiagAut u₁ u₁ order100_E25_e1) =
+        order100_e25DiagAut u₁ u₁ (η order100_E25_e1) at h
+      rw [hscalar]
+      exact h.symm
+    have h12' : φ g1 (η order100_E25_e2) =
+        η (order100_e25DiagAut u₁ u₁ order100_E25_e2) := by
+      have hcommη := order100_e25DiagAut_same_comm η u₁
+      have h := congrArg (fun γ : MulAut order100_E25 => γ order100_E25_e2) hcommη
+      change η (order100_e25DiagAut u₁ u₁ order100_E25_e2) =
+        order100_e25DiagAut u₁ u₁ (η order100_E25_e2) at h
+      rw [hscalar]
+      exact h.symm
+    refine ⟨order100_chi5V4_ofUnits u₁ v₁ hu₁ hv₁,
+      order100_chi5V4_ofUnits u₁ v₂ hu₁ hv₂, ?_⟩
+    exact ⟨order100_e25V4_action_eigenbasis_mulEquiv φ η u₁ u₁ v₁ v₂
+      hu₁ hu₁ hv₁ hv₂
+      (by simpa [g1] using h11') (by simpa [g1] using h12')
+      (by simpa [g2] using h21) (by simpa [g2] using h22)⟩
 
 theorem order100_c2_mul_self (x : CyclicRep 2) : x * x = 1 := by
   decide +revert
@@ -1844,6 +2129,30 @@ theorem order100_e25V4_diagAction_cases (χ₁ χ₂ : order100_V4 →* (ZMod 5)
   · subst χ₁; subst χ₂
     right; right; left
     exact ⟨order100_e25V4_prod_prod_equiv_11⟩
+
+theorem order100_e25V4_action_cases (φ : order100_V4 →* MulAut order100_E25) :
+    Nonempty (SemidirectProduct order100_E25 order100_V4 φ ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_00) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_V4 φ ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_10) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_V4 φ ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_11) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_V4 φ ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_12) := by
+  obtain ⟨χ₁, χ₂, ⟨eφ⟩⟩ := order100_e25V4_action_has_diagonal_form φ
+  rcases order100_e25V4_diagAction_cases χ₁ χ₂ with h | h | h | h
+  · rcases h with ⟨e⟩
+    left
+    exact ⟨eφ.trans e⟩
+  · rcases h with ⟨e⟩
+    right; left
+    exact ⟨eφ.trans e⟩
+  · rcases h with ⟨e⟩
+    right; right; left
+    exact ⟨eφ.trans e⟩
+  · rcases h with ⟨e⟩
+    right; right; right
+    exact ⟨eφ.trans e⟩
 
 /-- Every group of order `100` is one of the four standard semidirect-product action problems:
 `C₂₅ ⋊ C₄`, `C₂₅ ⋊ V₄`, `(C₅)² ⋊ C₄`, or `(C₅)² ⋊ V₄`. -/
