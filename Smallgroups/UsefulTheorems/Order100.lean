@@ -115,6 +115,128 @@ abbrev order100_C4 : Type := CyclicRep 4
 
 abbrev order100_V4 : Type := ElemAbelianRep 2
 
+abbrev order100_E25_e1 : order100_E25 := (Multiplicative.ofAdd (1 : ZMod 5), 1)
+
+abbrev order100_E25_e2 : order100_E25 := (1, Multiplicative.ofAdd (1 : ZMod 5))
+
+private lemma order100_ofAdd_pow_nat (c : ZMod 5) (n : ℕ) :
+    (Multiplicative.ofAdd c : Multiplicative (ZMod 5)) ^ n =
+      Multiplicative.ofAdd (↑n * c) := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [pow_succ, ih, ← ofAdd_add, Nat.cast_succ, add_mul, one_mul]
+
+private lemma order100_ofAdd_one_pow (n : ℕ) :
+    (Multiplicative.ofAdd (1 : ZMod 5)) ^ n =
+      Multiplicative.ofAdd (↑n : ZMod 5) := by
+  rw [order100_ofAdd_pow_nat, mul_one]
+
+theorem order100_E25_fst_pow (s : Multiplicative (ZMod 5)) :
+    ((s, 1) : order100_E25) = order100_E25_e1 ^ (Multiplicative.toAdd s).val := by
+  ext
+  · simp only [order100_E25_e1, Prod.pow_fst, order100_ofAdd_one_pow,
+      ZMod.natCast_zmod_val, ofAdd_toAdd]
+  · simp only [order100_E25_e1, Prod.pow_snd, one_pow]
+
+theorem order100_E25_snd_pow (s : Multiplicative (ZMod 5)) :
+    ((1, s) : order100_E25) = order100_E25_e2 ^ (Multiplicative.toAdd s).val := by
+  ext
+  · simp only [order100_E25_e2, Prod.pow_fst, one_pow]
+  · simp only [order100_E25_e2, Prod.pow_snd, order100_ofAdd_one_pow,
+      ZMod.natCast_zmod_val, ofAdd_toAdd]
+
+theorem order100_E25_hom_ext {M : Type*} [Monoid M] {f g : order100_E25 →* M}
+    (h1 : f order100_E25_e1 = g order100_E25_e1)
+    (h2 : f order100_E25_e2 = g order100_E25_e2) : f = g := by
+  ext ⟨x1, x2⟩
+  have hdecomp : ((x1, x2) : order100_E25) = (x1, 1) * (1, x2) := by ext <;> simp
+  rw [hdecomp, map_mul, map_mul]
+  congr 1
+  · rw [order100_E25_fst_pow, map_pow, map_pow, h1]
+  · rw [order100_E25_snd_pow, map_pow, map_pow, h2]
+
+theorem order100_E25_mulAut_ext {α β : MulAut order100_E25}
+    (h1 : α order100_E25_e1 = β order100_E25_e1)
+    (h2 : α order100_E25_e2 = β order100_E25_e2) : α = β := by
+  apply MulEquiv.ext
+  intro x
+  exact congrFun (congrArg DFunLike.coe
+    (order100_E25_hom_ext (f := α.toMonoidHom) (g := β.toMonoidHom) h1 h2)) x
+
+instance order100_E25_mulAut_decidableEq : DecidableEq (MulAut order100_E25) := fun α β =>
+  decidable_of_iff (∀ x, α x = β x)
+    ⟨fun h => MulEquiv.ext h, fun h x => by rw [h]⟩
+
+noncomputable def order100_E25_matrixAut (a b c d : ZMod 5) (hdet : a * d - b * c ≠ 0) :
+    MulAut order100_E25 where
+  toFun x :=
+    (Multiplicative.ofAdd (a * x.1.toAdd + b * x.2.toAdd),
+      Multiplicative.ofAdd (c * x.1.toAdd + d * x.2.toAdd))
+  invFun x :=
+    let Δ := a * d - b * c
+    (Multiplicative.ofAdd (Δ⁻¹ * (d * x.1.toAdd - b * x.2.toAdd)),
+      Multiplicative.ofAdd (Δ⁻¹ * (-c * x.1.toAdd + a * x.2.toAdd)))
+  left_inv x := by
+    haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+    dsimp
+    ext <;> simp only [toAdd_ofAdd]
+    · calc
+        (a * d - b * c)⁻¹ * (d * (a * Multiplicative.toAdd x.1 + b * Multiplicative.toAdd x.2) -
+            b * (c * Multiplicative.toAdd x.1 + d * Multiplicative.toAdd x.2))
+            = ((a * d - b * c)⁻¹ * (a * d - b * c)) * Multiplicative.toAdd x.1 := by ring
+        _ = Multiplicative.toAdd x.1 := by
+          rw [show (a * d - b * c)⁻¹ * (a * d - b * c) = 1 by
+            exact inv_mul_cancel₀ (a := a * d - b * c) (by simpa using hdet)]
+          ring
+    · calc
+        (a * d - b * c)⁻¹ * (-c * (a * Multiplicative.toAdd x.1 + b * Multiplicative.toAdd x.2) +
+            a * (c * Multiplicative.toAdd x.1 + d * Multiplicative.toAdd x.2))
+            = ((a * d - b * c)⁻¹ * (a * d - b * c)) * Multiplicative.toAdd x.2 := by ring
+        _ = Multiplicative.toAdd x.2 := by
+          rw [show (a * d - b * c)⁻¹ * (a * d - b * c) = 1 by
+            exact inv_mul_cancel₀ (a := a * d - b * c) (by simpa using hdet)]
+          ring
+  right_inv x := by
+    haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+    dsimp
+    ext
+    · calc
+        a * ((a * d - b * c)⁻¹ * (d * Multiplicative.toAdd x.1 - b * Multiplicative.toAdd x.2)) +
+            b * ((a * d - b * c)⁻¹ * (-c * Multiplicative.toAdd x.1 + a * Multiplicative.toAdd x.2))
+            = ((a * d - b * c) * (a * d - b * c)⁻¹) * Multiplicative.toAdd x.1 := by ring
+        _ = Multiplicative.toAdd x.1 := by
+          rw [show (a * d - b * c) * (a * d - b * c)⁻¹ = 1 by
+            exact mul_inv_cancel₀ (a := a * d - b * c) (by simpa using hdet)]
+          ring
+    · calc
+        c * ((a * d - b * c)⁻¹ * (d * Multiplicative.toAdd x.1 - b * Multiplicative.toAdd x.2)) +
+            d * ((a * d - b * c)⁻¹ * (-c * Multiplicative.toAdd x.1 + a * Multiplicative.toAdd x.2))
+            = ((a * d - b * c) * (a * d - b * c)⁻¹) * Multiplicative.toAdd x.2 := by ring
+        _ = Multiplicative.toAdd x.2 := by
+          rw [show (a * d - b * c) * (a * d - b * c)⁻¹ = 1 by
+            exact mul_inv_cancel₀ (a := a * d - b * c) (by simpa using hdet)]
+          ring
+  map_mul' x y := by
+    ext <;> simp [toAdd_mul, ofAdd_add, mul_add, add_assoc, add_left_comm]
+
+@[simp]
+theorem order100_E25_matrixAut_e1 (a b c d : ZMod 5) (hdet : a * d - b * c ≠ 0) :
+    order100_E25_matrixAut a b c d hdet order100_E25_e1 =
+      (Multiplicative.ofAdd a, Multiplicative.ofAdd c) := by
+  ext <;> simp [order100_E25_matrixAut, order100_E25_e1]
+
+@[simp]
+theorem order100_E25_matrixAut_e2 (a b c d : ZMod 5) (hdet : a * d - b * c ≠ 0) :
+    order100_E25_matrixAut a b c d hdet order100_E25_e2 =
+      (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
+  ext <;> simp [order100_E25_matrixAut, order100_E25_e2]
+
+theorem order100_E25_diag_det_ne_zero (u v : (ZMod 5)ˣ) :
+    (u : ZMod 5) * (v : ZMod 5) - 0 * 0 ≠ 0 := by
+  haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+  simp [mul_ne_zero (Units.ne_zero u) (Units.ne_zero v)]
+
 /-! ### Unit-valued actions on the cyclic subgroup of order `25` -/
 
 /-- A chosen generator of the cyclic unit group `(ZMod 25)ˣ`. -/
@@ -469,6 +591,26 @@ theorem order100_zmod5_unit_sq_eq_one_cases (u : (ZMod 5)ˣ) (hu : u ^ 2 = 1) :
 /-- The diagonal automorphism of `(C₅)²` multiplying the two coordinates by `u` and `v`. -/
 noncomputable abbrev order100_e25DiagAut (u v : (ZMod 5)ˣ) : MulAut order100_E25 :=
   MulEquiv.prodCongr (unitAutHom u) (unitAutHom v)
+
+theorem order100_E25_matrixAut_diag_eq (u v : (ZMod 5)ˣ)
+    (hdet : (u : ZMod 5) * (v : ZMod 5) - 0 * 0 ≠ 0) :
+    order100_E25_matrixAut (u : ZMod 5) 0 0 (v : ZMod 5) hdet =
+      order100_e25DiagAut u v := by
+  apply order100_E25_mulAut_ext
+  · rw [order100_E25_matrixAut_e1]
+    change (Multiplicative.ofAdd (u : ZMod 5), 1) =
+      (unitAutHom u (Multiplicative.ofAdd (1 : ZMod 5)), unitAutHom v 1)
+    apply Prod.ext
+    · rw [unitAutHom_apply]
+      simp
+    · exact (map_one (unitAutHom v)).symm
+  · rw [order100_E25_matrixAut_e2]
+    change (1, Multiplicative.ofAdd (v : ZMod 5)) =
+      (unitAutHom u 1, unitAutHom v (Multiplicative.ofAdd (1 : ZMod 5)))
+    apply Prod.ext
+    · exact (map_one (unitAutHom u)).symm
+    · rw [unitAutHom_apply]
+      simp
 
 /-- Diagonal automorphisms form a subgroup of `Aut((C₅)²)`, parametrised by two units. -/
 noncomputable def order100_e25DiagAutHom : (ZMod 5)ˣ × (ZMod 5)ˣ →* MulAut order100_E25 where
