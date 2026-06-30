@@ -7,6 +7,7 @@ import Mathlib.GroupTheory.Subgroup.Center
 import Mathlib.Algebra.Group.Subgroup.Finite
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.GroupTheory.PGroup
+import Mathlib.GroupTheory.SpecificGroups.Cyclic
 
 /-!
 # Center cardinality as a group invariant
@@ -108,5 +109,14 @@ theorem card_center_eq_card_iff {G : Type*} [Group G] [Finite G] :
     have h_top : Subgroup.center G = ⊤ := Subgroup.eq_top_of_card_eq _ h
     exact center_eq_top_iff.mp h_top
   · exact card_center_eq_card_of_comm G
+
+/-- If the quotient of a group by its center is cyclic, then the group is abelian.  In particular,
+the quotient by the center of a non-abelian group cannot be a nontrivial cyclic group. -/
+theorem comm_of_cyclic_center_quotient {G : Type*} [Group G]
+    [IsCyclic (G ⧸ Subgroup.center G)] (a b : G) : a * b = b * a := by
+  letI : CommGroup G := commGroupOfCyclicCenterQuotient
+    (QuotientGroup.mk' (Subgroup.center G))
+    (by rw [QuotientGroup.ker_mk'])
+  exact mul_comm a b
 
 end Smallgroups.UsefulTheorems

@@ -35,3 +35,4 @@ import Smallgroups.UsefulTheorems.Order40
 import Smallgroups.UsefulTheorems.Order88
 import Smallgroups.UsefulTheorems.Isoclinism
 import Smallgroups.UsefulTheorems.OrderP4_Abel
+import Smallgroups.UsefulTheorems.OrderP4_NonAbel
