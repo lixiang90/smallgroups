@@ -765,6 +765,86 @@ theorem order40_action_chiD8_prod_s0 :
 noncomputable abbrev order40_chiQ8 : order40_Q8 →* (ZMod 5)ˣ :=
   order40_c2UnitHom.comp order88_chiQ8
 
+noncomputable abbrev order40_chiQ8_xa : order40_Q8 →* (ZMod 5)ˣ :=
+  order40_c2UnitHom.comp order88_chiQ8_xa
+
+noncomputable abbrev order40_chiQ8_prod : order40_Q8 →* (ZMod 5)ˣ :=
+  order40_c2UnitHom.comp order88_chiQ8_prod
+
+@[simp]
+theorem order40_chiQ8_a1 :
+    order40_chiQ8 (QuaternionGroup.a (1 : ZMod 4)) = order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_chiQ8_x0 :
+    order40_chiQ8 (QuaternionGroup.xa (0 : ZMod 4)) = 1 := by
+  decide
+
+@[simp]
+theorem order40_chiQ8_xa_a1 :
+    order40_chiQ8_xa (QuaternionGroup.a (1 : ZMod 4)) = 1 := by
+  decide
+
+@[simp]
+theorem order40_chiQ8_xa_x0 :
+    order40_chiQ8_xa (QuaternionGroup.xa (0 : ZMod 4)) = order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_chiQ8_prod_a1 :
+    order40_chiQ8_prod (QuaternionGroup.a (1 : ZMod 4)) = order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_chiQ8_prod_x0 :
+    order40_chiQ8_prod (QuaternionGroup.xa (0 : ZMod 4)) = order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_action_chiQ8_a1 :
+    (order40_action order40_chiQ8) (QuaternionGroup.a (1 : ZMod 4)) =
+      unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiQ8 (QuaternionGroup.a (1 : ZMod 4))) =
+    unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiQ8_a1]
+
+@[simp]
+theorem order40_action_chiQ8_x0 :
+    (order40_action order40_chiQ8) (QuaternionGroup.xa (0 : ZMod 4)) = 1 := by
+  change unitAutHom (order40_chiQ8 (QuaternionGroup.xa (0 : ZMod 4))) = 1
+  rw [order40_chiQ8_x0, map_one]
+
+@[simp]
+theorem order40_action_chiQ8_xa_a1 :
+    (order40_action order40_chiQ8_xa) (QuaternionGroup.a (1 : ZMod 4)) = 1 := by
+  change unitAutHom (order40_chiQ8_xa (QuaternionGroup.a (1 : ZMod 4))) = 1
+  rw [order40_chiQ8_xa_a1, map_one]
+
+@[simp]
+theorem order40_action_chiQ8_xa_x0 :
+    (order40_action order40_chiQ8_xa) (QuaternionGroup.xa (0 : ZMod 4)) =
+      unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiQ8_xa (QuaternionGroup.xa (0 : ZMod 4))) =
+    unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiQ8_xa_x0]
+
+@[simp]
+theorem order40_action_chiQ8_prod_a1 :
+    (order40_action order40_chiQ8_prod) (QuaternionGroup.a (1 : ZMod 4)) =
+      unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiQ8_prod (QuaternionGroup.a (1 : ZMod 4))) =
+    unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiQ8_prod_a1]
+
+@[simp]
+theorem order40_action_chiQ8_prod_x0 :
+    (order40_action order40_chiQ8_prod) (QuaternionGroup.xa (0 : ZMod 4)) =
+      unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiQ8_prod (QuaternionGroup.xa (0 : ZMod 4))) =
+    unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiQ8_prod_x0]
+
 /-- Homomorphisms out of `D₈` are determined by a rotation and a reflection. -/
 theorem order40_d8_hom_ext {M : Type} [Group M] {χ ψ : order40_D8 →* M}
     (hr : χ (DihedralGroup.r (1 : ZMod 4)) =
@@ -837,6 +917,92 @@ theorem order40_d8_unit_character_cases (χ : order40_D8 →* (ZMod 5)ˣ) :
     right
     apply order40_d8_hom_ext <;>
       simp [r1, s0, hr, hs]
+
+/-- Homomorphisms out of `Q₈` are determined by the two displayed four-order generators. -/
+theorem order40_q8_hom_ext {M : Type} [Group M] {χ ψ : order40_Q8 →* M}
+    (ha : χ (QuaternionGroup.a (1 : ZMod 4)) =
+      ψ (QuaternionGroup.a (1 : ZMod 4)))
+    (hx : χ (QuaternionGroup.xa (0 : ZMod 4)) =
+      ψ (QuaternionGroup.xa (0 : ZMod 4))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  rcases x with i | i
+  · have hi : QuaternionGroup.a i = (QuaternionGroup.a (1 : ZMod 4) : order40_Q8) ^ i.val := by
+      calc
+        QuaternionGroup.a i = QuaternionGroup.a ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = (QuaternionGroup.a (1 : ZMod 4) : order40_Q8) ^ i.val := by
+          rw [QuaternionGroup.a_one_pow]
+    rw [hi, map_pow, map_pow, ha]
+  · have hai : QuaternionGroup.a i =
+        (QuaternionGroup.a (1 : ZMod 4) : order40_Q8) ^ i.val := by
+      calc
+        QuaternionGroup.a i = QuaternionGroup.a ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = (QuaternionGroup.a (1 : ZMod 4) : order40_Q8) ^ i.val := by
+          rw [QuaternionGroup.a_one_pow]
+    have hi : QuaternionGroup.xa i =
+        QuaternionGroup.xa (0 : ZMod 4) *
+          (QuaternionGroup.a (1 : ZMod 4) : order40_Q8) ^ i.val := by
+      rw [← hai]
+      simp [QuaternionGroup.xa_mul_a]
+    rw [hi, map_mul, map_mul, map_pow, map_pow, hx, ha]
+
+theorem order40_q8_character_a_sq (χ : order40_Q8 →* (ZMod 5)ˣ) :
+    χ (QuaternionGroup.a (1 : ZMod 4)) ^ 2 = 1 := by
+  let a1 : order40_Q8 := QuaternionGroup.a (1 : ZMod 4)
+  let x0 : order40_Q8 := QuaternionGroup.xa (0 : ZMod 4)
+  have hrel : x0 * a1 = a1⁻¹ * x0 := by decide
+  have himg : χ (x0 * a1) = χ (a1⁻¹ * x0) := congrArg χ hrel
+  rw [map_mul, map_mul, map_inv] at himg
+  have hmul : χ a1 = (χ a1)⁻¹ := by
+    have := congrArg (fun x => x * (χ x0)⁻¹) himg
+    simpa [mul_assoc, mul_comm, mul_left_comm] using this
+  rw [pow_two]
+  nth_rw 2 [hmul]
+  exact mul_inv_cancel _
+
+theorem order40_q8_character_x_sq (χ : order40_Q8 →* (ZMod 5)ˣ)
+    (ha : χ (QuaternionGroup.a (1 : ZMod 4)) ^ 2 = 1) :
+    χ (QuaternionGroup.xa (0 : ZMod 4)) ^ 2 = 1 := by
+  let a1 : order40_Q8 := QuaternionGroup.a (1 : ZMod 4)
+  let x0 : order40_Q8 := QuaternionGroup.xa (0 : ZMod 4)
+  have hrel : x0 ^ 2 = a1 ^ 2 := by decide
+  have himg : χ (x0 ^ 2) = χ (a1 ^ 2) := congrArg χ hrel
+  rw [map_pow, map_pow] at himg
+  change χ x0 ^ 2 = 1
+  rw [himg]
+  exact ha
+
+theorem order40_q8_unit_character_cases (χ : order40_Q8 →* (ZMod 5)ˣ) :
+    χ = 1 ∨ χ = order40_chiQ8 ∨ χ = order40_chiQ8_xa ∨
+      χ = order40_chiQ8_prod := by
+  let a1 : order40_Q8 := QuaternionGroup.a (1 : ZMod 4)
+  let x0 : order40_Q8 := QuaternionGroup.xa (0 : ZMod 4)
+  have hsq_a : χ a1 ^ 2 = 1 := by
+    exact order40_q8_character_a_sq χ
+  have hsq_x : χ x0 ^ 2 = 1 := by
+    exact order40_q8_character_x_sq χ hsq_a
+  rcases order40_unit_sq_eq_one_cases (χ a1) hsq_a with ha | ha <;>
+    rcases order40_unit_sq_eq_one_cases (χ x0) hsq_x with hx | hx
+  · left
+    apply order40_q8_hom_ext <;>
+      simp [a1, x0, ha, hx]
+  · right
+    right
+    left
+    apply order40_q8_hom_ext <;>
+      simp [a1, x0, ha, hx]
+  · right
+    left
+    apply order40_q8_hom_ext <;>
+      simp [a1, x0, ha, hx]
+  · right
+    right
+    right
+    apply order40_q8_hom_ext <;>
+      simp [a1, x0, ha, hx]
 
 /-- Direct-product representative attached to a group `H` of order `8`. -/
 abbrev order40_DP (H : Type) : Type := order40_C5 × H
@@ -1033,6 +1199,30 @@ noncomputable def order40_d8_prod_equiv_rot :
   order40_SD_equiv_of_character_comp order40_chiD8_rot order40_chiD8_prod
     order88_D8_shear order40_chiD8_rot_comp_shear
 
+theorem order40_chiQ8_comp_shear :
+    order40_chiQ8.comp order88_Q8_shear.toMonoidHom =
+      order40_chiQ8_prod := by
+  unfold order40_chiQ8 order40_chiQ8_prod
+  rw [MonoidHom.comp_assoc, order88_chiQ8_comp_shear]
+
+theorem order40_chiQ8_comp_swap :
+    order40_chiQ8.comp order88_Q8_swap.toMonoidHom =
+      order40_chiQ8_xa := by
+  unfold order40_chiQ8 order40_chiQ8_xa
+  rw [MonoidHom.comp_assoc, order88_chiQ8_comp_swap]
+
+noncomputable def order40_q8_prod_equiv_q8 :
+    order40_SD order40_Q8 order40_chiQ8_prod ≃*
+      order40_RN :=
+  order40_SD_equiv_of_character_comp order40_chiQ8 order40_chiQ8_prod
+    order88_Q8_shear order40_chiQ8_comp_shear
+
+noncomputable def order40_q8_xa_equiv_q8 :
+    order40_SD order40_Q8 order40_chiQ8_xa ≃*
+      order40_RN :=
+  order40_SD_equiv_of_character_comp order40_chiQ8 order40_chiQ8_xa
+    order88_Q8_swap order40_chiQ8_comp_swap
+
 theorem order40_c8_character_semidirect_cases (χ : order40_C8 →* (ZMod 5)ˣ) :
     Nonempty (order40_SD order40_C8 χ ≃* order40_RA) ∨
       Nonempty (order40_SD order40_C8 χ ≃* order40_RB) ∨
@@ -1171,6 +1361,26 @@ theorem order40_d8_character_semidirect_cases (χ : order40_D8 →* (ZMod 5)ˣ) 
     have haction : order40_action χ = order40_action order40_chiD8_prod := by rw [hχ]
     exact ⟨(semidirectProductCongr_eq haction).trans order40_d8_prod_equiv_rot⟩
 
+theorem order40_q8_character_semidirect_cases (χ : order40_Q8 →* (ZMod 5)ˣ) :
+    Nonempty (order40_SD order40_Q8 χ ≃* order40_RM) ∨
+      Nonempty (order40_SD order40_Q8 χ ≃* order40_RN) := by
+  rcases order40_q8_unit_character_cases χ with hχ | hχ | hχ | hχ
+  · left
+    have haction : order40_action χ = 1 := by
+      rw [hχ]
+      ext h x
+      simp [order40_action]
+    exact ⟨(semidirectProductCongr_eq haction).trans SemidirectProduct.mulEquivProd⟩
+  · right
+    have haction : order40_action χ = order40_action order40_chiQ8 := by rw [hχ]
+    exact ⟨semidirectProductCongr_eq haction⟩
+  · right
+    have haction : order40_action χ = order40_action order40_chiQ8_xa := by rw [hχ]
+    exact ⟨(semidirectProductCongr_eq haction).trans order40_q8_xa_equiv_q8⟩
+  · right
+    have haction : order40_action χ = order40_action order40_chiQ8_prod := by rw [hχ]
+    exact ⟨(semidirectProductCongr_eq haction).trans order40_q8_prod_equiv_q8⟩
+
 theorem order40_mulAut_sq_eq_one_cases (α : MulAut order40_C5) (hα : α ^ 2 = 1) :
     α = 1 ∨ α = unitAutHom (order40_u4 ^ 2) := by
   haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
@@ -1207,6 +1417,41 @@ theorem order40_d8_action_rot_sq (φ : order40_D8 →* MulAut order40_C5) :
   rw [pow_two]
   nth_rw 2 [hu_inv]
   exact mul_inv_cancel _
+
+theorem order40_q8_action_a_sq (φ : order40_Q8 →* MulAut order40_C5) :
+    φ (QuaternionGroup.a (1 : ZMod 4)) ^ 2 = 1 := by
+  haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+  let a1 : order40_Q8 := QuaternionGroup.a (1 : ZMod 4)
+  let x0 : order40_Q8 := QuaternionGroup.xa (0 : ZMod 4)
+  obtain ⟨u, hu⟩ := exists_unitAutHom_eq (p := 5) (φ a1)
+  obtain ⟨v, hv⟩ := exists_unitAutHom_eq (p := 5) (φ x0)
+  have hrel : x0 * a1 = a1⁻¹ * x0 := by decide
+  have himg : φ (x0 * a1) = φ (a1⁻¹ * x0) := congrArg φ hrel
+  rw [map_mul, map_mul, map_inv, hu, hv] at himg
+  have huv : v * u = u⁻¹ * v := by
+    apply unitAutHom_injective (p := 5)
+    simpa [map_mul, map_inv] using himg
+  have hu_inv : u = u⁻¹ := by
+    have := congrArg (fun x => x * v⁻¹) huv
+    simpa [mul_assoc, mul_comm, mul_left_comm] using this
+  rw [hu, ← map_pow]
+  rw [← map_one (unitAutHom (p := 5))]
+  apply congrArg (unitAutHom (p := 5))
+  rw [pow_two]
+  nth_rw 2 [hu_inv]
+  exact mul_inv_cancel _
+
+theorem order40_q8_action_x_sq (φ : order40_Q8 →* MulAut order40_C5)
+    (ha : φ (QuaternionGroup.a (1 : ZMod 4)) ^ 2 = 1) :
+    φ (QuaternionGroup.xa (0 : ZMod 4)) ^ 2 = 1 := by
+  let a1 : order40_Q8 := QuaternionGroup.a (1 : ZMod 4)
+  let x0 : order40_Q8 := QuaternionGroup.xa (0 : ZMod 4)
+  have hrel : x0 ^ 2 = a1 ^ 2 := by decide
+  have himg : φ (x0 ^ 2) = φ (a1 ^ 2) := congrArg φ hrel
+  rw [map_pow, map_pow] at himg
+  change φ x0 ^ 2 = 1
+  rw [himg]
+  exact ha
 
 theorem order40_c4c2_action_cases (φ : order40_C4C2 →* MulAut order40_C5) :
     φ = 1 ∨ φ = order40_action order40_chiC4C2_fst_two ∨
@@ -1385,6 +1630,36 @@ theorem order40_d8_action_cases (φ : order40_D8 →* MulAut order40_C5) :
     apply order40_d8_hom_ext <;>
       simp [r1, s0, hr, hs]
 
+theorem order40_q8_action_cases (φ : order40_Q8 →* MulAut order40_C5) :
+    φ = 1 ∨ φ = order40_action order40_chiQ8 ∨
+      φ = order40_action order40_chiQ8_xa ∨
+      φ = order40_action order40_chiQ8_prod := by
+  let a1 : order40_Q8 := QuaternionGroup.a (1 : ZMod 4)
+  let x0 : order40_Q8 := QuaternionGroup.xa (0 : ZMod 4)
+  have hsq_a : (φ a1) ^ 2 = 1 := by
+    exact order40_q8_action_a_sq φ
+  have hsq_x : (φ x0) ^ 2 = 1 := by
+    exact order40_q8_action_x_sq φ hsq_a
+  rcases order40_mulAut_sq_eq_one_cases (φ a1) hsq_a with ha | ha <;>
+    rcases order40_mulAut_sq_eq_one_cases (φ x0) hsq_x with hx | hx
+  · left
+    apply order40_q8_hom_ext <;>
+      simp [a1, x0, ha, hx]
+  · right
+    right
+    left
+    apply order40_q8_hom_ext <;>
+      simp [a1, x0, ha, hx]
+  · right
+    left
+    apply order40_q8_hom_ext <;>
+      simp [a1, x0, ha, hx]
+  · right
+    right
+    right
+    apply order40_q8_hom_ext <;>
+      simp [a1, x0, ha, hx]
+
 theorem order40_c8_action_semidirect_cases (φ : order40_C8 →* MulAut order40_C5) :
     Nonempty (SemidirectProduct order40_C5 order40_C8 φ ≃* order40_RA) ∨
       Nonempty (SemidirectProduct order40_C5 order40_C8 φ ≃* order40_RB) ∨
@@ -1506,6 +1781,20 @@ theorem order40_d8_action_semidirect_cases
   · right
     left
     exact ⟨(semidirectProductCongr_eq hφ).trans order40_d8_prod_equiv_rot⟩
+
+theorem order40_q8_action_semidirect_cases
+    (φ : order40_Q8 →* MulAut order40_C5) :
+    Nonempty (SemidirectProduct order40_C5 order40_Q8 φ ≃* order40_RM) ∨
+      Nonempty (SemidirectProduct order40_C5 order40_Q8 φ ≃* order40_RN) := by
+  rcases order40_q8_action_cases φ with hφ | hφ | hφ | hφ
+  · left
+    exact ⟨(semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd⟩
+  · right
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right
+    exact ⟨(semidirectProductCongr_eq hφ).trans order40_q8_xa_equiv_q8⟩
+  · right
+    exact ⟨(semidirectProductCongr_eq hφ).trans order40_q8_prod_equiv_q8⟩
 
 /-- The fourteen displayed representatives, indexed for the counting framework. -/
 noncomputable abbrev order40_reps : Fin 14 → Type
