@@ -10,3 +10,4 @@ import Smallgroups.Classifications.Classifications_31_to_40.Order35
 import Smallgroups.Classifications.Classifications_31_to_40.Order37
 import Smallgroups.Classifications.Classifications_31_to_40.Order38
 import Smallgroups.Classifications.Classifications_31_to_40.Order39
+import Smallgroups.Classifications.Classifications_31_to_40.Order40

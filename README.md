@@ -31,6 +31,7 @@ theorems:
 | `2pq` (`2<p<q`, `p∤q−1`) | 30,66,70 | 4 | `ℤ/2pq`, `D_pq`, `ℤ/q×D_p`, `ℤ/p×D_q` | `Order2PQ` |
 | `2pq` (`2<p<q`, `p∣q−1`) | 42,78 | 6 | + `(ℤ/q⋊ℤ/p)×ℤ/2`, `ℤ/q⋊ℤ/2p` | `Order2PQ` |
 | `7·3²` | 63 | 4 | `ℤ/63`, `ℤ/3×ℤ/21`, `(ℤ/7⋊ℤ/3)×ℤ/3`, `ℤ/7⋊ℤ/9` | `Order63` |
+| `8·5` | 40 | 14 | `ℤ/5 ⋊ H` (`H` of order 8) — 14 actions | `Order40` |
 | `8·11` | 88 | 12 | `ℤ/11 ⋊ H` (`H` of order 8) — 12 actions | `Order88` |
 
 ## Layout
@@ -261,6 +262,19 @@ theorems:
     `order63_classification`: `ℤ/63`, `ℤ/3 × ℤ/21`, `(ℤ/7 ⋊ ℤ/3) × ℤ/3`, and `ℤ/7 ⋊ ℤ/9`. They are
     pairwise non-isomorphic (`order63_pairwise`, separated by commutativity and by order-`9` /
     order-`21` element witnesses). Instantiated at **63** in `Classifications_61_to_70/Order63`.
+
+  * `Order40.lean` — the **complete classification** of groups of order `40 = 8 · 5` into
+    **fourteen** classes, reusing the order-`8`-complement machinery of `Order88`. The Sylow-`5`
+    subgroup is normal (`card_sylow_5_eq_one_of_card_40`), so `G ≅ ℤ/5 ⋊[φ] H` with `|H| = 8`
+    (`order40_semidirectProduct`). Casing `H` over the five groups of order `8` (via
+    `P3Group.classification`) and the homomorphisms `φ : H → Aut(ℤ/5) ≅ (ℤ/5)ˣ` up to the
+    `Aut H × Aut(ℤ/5)`-orbit gives the fourteen representatives `order40_reps` (five direct products
+    `ℤ/5 × H` plus nine non-trivial semidirect products — more than the seven of order `88`, since
+    `(ℤ/5)ˣ ≅ ℤ/4` is itself a `2`-group, so a `2`-group `H` can act with image of order `1`, `2`,
+    **or** `4`): `order40_classification` (exhaustiveness), `order40_reps_pairwise` (distinctness,
+    separated by the triple invariant `order40_reps_invariant` — center cardinality, `#{x : x² = 1}`,
+    `#{x : x⁴ = 1}`), and `order40_isClassif`. Instantiated at **40** in
+    `Classifications_31_to_40/Order40`.
 
   * `Order88.lean` — the **complete classification** of groups of order `88 = 8 · 11` into **twelve**
     classes. The Sylow-`11` subgroup is normal (`card_sylow_11_eq_one_of_card_88`), so
