@@ -332,7 +332,159 @@ private theorem nonempty_mulEquiv_prod_dihedral {G : Type*} [Group G]
     (_hcd : c * d = d * c)
     (_hcard : Nat.card G = 2 * m * n) :
     Nonempty (G ≃* Multiplicative (ZMod m) × DihedralGroup n) := by
-  sorry
+  haveI : NeZero m := ⟨hm⟩
+  haveI : NeZero n := ⟨hn⟩
+  haveI : Fintype G := Fintype.ofFinite G
+  have hdc : Commute d c := _hcd.symm
+  have hdb : Commute d b := _hbd.symm
+  have hd_m1 : d ^ m = 1 := by rw [← _hd_ord]; exact pow_orderOf_eq_one d
+  -- Dihedral machinery for `c, b` (mirrors `nonempty_mulEquiv_dihedral_odd`)
+  have hc_add : ∀ i j : ZMod n, c ^ (i + j).val = c ^ i.val * c ^ j.val := by
+    intro i j; rw [← pow_add]; apply pow_eq_pow_iff_modEq.mpr
+    rw [_hc_ord, ZMod.val_add]; exact Nat.mod_modEq _ _
+  have hc_sub : ∀ i j : ZMod n, c ^ (j - i).val = c ^ j.val * (c ^ i.val)⁻¹ := by
+    intro i j; have h := hc_add (j - i) i
+    rw [sub_add_cancel] at h; exact eq_mul_inv_iff_mul_eq.mpr h.symm
+  have hcb : c * b = b * c⁻¹ := by
+    have h2 : b * c = c⁻¹ * b := by rw [← _hba]; group
+    have h : c * b * c = b := by
+      calc c * b * c = c * (b * c) := by group
+        _ = c * (c⁻¹ * b) := by rw [h2]
+        _ = b := by group
+    calc c * b = c * b * c * c⁻¹ := by group
+      _ = b * c⁻¹ := by rw [h]
+  have hck : ∀ k : ℕ, c ^ k * b = b * (c⁻¹) ^ k := by
+    intro k; induction k with
+    | zero => simp
+    | succ mm ih => rw [pow_succ, mul_assoc, hcb, ← mul_assoc, ih, mul_assoc, ← pow_succ]
+  have hcom : ∀ m₀ n₀ : ℕ, (c ^ m₀)⁻¹ * c ^ n₀ = c ^ n₀ * (c ^ m₀)⁻¹ := fun m₀ n₀ =>
+    ((((Commute.refl c).pow_pow n₀ m₀).inv_right).eq).symm
+  have hrsr : ∀ m₀ n₀ : ℕ, c ^ m₀ * (b * c ^ n₀) = b * (c ^ n₀ * (c ^ m₀)⁻¹) := by
+    intro m₀ n₀; rw [← mul_assoc, hck, mul_assoc, inv_pow, hcom]
+  have hsrsr : ∀ m₀ n₀ : ℕ, b * c ^ m₀ * (b * c ^ n₀) = c ^ n₀ * (c ^ m₀)⁻¹ := by
+    intro m₀ n₀; rw [mul_assoc, hrsr, ← mul_assoc, ← pow_two, _hb2, one_mul]
+  -- The dihedral part as a function
+  let ψ : DihedralGroup n → G := fun x => match x with
+    | .r i => c ^ i.val
+    | .sr i => b * c ^ i.val
+  have hψmul : ∀ x y, ψ (x * y) = ψ x * ψ y := by
+    rintro (i | i) (j | j)
+    · exact hc_add i j
+    · change b * c ^ (j - i).val = c ^ i.val * (b * c ^ j.val)
+      rw [hc_sub, hrsr]
+    · change b * c ^ (i + j).val = b * c ^ i.val * c ^ j.val
+      rw [hc_add, mul_assoc]
+    · change c ^ (j - i).val = b * c ^ i.val * (b * c ^ j.val)
+      rw [hc_sub, hsrsr]
+  -- The cyclic part addition law
+  have hd_add : ∀ i j : ZMod m, d ^ (i + j).val = d ^ i.val * d ^ j.val := by
+    intro i j; rw [← pow_add]; apply pow_eq_pow_iff_modEq.mpr
+    rw [_hd_ord, ZMod.val_add]; exact Nat.mod_modEq _ _
+  -- Powers of `d` commute with the entire dihedral part
+  have hd_comm : ∀ (a : ℕ) (y : DihedralGroup n), Commute (d ^ a) (ψ y) := by
+    intro a y
+    cases y with
+    | r i => exact hdc.pow_pow a i.val
+    | sr i =>
+        change Commute (d ^ a) (b * c ^ i.val)
+        exact (hdb.pow_left a).mul_right (hdc.pow_pow a i.val)
+  -- The combined map
+  let Φ : Multiplicative (ZMod m) × DihedralGroup n → G := fun z =>
+    d ^ (Multiplicative.toAdd z.1).val * ψ z.2
+  have hΦmul : ∀ z w, Φ (z * w) = Φ z * Φ w := by
+    rintro ⟨x1, y1⟩ ⟨x2, y2⟩
+    change d ^ (Multiplicative.toAdd (x1 * x2)).val * ψ (y1 * y2)
+        = (d ^ (Multiplicative.toAdd x1).val * ψ y1)
+          * (d ^ (Multiplicative.toAdd x2).val * ψ y2)
+    rw [hψmul y1 y2,
+        show Multiplicative.toAdd (x1 * x2)
+            = Multiplicative.toAdd x1 + Multiplicative.toAdd x2 from rfl,
+        hd_add]
+    have hBP := (hd_comm (Multiplicative.toAdd x2).val y1).eq
+    rw [mul_assoc (d ^ (Multiplicative.toAdd x1).val) (d ^ (Multiplicative.toAdd x2).val)
+          (ψ y1 * ψ y2),
+        ← mul_assoc (d ^ (Multiplicative.toAdd x2).val) (ψ y1) (ψ y2),
+        hBP,
+        mul_assoc (ψ y1) (d ^ (Multiplicative.toAdd x2).val) (ψ y2),
+        ← mul_assoc (d ^ (Multiplicative.toAdd x1).val) (ψ y1)
+          (d ^ (Multiplicative.toAdd x2).val * ψ y2)]
+  let f : Multiplicative (ZMod m) × DihedralGroup n →* G := MonoidHom.mk' Φ hΦmul
+  -- Coprime orders ⇒ the cyclic subgroups intersect trivially
+  have key2 : ∀ (s t : ℕ), d ^ s * c ^ t = 1 → d ^ s = 1 ∧ c ^ t = 1 := by
+    intro s t h
+    have e1 : d ^ s = (c ^ t)⁻¹ := mul_eq_one_iff_eq_inv.mp h
+    have e2 : c ^ (t * m) = 1 := by
+      have hh : (d ^ s) ^ m = ((c ^ t)⁻¹) ^ m := by rw [e1]
+      rw [← pow_mul, mul_comm s m, pow_mul, hd_m1, one_pow] at hh
+      rw [inv_pow, ← pow_mul] at hh
+      rw [eq_comm, inv_eq_one] at hh
+      exact hh
+    have hndvd : n ∣ t := by
+      have hdvd : orderOf c ∣ t * m := orderOf_dvd_of_pow_eq_one e2
+      rw [_hc_ord] at hdvd
+      exact (_hcop.symm).dvd_of_dvd_mul_right hdvd
+    have hct1 : c ^ t = 1 := orderOf_dvd_iff_pow_eq_one.mp (by rw [_hc_ord]; exact hndvd)
+    refine ⟨?_, hct1⟩
+    rw [hct1, mul_one] at h; exact h
+  -- Injectivity of `f`
+  have hinj : Function.Injective f := by
+    rw [injective_iff_map_eq_one]
+    rintro ⟨x, (i | i)⟩ hx
+    · have hx' : d ^ (Multiplicative.toAdd x).val * c ^ i.val = 1 := hx
+      obtain ⟨hd1, hc1⟩ := key2 (Multiplicative.toAdd x).val i.val hx'
+      have hi0 : i = 0 := by
+        rw [← ZMod.val_eq_zero]
+        have hdvd : orderOf c ∣ i.val := orderOf_dvd_of_pow_eq_one hc1
+        rw [_hc_ord] at hdvd
+        exact Nat.eq_zero_of_dvd_of_lt hdvd (ZMod.val_lt i)
+      have hx1 : x = 1 := by
+        have hdvd : orderOf d ∣ (Multiplicative.toAdd x).val := orderOf_dvd_of_pow_eq_one hd1
+        rw [_hd_ord] at hdvd
+        have hval0 : (Multiplicative.toAdd x).val = 0 :=
+          Nat.eq_zero_of_dvd_of_lt hdvd (ZMod.val_lt _)
+        have htoadd0 : Multiplicative.toAdd x = 0 := (ZMod.val_eq_zero _).mp hval0
+        rw [← ofAdd_toAdd x, htoadd0, ofAdd_zero]
+      rw [hx1, hi0]; rfl
+    · exfalso
+      have hx' : d ^ (Multiplicative.toAdd x).val * (b * c ^ i.val) = 1 := hx
+      set a := (Multiplicative.toAdd x).val
+      set t := i.val
+      have huv : Commute (d ^ a) (c ^ t) := hdc.pow_pow a t
+      have step1 : b * c ^ t = (d ^ a)⁻¹ := eq_inv_of_mul_eq_one_right hx'
+      have hbeq : b = (d ^ a)⁻¹ * (c ^ t)⁻¹ := by rw [← step1]; group
+      have hbeq2 : b = (d ^ a * c ^ t)⁻¹ := by
+        rw [hbeq, mul_inv_rev]; exact (huv.inv_left.inv_right).eq
+      have hw2 : (d ^ a * c ^ t) ^ 2 = 1 := by
+        have hh : b ^ 2 = ((d ^ a * c ^ t)⁻¹) ^ 2 := by rw [hbeq2]
+        rw [_hb2, inv_pow] at hh
+        rw [eq_comm, inv_eq_one] at hh
+        exact hh
+      have hexp : (d ^ a * c ^ t) ^ 2 = d ^ (2 * a) * c ^ (2 * t) := by
+        rw [huv.mul_pow, ← pow_mul, ← pow_mul, mul_comm a 2, mul_comm t 2]
+      have hb2eq : d ^ (2 * a) * c ^ (2 * t) = 1 := by rw [← hexp]; exact hw2
+      obtain ⟨hd2, hc2⟩ := key2 (2 * a) (2 * t) hb2eq
+      have hda : d ^ a = 1 := by
+        have hdvd : orderOf d ∣ 2 * a := orderOf_dvd_of_pow_eq_one hd2
+        rw [_hd_ord] at hdvd
+        have hma : m ∣ a := (Nat.coprime_two_right.mpr _hm_odd).dvd_of_dvd_mul_left hdvd
+        exact orderOf_dvd_iff_pow_eq_one.mp (by rw [_hd_ord]; exact hma)
+      have hct : c ^ t = 1 := by
+        have hdvd : orderOf c ∣ 2 * t := orderOf_dvd_of_pow_eq_one hc2
+        rw [_hc_ord] at hdvd
+        have hnt : n ∣ t := (Nat.coprime_two_right.mpr _hn_odd).dvd_of_dvd_mul_left hdvd
+        exact orderOf_dvd_iff_pow_eq_one.mp (by rw [_hc_ord]; exact hnt)
+      have hb1' : b = 1 := by rw [hbeq, hda, hct, inv_one, mul_one]
+      exact _hb1 hb1'
+  -- Cardinality count
+  have hMcard : Fintype.card (Multiplicative (ZMod m)) = m :=
+    (Fintype.card_congr Multiplicative.toAdd).trans (ZMod.card m)
+  have hcard_eq :
+      Fintype.card (Multiplicative (ZMod m) × DihedralGroup n) = Fintype.card G := by
+    rw [Fintype.card_prod, hMcard, DihedralGroup.card, ← Nat.card_eq_fintype_card, _hcard]
+    ring
+  have hbij : Function.Bijective f :=
+    (Fintype.bijective_iff_injective_and_card f).mpr ⟨hinj, hcard_eq⟩
+  exact ⟨(MulEquiv.ofBijective f hbij).symm⟩
 
 /-! ### Exhaustiveness: `¬ p ∣ q - 1` case (4 classes) -/
 
