@@ -457,6 +457,22 @@ theorem order100_c25Action_one {H : Type} [Group H] :
   ext h x
   simp [order100_c25Action]
 
+noncomputable def order100_c25Action_precomp_mulEquiv {H : Type} [Group H]
+    (χ : H →* (ZMod 25)ˣ) (σ : H ≃* H) :
+    SemidirectProduct order100_C25 H (order100_c25Action (χ.comp σ.toMonoidHom)) ≃*
+      SemidirectProduct order100_C25 H (order100_c25Action χ) :=
+  semidirectProductCongrAut (N := order100_C25) (H := H) (φ := order100_c25Action χ) σ
+
+noncomputable def order100_c25Action_precomp_eq_mulEquiv {H : Type} [Group H]
+    (χ ψ : H →* (ZMod 25)ˣ) (σ : H ≃* H)
+    (h : χ.comp σ.toMonoidHom = ψ) :
+    SemidirectProduct order100_C25 H (order100_c25Action ψ) ≃*
+      SemidirectProduct order100_C25 H (order100_c25Action χ) := by
+  have haction : order100_c25Action ψ = order100_c25Action (χ.comp σ.toMonoidHom) := by
+    rw [h]
+  exact (semidirectProductCongr_eq haction).trans
+    (order100_c25Action_precomp_mulEquiv χ σ)
+
 noncomputable abbrev order100_chiC4_four : order100_C4 →* (ZMod 25)ˣ :=
   powHom (p := 25) (q := 4) (order100_u20 ^ 5) (by decide)
 
@@ -1472,6 +1488,12 @@ theorem order100_chi5C4_one_comp_mulThree :
   apply order100_c4_hom_ext
   decide
 
+theorem order100_chiC4_four_comp_mulThree :
+    order100_chiC4_four.comp order100_C4_mulThree.toMonoidHom =
+      order100_chiC4_four_inv := by
+  apply order100_c4_hom_ext
+  decide
+
 noncomputable abbrev order100_c2UnitHom5 : CyclicRep 2 →* (ZMod 5)ˣ :=
   powHom (p := 5) (q := 2) (order100_u5_4 ^ 2) (by decide)
 
@@ -1797,6 +1819,14 @@ theorem order100_chi5V4_fst_comp_toSndProd :
 
 theorem order100_chi5V4_snd_comp_toSndProd :
     order100_chi5V4_snd.comp order100_V4_toSndProd.toMonoidHom = order100_chi5V4_prod := by
+  apply order100_v4_hom_ext <;> decide
+
+theorem order100_chiV4_fst_comp_swap :
+    order100_chiV4_fst.comp order100_V4_swap.toMonoidHom = order100_chiV4_snd := by
+  apply order100_v4_hom_ext <;> decide
+
+theorem order100_chiV4_fst_comp_toProd :
+    order100_chiV4_fst.comp order100_V4_toProd.toMonoidHom = order100_chiV4_prod := by
   apply order100_v4_hom_ext <;> decide
 
 /-! The expected diagonal standard actions for the elementary-abelian `25`-subgroup.
@@ -2154,6 +2184,24 @@ theorem order100_e25V4_action_cases (φ : order100_V4 →* MulAut order100_E25) 
     right; right; right
     exact ⟨eφ.trans e⟩
 
+noncomputable def order100_c25C4_four_inv_equiv_four :
+    SemidirectProduct order100_C25 order100_C4 (order100_c25Action order100_chiC4_four_inv) ≃*
+      SemidirectProduct order100_C25 order100_C4 (order100_c25Action order100_chiC4_four) :=
+  order100_c25Action_precomp_eq_mulEquiv order100_chiC4_four order100_chiC4_four_inv
+    order100_C4_mulThree order100_chiC4_four_comp_mulThree
+
+noncomputable def order100_c25V4_snd_equiv_fst :
+    SemidirectProduct order100_C25 order100_V4 (order100_c25Action order100_chiV4_snd) ≃*
+      SemidirectProduct order100_C25 order100_V4 (order100_c25Action order100_chiV4_fst) :=
+  order100_c25Action_precomp_eq_mulEquiv order100_chiV4_fst order100_chiV4_snd
+    order100_V4_swap order100_chiV4_fst_comp_swap
+
+noncomputable def order100_c25V4_prod_equiv_fst :
+    SemidirectProduct order100_C25 order100_V4 (order100_c25Action order100_chiV4_prod) ≃*
+      SemidirectProduct order100_C25 order100_V4 (order100_c25Action order100_chiV4_fst) :=
+  order100_c25Action_precomp_eq_mulEquiv order100_chiV4_fst order100_chiV4_prod
+    order100_V4_toProd order100_chiV4_fst_comp_toProd
+
 /-- Every group of order `100` is one of the four standard semidirect-product action problems:
 `C₂₅ ⋊ C₄`, `C₂₅ ⋊ V₄`, `(C₅)² ⋊ C₄`, or `(C₅)² ⋊ V₄`. -/
 theorem order100_semidirectProduct_standard_cases [Finite G] (hG : Nat.card G = 100) :
@@ -2190,5 +2238,107 @@ theorem order100_semidirectProduct_standard_cases [Finite G] (hG : Nat.card G = 
     · have hHelem' : Nonempty (H ≃* order100_V4) := by simpa [order100_V4] using hHelem
       obtain ⟨eH⟩ := hHelem'
       exact Or.inr <| Or.inr <| Or.inr ⟨_, ⟨e.trans (SemidirectProduct.congr' eP eH)⟩⟩
+
+theorem order100_classification_cases [Finite G] (hG : Nat.card G = 100) :
+    (Nonempty (G ≃*
+        SemidirectProduct order100_C25 order100_C4 (1 : order100_C4 →* MulAut order100_C25)) ∨
+      Nonempty (G ≃*
+        SemidirectProduct order100_C25 order100_C4
+          (order100_c25Action order100_chiC4_four)) ∨
+      Nonempty (G ≃*
+        SemidirectProduct order100_C25 order100_C4
+          (order100_c25Action order100_chiC4_two))) ∨
+    (Nonempty (G ≃*
+        SemidirectProduct order100_C25 order100_V4 (1 : order100_V4 →* MulAut order100_C25)) ∨
+      Nonempty (G ≃*
+        SemidirectProduct order100_C25 order100_V4
+          (order100_c25Action order100_chiV4_fst))) ∨
+    (Nonempty (G ≃* SemidirectProduct order100_E25 order100_C4 order100_e25C4_00) ∨
+      Nonempty (G ≃* SemidirectProduct order100_E25 order100_C4 order100_e25C4_20) ∨
+      Nonempty (G ≃* SemidirectProduct order100_E25 order100_C4 order100_e25C4_40) ∨
+      Nonempty (G ≃* SemidirectProduct order100_E25 order100_C4 order100_e25C4_22) ∨
+      Nonempty (G ≃* SemidirectProduct order100_E25 order100_C4 order100_e25C4_42) ∨
+      Nonempty (G ≃* SemidirectProduct order100_E25 order100_C4 order100_e25C4_44) ∨
+      Nonempty (G ≃* SemidirectProduct order100_E25 order100_C4 order100_e25C4_44i)) ∨
+    (Nonempty (G ≃* SemidirectProduct order100_E25 order100_V4 order100_e25V4_00) ∨
+      Nonempty (G ≃* SemidirectProduct order100_E25 order100_V4 order100_e25V4_10) ∨
+      Nonempty (G ≃* SemidirectProduct order100_E25 order100_V4 order100_e25V4_11) ∨
+      Nonempty (G ≃* SemidirectProduct order100_E25 order100_V4 order100_e25V4_12)) := by
+  rcases order100_semidirectProduct_standard_cases (G := G) hG with h | h | h | h
+  · obtain ⟨φ, ⟨eG⟩⟩ := h
+    rcases order100_c4_c25Action_cases φ with hφ | hφ | hφ | hφ
+    · subst φ
+      left
+      left
+      exact ⟨eG⟩
+    · subst φ
+      left
+      right; left
+      exact ⟨eG⟩
+    · subst φ
+      left
+      right; right
+      exact ⟨eG⟩
+    · subst φ
+      left
+      right; left
+      exact ⟨eG.trans order100_c25C4_four_inv_equiv_four⟩
+  · obtain ⟨φ, ⟨eG⟩⟩ := h
+    rcases order100_v4_c25Action_cases φ with hφ | hφ | hφ | hφ
+    · subst φ
+      right; left
+      left
+      exact ⟨eG⟩
+    · subst φ
+      right; left
+      right
+      exact ⟨eG⟩
+    · subst φ
+      right; left
+      right
+      exact ⟨eG.trans order100_c25V4_snd_equiv_fst⟩
+    · subst φ
+      right; left
+      right
+      exact ⟨eG.trans order100_c25V4_prod_equiv_fst⟩
+  · obtain ⟨φ, ⟨eG⟩⟩ := h
+    right; right; left
+    rcases order100_e25C4_action_cases φ with h | h | h | h | h | h | h
+    · rcases h with ⟨e⟩
+      left
+      exact ⟨eG.trans e⟩
+    · rcases h with ⟨e⟩
+      right; left
+      exact ⟨eG.trans e⟩
+    · rcases h with ⟨e⟩
+      right; right; left
+      exact ⟨eG.trans e⟩
+    · rcases h with ⟨e⟩
+      right; right; right; left
+      exact ⟨eG.trans e⟩
+    · rcases h with ⟨e⟩
+      right; right; right; right; left
+      exact ⟨eG.trans e⟩
+    · rcases h with ⟨e⟩
+      right; right; right; right; right; left
+      exact ⟨eG.trans e⟩
+    · rcases h with ⟨e⟩
+      right; right; right; right; right; right
+      exact ⟨eG.trans e⟩
+  · obtain ⟨φ, ⟨eG⟩⟩ := h
+    right; right; right
+    rcases order100_e25V4_action_cases φ with h | h | h | h
+    · rcases h with ⟨e⟩
+      left
+      exact ⟨eG.trans e⟩
+    · rcases h with ⟨e⟩
+      right; left
+      exact ⟨eG.trans e⟩
+    · rcases h with ⟨e⟩
+      right; right; left
+      exact ⟨eG.trans e⟩
+    · rcases h with ⟨e⟩
+      right; right; right
+      exact ⟨eG.trans e⟩
 
 end Smallgroups.UsefulTheorems
