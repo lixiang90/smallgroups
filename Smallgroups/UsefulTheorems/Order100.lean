@@ -657,6 +657,9 @@ theorem order100_zmod5_unit_sq_eq_one_cases (u : (ZMod 5)ˣ) (hu : u ^ 2 = 1) :
     u = 1 ∨ u = order100_u5_4 ^ 2 := by
   decide +revert
 
+theorem order100_zmod5_unit_pow_four (u : (ZMod 5)ˣ) : u ^ 4 = 1 := by
+  decide +revert
+
 /-- The diagonal automorphism of `(C₅)²` multiplying the two coordinates by `u` and `v`. -/
 noncomputable abbrev order100_e25DiagAut (u v : (ZMod 5)ˣ) : MulAut order100_E25 :=
   MulEquiv.prodCongr (unitAutHom u) (unitAutHom v)
@@ -773,6 +776,98 @@ noncomputable def order100_e25DiagAction_precomp_pair_mulEquiv {H : Type} [Group
     rw [h₁, h₂]
   exact (semidirectProductCongr_eq haction).trans
     (order100_e25DiagAction_precomp_mulEquiv χ₁ χ₂ σ)
+
+/-- If `θ` sends the standard basis to eigenvectors for `α`, then conjugating `α` by `θ⁻¹`
+gives the corresponding diagonal automorphism. -/
+theorem order100_E25_conj_symm_eq_diag_of_eigenbasis
+    (θ α : MulAut order100_E25) (u v : (ZMod 5)ˣ)
+    (h1 : α (θ order100_E25_e1) = θ (order100_e25DiagAut u v order100_E25_e1))
+    (h2 : α (θ order100_E25_e2) = θ (order100_e25DiagAut u v order100_E25_e2)) :
+    (MulAut.conj θ.symm) α = order100_e25DiagAut u v := by
+  apply order100_E25_mulAut_ext
+  · change θ.symm (α (θ order100_E25_e1)) = order100_e25DiagAut u v order100_E25_e1
+    rw [h1]
+    exact θ.left_inv _
+  · change θ.symm (α (θ order100_E25_e2)) = order100_e25DiagAut u v order100_E25_e2
+    rw [h2]
+    exact θ.left_inv _
+
+/-- A common eigenbasis for an action on `(C₅)²` conjugates it to a diagonal action. -/
+theorem order100_e25Action_conj_symm_eq_diag_of_eigenbasis {H : Type} [Group H]
+    (φ : H →* MulAut order100_E25) (θ : MulAut order100_E25)
+    (χ₁ χ₂ : H →* (ZMod 5)ˣ)
+    (h1 : ∀ h, φ h (θ order100_E25_e1) =
+      θ ((order100_e25DiagAction χ₁ χ₂ h) order100_E25_e1))
+    (h2 : ∀ h, φ h (θ order100_E25_e2) =
+      θ ((order100_e25DiagAction χ₁ χ₂ h) order100_E25_e2)) :
+    (MulAut.conj θ.symm).toMonoidHom.comp φ = order100_e25DiagAction χ₁ χ₂ := by
+  apply MonoidHom.ext
+  intro h
+  exact order100_E25_conj_symm_eq_diag_of_eigenbasis θ (φ h) (χ₁ h) (χ₂ h)
+    (h1 h) (h2 h)
+
+/-- A common eigenbasis gives an isomorphism from the original semidirect product to the
+corresponding diagonal-action semidirect product. -/
+noncomputable def order100_e25Action_eigenbasis_mulEquiv {H : Type} [Group H]
+    (φ : H →* MulAut order100_E25) (θ : MulAut order100_E25)
+    (χ₁ χ₂ : H →* (ZMod 5)ˣ)
+    (h1 : ∀ h, φ h (θ order100_E25_e1) =
+      θ ((order100_e25DiagAction χ₁ χ₂ h) order100_E25_e1))
+    (h2 : ∀ h, φ h (θ order100_E25_e2) =
+      θ ((order100_e25DiagAction χ₁ χ₂ h) order100_E25_e2)) :
+    SemidirectProduct order100_E25 H φ ≃*
+      SemidirectProduct order100_E25 H (order100_e25DiagAction χ₁ χ₂) :=
+  (semidirectProductCongrConj (N := order100_E25) (H := H) (φ := φ) θ.symm).trans
+    (semidirectProductCongr_eq
+      (order100_e25Action_conj_symm_eq_diag_of_eigenbasis φ θ χ₁ χ₂ h1 h2))
+
+/-- The `C₄` character sending the generator to a chosen unit of `(ZMod 5)ˣ`. -/
+noncomputable abbrev order100_chi5C4_ofUnit (u : (ZMod 5)ˣ) :
+    order100_C4 →* (ZMod 5)ˣ :=
+  powHom (p := 5) (q := 4) u (order100_zmod5_unit_pow_four u)
+
+@[simp]
+theorem order100_chi5C4_ofUnit_gen (u : (ZMod 5)ˣ) :
+    order100_chi5C4_ofUnit u (Multiplicative.ofAdd (1 : ZMod 4)) = u := by
+  change u ^ (1 : ZMod 4).val = u
+  haveI : Fact (1 < 4) := ⟨by norm_num⟩
+  rw [ZMod.val_one]
+  simp
+
+/-- For a `C₄`-action, an eigenbasis for the generator diagonalizes the whole action. -/
+theorem order100_e25C4_action_conj_symm_eq_diag_of_generator_eigenbasis
+    (φ : order100_C4 →* MulAut order100_E25) (θ : MulAut order100_E25)
+    (u v : (ZMod 5)ˣ)
+    (h1 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order100_E25_e1) =
+      θ (order100_e25DiagAut u v order100_E25_e1))
+    (h2 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order100_E25_e2) =
+      θ (order100_e25DiagAut u v order100_E25_e2)) :
+    (MulAut.conj θ.symm).toMonoidHom.comp φ =
+      order100_e25DiagAction (order100_chi5C4_ofUnit u) (order100_chi5C4_ofUnit v) := by
+  apply order100_c4_hom_ext
+  change (MulAut.conj θ.symm) (φ (Multiplicative.ofAdd (1 : ZMod 4))) =
+    order100_e25DiagAut
+      (order100_chi5C4_ofUnit u (Multiplicative.ofAdd (1 : ZMod 4)))
+      (order100_chi5C4_ofUnit v (Multiplicative.ofAdd (1 : ZMod 4)))
+  rw [order100_chi5C4_ofUnit_gen, order100_chi5C4_ofUnit_gen]
+  exact order100_E25_conj_symm_eq_diag_of_eigenbasis θ
+    (φ (Multiplicative.ofAdd (1 : ZMod 4))) u v h1 h2
+
+/-- The semidirect-product form of diagonalizing a `C₄`-action from an eigenbasis of its
+generator. -/
+noncomputable def order100_e25C4_action_eigenbasis_mulEquiv
+    (φ : order100_C4 →* MulAut order100_E25) (θ : MulAut order100_E25)
+    (u v : (ZMod 5)ˣ)
+    (h1 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order100_E25_e1) =
+      θ (order100_e25DiagAut u v order100_E25_e1))
+    (h2 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order100_E25_e2) =
+      θ (order100_e25DiagAut u v order100_E25_e2)) :
+    SemidirectProduct order100_E25 order100_C4 φ ≃*
+      SemidirectProduct order100_E25 order100_C4
+        (order100_e25DiagAction (order100_chi5C4_ofUnit u) (order100_chi5C4_ofUnit v)) :=
+  (semidirectProductCongrConj (N := order100_E25) (H := order100_C4) (φ := φ) θ.symm).trans
+    (semidirectProductCongr_eq
+      (order100_e25C4_action_conj_symm_eq_diag_of_generator_eigenbasis φ θ u v h1 h2))
 
 noncomputable abbrev order100_chi5C4_four : order100_C4 →* (ZMod 5)ˣ :=
   powHom (p := 5) (q := 4) order100_u5_4 (by decide)
