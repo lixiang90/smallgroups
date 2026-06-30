@@ -33,3 +33,4 @@ import Smallgroups.UsefulTheorems.Order4P
 import Smallgroups.UsefulTheorems.Order4P_12
 import Smallgroups.UsefulTheorems.Order40
 import Smallgroups.UsefulTheorems.Order88
+import Smallgroups.UsefulTheorems.Isoclinism
