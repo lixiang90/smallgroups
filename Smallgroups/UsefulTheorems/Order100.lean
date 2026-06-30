@@ -448,6 +448,641 @@ theorem order100_v4_c25Action_cases (φ : order100_V4 →* MulAut order100_C25) 
     right
     rw [hχ]
 
+/-! ### Diagonal actions on the elementary-abelian subgroup of order `25` -/
+
+/-- A chosen element of order `4` in `(ZMod 5)ˣ`. -/
+noncomputable abbrev order100_u5_4 : (ZMod 5)ˣ :=
+  ZMod.unitOfCoprime 2 (by norm_num : Nat.Coprime 2 5)
+
+theorem order100_u5_4_pow_four : order100_u5_4 ^ 4 = 1 := by
+  decide
+
+theorem order100_zmod5_unit_cases (u : (ZMod 5)ˣ) :
+    u = 1 ∨ u = order100_u5_4 ∨ u = order100_u5_4 ^ 2 ∨
+      u = order100_u5_4 ^ 3 := by
+  decide +revert
+
+theorem order100_zmod5_unit_sq_eq_one_cases (u : (ZMod 5)ˣ) (hu : u ^ 2 = 1) :
+    u = 1 ∨ u = order100_u5_4 ^ 2 := by
+  decide +revert
+
+/-- The diagonal automorphism of `(C₅)²` multiplying the two coordinates by `u` and `v`. -/
+noncomputable abbrev order100_e25DiagAut (u v : (ZMod 5)ˣ) : MulAut order100_E25 :=
+  MulEquiv.prodCongr (unitAutHom u) (unitAutHom v)
+
+/-- Diagonal automorphisms form a subgroup of `Aut((C₅)²)`, parametrised by two units. -/
+noncomputable def order100_e25DiagAutHom : (ZMod 5)ˣ × (ZMod 5)ˣ →* MulAut order100_E25 where
+  toFun uv := order100_e25DiagAut uv.1 uv.2
+  map_one' := by
+    ext x
+    · change (unitAutHom (p := 5) 1) x.1 = x.1
+      rw [map_one]
+      rfl
+    · change (unitAutHom (p := 5) 1) x.2 = x.2
+      rw [map_one]
+      rfl
+  map_mul' uv uw := by
+    ext x
+    · change unitAutHom (uv.1 * uw.1) x.1 = (unitAutHom uv.1 * unitAutHom uw.1) x.1
+      rw [map_mul]
+    · change unitAutHom (uv.2 * uw.2) x.2 = (unitAutHom uv.2 * unitAutHom uw.2) x.2
+      rw [map_mul]
+
+/-- A pair of unit-valued characters gives a diagonal action on `(C₅)²`. -/
+noncomputable abbrev order100_e25DiagAction {H : Type} [Group H]
+    (χ₁ χ₂ : H →* (ZMod 5)ˣ) : H →* MulAut order100_E25 :=
+  order100_e25DiagAutHom.comp (χ₁.prod χ₂)
+
+theorem order100_e25DiagAction_one {H : Type} [Group H] :
+    order100_e25DiagAction (H := H) 1 1 = 1 := by
+  ext h x
+  · change (unitAutHom (p := 5) 1) x.1 = x.1
+    rw [map_one]
+    rfl
+  · change (unitAutHom (p := 5) 1) x.2 = x.2
+    rw [map_one]
+    rfl
+
+theorem order100_e25DiagAction_comp {H K : Type} [Group H] [Group K]
+    (χ₁ χ₂ : H →* (ZMod 5)ˣ) (σ : K →* H) :
+    (order100_e25DiagAction χ₁ χ₂).comp σ =
+      order100_e25DiagAction (χ₁.comp σ) (χ₂.comp σ) := by
+  rfl
+
+/-- Swap the two cyclic factors of `(C₅)²`. -/
+noncomputable def order100_E25_swap : order100_E25 ≃* order100_E25 where
+  toFun x := (x.2, x.1)
+  invFun x := (x.2, x.1)
+  left_inv x := by cases x; rfl
+  right_inv x := by cases x; rfl
+  map_mul' x y := by rfl
+
+theorem order100_e25DiagAut_swap_conj (u v : (ZMod 5)ˣ) :
+    (MulAut.conj order100_E25_swap) (order100_e25DiagAut u v) =
+      order100_e25DiagAut v u := by
+  ext x <;> rfl
+
+theorem order100_e25DiagAction_swap_conj {H : Type} [Group H]
+    (χ₁ χ₂ : H →* (ZMod 5)ˣ) :
+    (MulAut.conj order100_E25_swap).toMonoidHom.comp (order100_e25DiagAction χ₁ χ₂) =
+      order100_e25DiagAction χ₂ χ₁ := by
+  ext h x <;> rfl
+
+/-- Swapping the two `C₅` factors identifies the two diagonal actions with exchanged characters. -/
+noncomputable def order100_e25DiagAction_swap_mulEquiv {H : Type} [Group H]
+    (χ₁ χ₂ : H →* (ZMod 5)ˣ) :
+    SemidirectProduct order100_E25 H (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 H (order100_e25DiagAction χ₂ χ₁) :=
+  (semidirectProductCongrConj order100_E25_swap).trans
+    (semidirectProductCongr_eq (order100_e25DiagAction_swap_conj χ₁ χ₂))
+
+/-- Precomposing both characters by an automorphism of the complement does not change the
+semidirect product up to isomorphism. -/
+noncomputable def order100_e25DiagAction_precomp_mulEquiv {H : Type} [Group H]
+    (χ₁ χ₂ : H →* (ZMod 5)ˣ) (σ : H ≃* H) :
+    SemidirectProduct order100_E25 H
+        (order100_e25DiagAction (χ₁.comp σ.toMonoidHom) (χ₂.comp σ.toMonoidHom)) ≃*
+      SemidirectProduct order100_E25 H (order100_e25DiagAction χ₁ χ₂) :=
+  semidirectProductCongrAut (N := order100_E25) (H := H)
+    (φ := order100_e25DiagAction χ₁ χ₂) σ
+
+theorem order100_zmod5_character_one_comp {H : Type} [Group H] (σ : H ≃* H) :
+    (1 : H →* (ZMod 5)ˣ).comp σ.toMonoidHom = 1 := by
+  ext h
+  rfl
+
+noncomputable def order100_e25DiagAction_precomp_pair_mulEquiv {H : Type} [Group H]
+    (χ₁ χ₂ ψ₁ ψ₂ : H →* (ZMod 5)ˣ) (σ : H ≃* H)
+    (h₁ : χ₁.comp σ.toMonoidHom = ψ₁) (h₂ : χ₂.comp σ.toMonoidHom = ψ₂) :
+    SemidirectProduct order100_E25 H (order100_e25DiagAction ψ₁ ψ₂) ≃*
+      SemidirectProduct order100_E25 H (order100_e25DiagAction χ₁ χ₂) := by
+  have haction :
+      order100_e25DiagAction ψ₁ ψ₂ =
+        order100_e25DiagAction (χ₁.comp σ.toMonoidHom) (χ₂.comp σ.toMonoidHom) := by
+    rw [h₁, h₂]
+  exact (semidirectProductCongr_eq haction).trans
+    (order100_e25DiagAction_precomp_mulEquiv χ₁ χ₂ σ)
+
+noncomputable abbrev order100_chi5C4_four : order100_C4 →* (ZMod 5)ˣ :=
+  powHom (p := 5) (q := 4) order100_u5_4 (by decide)
+
+noncomputable abbrev order100_chi5C4_two : order100_C4 →* (ZMod 5)ˣ :=
+  powHom (p := 5) (q := 4) (order100_u5_4 ^ 2) (by decide)
+
+noncomputable abbrev order100_chi5C4_four_inv : order100_C4 →* (ZMod 5)ˣ :=
+  powHom (p := 5) (q := 4) (order100_u5_4 ^ 3) (by decide)
+
+@[simp]
+theorem order100_chi5C4_four_gen :
+    order100_chi5C4_four (Multiplicative.ofAdd (1 : ZMod 4)) = order100_u5_4 := by
+  decide
+
+@[simp]
+theorem order100_chi5C4_two_gen :
+    order100_chi5C4_two (Multiplicative.ofAdd (1 : ZMod 4)) =
+      order100_u5_4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order100_chi5C4_four_inv_gen :
+    order100_chi5C4_four_inv (Multiplicative.ofAdd (1 : ZMod 4)) =
+      order100_u5_4 ^ 3 := by
+  decide
+
+theorem order100_c4_zmod5_character_cases (χ : order100_C4 →* (ZMod 5)ˣ) :
+    χ = 1 ∨ χ = order100_chi5C4_four ∨ χ = order100_chi5C4_two ∨
+      χ = order100_chi5C4_four_inv := by
+  let g : order100_C4 := Multiplicative.ofAdd (1 : ZMod 4)
+  have hpow : χ g ^ 4 = 1 := by
+    rw [← map_pow, show g ^ 4 = 1 by decide, map_one]
+  rcases order100_zmod5_unit_cases (χ g) with h | h | h | h
+  · left
+    apply order100_c4_hom_ext
+    simp [g, h]
+  · right
+    left
+    apply order100_c4_hom_ext
+    rw [h, order100_chi5C4_four_gen]
+  · right
+    right
+    left
+    apply order100_c4_hom_ext
+    rw [h, order100_chi5C4_two_gen]
+  · right
+    right
+    right
+    apply order100_c4_hom_ext
+    rw [h, order100_chi5C4_four_inv_gen]
+
+/-- The automorphism of `C₄` sending the additive generator to three times itself. -/
+noncomputable def order100_C4_mulThree : order100_C4 ≃* order100_C4 :=
+  unitAutHom (p := 4) (ZMod.unitOfCoprime 3 (by norm_num : Nat.Coprime 3 4))
+
+theorem order100_chi5C4_four_comp_mulThree :
+    order100_chi5C4_four.comp order100_C4_mulThree.toMonoidHom =
+      order100_chi5C4_four_inv := by
+  apply order100_c4_hom_ext
+  decide
+
+theorem order100_chi5C4_four_inv_comp_mulThree :
+    order100_chi5C4_four_inv.comp order100_C4_mulThree.toMonoidHom =
+      order100_chi5C4_four := by
+  apply order100_c4_hom_ext
+  decide
+
+theorem order100_chi5C4_two_comp_mulThree :
+    order100_chi5C4_two.comp order100_C4_mulThree.toMonoidHom =
+      order100_chi5C4_two := by
+  apply order100_c4_hom_ext
+  decide
+
+theorem order100_chi5C4_one_comp_mulThree :
+    (1 : order100_C4 →* (ZMod 5)ˣ).comp order100_C4_mulThree.toMonoidHom = 1 := by
+  apply order100_c4_hom_ext
+  decide
+
+noncomputable abbrev order100_c2UnitHom5 : CyclicRep 2 →* (ZMod 5)ˣ :=
+  powHom (p := 5) (q := 2) (order100_u5_4 ^ 2) (by decide)
+
+@[simp]
+theorem order100_c2UnitHom5_gen :
+    order100_c2UnitHom5 (Multiplicative.ofAdd (1 : ZMod 2)) =
+      order100_u5_4 ^ 2 := by
+  decide
+
+noncomputable abbrev order100_chi5V4_fst : order100_V4 →* (ZMod 5)ˣ :=
+  order100_c2UnitHom5.comp (MonoidHom.fst (CyclicRep 2) (CyclicRep 2))
+
+noncomputable abbrev order100_chi5V4_snd : order100_V4 →* (ZMod 5)ˣ :=
+  order100_c2UnitHom5.comp (MonoidHom.snd (CyclicRep 2) (CyclicRep 2))
+
+noncomputable abbrev order100_chi5V4_prod : order100_V4 →* (ZMod 5)ˣ :=
+  order100_chi5V4_fst * order100_chi5V4_snd
+
+@[simp]
+theorem order100_chi5V4_fst_g1 :
+    order100_chi5V4_fst (Multiplicative.ofAdd (1 : ZMod 2), 1) =
+      order100_u5_4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order100_chi5V4_fst_g2 :
+    order100_chi5V4_fst (1, Multiplicative.ofAdd (1 : ZMod 2)) = 1 := by
+  decide
+
+@[simp]
+theorem order100_chi5V4_snd_g1 :
+    order100_chi5V4_snd (Multiplicative.ofAdd (1 : ZMod 2), 1) = 1 := by
+  decide
+
+@[simp]
+theorem order100_chi5V4_snd_g2 :
+    order100_chi5V4_snd (1, Multiplicative.ofAdd (1 : ZMod 2)) =
+      order100_u5_4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order100_chi5V4_prod_g1 :
+    order100_chi5V4_prod (Multiplicative.ofAdd (1 : ZMod 2), 1) =
+      order100_u5_4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order100_chi5V4_prod_g2 :
+    order100_chi5V4_prod (1, Multiplicative.ofAdd (1 : ZMod 2)) =
+      order100_u5_4 ^ 2 := by
+  decide
+
+theorem order100_v4_zmod5_character_cases (χ : order100_V4 →* (ZMod 5)ˣ) :
+    χ = 1 ∨ χ = order100_chi5V4_fst ∨ χ = order100_chi5V4_snd ∨
+      χ = order100_chi5V4_prod := by
+  let g1 : order100_V4 := (Multiplicative.ofAdd (1 : ZMod 2), 1)
+  let g2 : order100_V4 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+  have hsq1 : χ g1 ^ 2 = 1 := by
+    rw [← map_pow, show g1 ^ 2 = 1 by decide, map_one]
+  have hsq2 : χ g2 ^ 2 = 1 := by
+    rw [← map_pow, show g2 ^ 2 = 1 by decide, map_one]
+  rcases order100_zmod5_unit_sq_eq_one_cases (χ g1) hsq1 with h1 | h1 <;>
+    rcases order100_zmod5_unit_sq_eq_one_cases (χ g2) hsq2 with h2 | h2
+  · left
+    apply order100_v4_hom_ext <;>
+      simp [g1, g2, h1, h2]
+  · right
+    right
+    left
+    apply order100_v4_hom_ext <;>
+      simp [g1, g2, h1, h2]
+  · right
+    left
+    apply order100_v4_hom_ext <;>
+      simp [g1, g2, h1, h2]
+  · right
+    right
+    right
+    apply order100_v4_hom_ext <;>
+      simp [g1, g2, h1, h2]
+
+theorem order100_c2_mul_self (x : CyclicRep 2) : x * x = 1 := by
+  decide +revert
+
+/-- Swap the two factors of `V₄ = C₂ × C₂`. -/
+noncomputable def order100_V4_swap : order100_V4 ≃* order100_V4 where
+  toFun x := (x.2, x.1)
+  invFun x := (x.2, x.1)
+  left_inv x := by cases x; rfl
+  right_inv x := by cases x; rfl
+  map_mul' x y := by rfl
+
+/-- The shear `(x, y) ↦ (x, xy)` of `V₄ = C₂ × C₂`. -/
+noncomputable def order100_V4_shear : order100_V4 ≃* order100_V4 where
+  toFun x := (x.1, x.1 * x.2)
+  invFun x := (x.1, x.1 * x.2)
+  left_inv x := by
+    ext
+    · rfl
+    · change x.1 * (x.1 * x.2) = x.2
+      rw [← mul_assoc, order100_c2_mul_self x.1, one_mul]
+  right_inv x := by
+    ext
+    · rfl
+    · change x.1 * (x.1 * x.2) = x.2
+      rw [← mul_assoc, order100_c2_mul_self x.1, one_mul]
+  map_mul' x y := by ext <;> simp [mul_comm, mul_left_comm]
+
+theorem order100_chi5V4_fst_comp_swap :
+    order100_chi5V4_fst.comp order100_V4_swap.toMonoidHom = order100_chi5V4_snd := by
+  apply order100_v4_hom_ext <;> decide
+
+theorem order100_chi5V4_snd_comp_swap :
+    order100_chi5V4_snd.comp order100_V4_swap.toMonoidHom = order100_chi5V4_fst := by
+  apply order100_v4_hom_ext <;> decide
+
+theorem order100_chi5V4_fst_comp_shear :
+    order100_chi5V4_fst.comp order100_V4_shear.toMonoidHom = order100_chi5V4_fst := by
+  apply order100_v4_hom_ext <;> decide
+
+theorem order100_chi5V4_snd_comp_shear :
+    order100_chi5V4_snd.comp order100_V4_shear.toMonoidHom = order100_chi5V4_prod := by
+  apply order100_v4_hom_ext <;> decide
+
+theorem order100_chi5V4_prod_comp_shear :
+    order100_chi5V4_prod.comp order100_V4_shear.toMonoidHom = order100_chi5V4_snd := by
+  apply order100_v4_hom_ext <;> decide
+
+noncomputable def order100_V4_toProd : order100_V4 ≃* order100_V4 :=
+  order100_V4_shear.trans order100_V4_swap
+
+noncomputable def order100_V4_toSndProd : order100_V4 ≃* order100_V4 :=
+  order100_V4_swap.trans order100_V4_shear
+
+theorem order100_chi5V4_fst_comp_toProd :
+    order100_chi5V4_fst.comp order100_V4_toProd.toMonoidHom = order100_chi5V4_prod := by
+  apply order100_v4_hom_ext <;> decide
+
+theorem order100_chi5V4_snd_comp_toProd :
+    order100_chi5V4_snd.comp order100_V4_toProd.toMonoidHom = order100_chi5V4_fst := by
+  apply order100_v4_hom_ext <;> decide
+
+theorem order100_chi5V4_fst_comp_toSndProd :
+    order100_chi5V4_fst.comp order100_V4_toSndProd.toMonoidHom = order100_chi5V4_snd := by
+  apply order100_v4_hom_ext <;> decide
+
+theorem order100_chi5V4_snd_comp_toSndProd :
+    order100_chi5V4_snd.comp order100_V4_toSndProd.toMonoidHom = order100_chi5V4_prod := by
+  apply order100_v4_hom_ext <;> decide
+
+/-! The expected diagonal standard actions for the elementary-abelian `25`-subgroup.
+
+For `C₄`, the suffix records the two character exponents, with `4` denoting
+`order100_chi5C4_four`, `2` denoting its square, and `4i` denoting its inverse.
+The seven displayed cases are the diagonal representatives expected after swapping
+the two factors and inverting the generator of `C₄`.
+-/
+
+noncomputable abbrev order100_e25C4_00 : order100_C4 →* MulAut order100_E25 :=
+  order100_e25DiagAction 1 1
+
+noncomputable abbrev order100_e25C4_20 : order100_C4 →* MulAut order100_E25 :=
+  order100_e25DiagAction order100_chi5C4_two 1
+
+noncomputable abbrev order100_e25C4_40 : order100_C4 →* MulAut order100_E25 :=
+  order100_e25DiagAction order100_chi5C4_four 1
+
+noncomputable abbrev order100_e25C4_22 : order100_C4 →* MulAut order100_E25 :=
+  order100_e25DiagAction order100_chi5C4_two order100_chi5C4_two
+
+noncomputable abbrev order100_e25C4_42 : order100_C4 →* MulAut order100_E25 :=
+  order100_e25DiagAction order100_chi5C4_four order100_chi5C4_two
+
+noncomputable abbrev order100_e25C4_44 : order100_C4 →* MulAut order100_E25 :=
+  order100_e25DiagAction order100_chi5C4_four order100_chi5C4_four
+
+noncomputable abbrev order100_e25C4_44i : order100_C4 →* MulAut order100_E25 :=
+  order100_e25DiagAction order100_chi5C4_four order100_chi5C4_four_inv
+
+noncomputable def order100_e25C4_four_inv_one_equiv_40 :
+    SemidirectProduct order100_E25 order100_C4
+        (order100_e25DiagAction order100_chi5C4_four_inv 1) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_40 := by
+  have haction :
+      order100_e25DiagAction order100_chi5C4_four_inv 1 =
+        order100_e25DiagAction
+          (order100_chi5C4_four.comp order100_C4_mulThree.toMonoidHom)
+          ((1 : order100_C4 →* (ZMod 5)ˣ).comp order100_C4_mulThree.toMonoidHom) := by
+    rw [order100_chi5C4_four_comp_mulThree, order100_chi5C4_one_comp_mulThree]
+  exact (semidirectProductCongr_eq haction).trans
+    (order100_e25DiagAction_precomp_mulEquiv order100_chi5C4_four 1 order100_C4_mulThree)
+
+noncomputable def order100_e25C4_four_inv_two_equiv_42 :
+    SemidirectProduct order100_E25 order100_C4
+        (order100_e25DiagAction order100_chi5C4_four_inv order100_chi5C4_two) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_42 := by
+  have haction :
+      order100_e25DiagAction order100_chi5C4_four_inv order100_chi5C4_two =
+        order100_e25DiagAction
+          (order100_chi5C4_four.comp order100_C4_mulThree.toMonoidHom)
+          (order100_chi5C4_two.comp order100_C4_mulThree.toMonoidHom) := by
+    rw [order100_chi5C4_four_comp_mulThree, order100_chi5C4_two_comp_mulThree]
+  exact (semidirectProductCongr_eq haction).trans
+    (order100_e25DiagAction_precomp_mulEquiv order100_chi5C4_four order100_chi5C4_two
+      order100_C4_mulThree)
+
+noncomputable def order100_e25C4_two_four_inv_equiv_42 :
+    SemidirectProduct order100_E25 order100_C4
+        (order100_e25DiagAction order100_chi5C4_two order100_chi5C4_four_inv) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_42 := by
+  have haction :
+      order100_e25DiagAction order100_chi5C4_two order100_chi5C4_four_inv =
+        order100_e25DiagAction
+          (order100_chi5C4_two.comp order100_C4_mulThree.toMonoidHom)
+          (order100_chi5C4_four.comp order100_C4_mulThree.toMonoidHom) := by
+    rw [order100_chi5C4_two_comp_mulThree, order100_chi5C4_four_comp_mulThree]
+  exact ((semidirectProductCongr_eq haction).trans
+    (order100_e25DiagAction_precomp_mulEquiv order100_chi5C4_two order100_chi5C4_four
+      order100_C4_mulThree)).trans
+    (order100_e25DiagAction_swap_mulEquiv order100_chi5C4_two order100_chi5C4_four)
+
+noncomputable def order100_e25C4_four_inv_four_inv_equiv_44 :
+    SemidirectProduct order100_E25 order100_C4
+        (order100_e25DiagAction order100_chi5C4_four_inv order100_chi5C4_four_inv) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_44 := by
+  have haction :
+      order100_e25DiagAction order100_chi5C4_four_inv order100_chi5C4_four_inv =
+        order100_e25DiagAction
+          (order100_chi5C4_four.comp order100_C4_mulThree.toMonoidHom)
+          (order100_chi5C4_four.comp order100_C4_mulThree.toMonoidHom) := by
+    rw [order100_chi5C4_four_comp_mulThree]
+  exact (semidirectProductCongr_eq haction).trans
+    (order100_e25DiagAction_precomp_mulEquiv order100_chi5C4_four order100_chi5C4_four
+      order100_C4_mulThree)
+
+theorem order100_e25C4_diagAction_cases (χ₁ χ₂ : order100_C4 →* (ZMod 5)ˣ) :
+    Nonempty (SemidirectProduct order100_E25 order100_C4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_00) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_20) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_40) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_22) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_42) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_44) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_44i) := by
+  rcases order100_c4_zmod5_character_cases χ₁ with h₁ | h₁ | h₁ | h₁ <;>
+    rcases order100_c4_zmod5_character_cases χ₂ with h₂ | h₂ | h₂ | h₂
+  · subst χ₁; subst χ₂
+    left
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; right; left
+    exact ⟨order100_e25DiagAction_swap_mulEquiv 1 order100_chi5C4_four⟩
+  · subst χ₁; subst χ₂
+    right; left
+    exact ⟨order100_e25DiagAction_swap_mulEquiv 1 order100_chi5C4_two⟩
+  · subst χ₁; subst χ₂
+    right; right; left
+    exact ⟨(order100_e25DiagAction_swap_mulEquiv 1 order100_chi5C4_four_inv).trans
+      order100_e25C4_four_inv_one_equiv_40⟩
+  · subst χ₁; subst χ₂
+    right; right; left
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; right; right; right; right; left
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; right; right; right; left
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; right; right; right; right; right
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; left
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; right; right; right; left
+    exact ⟨order100_e25DiagAction_swap_mulEquiv order100_chi5C4_two order100_chi5C4_four⟩
+  · subst χ₁; subst χ₂
+    right; right; right; left
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; right; right; right; left
+    exact ⟨order100_e25C4_two_four_inv_equiv_42⟩
+  · subst χ₁; subst χ₂
+    right; right; left
+    exact ⟨order100_e25C4_four_inv_one_equiv_40⟩
+  · subst χ₁; subst χ₂
+    right; right; right; right; right; right
+    exact ⟨order100_e25DiagAction_swap_mulEquiv order100_chi5C4_four_inv order100_chi5C4_four⟩
+  · subst χ₁; subst χ₂
+    right; right; right; right; left
+    exact ⟨order100_e25C4_four_inv_two_equiv_42⟩
+  · subst χ₁; subst χ₂
+    right; right; right; right; right; left
+    exact ⟨order100_e25C4_four_inv_four_inv_equiv_44⟩
+
+/-! For `V₄`, the four diagonal representatives are: no non-trivial character, one character,
+the same character twice, and two independent characters. -/
+
+noncomputable abbrev order100_e25V4_00 : order100_V4 →* MulAut order100_E25 :=
+  order100_e25DiagAction 1 1
+
+noncomputable abbrev order100_e25V4_10 : order100_V4 →* MulAut order100_E25 :=
+  order100_e25DiagAction order100_chi5V4_fst 1
+
+noncomputable abbrev order100_e25V4_11 : order100_V4 →* MulAut order100_E25 :=
+  order100_e25DiagAction order100_chi5V4_fst order100_chi5V4_fst
+
+noncomputable abbrev order100_e25V4_12 : order100_V4 →* MulAut order100_E25 :=
+  order100_e25DiagAction order100_chi5V4_fst order100_chi5V4_snd
+
+noncomputable def order100_e25V4_snd_one_equiv_10 :
+    SemidirectProduct order100_E25 order100_V4
+        (order100_e25DiagAction order100_chi5V4_snd 1) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_10 :=
+  order100_e25DiagAction_precomp_pair_mulEquiv order100_chi5V4_fst 1
+    order100_chi5V4_snd 1 order100_V4_swap order100_chi5V4_fst_comp_swap
+    (order100_zmod5_character_one_comp order100_V4_swap)
+
+noncomputable def order100_e25V4_prod_one_equiv_10 :
+    SemidirectProduct order100_E25 order100_V4
+        (order100_e25DiagAction order100_chi5V4_prod 1) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_10 :=
+  order100_e25DiagAction_precomp_pair_mulEquiv order100_chi5V4_fst 1
+    order100_chi5V4_prod 1 order100_V4_toProd order100_chi5V4_fst_comp_toProd
+    (order100_zmod5_character_one_comp order100_V4_toProd)
+
+noncomputable def order100_e25V4_snd_snd_equiv_11 :
+    SemidirectProduct order100_E25 order100_V4
+        (order100_e25DiagAction order100_chi5V4_snd order100_chi5V4_snd) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_11 :=
+  order100_e25DiagAction_precomp_pair_mulEquiv order100_chi5V4_fst order100_chi5V4_fst
+    order100_chi5V4_snd order100_chi5V4_snd order100_V4_swap
+    order100_chi5V4_fst_comp_swap order100_chi5V4_fst_comp_swap
+
+noncomputable def order100_e25V4_prod_prod_equiv_11 :
+    SemidirectProduct order100_E25 order100_V4
+        (order100_e25DiagAction order100_chi5V4_prod order100_chi5V4_prod) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_11 :=
+  order100_e25DiagAction_precomp_pair_mulEquiv order100_chi5V4_fst order100_chi5V4_fst
+    order100_chi5V4_prod order100_chi5V4_prod order100_V4_toProd
+    order100_chi5V4_fst_comp_toProd order100_chi5V4_fst_comp_toProd
+
+noncomputable def order100_e25V4_fst_prod_equiv_12 :
+    SemidirectProduct order100_E25 order100_V4
+        (order100_e25DiagAction order100_chi5V4_fst order100_chi5V4_prod) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_12 :=
+  order100_e25DiagAction_precomp_pair_mulEquiv order100_chi5V4_fst order100_chi5V4_snd
+    order100_chi5V4_fst order100_chi5V4_prod order100_V4_shear
+    order100_chi5V4_fst_comp_shear order100_chi5V4_snd_comp_shear
+
+noncomputable def order100_e25V4_snd_prod_equiv_12 :
+    SemidirectProduct order100_E25 order100_V4
+        (order100_e25DiagAction order100_chi5V4_snd order100_chi5V4_prod) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_12 :=
+  order100_e25DiagAction_precomp_pair_mulEquiv order100_chi5V4_fst order100_chi5V4_snd
+    order100_chi5V4_snd order100_chi5V4_prod order100_V4_toSndProd
+    order100_chi5V4_fst_comp_toSndProd order100_chi5V4_snd_comp_toSndProd
+
+noncomputable def order100_e25V4_prod_fst_equiv_12 :
+    SemidirectProduct order100_E25 order100_V4
+        (order100_e25DiagAction order100_chi5V4_prod order100_chi5V4_fst) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_12 :=
+  order100_e25DiagAction_precomp_pair_mulEquiv order100_chi5V4_fst order100_chi5V4_snd
+    order100_chi5V4_prod order100_chi5V4_fst order100_V4_toProd
+    order100_chi5V4_fst_comp_toProd order100_chi5V4_snd_comp_toProd
+
+noncomputable def order100_e25V4_prod_snd_equiv_12 :
+    SemidirectProduct order100_E25 order100_V4
+        (order100_e25DiagAction order100_chi5V4_prod order100_chi5V4_snd) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_12 :=
+  (order100_e25DiagAction_swap_mulEquiv order100_chi5V4_prod order100_chi5V4_snd).trans
+    order100_e25V4_snd_prod_equiv_12
+
+theorem order100_e25V4_diagAction_cases (χ₁ χ₂ : order100_V4 →* (ZMod 5)ˣ) :
+    Nonempty (SemidirectProduct order100_E25 order100_V4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_00) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_V4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_10) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_V4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_11) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_V4 (order100_e25DiagAction χ₁ χ₂) ≃*
+      SemidirectProduct order100_E25 order100_V4 order100_e25V4_12) := by
+  rcases order100_v4_zmod5_character_cases χ₁ with h₁ | h₁ | h₁ | h₁ <;>
+    rcases order100_v4_zmod5_character_cases χ₂ with h₂ | h₂ | h₂ | h₂
+  · subst χ₁; subst χ₂
+    left
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; left
+    exact ⟨order100_e25DiagAction_swap_mulEquiv 1 order100_chi5V4_fst⟩
+  · subst χ₁; subst χ₂
+    right; left
+    exact ⟨(order100_e25DiagAction_swap_mulEquiv 1 order100_chi5V4_snd).trans
+      order100_e25V4_snd_one_equiv_10⟩
+  · subst χ₁; subst χ₂
+    right; left
+    exact ⟨(order100_e25DiagAction_swap_mulEquiv 1 order100_chi5V4_prod).trans
+      order100_e25V4_prod_one_equiv_10⟩
+  · subst χ₁; subst χ₂
+    right; left
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; right; left
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; right; right
+    exact ⟨MulEquiv.refl _⟩
+  · subst χ₁; subst χ₂
+    right; right; right
+    exact ⟨order100_e25V4_fst_prod_equiv_12⟩
+  · subst χ₁; subst χ₂
+    right; left
+    exact ⟨order100_e25V4_snd_one_equiv_10⟩
+  · subst χ₁; subst χ₂
+    right; right; right
+    exact ⟨order100_e25DiagAction_swap_mulEquiv order100_chi5V4_snd order100_chi5V4_fst⟩
+  · subst χ₁; subst χ₂
+    right; right; left
+    exact ⟨order100_e25V4_snd_snd_equiv_11⟩
+  · subst χ₁; subst χ₂
+    right; right; right
+    exact ⟨order100_e25V4_snd_prod_equiv_12⟩
+  · subst χ₁; subst χ₂
+    right; left
+    exact ⟨order100_e25V4_prod_one_equiv_10⟩
+  · subst χ₁; subst χ₂
+    right; right; right
+    exact ⟨order100_e25V4_prod_fst_equiv_12⟩
+  · subst χ₁; subst χ₂
+    right; right; right
+    exact ⟨order100_e25V4_prod_snd_equiv_12⟩
+  · subst χ₁; subst χ₂
+    right; right; left
+    exact ⟨order100_e25V4_prod_prod_equiv_11⟩
+
 /-- Every group of order `100` is one of the four standard semidirect-product action problems:
 `C₂₅ ⋊ C₄`, `C₂₅ ⋊ V₄`, `(C₅)² ⋊ C₄`, or `(C₅)² ⋊ V₄`. -/
 theorem order100_semidirectProduct_standard_cases [Finite G] (hG : Nat.card G = 100) :
