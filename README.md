@@ -32,6 +32,7 @@ theorems:
 | `2pq` (`2<p<q`, `p∣q−1`) | 42,78 | 6 | + `(ℤ/q⋊ℤ/p)×ℤ/2`, `ℤ/q⋊ℤ/2p` | `Order2PQ` |
 | `7·3²` | 63 | 4 | `ℤ/63`, `ℤ/3×ℤ/21`, `(ℤ/7⋊ℤ/3)×ℤ/3`, `ℤ/7⋊ℤ/9` | `Order63` |
 | `8·5` | 40 | 14 | `ℤ/5 ⋊ H` (`H` of order 8) — 14 actions | `Order40` |
+| `8·7` | 56 | 13 | two Sylow cases: `ℤ/7 ⋊ H` and one `(ℤ/2)³ ⋊ ℤ/7` case | `Order56` |
 | `8·11` | 88 | 12 | `ℤ/11 ⋊ H` (`H` of order 8) — 12 actions | `Order88` |
 
 ## Layout
@@ -275,6 +276,14 @@ theorems:
     separated by the triple invariant `order40_reps_invariant` — center cardinality, `#{x : x² = 1}`,
     `#{x : x⁴ = 1}`), and `order40_isClassif`. Instantiated at **40** in
     `Classifications_31_to_40/Order40`.
+
+  * `Order56.lean` — the **complete classification** of groups of order `56 = 8 · 7` into
+    **thirteen** classes. The Sylow-`7` count gives two cases: if the Sylow `7`-subgroup is normal,
+    the argument reuses the order-`8` complement/action analysis from `Order88`; if it is not
+    normal, a normal subgroup of order `8` is obtained, and all `C₇`-actions are trivial except the
+    single nontrivial action on `(C₂)³`. The representatives `order56_reps` are separated by the
+    pair invariant `order56_reps_invariant` — center cardinality and `#{x : x² = 1}` — and packaged
+    as `order56_isClassif`. Instantiated at **56** in `Classifications_51_to_60/Order56`.
 
   * `Order88.lean` — the **complete classification** of groups of order `88 = 8 · 11` into **twelve**
     classes. The Sylow-`11` subgroup is normal (`card_sylow_11_eq_one_of_card_88`), so
