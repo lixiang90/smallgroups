@@ -2153,6 +2153,291 @@ theorem card_order40_reps (i : Fin 14) : Nat.card (order40_reps i) = 40 := by
   · exact card_order40_RM
   · exact card_order40_RN
 
+private theorem nat_card_eq_of_fintype_card_eq {α : Type*} [Fintype α] {n : Nat}
+    (h : Fintype.card α = n) : Nat.card α = n :=
+  Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq h)
+
+theorem card_center_order40_RA : Nat.card (Subgroup.center order40_RA) = 40 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RB : Nat.card (Subgroup.center order40_RB) = 4 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RC : Nat.card (Subgroup.center order40_RC) = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RD : Nat.card (Subgroup.center order40_RD) = 40 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RE : Nat.card (Subgroup.center order40_RE) = 4 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RF : Nat.card (Subgroup.center order40_RF) = 4 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RG : Nat.card (Subgroup.center order40_RG) = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RH : Nat.card (Subgroup.center order40_RH) = 40 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RI : Nat.card (Subgroup.center order40_RI) = 4 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RJ : Nat.card (Subgroup.center order40_RJ) = 10 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RK : Nat.card (Subgroup.center order40_RK) = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RL : Nat.card (Subgroup.center order40_RL) = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RM : Nat.card (Subgroup.center order40_RM) = 10 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order40_RN : Nat.card (Subgroup.center order40_RN) = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Center cardinalities of the fourteen displayed representatives. -/
+def order40_center_card : Fin 14 → Nat
+  | 0 => 40
+  | 1 => 4
+  | 2 => 2
+  | 3 => 40
+  | 4 => 4
+  | 5 => 4
+  | 6 => 2
+  | 7 => 40
+  | 8 => 4
+  | 9 => 10
+  | 10 => 2
+  | 11 => 2
+  | 12 => 10
+  | 13 => 2
+
+theorem card_center_order40_reps (i : Fin 14) :
+    Nat.card (Subgroup.center (order40_reps i)) = order40_center_card i := by
+  fin_cases i
+  · exact card_center_order40_RA
+  · exact card_center_order40_RB
+  · exact card_center_order40_RC
+  · exact card_center_order40_RD
+  · exact card_center_order40_RE
+  · exact card_center_order40_RF
+  · exact card_center_order40_RG
+  · exact card_center_order40_RH
+  · exact card_center_order40_RI
+  · exact card_center_order40_RJ
+  · exact card_center_order40_RK
+  · exact card_center_order40_RL
+  · exact card_center_order40_RM
+  · exact card_center_order40_RN
+
+theorem not_nonempty_mulEquiv_order40_reps_of_center_card_ne {i j : Fin 14}
+    (h : order40_center_card i ≠ order40_center_card j) :
+    ¬ Nonempty (order40_reps i ≃* order40_reps j) := by
+  exact not_nonempty_mulEquiv_of_card_center_ne (by
+    rw [card_center_order40_reps i, card_center_order40_reps j]
+    exact h)
+
+theorem card_pow_two_eq_one_order40_RA : pow_eq_one_card order40_RA 2 = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RB : pow_eq_one_card order40_RB 2 = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RC : pow_eq_one_card order40_RC 2 = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RD : pow_eq_one_card order40_RD 2 = 4 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RE : pow_eq_one_card order40_RE 2 = 4 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RF : pow_eq_one_card order40_RF 2 = 12 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RG : pow_eq_one_card order40_RG 2 = 12 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RH : pow_eq_one_card order40_RH 2 = 8 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RI : pow_eq_one_card order40_RI 2 = 24 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RJ : pow_eq_one_card order40_RJ 2 = 6 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RK : pow_eq_one_card order40_RK 2 = 14 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RL : pow_eq_one_card order40_RL 2 = 22 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RM : pow_eq_one_card order40_RM 2 = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order40_RN : pow_eq_one_card order40_RN 2 = 2 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Cardinalities of `{x | x ^ 2 = 1}` in the fourteen displayed representatives. -/
+def order40_pow_two_eq_one_card : Fin 14 → Nat
+  | 0 => 2
+  | 1 => 2
+  | 2 => 2
+  | 3 => 4
+  | 4 => 4
+  | 5 => 12
+  | 6 => 12
+  | 7 => 8
+  | 8 => 24
+  | 9 => 6
+  | 10 => 14
+  | 11 => 22
+  | 12 => 2
+  | 13 => 2
+
+theorem card_pow_two_eq_one_order40_reps (i : Fin 14) :
+    pow_eq_one_card (order40_reps i) 2 = order40_pow_two_eq_one_card i := by
+  fin_cases i
+  · exact card_pow_two_eq_one_order40_RA
+  · exact card_pow_two_eq_one_order40_RB
+  · exact card_pow_two_eq_one_order40_RC
+  · exact card_pow_two_eq_one_order40_RD
+  · exact card_pow_two_eq_one_order40_RE
+  · exact card_pow_two_eq_one_order40_RF
+  · exact card_pow_two_eq_one_order40_RG
+  · exact card_pow_two_eq_one_order40_RH
+  · exact card_pow_two_eq_one_order40_RI
+  · exact card_pow_two_eq_one_order40_RJ
+  · exact card_pow_two_eq_one_order40_RK
+  · exact card_pow_two_eq_one_order40_RL
+  · exact card_pow_two_eq_one_order40_RM
+  · exact card_pow_two_eq_one_order40_RN
+
+theorem not_nonempty_mulEquiv_order40_reps_of_pow_two_card_ne {i j : Fin 14}
+    (h : order40_pow_two_eq_one_card i ≠ order40_pow_two_eq_one_card j) :
+    ¬ Nonempty (order40_reps i ≃* order40_reps j) := by
+  exact not_nonempty_mulEquiv_of_pow_eq_one_card_ne (n := 2) (by
+    rw [card_pow_two_eq_one_order40_reps i, card_pow_two_eq_one_order40_reps j]
+    exact h)
+
+theorem card_pow_four_eq_one_order40_RA : pow_eq_one_card order40_RA 4 = 4 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RB : pow_eq_one_card order40_RB 4 = 4 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RC : pow_eq_one_card order40_RC 4 = 12 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RD : pow_eq_one_card order40_RD 4 = 8 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RE : pow_eq_one_card order40_RE 4 = 24 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RF : pow_eq_one_card order40_RF 4 = 24 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RG : pow_eq_one_card order40_RG 4 = 32 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RH : pow_eq_one_card order40_RH 4 = 8 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RI : pow_eq_one_card order40_RI 4 = 24 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RJ : pow_eq_one_card order40_RJ 4 = 8 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RK : pow_eq_one_card order40_RK 4 = 24 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RL : pow_eq_one_card order40_RL 4 = 24 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RM : pow_eq_one_card order40_RM 4 = 8 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_four_eq_one_order40_RN : pow_eq_one_card order40_RN 4 = 24 :=
+  nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Cardinalities of `{x | x ^ 4 = 1}` in the fourteen displayed representatives. -/
+def order40_pow_four_eq_one_card : Fin 14 → Nat
+  | 0 => 4
+  | 1 => 4
+  | 2 => 12
+  | 3 => 8
+  | 4 => 24
+  | 5 => 24
+  | 6 => 32
+  | 7 => 8
+  | 8 => 24
+  | 9 => 8
+  | 10 => 24
+  | 11 => 24
+  | 12 => 8
+  | 13 => 24
+
+theorem card_pow_four_eq_one_order40_reps (i : Fin 14) :
+    pow_eq_one_card (order40_reps i) 4 = order40_pow_four_eq_one_card i := by
+  fin_cases i
+  · exact card_pow_four_eq_one_order40_RA
+  · exact card_pow_four_eq_one_order40_RB
+  · exact card_pow_four_eq_one_order40_RC
+  · exact card_pow_four_eq_one_order40_RD
+  · exact card_pow_four_eq_one_order40_RE
+  · exact card_pow_four_eq_one_order40_RF
+  · exact card_pow_four_eq_one_order40_RG
+  · exact card_pow_four_eq_one_order40_RH
+  · exact card_pow_four_eq_one_order40_RI
+  · exact card_pow_four_eq_one_order40_RJ
+  · exact card_pow_four_eq_one_order40_RK
+  · exact card_pow_four_eq_one_order40_RL
+  · exact card_pow_four_eq_one_order40_RM
+  · exact card_pow_four_eq_one_order40_RN
+
+theorem not_nonempty_mulEquiv_order40_reps_of_pow_four_card_ne {i j : Fin 14}
+    (h : order40_pow_four_eq_one_card i ≠ order40_pow_four_eq_one_card j) :
+    ¬ Nonempty (order40_reps i ≃* order40_reps j) := by
+  exact not_nonempty_mulEquiv_of_pow_eq_one_card_ne (n := 4) (by
+    rw [card_pow_four_eq_one_order40_reps i, card_pow_four_eq_one_order40_reps j]
+    exact h)
+
+def order40_reps_invariant (i : Fin 14) : Nat × Nat × Nat :=
+  (order40_center_card i, order40_pow_two_eq_one_card i, order40_pow_four_eq_one_card i)
+
+theorem order40_reps_invariant_injective : Function.Injective order40_reps_invariant := by
+  intro i j h
+  fin_cases i <;> fin_cases j <;>
+    simp [order40_reps_invariant, order40_center_card, order40_pow_two_eq_one_card,
+      order40_pow_four_eq_one_card] at h ⊢
+
+theorem order40_reps_invariant_eq_of_mulEquiv {i j : Fin 14}
+    (hiso : Nonempty (order40_reps i ≃* order40_reps j)) :
+    order40_reps_invariant i = order40_reps_invariant j := by
+  rcases hiso with ⟨e⟩
+  apply Prod.ext
+  · change order40_center_card i = order40_center_card j
+    rw [← card_center_order40_reps i, ← card_center_order40_reps j]
+    exact card_center_eq_of_mulEquiv e
+  · apply Prod.ext
+    · change order40_pow_two_eq_one_card i = order40_pow_two_eq_one_card j
+      rw [← card_pow_two_eq_one_order40_reps i, ← card_pow_two_eq_one_order40_reps j]
+      exact pow_eq_one_card_eq_of_mulEquiv 2 e
+    · change order40_pow_four_eq_one_card i = order40_pow_four_eq_one_card j
+      rw [← card_pow_four_eq_one_order40_reps i, ← card_pow_four_eq_one_order40_reps j]
+      exact pow_eq_one_card_eq_of_mulEquiv 4 e
+
+theorem order40_reps_pairwise : PairwiseNonMulEquiv order40_reps := by
+  intro i j hiso
+  exact order40_reps_invariant_injective (order40_reps_invariant_eq_of_mulEquiv hiso)
+
 /-- The displayed representatives exhaust the groups of order `40`, in `IsClassif` form. -/
 theorem order40_complete (G : Type) [Group G] (hG : Nat.card G = 40) :
     ∃ i, Nonempty (G ≃* order40_reps i) := by
@@ -2173,5 +2458,13 @@ theorem order40_complete (G : Type) [Group G] (hG : Nat.card G = 40) :
     ⟨11, by simpa [order40_reps] using h⟩,
     ⟨12, by simpa [order40_reps] using h⟩,
     ⟨13, by simpa [order40_reps] using h⟩]
+
+/-- The displayed representatives form a complete classification of groups of order `40`. -/
+theorem order40_isClassif : IsClassif 40 order40_reps := by
+  exact {
+    card := card_order40_reps
+    complete := order40_complete
+    distinct := order40_reps_pairwise
+  }
 
 end Smallgroups.UsefulTheorems
