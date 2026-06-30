@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Mathlib.GroupTheory.Commutator.Basic
 import Mathlib.GroupTheory.QuotientGroup.Defs
+import Mathlib.GroupTheory.QuotientGroup.Basic
 import Mathlib.GroupTheory.Subgroup.Center
 import Mathlib.Algebra.Group.Subgroup.Finite
 import Mathlib.SetTheory.Cardinal.Finite
@@ -164,14 +165,56 @@ def trans {G₁ G₂ G₃ : Type*} [Group G₁] [Group G₂] [Group G₃]
 /-- Isomorphic groups are isoclinic. The quotient `G₁/Z(G₁) ≃* G₂/Z(G₂)` and derived subgroup
 `[G₁,G₁] ≃* [G₂,G₂]` isomorphisms are induced by `e`. -/
 noncomputable def ofMulEquiv {G₁ G₂ : Type*} [Group G₁] [Group G₂] (e : G₁ ≃* G₂) :
-    Isoclinism G₁ G₂ where
-  φ := sorry
-  ψ := by
-    have hmap : (commutator G₁).map e.toMonoidHom = commutator G₂ := by
-      simp only [_root_.commutator_def]
-      rw [Subgroup.map_commutator, Subgroup.map_top_of_surjective _ e.surjective]
-    exact (MulEquiv.subgroupMap e (commutator G₁)).trans (MulEquiv.subgroupCongr hmap)
-  comm := sorry
+    Isoclinism G₁ G₂ := by
+  let f : G₁ →* G₂ ⧸ center G₂ := (QuotientGroup.mk' (center G₂)).comp e.toMonoidHom
+  have hsurj : Function.Surjective f := by
+    intro y
+    obtain ⟨x, hx⟩ := QuotientGroup.mk'_surjective (center G₂) y
+    obtain ⟨x', rfl⟩ := e.surjective x
+    exact ⟨x', hx⟩
+  have hker : center G₁ = MonoidHom.ker f := by
+    ext x
+    simp only [MonoidHom.mem_ker, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+      QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff, f]
+    constructor
+    · intro h
+      rw [Subgroup.mem_center_iff] at h
+      rw [Subgroup.mem_center_iff]
+      intro g₂
+      obtain ⟨g, rfl⟩ := e.surjective g₂
+      calc e g * e x = e (g * x) := (map_mul e g x).symm
+        _ = e (x * g) := by rw [h g]
+        _ = e x * e g := map_mul e x g
+    · intro h
+      rw [Subgroup.mem_center_iff] at h
+      rw [Subgroup.mem_center_iff]
+      intro g; apply e.injective
+      calc e (g * x) = e g * e x := map_mul e g x
+        _ = e x * e g := h (e g)
+        _ = e (x * g) := (map_mul e x g).symm
+  have hmap : (commutator G₁).map e.toMonoidHom = commutator G₂ := by
+    simp only [_root_.commutator_def]
+    rw [Subgroup.map_commutator, Subgroup.map_top_of_surjective _ e.surjective]
+  let φ := QuotientGroup.liftEquiv (center G₁) hsurj hker
+  let ψ := (MulEquiv.subgroupMap e (commutator G₁)).trans (MulEquiv.subgroupCongr hmap)
+  exact ⟨φ, ψ, fun a₁ b₁ a₂ b₂ ha hb => by
+    have ha' : QuotientGroup.mk' (center G₂) (e a₁) =
+        QuotientGroup.mk' (center G₂) a₂ := ha
+    have hb' : QuotientGroup.mk' (center G₂) (e b₁) =
+        QuotientGroup.mk' (center G₂) b₂ := hb
+    rw [QuotientGroup.mk'_eq_mk'] at ha' hb'
+    obtain ⟨za, hza_mem, hza_eq⟩ := ha'
+    obtain ⟨zb, hzb_mem, hzb_eq⟩ := hb'
+    have hmema : (e a₁)⁻¹ * a₂ ∈ center G₂ := by
+      have : (e a₁)⁻¹ * a₂ = za := by rw [← hza_eq]; group
+      rw [this]; exact hza_mem
+    have hmemb : (e b₁)⁻¹ * b₂ ∈ center G₂ := by
+      have : (e b₁)⁻¹ * b₂ = zb := by rw [← hzb_eq]; group
+      rw [this]; exact hzb_mem
+    ext
+    change (e ⁅a₁, b₁⁆ : G₂) = ⁅a₂, b₂⁆
+    rw [map_commutatorElement]
+    exact commutatorElement_center_congr hmema hmemb⟩
 
 end Isoclinism
 
