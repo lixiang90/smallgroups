@@ -368,10 +368,11 @@ theorem twoPQ_classification_4 (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq 
   have hb2 : b ^ 2 = 1 := by rw [← hb]; exact pow_orderOf_eq_one b
   -- Step 5: zpowers a = N
   have hA_eq_N : zpowers a = N := by
-    apply le_antisymm
+    apply Subgroup.eq_of_le_of_card_ge
     · intro x hx; obtain ⟨k, rfl⟩ := mem_zpowers_iff.mp hx
       exact N.zpow_mem ha_mem k
-    · sorry
+    · have : Nat.card ↥(zpowers a) = p * q := by rw [Nat.card_zpowers, ha_ord]
+      omega
   -- Step 6: conjugation b * a * b⁻¹ = a ^ k
   have hconj_mem : b * a * b⁻¹ ∈ zpowers a := by
     rw [hA_eq_N]; exact hNnorm.conj_mem a ha_mem b
@@ -427,9 +428,11 @@ theorem twoPQ_classification_4 (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq 
     set c := a ^ (q : ℕ) with hc_def
     set d := a ^ (p : ℕ) with hd_def
     have hc_ord : orderOf c = p := by
-      sorry
+      rw [hc_def, orderOf_pow' a hq.ne_zero, ha_ord,
+        Nat.gcd_eq_right (dvd_mul_left q p), Nat.mul_div_cancel p hq.pos]
     have hd_ord : orderOf d = q := by
-      sorry
+      rw [hd_def, orderOf_pow' a hp.ne_zero, ha_ord,
+        Nat.gcd_eq_right (dvd_mul_right p q), Nat.mul_div_cancel_left q hp.pos]
     -- b commutes with c = a^q (since p | k-1)
     have hbc_comm : b * c = c * b := by
       have h1 : b * c * b⁻¹ = a ^ (k * ↑q) := by
@@ -437,7 +440,10 @@ theorem twoPQ_classification_4 (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq 
           _ = (a ^ k) ^ (q : ℕ) := by rw [hk]
           _ = a ^ (k * ↑q) := by rw [← zpow_natCast (a ^ k), ← zpow_mul]
       have h2 : a ^ (k * ↑q) = c := by
-        sorry
+        rw [hc_def, ← zpow_natCast, zpow_eq_zpow_iff_modEq, ha_ord,
+          Int.modEq_iff_dvd, show (↑q : ℤ) - k * ↑q = -(↑q * (k - 1)) from by ring,
+          dvd_neg, Nat.cast_mul, show (↑p : ℤ) * ↑q = ↑q * ↑p from mul_comm _ _]
+        exact mul_dvd_mul_left ↑q hp_k1
       calc b * c = b * c * b⁻¹ * b := by group
         _ = c * b := by rw [h1, h2]
     -- b inverts d = a^p (since q | k+1)
@@ -465,9 +471,11 @@ theorem twoPQ_classification_4 (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq 
     set c := a ^ (q : ℕ) with hc_def
     set d := a ^ (p : ℕ) with hd_def
     have hc_ord : orderOf c = p := by
-      sorry
+      rw [hc_def, orderOf_pow' a hq.ne_zero, ha_ord,
+        Nat.gcd_eq_right (dvd_mul_left q p), Nat.mul_div_cancel p hq.pos]
     have hd_ord : orderOf d = q := by
-      sorry
+      rw [hd_def, orderOf_pow' a hp.ne_zero, ha_ord,
+        Nat.gcd_eq_right (dvd_mul_right p q), Nat.mul_div_cancel_left q hp.pos]
     -- b inverts c = a^q (since p | k+1)
     have hbc_inv : b * c * b⁻¹ = c⁻¹ := by
       have h1 : b * c * b⁻¹ = a ^ (k * ↑q) := by
@@ -487,7 +495,10 @@ theorem twoPQ_classification_4 (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq 
           _ = (a ^ k) ^ (p : ℕ) := by rw [hk]
           _ = a ^ (k * ↑p) := by rw [← zpow_natCast (a ^ k), ← zpow_mul]
       have h2 : a ^ (k * ↑p) = d := by
-        sorry
+        rw [hd_def, ← zpow_natCast, zpow_eq_zpow_iff_modEq, ha_ord,
+          Int.modEq_iff_dvd, show (↑p : ℤ) - k * ↑p = -(↑p * (k - 1)) from by ring,
+          dvd_neg, Nat.cast_mul]
+        exact mul_dvd_mul_left ↑p hq_k1
       calc b * d = b * d * b⁻¹ * b := by group
         _ = d * b := by rw [h1, h2]
     -- c and d commute (powers of a)
