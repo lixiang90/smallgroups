@@ -678,17 +678,591 @@ theorem twoPQ_classification_4 (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq 
 
 /-! ### Exhaustiveness: `p ∣ q - 1` case (6 classes) -/
 
+/-- The cyclic-`N` case of the order-`2pq` classification: if `G` has a normal cyclic subgroup
+`N` of order `pq`, then `G` is one of the first four types (I–IV). This is exactly the
+argument of `twoPQ_classification_4`, extracted so it can be reused when `p ∣ q - 1`. -/
+private theorem twoPQ_classif_cyclicCase
+    (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q)
+    [Finite G] (hG : Nat.card G = 2 * p * q)
+    (N : Subgroup G) (hNnorm : N.Normal) (hNcard : Nat.card N = p * q)
+    (hcyc : IsCyclic ↥N) :
+    Nonempty (G ≃* twoPQ_I p q) ∨ Nonempty (G ≃* twoPQ_II p q) ∨
+    Nonempty (G ≃* twoPQ_III p q) ∨ Nonempty (G ≃* twoPQ_IV p q) := by
+  haveI : Fintype G := Fintype.ofFinite G
+  haveI : N.Normal := hNnorm
+  haveI : IsCyclic ↥N := hcyc
+  have hpodd : Odd p := hp.odd_of_ne_two (by omega)
+  have hqodd : Odd q := hq.odd_of_ne_two (by omega)
+  -- Step 3: get generator a of N with orderOf a = pq
+  obtain ⟨a₀, ha₀⟩ := IsCyclic.exists_monoid_generator (α := ↥N)
+  have ha₀_ord : orderOf a₀ = p * q :=
+    (orderOf_eq_card_of_forall_mem_powers ha₀).trans hNcard
+  set a := (a₀ : G) with ha_def
+  have ha_ord : orderOf a = p * q := by
+    change orderOf (a₀ : G) = p * q
+    rw [show (a₀ : G) = N.subtype a₀ from rfl,
+      orderOf_injective N.subtype N.subtype_injective, ha₀_ord]
+  have ha_mem : a ∈ N := a₀.property
+  -- Step 4: get involution b with orderOf b = 2
+  obtain ⟨b, hb⟩ := exists_prime_orderOf_dvd_card' (G := G) 2
+    ⟨p * q, by rw [hG]; ring⟩
+  have hb1 : b ≠ 1 := by intro h; rw [h, orderOf_one] at hb; exact absurd hb (by norm_num)
+  have hb2 : b ^ 2 = 1 := by rw [← hb]; exact pow_orderOf_eq_one b
+  -- Step 5: zpowers a = N
+  have hA_eq_N : zpowers a = N := by
+    apply Subgroup.eq_of_le_of_card_ge
+    · intro x hx; obtain ⟨k, rfl⟩ := mem_zpowers_iff.mp hx
+      exact N.zpow_mem ha_mem k
+    · have : Nat.card ↥(zpowers a) = p * q := by rw [Nat.card_zpowers, ha_ord]
+      omega
+  -- Step 6: conjugation b * a * b⁻¹ = a ^ k
+  have hconj_mem : b * a * b⁻¹ ∈ zpowers a := by
+    rw [hA_eq_N]; exact hNnorm.conj_mem a ha_mem b
+  obtain ⟨k, hk⟩ := mem_zpowers_iff.mp hconj_mem
+  -- Step 7: k² ≡ 1 (mod pq)
+  have hbb : b * b = 1 := by rw [← pow_two]; exact hb2
+  have hbinv : b⁻¹ = b := inv_eq_of_mul_eq_one_right hbb
+  have hconj2 : b * (b * a * b⁻¹) * b⁻¹ = a := by
+    rw [hbinv]
+    calc b * (b * a * b) * b = (b * b) * a * (b * b) := by group
+      _ = a := by rw [hbb, one_mul, mul_one]
+  have hkk : a ^ (k * k) = a := by rw [zpow_mul, hk, conj_zpow, hk, hconj2]
+  have hk1 : a ^ (k * k - 1) = 1 := by
+    rw [zpow_sub, hkk, zpow_one]; exact mul_inv_cancel a
+  have hpqd : (↑(p * q) : ℤ) ∣ (k - 1) * (k + 1) := by
+    have h0 : (k * k - 1) ≡ 0 [ZMOD orderOf a] := zpow_eq_one_iff_modEq.mp hk1
+    rw [ha_ord, Int.modEq_zero_iff_dvd] at h0
+    rwa [show (k - 1) * (k + 1) = k * k - 1 by ring]
+  -- Step 8: split by p and q
+  have hpd : (↑p : ℤ) ∣ (k - 1) * (k + 1) :=
+    dvd_trans (by exact_mod_cast dvd_mul_right p q) hpqd
+  have hqd : (↑q : ℤ) ∣ (k - 1) * (k + 1) :=
+    dvd_trans (by exact_mod_cast dvd_mul_left q p) hpqd
+  rcases (Nat.prime_iff_prime_int.mp hp).dvd_or_dvd hpd with hp_k1 | hp_k1
+  <;> rcases (Nat.prime_iff_prime_int.mp hq).dvd_or_dvd hqd with hq_k1 | hq_k1
+  · -- Case I: p ∣ k-1 and q ∣ k-1 → k ≡ 1 (mod pq) → abelian → cyclic
+    left
+    have hpq_k1 : (↑(p * q) : ℤ) ∣ k - 1 := by
+      rw [Nat.cast_mul]
+      exact IsCoprime.mul_dvd
+        (by exact_mod_cast (Nat.coprime_primes hp hq).mpr (by omega)) hp_k1 hq_k1
+    have hak1 : a ^ k = a := by
+      have : a ^ (k - 1) = 1 := by
+        rw [zpow_eq_one_iff_modEq, ha_ord, Int.modEq_zero_iff_dvd]; exact hpq_k1
+      rw [zpow_sub, zpow_one] at this; exact mul_inv_eq_one.mp this
+    have hba1 : b * a * b⁻¹ = a := by rw [← hk, hak1]
+    have hcomm : Commute a b := by
+      have : b * a = a * b :=
+        calc b * a = b * a * b⁻¹ * b := by group
+          _ = a * b := by rw [hba1]
+      exact this.symm
+    have hcop : (orderOf a).Coprime (orderOf b) := by
+      rw [ha_ord, hb]
+      exact Nat.coprime_two_right.mpr (hpodd.mul hqodd)
+    haveI : IsCyclic G := by
+      have hord : orderOf (a * b) = 2 * p * q := by
+        rw [hcomm.orderOf_mul_eq_mul_orderOf_of_coprime hcop, ha_ord, hb]; ring
+      exact isCyclic_of_orderOf_eq_card (a * b) (by rw [hord, hG])
+    exact cyclicRep_classification
+      (Nat.mul_ne_zero (Nat.mul_ne_zero two_ne_zero hp.pos.ne') hq.pos.ne') hG
+  · -- Case IV: p ∣ k-1 and q ∣ k+1 → ℤ/p × D_q
+    right; right; right
+    set c := a ^ (q : ℕ) with hc_def
+    set d := a ^ (p : ℕ) with hd_def
+    have hc_ord : orderOf c = p := by
+      rw [hc_def, orderOf_pow' a hq.ne_zero, ha_ord,
+        Nat.gcd_eq_right (dvd_mul_left q p), Nat.mul_div_cancel p hq.pos]
+    have hd_ord : orderOf d = q := by
+      rw [hd_def, orderOf_pow' a hp.ne_zero, ha_ord,
+        Nat.gcd_eq_right (dvd_mul_right p q), Nat.mul_div_cancel_left q hp.pos]
+    have hbc_comm : b * c = c * b := by
+      have h1 : b * c * b⁻¹ = a ^ (k * ↑q) := by
+        calc b * c * b⁻¹ = (b * a * b⁻¹) ^ (q : ℕ) := by rw [hc_def]; exact conj_pow.symm
+          _ = (a ^ k) ^ (q : ℕ) := by rw [hk]
+          _ = a ^ (k * ↑q) := by rw [← zpow_natCast (a ^ k), ← zpow_mul]
+      have h2 : a ^ (k * ↑q) = c := by
+        rw [hc_def, ← zpow_natCast, zpow_eq_zpow_iff_modEq, ha_ord,
+          Int.modEq_iff_dvd, show (↑q : ℤ) - k * ↑q = -(↑q * (k - 1)) from by ring,
+          dvd_neg, Nat.cast_mul, show (↑p : ℤ) * ↑q = ↑q * ↑p from mul_comm _ _]
+        exact mul_dvd_mul_left ↑q hp_k1
+      calc b * c = b * c * b⁻¹ * b := by group
+        _ = c * b := by rw [h1, h2]
+    have hbd_inv : b * d * b⁻¹ = d⁻¹ := by
+      have h1 : b * d * b⁻¹ = a ^ (k * ↑p) := by
+        calc b * d * b⁻¹ = (b * a * b⁻¹) ^ (p : ℕ) := by rw [hd_def]; exact conj_pow.symm
+          _ = (a ^ k) ^ (p : ℕ) := by rw [hk]
+          _ = a ^ (k * ↑p) := by rw [← zpow_natCast (a ^ k), ← zpow_mul]
+      have h2 : a ^ (k * ↑p) = a ^ (-(↑p : ℤ)) := by
+        rw [zpow_eq_zpow_iff_modEq, ha_ord, Int.modEq_iff_dvd,
+          show -(↑p : ℤ) - k * ↑p = -(↑p * (k + 1)) from by ring, dvd_neg,
+          Nat.cast_mul]
+        exact mul_dvd_mul_left ↑p hq_k1
+      rw [h1, h2, zpow_neg, zpow_natCast]
+    have hdc_comm : d * c = c * d := by
+      rw [hd_def, hc_def]; exact (Commute.refl a).pow_pow p q
+    exact nonempty_mulEquiv_prod_dihedral hp.ne_zero hq.ne_zero hpodd hqodd
+      ((Nat.coprime_primes hp hq).mpr (by omega))
+      d c b hd_ord hc_ord hb1 hb2 hbd_inv hbc_comm hdc_comm
+      (show Nat.card G = 2 * p * q from hG)
+  · -- Case III: p ∣ k+1 and q ∣ k-1 → ℤ/q × D_p
+    right; right; left
+    set c := a ^ (q : ℕ) with hc_def
+    set d := a ^ (p : ℕ) with hd_def
+    have hc_ord : orderOf c = p := by
+      rw [hc_def, orderOf_pow' a hq.ne_zero, ha_ord,
+        Nat.gcd_eq_right (dvd_mul_left q p), Nat.mul_div_cancel p hq.pos]
+    have hd_ord : orderOf d = q := by
+      rw [hd_def, orderOf_pow' a hp.ne_zero, ha_ord,
+        Nat.gcd_eq_right (dvd_mul_right p q), Nat.mul_div_cancel_left q hp.pos]
+    have hbc_inv : b * c * b⁻¹ = c⁻¹ := by
+      have h1 : b * c * b⁻¹ = a ^ (k * ↑q) := by
+        calc b * c * b⁻¹ = (b * a * b⁻¹) ^ (q : ℕ) := by rw [hc_def]; exact conj_pow.symm
+          _ = (a ^ k) ^ (q : ℕ) := by rw [hk]
+          _ = a ^ (k * ↑q) := by rw [← zpow_natCast (a ^ k), ← zpow_mul]
+      have h2 : a ^ (k * ↑q) = a ^ (-(↑q : ℤ)) := by
+        rw [zpow_eq_zpow_iff_modEq, ha_ord, Int.modEq_iff_dvd,
+          show -(↑q : ℤ) - k * ↑q = -(↑q * (k + 1)) from by ring, dvd_neg,
+          Nat.cast_mul, mul_comm (↑p : ℤ)]
+        exact mul_dvd_mul_left ↑q hp_k1
+      rw [h1, h2, zpow_neg, zpow_natCast]
+    have hbd_comm : b * d = d * b := by
+      have h1 : b * d * b⁻¹ = a ^ (k * ↑p) := by
+        calc b * d * b⁻¹ = (b * a * b⁻¹) ^ (p : ℕ) := by rw [hd_def]; exact conj_pow.symm
+          _ = (a ^ k) ^ (p : ℕ) := by rw [hk]
+          _ = a ^ (k * ↑p) := by rw [← zpow_natCast (a ^ k), ← zpow_mul]
+      have h2 : a ^ (k * ↑p) = d := by
+        rw [hd_def, ← zpow_natCast, zpow_eq_zpow_iff_modEq, ha_ord,
+          Int.modEq_iff_dvd, show (↑p : ℤ) - k * ↑p = -(↑p * (k - 1)) from by ring,
+          dvd_neg, Nat.cast_mul]
+        exact mul_dvd_mul_left ↑p hq_k1
+      calc b * d = b * d * b⁻¹ * b := by group
+        _ = d * b := by rw [h1, h2]
+    have hcd_comm : c * d = d * c := by
+      rw [hc_def, hd_def]; exact (Commute.refl a).pow_pow q p
+    exact nonempty_mulEquiv_prod_dihedral hq.ne_zero hp.ne_zero hqodd hpodd
+      ((Nat.coprime_primes hq hp).mpr (by omega))
+      c d b hc_ord hd_ord hb1 hb2 hbc_inv hbd_comm hcd_comm
+      (show Nat.card G = 2 * q * p by rw [hG]; ring)
+  · -- Case II: p ∣ k+1 and q ∣ k+1 → k ≡ -1 (mod pq) → dihedral
+    right; left
+    have hpq_k1 : (↑(p * q) : ℤ) ∣ k + 1 := by
+      rw [Nat.cast_mul]
+      exact IsCoprime.mul_dvd
+        (by exact_mod_cast (Nat.coprime_primes hp hq).mpr (by omega)) hp_k1 hq_k1
+    have hak1 : a ^ k = a⁻¹ := by
+      have : a ^ (k + 1) = 1 := by
+        rw [zpow_eq_one_iff_modEq, ha_ord, Int.modEq_zero_iff_dvd]; exact hpq_k1
+      rw [zpow_add, zpow_one] at this; exact mul_eq_one_iff_eq_inv.mp this
+    have hba_rel : b * a * b⁻¹ = a⁻¹ := by rw [← hk, hak1]
+    rw [Nat.mul_assoc] at hG
+    exact nonempty_mulEquiv_dihedral_odd (Nat.mul_ne_zero hp.ne_zero hq.ne_zero)
+      (hpodd.mul hqodd) a b ha_ord hb1 hb2 hba_rel hG
+
 /-- When `p ∣ q - 1`, every group of order `2pq` is isomorphic to one of the six types.
     Requires a choice of primitive `p`-th root of unity `c₀` in `(ℤ/q)ˣ` and
     a unit `d₀` of order `2p` in `(ℤ/q)ˣ`. -/
 theorem twoPQ_classification_6 [NeZero p] [NeZero (2 * p)]
-    (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) (hmod : p ∣ q - 1)
+    (hp : p.Prime) (hq : q.Prime) (h2p : 2 < p) (hpq : p < q) (_ : p ∣ q - 1)
     (c₀ : (ZMod q)ˣ) (hc₀ : c₀ ^ p = 1) (hc₀ne : c₀ ≠ 1)
     (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) (hd₀ord : orderOf d₀ = 2 * p)
     [Finite G] (hG : Nat.card G = 2 * p * q) :
     Nonempty (G ≃* twoPQ_I p q) ∨ Nonempty (G ≃* twoPQ_II p q) ∨
     Nonempty (G ≃* twoPQ_III p q) ∨ Nonempty (G ≃* twoPQ_IV p q) ∨
-    Nonempty (G ≃* twoPQ_V p q c₀ hc₀) ∨ Nonempty (G ≃* twoPQ_VI p q d₀ hd₀) := sorry
+    Nonempty (G ≃* twoPQ_V p q c₀ hc₀) ∨ Nonempty (G ≃* twoPQ_VI p q d₀ hd₀) := by
+  haveI : Fintype G := Fintype.ofFinite G
+  haveI : NeZero q := ⟨hq.pos.ne'⟩
+  -- Step 1: normal subgroup N of order pq
+  obtain ⟨N, hNnorm, hNcard⟩ := twoPQ_normal_pq_subgroup p q hp hq h2p hpq hG
+  haveI : N.Normal := hNnorm
+  -- Step 2: N is cyclic, or non-abelian (≅ ℤ/q ⋊ ℤ/p)
+  rcases classification_card_eq_prime_mul (p := q) (q := p) hq hp hpq
+      (show Nat.card ↥N = q * p by rw [hNcard, mul_comm]) c₀ hc₀ hc₀ne with hcyc | hnonab
+  · -- N cyclic: reduce to types I–IV
+    rcases twoPQ_classif_cyclicCase p q hp hq h2p hpq hG N hNnorm hNcard hcyc with h | h | h | h
+    · exact Or.inl h
+    · exact Or.inr (Or.inl h)
+    · exact Or.inr (Or.inr (Or.inl h))
+    · exact Or.inr (Or.inr (Or.inr (Or.inl h)))
+  · -- N non-abelian: types V or VI
+    haveI : Fact q.Prime := ⟨hq⟩
+    haveI : Fact p.Prime := ⟨hp⟩
+    have hncyc : ¬ IsCyclic ↥N := fun hc =>
+      not_isCyclic_nonabRep hp.one_lt c₀ hc₀ hc₀ne (hnonab.some.isCyclic.mp hc)
+    obtain ⟨a₁, y₁, cc, ha₁, hy₁, hccp, hcc1, hrel⟩ :=
+      exists_generators_of_card_eq_prime_mul (p := q) (q := p) hq hp hpq
+        (show Nat.card ↥N = q * p by rw [hNcard, mul_comm]) hncyc
+    -- `zpowers a₁` is the unique Sylow-`q` of `N`, hence characteristic in `N`.
+    have hqndvdp : ¬ q ∣ p := fun h => by have := Nat.le_of_dvd hp.pos h; omega
+    have hfact : (Nat.card ↥N).factorization q = 1 := by
+      rw [hNcard, Nat.factorization_mul hp.ne_zero hq.ne_zero, Finsupp.add_apply,
+        Nat.factorization_eq_zero_of_not_dvd hqndvdp, hq.factorization_self, zero_add]
+    have hcard_zp : Nat.card ↥(zpowers a₁) = q ^ (Nat.card ↥N).factorization q := by
+      rw [hfact, pow_one, Nat.card_zpowers, ha₁]
+    let Pq : Sylow q ↥N := Sylow.ofCard (zpowers a₁) hcard_zp
+    have hnq : Nat.card (Sylow q ↥N) = 1 := by
+      obtain ⟨P0⟩ := (Sylow.nonempty : Nonempty (Sylow q ↥N))
+      have hdvd : Nat.card (Sylow q ↥N) ∣ p * q :=
+        hNcard ▸ (P0.card_dvd_index.trans (Subgroup.index_dvd_card _))
+      have hndvd : ¬ q ∣ Nat.card (Sylow q ↥N) := not_dvd_card_sylow q ↥N
+      have hdp : Nat.card (Sylow q ↥N) ∣ p :=
+        Nat.Coprime.dvd_of_dvd_mul_right ((hq.coprime_iff_not_dvd.mpr hndvd).symm) hdvd
+      rcases (Nat.dvd_prime hp).mp hdp with h | h
+      · exact h
+      · exfalso
+        have hmod := card_sylow_modEq_one q ↥N
+        rw [h] at hmod
+        have hd : q ∣ p - 1 := (Nat.modEq_iff_dvd' (by omega)).mp hmod.symm
+        have := Nat.le_of_dvd (by omega) hd
+        omega
+    haveI : Subsingleton (Sylow q ↥N) := (Nat.card_eq_one_iff_unique.mp hnq).1
+    haveI hzp_char : (zpowers a₁).Characteristic :=
+      Sylow.characteristic_of_normal Pq (Sylow.normal_of_subsingleton Pq)
+    set a : G := (a₁ : G) with ha_def
+    have ha_ord : orderOf a = q := by
+      rw [ha_def, show (a₁ : G) = N.subtype a₁ from rfl,
+        orderOf_injective N.subtype N.subtype_injective, ha₁]
+    have hQ_normal : (zpowers a).Normal := by
+      have heq : zpowers a = (zpowers a₁).map N.subtype := by
+        rw [ha_def, show (a₁ : G) = N.subtype a₁ from rfl, MonoidHom.map_zpowers]
+      rw [heq]; infer_instance
+    -- the involution `b`
+    obtain ⟨b, hb⟩ := exists_prime_orderOf_dvd_card' (G := G) 2 ⟨p * q, by rw [hG]; ring⟩
+    have hb1 : b ≠ 1 := by intro h; rw [h, orderOf_one] at hb; exact absurd hb (by norm_num)
+    have hb2 : b ^ 2 = 1 := by rw [← hb]; exact pow_orderOf_eq_one b
+    have hbb : b * b = 1 := by rw [← pow_two]; exact hb2
+    have hbinv : b⁻¹ = b := inv_eq_of_mul_eq_one_right hbb
+    -- conjugation `b * a * b⁻¹ = a ^ k`, with `k² ≡ 1 (mod q)`
+    have hconj_mem : b * a * b⁻¹ ∈ zpowers a := hQ_normal.conj_mem a (mem_zpowers a) b
+    obtain ⟨k, hk⟩ := mem_zpowers_iff.mp hconj_mem
+    have hconj2 : b * (b * a * b⁻¹) * b⁻¹ = a := by
+      rw [hbinv]
+      calc b * (b * a * b) * b = (b * b) * a * (b * b) := by group
+        _ = a := by rw [hbb, one_mul, mul_one]
+    have hkk : a ^ (k * k) = a := by rw [zpow_mul, hk, conj_zpow, hk, hconj2]
+    have hk1 : a ^ (k * k - 1) = 1 := by
+      rw [zpow_sub, hkk, zpow_one]; exact mul_inv_cancel a
+    have hqd : (↑q : ℤ) ∣ (k - 1) * (k + 1) := by
+      have h0 : (k * k - 1) ≡ 0 [ZMOD orderOf a] := zpow_eq_one_iff_modEq.mp hk1
+      rw [ha_ord, Int.modEq_zero_iff_dvd] at h0
+      rwa [show (k - 1) * (k + 1) = k * k - 1 by ring]
+    -- lift the order-`p` generator and its conjugation relation
+    set y : G := (y₁ : G) with hy_def
+    have hy_ord : orderOf y = p := by
+      rw [hy_def, show (y₁ : G) = N.subtype y₁ from rfl,
+        orderOf_injective N.subtype N.subtype_injective, hy₁]
+    have hyrel : y * a * y⁻¹ = a ^ (cc : ZMod q).val := by
+      have hh := congrArg (N.subtype) hrel
+      simpa [hy_def, ha_def, map_mul, map_inv, map_pow] using hh
+    rcases (Nat.prime_iff_prime_int.mp hq).dvd_or_dvd hqd with hk_neg | hk_pos
+    · -- `q ∣ k - 1`: `b` centralizes `a`  → type V
+      haveI : Fact q.Prime := ⟨hq⟩
+      have hba1 : b * a * b⁻¹ = a := by
+        have hak : a ^ k = a := by
+          have hh : a ^ (k - 1) = 1 := by
+            rw [zpow_eq_one_iff_modEq, ha_ord, Int.modEq_zero_iff_dvd]; exact hk_neg
+          rw [zpow_sub, zpow_one] at hh; exact mul_inv_eq_one.mp hh
+        rw [← hk, hak]
+      have hab_comm : Commute a b := by
+        have hh : b * a = a * b := by
+          calc b * a = b * a * b⁻¹ * b := by group
+            _ = a * b := by rw [hba1]
+        exact hh.symm
+      -- the centralizer of `a₁` in `N` is `⟨a₁⟩`
+      have cent_aN : ∀ w₀ : ↥N, Commute w₀ a₁ → w₀ ∈ zpowers a₁ := by
+        intro w₀ hcw
+        by_cases hpdvd : p ∣ orderOf w₀
+        · exfalso
+          obtain ⟨j, hj⟩ := hpdvd
+          have hord_pos : 0 < orderOf w₀ := orderOf_pos w₀
+          have hjne : j ≠ 0 := by rintro rfl; simp [hj] at hord_pos
+          have hn'_ord : orderOf (w₀ ^ j) = p := by
+            rw [orderOf_pow' w₀ hjne, hj, Nat.gcd_eq_right (dvd_mul_left j p),
+              Nat.mul_div_cancel p (Nat.pos_of_ne_zero hjne)]
+          have hcomm_an : Commute a₁ (w₀ ^ j) := (hcw.symm).pow_right j
+          have hcop : Nat.Coprime (orderOf a₁) (orderOf (w₀ ^ j)) := by
+            rw [ha₁, hn'_ord]; exact (Nat.coprime_primes hq hp).mpr (by omega)
+          have hord_mul : orderOf (a₁ * w₀ ^ j) = p * q := by
+            rw [hcomm_an.orderOf_mul_eq_mul_orderOf_of_coprime hcop, ha₁, hn'_ord]; ring
+          haveI : IsCyclic ↥N :=
+            isCyclic_of_orderOf_eq_card (a₁ * w₀ ^ j) (by rw [hord_mul, hNcard])
+          exact hncyc inferInstance
+        · have hdvd : orderOf w₀ ∣ p * q := by
+            rw [← hNcard]; exact orderOf_dvd_natCard _
+          have hdq : orderOf w₀ ∣ q :=
+            ((hp.coprime_iff_not_dvd.mpr hpdvd).symm).dvd_of_dvd_mul_left hdvd
+          rcases (Nat.dvd_prime hq).mp hdq with h1 | h1
+          · rw [orderOf_eq_one_iff] at h1; rw [h1]; exact one_mem _
+          · have hpg : IsPGroup q ↥(zpowers w₀) :=
+              IsPGroup.of_card (by rw [Nat.card_zpowers, h1]; exact (pow_one q).symm)
+            obtain ⟨Q', hQ'⟩ := hpg.exists_le_sylow
+            rw [Subsingleton.elim Q' Pq] at hQ'
+            exact hQ' (mem_zpowers w₀)
+      -- `b` commutes with `y`, hence is central
+      have haN : a ∈ N := by rw [ha_def]; exact SetLike.coe_mem a₁
+      have hyN : y ∈ N := by rw [hy_def]; exact SetLike.coe_mem y₁
+      have hbab : b⁻¹ * a * b = a := by
+        rw [hbinv]; have h := hba1; rwa [hbinv] at h
+      have hyb_comm : b * y = y * b := by
+        set z := b * y * b⁻¹ with hz_def
+        have hzN : z ∈ N := hNnorm.conj_mem y hyN b
+        have hzconj : z * a * z⁻¹ = a ^ (cc : ZMod q).val := by
+          rw [hz_def]
+          calc b * y * b⁻¹ * a * (b * y * b⁻¹)⁻¹
+              = b * (y * (b⁻¹ * a * b) * y⁻¹) * b⁻¹ := by group
+            _ = b * (y * a * y⁻¹) * b⁻¹ := by rw [hbab]
+            _ = b * a ^ (cc : ZMod q).val * b⁻¹ := by rw [hyrel]
+            _ = a ^ (cc : ZMod q).val := by rw [← conj_pow, hba1]
+        have hcomm_yz : Commute (y⁻¹ * z) a := by
+          change (y⁻¹ * z) * a = a * (y⁻¹ * z)
+          have h1 : (y⁻¹ * z) * a * (y⁻¹ * z)⁻¹ = a := by
+            have hrw : (y⁻¹ * z) * a * (y⁻¹ * z)⁻¹ = y⁻¹ * (z * a * z⁻¹) * y := by group
+            rw [hrw, hzconj]
+            calc y⁻¹ * a ^ (cc : ZMod q).val * y = y⁻¹ * (y * a * y⁻¹) * y := by rw [hyrel]
+              _ = a := by group
+          calc (y⁻¹ * z) * a
+              = (y⁻¹ * z) * a * (y⁻¹ * z)⁻¹ * (y⁻¹ * z) := by group
+            _ = a * (y⁻¹ * z) := by rw [h1]
+        have hmemyz : y⁻¹ * z ∈ N := N.mul_mem (N.inv_mem hyN) hzN
+        set w₀ : ↥N := ⟨y⁻¹ * z, hmemyz⟩ with hw₀_def
+        have hcw₀ : Commute w₀ a₁ := by
+          apply Subtype.ext
+          simp only [Subgroup.coe_mul]
+          exact hcomm_yz
+        obtain ⟨m, hm⟩ := mem_zpowers_iff.mp (cent_aN w₀ hcw₀)
+        have hzeq : z = y * a ^ m := by
+          have hsub : a ^ m = y⁻¹ * z := by
+            have hc := congrArg (N.subtype) hm
+            simpa [map_zpow, hw₀_def] using hc
+          rw [hsub, ← mul_assoc, mul_inv_cancel, one_mul]
+        have hba_m : b * a ^ m * b⁻¹ = a ^ m := by rw [← conj_zpow, hba1]
+        have hbzb : b * z * b⁻¹ = y := by
+          rw [hz_def, hbinv]
+          calc b * (b * y * b) * b = (b * b) * y * (b * b) := by group
+            _ = y := by rw [hbb, one_mul, mul_one]
+        have hbzb2 : b * z * b⁻¹ = y * a ^ (2 * m) := by
+          rw [hzeq]
+          calc b * (y * a ^ m) * b⁻¹ = (b * y * b⁻¹) * (b * a ^ m * b⁻¹) := by group
+            _ = z * a ^ m := by rw [← hz_def, hba_m]
+            _ = (y * a ^ m) * a ^ m := by rw [hzeq]
+            _ = y * a ^ (2 * m) := by rw [mul_assoc, ← zpow_add, two_mul]
+        have ha2m : a ^ (2 * m) = 1 := by
+          have heqy : y * a ^ (2 * m) = y * 1 := by rw [mul_one, ← hbzb2, hbzb]
+          exact mul_left_cancel heqy
+        have hqdvd : (↑q : ℤ) ∣ m := by
+          have h2m : (↑q : ℤ) ∣ 2 * m := by
+            have hh := zpow_eq_one_iff_modEq.mp ha2m
+            rwa [ha_ord, Int.modEq_zero_iff_dvd] at hh
+          rcases (Nat.prime_iff_prime_int.mp hq).dvd_or_dvd h2m with h | h
+          · exfalso
+            have h2 : (q : ℤ) ≤ 2 := Int.le_of_dvd (by norm_num) h
+            have : q ≤ 2 := by exact_mod_cast h2
+            omega
+          · exact h
+        have ham1 : a ^ m = 1 := by
+          rw [zpow_eq_one_iff_modEq, ha_ord, Int.modEq_zero_iff_dvd]; exact hqdvd
+        have hzy : b * y * b⁻¹ = y := by rw [← hz_def, hzeq, ham1, mul_one]
+        exact mul_inv_eq_iff_eq_mul.mp hzy
+      -- `b` commutes with all of `N`
+      haveI : Fintype ↥N := Fintype.ofFinite ↥N
+      have ha_in : a ∈ Subgroup.closure ({a, y} : Set G) := Subgroup.subset_closure (by simp)
+      have hy_in : y ∈ Subgroup.closure ({a, y} : Set G) := Subgroup.subset_closure (by simp)
+      have hle : Subgroup.closure ({a, y} : Set G) ≤ N := by
+        rw [Subgroup.closure_le]; intro x hx
+        simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hx
+        rcases hx with rfl | rfl
+        · exact haN
+        · exact hyN
+      have hpq_dvd : p * q ∣ Nat.card ↥(Subgroup.closure ({a, y} : Set G)) :=
+        Nat.Coprime.mul_dvd_of_dvd_of_dvd ((Nat.coprime_primes hp hq).mpr (by omega))
+          (by rw [← hy_ord]; exact Subgroup.orderOf_dvd_natCard _ hy_in)
+          (by rw [← ha_ord]; exact Subgroup.orderOf_dvd_natCard _ ha_in)
+      have hgen : Subgroup.closure ({a, y} : Set G) = N :=
+        Subgroup.eq_of_le_of_card_ge hle
+          (le_trans (le_of_eq hNcard) (Nat.le_of_dvd Nat.card_pos hpq_dvd))
+      have hbcent : ∀ n : G, n ∈ N → Commute b n := by
+        intro n hn
+        rw [← hgen] at hn
+        induction hn using Subgroup.closure_induction with
+        | mem x hx =>
+            simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hx
+            rcases hx with rfl | rfl
+            · exact hab_comm.symm
+            · exact hyb_comm
+        | one => exact Commute.one_right b
+        | mul x z _ _ hx hz => exact hx.mul_right hz
+        | inv x _ hx => exact hx.inv_right
+      have hbnotN : b ∉ N := by
+        intro hbN
+        have h2 : (2 : ℕ) ∣ Nat.card ↥N := by rw [← hb]; exact Subgroup.orderOf_dvd_natCard N hbN
+        rw [hNcard] at h2
+        have hodd : Odd (p * q) :=
+          (hp.odd_of_ne_two (by omega)).mul (hq.odd_of_ne_two (by omega))
+        exact (Nat.not_even_iff_odd.mpr hodd) (even_iff_two_dvd.mpr h2)
+      -- the product isomorphism `G ≃* ↥N × ℤ/2`
+      haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+      have hb_add : ∀ i j : ZMod 2, b ^ (i + j).val = b ^ i.val * b ^ j.val := by
+        intro i j; rw [← pow_add]; apply pow_eq_pow_iff_modEq.mpr
+        rw [hb, ZMod.val_add]; exact Nat.mod_modEq _ _
+      let Φ : ↥N × Multiplicative (ZMod 2) → G := fun z =>
+        (z.1 : G) * b ^ (Multiplicative.toAdd z.2).val
+      have hΦmul : ∀ z w, Φ (z * w) = Φ z * Φ w := by
+        rintro ⟨n₁, ε₁⟩ ⟨n₂, ε₂⟩
+        change (↑(n₁ * n₂) : G) * b ^ (Multiplicative.toAdd (ε₁ * ε₂)).val
+            = ((↑n₁ : G) * b ^ (Multiplicative.toAdd ε₁).val)
+              * ((↑n₂ : G) * b ^ (Multiplicative.toAdd ε₂).val)
+        rw [Subgroup.coe_mul,
+          show Multiplicative.toAdd (ε₁ * ε₂)
+              = Multiplicative.toAdd ε₁ + Multiplicative.toAdd ε₂ from rfl, hb_add]
+        have hBP := ((hbcent n₂ (SetLike.coe_mem n₂)).pow_left
+          (Multiplicative.toAdd ε₁).val).symm.eq
+        rw [mul_assoc (↑n₁ : G) (↑n₂ : G) (b ^ (Multiplicative.toAdd ε₁).val
+              * b ^ (Multiplicative.toAdd ε₂).val),
+          ← mul_assoc (↑n₂ : G) (b ^ (Multiplicative.toAdd ε₁).val)
+              (b ^ (Multiplicative.toAdd ε₂).val),
+          hBP,
+          mul_assoc (b ^ (Multiplicative.toAdd ε₁).val) (↑n₂ : G)
+              (b ^ (Multiplicative.toAdd ε₂).val),
+          ← mul_assoc (↑n₁ : G) (b ^ (Multiplicative.toAdd ε₁).val)
+              ((↑n₂ : G) * b ^ (Multiplicative.toAdd ε₂).val)]
+      let f : ↥N × Multiplicative (ZMod 2) →* G := MonoidHom.mk' Φ hΦmul
+      have hinj : Function.Injective f := by
+        rw [injective_iff_map_eq_one]
+        rintro ⟨n, ε⟩ hx
+        have hx' : (↑n : G) * b ^ (Multiplicative.toAdd ε).val = 1 := hx
+        have hvlt : (Multiplicative.toAdd ε).val < 2 := ZMod.val_lt _
+        rcases (by omega : (Multiplicative.toAdd ε).val = 0 ∨
+            (Multiplicative.toAdd ε).val = 1) with h | h
+        · rw [h, pow_zero, mul_one] at hx'
+          have hn1 : n = 1 := by apply Subtype.ext; rw [Subgroup.coe_one]; exact hx'
+          have hε1 : ε = 1 := by
+            have hz : Multiplicative.toAdd ε = 0 := (ZMod.val_eq_zero _).mp h
+            rw [← ofAdd_toAdd ε, hz, ofAdd_zero]
+          rw [hn1, hε1]; rfl
+        · exfalso
+          rw [h, pow_one] at hx'
+          have hbe : b = (↑n : G)⁻¹ := eq_inv_of_mul_eq_one_right hx'
+          exact hbnotN (by rw [hbe]; exact N.inv_mem (SetLike.coe_mem n))
+      have hcard_eq : Fintype.card (↥N × Multiplicative (ZMod 2)) = Fintype.card G := by
+        rw [Fintype.card_prod]
+        have h1 : Fintype.card ↥N = p * q := by rw [← Nat.card_eq_fintype_card, hNcard]
+        have h2 : Fintype.card (Multiplicative (ZMod 2)) = 2 :=
+          (Fintype.card_congr Multiplicative.toAdd).trans (ZMod.card 2)
+        rw [h1, h2, ← Nat.card_eq_fintype_card, hG]; ring
+      have hbij : Function.Bijective f :=
+        (Fintype.bijective_iff_injective_and_card f).mpr ⟨hinj, hcard_eq⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl
+        ⟨((MulEquiv.ofBijective f hbij).symm).trans
+          (hnonab.some.prodCongr (MulEquiv.refl (Multiplicative (ZMod 2))))⟩))))
+    · -- `q ∣ k + 1`: `b` inverts `a` → type VI
+      haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+      haveI : Fact (1 < q) := ⟨hq.one_lt⟩
+      have hba : b * a * b⁻¹ = a⁻¹ := by
+        have hak : a ^ k = a⁻¹ := by
+          have hh : a ^ (k + 1) = 1 := by
+            rw [zpow_eq_one_iff_modEq, ha_ord, Int.modEq_zero_iff_dvd]; exact hk_pos
+          rw [zpow_add, zpow_one] at hh; exact mul_eq_one_iff_eq_inv.mp hh
+        rw [← hk, hak]
+      -- the unit `u = -cc` has order `2p`
+      have hcc_ord : orderOf cc = p := orderOf_eq_prime hccp hcc1
+      have hneg1_val_ne : (-1 : ZMod q) ≠ 1 :=
+        Ring.neg_one_ne_one_of_char_ne_two (by rw [ZMod.ringChar_zmod_n]; omega)
+      have hneg1_ne : (-1 : (ZMod q)ˣ) ≠ 1 := fun h =>
+        hneg1_val_ne (by have := congrArg Units.val h; simpa using this)
+      have hneg1_ord : orderOf (-1 : (ZMod q)ˣ) = 2 := orderOf_eq_prime (by simp) hneg1_ne
+      set u : (ZMod q)ˣ := -cc with hu_def
+      have hu_ord : orderOf u = 2 * p := by
+        have : orderOf ((-1 : (ZMod q)ˣ) * cc) = orderOf (-1 : (ZMod q)ˣ) * orderOf cc :=
+          (Commute.all _ _).orderOf_mul_eq_mul_orderOf_of_coprime (by
+            rw [hneg1_ord, hcc_ord]
+            exact Nat.coprime_two_left.mpr (hp.odd_of_ne_two (by omega)))
+        rw [hu_def, show (-cc : (ZMod q)ˣ) = (-1) * cc from (neg_one_mul cc).symm, this,
+          hneg1_ord, hcc_ord]
+      -- conjugation by `w = y * b`
+      set w : G := y * b with hw_def
+      have hwconj_raw : w * a * w⁻¹ = (a ^ (cc : ZMod q).val)⁻¹ := by
+        rw [hw_def, mul_inv_rev, hbinv]
+        calc y * b * a * (b * y⁻¹) = y * (b * a * b⁻¹) * y⁻¹ := by rw [hbinv]; group
+          _ = y * a⁻¹ * y⁻¹ := by rw [hba]
+          _ = (y * a * y⁻¹)⁻¹ := by group
+          _ = (a ^ (cc : ZMod q).val)⁻¹ := by rw [hyrel]
+      have hcast_u : ((u : ZMod q).val : ZMod q) = (u : ZMod q) := ZMod.natCast_rightInverse _
+      have hcast_cc : ((cc : ZMod q).val : ZMod q) = (cc : ZMod q) := ZMod.natCast_rightInverse _
+      have hu_val : a ^ ((u : ZMod q)).val = (a ^ (cc : ZMod q).val)⁻¹ := by
+        rw [eq_inv_iff_mul_eq_one, ← pow_add, ← orderOf_dvd_iff_pow_eq_one, ha_ord,
+          ← CharP.cast_eq_zero_iff (ZMod q) q ((u : ZMod q).val + (cc : ZMod q).val),
+          Nat.cast_add, hcast_u, hcast_cc, hu_def, Units.val_neg]
+        ring
+      have hwconj : w * a * w⁻¹ = a ^ (u : ZMod q).val := by rw [hwconj_raw, hu_val]
+      -- iterate conjugation
+      have conj_iter : ∀ (g : G) (v : (ZMod q)ˣ), g * a * g⁻¹ = a ^ (v : ZMod q).val →
+          ∀ n : ℕ, g ^ n * a * (g ^ n)⁻¹ = a ^ ((v ^ n : (ZMod q)ˣ) : ZMod q).val := by
+        intro g v hgv n
+        induction n with
+        | zero => simp [ZMod.val_one]
+        | succ m ih =>
+          have hsplit : g ^ (m + 1) * a * (g ^ (m + 1))⁻¹
+              = g * (g ^ m * a * (g ^ m)⁻¹) * g⁻¹ := by rw [pow_succ, mul_inv_rev]; group
+          rw [hsplit, ih, ← conj_pow, hgv, ← pow_mul]
+          apply pow_eq_pow_iff_modEq.mpr
+          rw [ha_ord, show (((v ^ (m + 1) : (ZMod q)ˣ) : ZMod q)).val
+                = ((v : ZMod q).val * (((v ^ m : (ZMod q)ˣ) : ZMod q)).val) % q from by
+              rw [pow_succ', Units.val_mul, ZMod.val_mul]]
+          exact (Nat.mod_modEq _ _).symm
+      have conj_order : ∀ (g : G) (v : (ZMod q)ˣ), g * a * g⁻¹ = a ^ (v : ZMod q).val →
+          v ^ orderOf g = 1 := by
+        intro g v hgv
+        have h1 := conj_iter g v hgv (orderOf g)
+        rw [pow_orderOf_eq_one g] at h1
+        simp only [one_mul, inv_one, mul_one] at h1
+        have hmod : ((v ^ orderOf g : (ZMod q)ˣ) : ZMod q).val ≡ 1 [MOD q] := by
+          have h2 : a ^ 1 = a ^ ((v ^ orderOf g : (ZMod q)ˣ) : ZMod q).val := by
+            rw [pow_one]; exact h1
+          have h3 := (pow_eq_pow_iff_modEq.mp h2).symm
+          rwa [ha_ord] at h3
+        have hval1 : ((v ^ orderOf g : (ZMod q)ˣ) : ZMod q).val = 1 := by
+          have hlt := ZMod.val_lt ((v ^ orderOf g : (ZMod q)ˣ) : ZMod q)
+          unfold Nat.ModEq at hmod
+          rw [Nat.mod_eq_of_lt hq.one_lt, Nat.mod_eq_of_lt hlt] at hmod
+          exact hmod
+        have hcast : ((v ^ orderOf g : (ZMod q)ˣ) : ZMod q) = 1 := by
+          conv_lhs => rw [← ZMod.natCast_rightInverse ((v ^ orderOf g : (ZMod q)ˣ) : ZMod q)]
+          rw [hval1, Nat.cast_one]
+        exact Units.val_eq_one.mp hcast
+      -- relabel `d₀ = u ^ j₀`
+      have hcoprime : Nat.Coprime q (2 * p) :=
+        Nat.Coprime.mul_right (Nat.coprime_two_right.mpr (hq.odd_of_ne_two (by omega)))
+          ((Nat.coprime_primes hq hp).mpr (by omega))
+      have hcardG : Nat.card G = q * (2 * p) := by rw [hG]; ring
+      have hd₀ne : d₀ ≠ 1 := by
+        intro h; rw [h, orderOf_one] at hd₀ord; have := NeZero.ne (2 * p); omega
+      obtain ⟨j₀, hj₀⟩ := (mem_powers_iff_mem_zpowers (y := d₀)).mpr
+        (unit_mem_zpowers_of_pow_eq (p := q) (q := 2 * p) hq (by positivity) u d₀ hu_ord hd₀)
+      simp only at hj₀
+      have hj₀ne : j₀ ≠ 0 := by intro h; rw [h, pow_zero] at hj₀; exact hd₀ne hj₀.symm
+      set w' : G := w ^ j₀ with hw'_def
+      have hw'conj : w' * a * w'⁻¹ = a ^ (d₀ : ZMod q).val := by
+        rw [hw'_def, conj_iter w u hwconj j₀, hj₀]
+      have hw'ord : orderOf w' = 2 * p := by
+        have h2p_dvd : 2 * p ∣ orderOf w' := by
+          have hpow := conj_order w' d₀ hw'conj
+          rw [← hd₀ord]; exact orderOf_dvd_of_pow_eq_one hpow
+        have hdvd : orderOf w' ∣ 2 * p * q := by
+          rw [← hG, Nat.card_eq_fintype_card]; exact orderOf_dvd_card
+        have hne : orderOf w' ≠ 2 * p * q := by
+          intro h
+          haveI : IsCyclic G := isCyclic_of_orderOf_eq_card w' (by rw [h, hG])
+          exact hncyc inferInstance
+        obtain ⟨t, ht⟩ := h2p_dvd
+        rw [ht] at hdvd hne ⊢
+        have htq : t ∣ q :=
+          (Nat.mul_dvd_mul_iff_left (by positivity : 0 < 2 * p)).mp hdvd
+        rcases (Nat.dvd_prime hq).mp htq with h | h
+        · rw [h, mul_one]
+        · exact absurd (by rw [h]) hne
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr
+        (nonempty_mulEquiv_nonabRep (p := q) (q := 2 * p) a w' ha_ord hw'ord d₀ hd₀
+          hw'conj hcoprime hcardG)))))
+
 
 /-! ### Commutativity / non-commutativity -/
 
