@@ -1796,6 +1796,261 @@ theorem order40_q8_action_semidirect_cases
   · right
     exact ⟨(semidirectProductCongr_eq hφ).trans order40_q8_prod_equiv_q8⟩
 
+/-! ### Exhaustiveness -/
+
+/-- The fourteen representative cases for groups of order `40`. -/
+abbrev order40RepCases (G : Type*) [Group G] : Prop :=
+  Nonempty (G ≃* order40_RA) ∨ Nonempty (G ≃* order40_RB) ∨
+    Nonempty (G ≃* order40_RC) ∨ Nonempty (G ≃* order40_RD) ∨
+    Nonempty (G ≃* order40_RE) ∨ Nonempty (G ≃* order40_RF) ∨
+    Nonempty (G ≃* order40_RG) ∨ Nonempty (G ≃* order40_RH) ∨
+    Nonempty (G ≃* order40_RI) ∨ Nonempty (G ≃* order40_RJ) ∨
+    Nonempty (G ≃* order40_RK) ∨ Nonempty (G ≃* order40_RL) ∨
+    Nonempty (G ≃* order40_RM) ∨ Nonempty (G ≃* order40_RN)
+
+private theorem order40RepCases_ra {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RA)) :
+    order40RepCases G := by
+  left
+  exact h
+
+private theorem order40RepCases_rb {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RB)) :
+    order40RepCases G := by
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rc {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RC)) :
+    order40RepCases G := by
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rd {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RD)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_re {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RE)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rf {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RF)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rg {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RG)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rh {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RH)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_ri {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RI)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rj {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RJ)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rk {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RK)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rl {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RL)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rm {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RM)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  left
+  exact h
+
+private theorem order40RepCases_rn {G : Type*} [Group G] (h : Nonempty (G ≃* order40_RN)) :
+    order40RepCases G := by
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  right
+  exact h
+
+private theorem order40_classification_of_c8_action {G : Type*} [Group G]
+    {φ : order40_C8 →* MulAut order40_C5}
+    (e : G ≃* SemidirectProduct order40_C5 order40_C8 φ) :
+    order40RepCases G := by
+  rcases order40_c8_action_semidirect_cases φ with h | h | h
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_ra ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rb ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rc ⟨e.trans eh⟩
+
+private theorem order40_classification_of_c4c2_action {G : Type*} [Group G]
+    {φ : order40_C4C2 →* MulAut order40_C5}
+    (e : G ≃* SemidirectProduct order40_C5 order40_C4C2 φ) :
+    order40RepCases G := by
+  rcases order40_c4c2_action_semidirect_cases φ with h | h | h | h
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rd ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_re ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rf ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rg ⟨e.trans eh⟩
+
+private theorem order40_classification_of_c2c2c2_action {G : Type*} [Group G]
+    {φ : order40_C2C2C2 →* MulAut order40_C5}
+    (e : G ≃* SemidirectProduct order40_C5 order40_C2C2C2 φ) :
+    order40RepCases G := by
+  rcases order40_c2c2c2_action_semidirect_cases φ with h | h
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rh ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_ri ⟨e.trans eh⟩
+
+private theorem order40_classification_of_d8_action {G : Type*} [Group G]
+    {φ : order40_D8 →* MulAut order40_C5}
+    (e : G ≃* SemidirectProduct order40_C5 order40_D8 φ) :
+    order40RepCases G := by
+  rcases order40_d8_action_semidirect_cases φ with h | h | h
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rj ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rk ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rl ⟨e.trans eh⟩
+
+private theorem order40_classification_of_q8_action {G : Type*} [Group G]
+    {φ : order40_Q8 →* MulAut order40_C5}
+    (e : G ≃* SemidirectProduct order40_C5 order40_Q8 φ) :
+    order40RepCases G := by
+  rcases order40_q8_action_semidirect_cases φ with h | h
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rm ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact order40RepCases_rn ⟨e.trans eh⟩
+
+/-- Every group of order `40` is isomorphic to one of the fourteen displayed representatives. -/
+theorem order40_classification [Finite G] (hG : Nat.card G = 40) :
+    order40RepCases G := by
+  obtain ⟨N, H, φ, _, hcardN, hcardH, ⟨e⟩⟩ := order40_semidirectProduct hG
+  obtain ⟨eN⟩ := prime_classification (by norm_num : Nat.Prime 5) hcardN
+  haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+  haveI : Fintype H := Fintype.ofFinite H
+  rcases P3Group.classification 2 H (hcardH.trans (by norm_num)) with
+    hH | hH | hH | hH | hH | hH | hH
+  · change Nonempty (H ≃* order40_C8) at hH
+    obtain ⟨eH⟩ := hH
+    exact order40_classification_of_c8_action (e.trans (SemidirectProduct.congr' eN eH))
+  · change Nonempty (H ≃* order40_C4C2) at hH
+    obtain ⟨eH⟩ := hH
+    exact order40_classification_of_c4c2_action (e.trans (SemidirectProduct.congr' eN eH))
+  · change Nonempty (H ≃* order40_C2C2C2) at hH
+    obtain ⟨eH⟩ := hH
+    exact order40_classification_of_c2c2c2_action (e.trans (SemidirectProduct.congr' eN eH))
+  · exact (hH.1 rfl).elim
+  · exact (hH.1 rfl).elim
+  · obtain ⟨eH⟩ := hH.2
+    exact order40_classification_of_d8_action (e.trans (SemidirectProduct.congr' eN eH))
+  · obtain ⟨eH⟩ := hH.2
+    exact order40_classification_of_q8_action (e.trans (SemidirectProduct.congr' eN eH))
+
 /-- The fourteen displayed representatives, indexed for the counting framework. -/
 noncomputable abbrev order40_reps : Fin 14 → Type
   | 0 => order40_RA
@@ -1897,5 +2152,26 @@ theorem card_order40_reps (i : Fin 14) : Nat.card (order40_reps i) = 40 := by
   · exact card_order40_RL
   · exact card_order40_RM
   · exact card_order40_RN
+
+/-- The displayed representatives exhaust the groups of order `40`, in `IsClassif` form. -/
+theorem order40_complete (G : Type) [Group G] (hG : Nat.card G = 40) :
+    ∃ i, Nonempty (G ≃* order40_reps i) := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hG]; norm_num)
+  rcases order40_classification (G := G) hG with
+    h | h | h | h | h | h | h | h | h | h | h | h | h | h
+  exacts [⟨0, by simpa [order40_reps] using h⟩,
+    ⟨1, by simpa [order40_reps] using h⟩,
+    ⟨2, by simpa [order40_reps] using h⟩,
+    ⟨3, by simpa [order40_reps] using h⟩,
+    ⟨4, by simpa [order40_reps] using h⟩,
+    ⟨5, by simpa [order40_reps] using h⟩,
+    ⟨6, by simpa [order40_reps] using h⟩,
+    ⟨7, by simpa [order40_reps] using h⟩,
+    ⟨8, by simpa [order40_reps] using h⟩,
+    ⟨9, by simpa [order40_reps] using h⟩,
+    ⟨10, by simpa [order40_reps] using h⟩,
+    ⟨11, by simpa [order40_reps] using h⟩,
+    ⟨12, by simpa [order40_reps] using h⟩,
+    ⟨13, by simpa [order40_reps] using h⟩]
 
 end Smallgroups.UsefulTheorems
