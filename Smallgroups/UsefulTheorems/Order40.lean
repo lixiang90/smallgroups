@@ -236,6 +236,212 @@ noncomputable abbrev order40_chiC4C2_fst_four : order40_C4C2 →* (ZMod 5)ˣ :=
   (powHom (p := 5) (q := 4) order40_u4 (by decide)).comp
     (MonoidHom.fst (Multiplicative (ZMod 4)) (Multiplicative (ZMod 2)))
 
+noncomputable abbrev order40_chiC4C2_prod_two : order40_C4C2 →* (ZMod 5)ˣ :=
+  order40_c2UnitHom.comp order88_chiC4C2_prod
+
+noncomputable abbrev order40_chiC4C2_fst_four_snd : order40_C4C2 →* (ZMod 5)ˣ :=
+  order40_chiC4C2_fst_four * order40_chiC4C2_snd_two
+
+noncomputable abbrev order40_chiC4C2_fst_four_inv : order40_C4C2 →* (ZMod 5)ˣ :=
+  (powHom (p := 5) (q := 4) (order40_u4 ^ 3) (by decide)).comp
+    (MonoidHom.fst (Multiplicative (ZMod 4)) (Multiplicative (ZMod 2)))
+
+noncomputable abbrev order40_chiC4C2_fst_four_inv_snd :
+    order40_C4C2 →* (ZMod 5)ˣ :=
+  order40_chiC4C2_fst_four_inv * order40_chiC4C2_snd_two
+
+@[simp]
+theorem order40_chiC4C2_fst_two_g4 :
+    order40_chiC4C2_fst_two (Multiplicative.ofAdd (1 : ZMod 4), 1) =
+      order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_fst_two_g2 :
+    order40_chiC4C2_fst_two (1, Multiplicative.ofAdd (1 : ZMod 2)) = 1 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_snd_two_g4 :
+    order40_chiC4C2_snd_two (Multiplicative.ofAdd (1 : ZMod 4), 1) = 1 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_snd_two_g2 :
+    order40_chiC4C2_snd_two (1, Multiplicative.ofAdd (1 : ZMod 2)) =
+      order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_prod_two_g4 :
+    order40_chiC4C2_prod_two (Multiplicative.ofAdd (1 : ZMod 4), 1) =
+      order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_prod_two_g2 :
+    order40_chiC4C2_prod_two (1, Multiplicative.ofAdd (1 : ZMod 2)) =
+      order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_fst_four_g4 :
+    order40_chiC4C2_fst_four (Multiplicative.ofAdd (1 : ZMod 4), 1) =
+      order40_u4 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_fst_four_g2 :
+    order40_chiC4C2_fst_four (1, Multiplicative.ofAdd (1 : ZMod 2)) = 1 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_fst_four_snd_g4 :
+    order40_chiC4C2_fst_four_snd (Multiplicative.ofAdd (1 : ZMod 4), 1) =
+      order40_u4 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_fst_four_snd_g2 :
+    order40_chiC4C2_fst_four_snd (1, Multiplicative.ofAdd (1 : ZMod 2)) =
+      order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_fst_four_inv_g4 :
+    order40_chiC4C2_fst_four_inv (Multiplicative.ofAdd (1 : ZMod 4), 1) =
+      order40_u4 ^ 3 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_fst_four_inv_g2 :
+    order40_chiC4C2_fst_four_inv (1, Multiplicative.ofAdd (1 : ZMod 2)) = 1 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_fst_four_inv_snd_g4 :
+    order40_chiC4C2_fst_four_inv_snd (Multiplicative.ofAdd (1 : ZMod 4), 1) =
+      order40_u4 ^ 3 := by
+  decide
+
+@[simp]
+theorem order40_chiC4C2_fst_four_inv_snd_g2 :
+    order40_chiC4C2_fst_four_inv_snd (1, Multiplicative.ofAdd (1 : ZMod 2)) =
+      order40_u4 ^ 2 := by
+  decide
+
+@[simp]
+theorem order40_action_chiC4C2_fst_two_g4 :
+    (order40_action order40_chiC4C2_fst_two)
+      (Multiplicative.ofAdd (1 : ZMod 4), 1) = unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiC4C2_fst_two
+    (Multiplicative.ofAdd (1 : ZMod 4), 1)) = unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiC4C2_fst_two_g4]
+
+@[simp]
+theorem order40_action_chiC4C2_fst_two_g2 :
+    (order40_action order40_chiC4C2_fst_two)
+      (1, Multiplicative.ofAdd (1 : ZMod 2)) = 1 := by
+  change unitAutHom (order40_chiC4C2_fst_two
+    (1, Multiplicative.ofAdd (1 : ZMod 2))) = 1
+  rw [order40_chiC4C2_fst_two_g2, map_one]
+
+@[simp]
+theorem order40_action_chiC4C2_snd_two_g4 :
+    (order40_action order40_chiC4C2_snd_two)
+      (Multiplicative.ofAdd (1 : ZMod 4), 1) = 1 := by
+  change unitAutHom (order40_chiC4C2_snd_two
+    (Multiplicative.ofAdd (1 : ZMod 4), 1)) = 1
+  rw [order40_chiC4C2_snd_two_g4, map_one]
+
+@[simp]
+theorem order40_action_chiC4C2_snd_two_g2 :
+    (order40_action order40_chiC4C2_snd_two)
+      (1, Multiplicative.ofAdd (1 : ZMod 2)) = unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiC4C2_snd_two
+    (1, Multiplicative.ofAdd (1 : ZMod 2))) = unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiC4C2_snd_two_g2]
+
+@[simp]
+theorem order40_action_chiC4C2_prod_two_g4 :
+    (order40_action order40_chiC4C2_prod_two)
+      (Multiplicative.ofAdd (1 : ZMod 4), 1) = unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiC4C2_prod_two
+    (Multiplicative.ofAdd (1 : ZMod 4), 1)) = unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiC4C2_prod_two_g4]
+
+@[simp]
+theorem order40_action_chiC4C2_prod_two_g2 :
+    (order40_action order40_chiC4C2_prod_two)
+      (1, Multiplicative.ofAdd (1 : ZMod 2)) = unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiC4C2_prod_two
+    (1, Multiplicative.ofAdd (1 : ZMod 2))) = unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiC4C2_prod_two_g2]
+
+@[simp]
+theorem order40_action_chiC4C2_fst_four_g4 :
+    (order40_action order40_chiC4C2_fst_four)
+      (Multiplicative.ofAdd (1 : ZMod 4), 1) = unitAutHom order40_u4 := by
+  change unitAutHom (order40_chiC4C2_fst_four
+    (Multiplicative.ofAdd (1 : ZMod 4), 1)) = unitAutHom order40_u4
+  rw [order40_chiC4C2_fst_four_g4]
+
+@[simp]
+theorem order40_action_chiC4C2_fst_four_g2 :
+    (order40_action order40_chiC4C2_fst_four)
+      (1, Multiplicative.ofAdd (1 : ZMod 2)) = 1 := by
+  change unitAutHom (order40_chiC4C2_fst_four
+    (1, Multiplicative.ofAdd (1 : ZMod 2))) = 1
+  rw [order40_chiC4C2_fst_four_g2, map_one]
+
+@[simp]
+theorem order40_action_chiC4C2_fst_four_snd_g4 :
+    (order40_action order40_chiC4C2_fst_four_snd)
+      (Multiplicative.ofAdd (1 : ZMod 4), 1) = unitAutHom order40_u4 := by
+  change unitAutHom (order40_chiC4C2_fst_four_snd
+    (Multiplicative.ofAdd (1 : ZMod 4), 1)) = unitAutHom order40_u4
+  rw [order40_chiC4C2_fst_four_snd_g4]
+
+@[simp]
+theorem order40_action_chiC4C2_fst_four_snd_g2 :
+    (order40_action order40_chiC4C2_fst_four_snd)
+      (1, Multiplicative.ofAdd (1 : ZMod 2)) = unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiC4C2_fst_four_snd
+    (1, Multiplicative.ofAdd (1 : ZMod 2))) = unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiC4C2_fst_four_snd_g2]
+
+@[simp]
+theorem order40_action_chiC4C2_fst_four_inv_g4 :
+    (order40_action order40_chiC4C2_fst_four_inv)
+      (Multiplicative.ofAdd (1 : ZMod 4), 1) = unitAutHom (order40_u4 ^ 3) := by
+  change unitAutHom (order40_chiC4C2_fst_four_inv
+    (Multiplicative.ofAdd (1 : ZMod 4), 1)) = unitAutHom (order40_u4 ^ 3)
+  rw [order40_chiC4C2_fst_four_inv_g4]
+
+@[simp]
+theorem order40_action_chiC4C2_fst_four_inv_g2 :
+    (order40_action order40_chiC4C2_fst_four_inv)
+      (1, Multiplicative.ofAdd (1 : ZMod 2)) = 1 := by
+  change unitAutHom (order40_chiC4C2_fst_four_inv
+    (1, Multiplicative.ofAdd (1 : ZMod 2))) = 1
+  rw [order40_chiC4C2_fst_four_inv_g2, map_one]
+
+@[simp]
+theorem order40_action_chiC4C2_fst_four_inv_snd_g4 :
+    (order40_action order40_chiC4C2_fst_four_inv_snd)
+      (Multiplicative.ofAdd (1 : ZMod 4), 1) = unitAutHom (order40_u4 ^ 3) := by
+  change unitAutHom (order40_chiC4C2_fst_four_inv_snd
+    (Multiplicative.ofAdd (1 : ZMod 4), 1)) = unitAutHom (order40_u4 ^ 3)
+  rw [order40_chiC4C2_fst_four_inv_snd_g4]
+
+@[simp]
+theorem order40_action_chiC4C2_fst_four_inv_snd_g2 :
+    (order40_action order40_chiC4C2_fst_four_inv_snd)
+      (1, Multiplicative.ofAdd (1 : ZMod 2)) = unitAutHom (order40_u4 ^ 2) := by
+  change unitAutHom (order40_chiC4C2_fst_four_inv_snd
+    (1, Multiplicative.ofAdd (1 : ZMod 2))) = unitAutHom (order40_u4 ^ 2)
+  rw [order40_chiC4C2_fst_four_inv_snd_g2]
+
 noncomputable abbrev order40_chiC2C2C2 : order40_C2C2C2 →* (ZMod 5)ˣ :=
   order40_c2UnitHom.comp order88_chiC2C2C2
 
@@ -268,6 +474,98 @@ theorem order40_unit_sq_eq_one_cases (u : (ZMod 5)ˣ) (hu : u ^ 2 = 1) :
   · exfalso
     have hbad : (order40_u4 ^ 3) ^ 2 = (1 : (ZMod 5)ˣ) := by simpa [h] using hu
     exact (by decide : (order40_u4 ^ 3) ^ 2 ≠ (1 : (ZMod 5)ˣ)) hbad
+
+/-- Homomorphisms out of `C₄ × C₂` are determined by the two standard generators. -/
+theorem order40_c4c2_hom_ext {M : Type} [Group M] {χ ψ : order40_C4C2 →* M}
+    (h4 : χ (Multiplicative.ofAdd (1 : ZMod 4), 1) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 4), 1))
+    (h2 : χ (1, Multiplicative.ofAdd (1 : ZMod 2)) =
+      ψ (1, Multiplicative.ofAdd (1 : ZMod 2))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  rintro ⟨x4, x2⟩
+  obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x4
+  obtain ⟨b, rfl⟩ := Multiplicative.ofAdd.surjective x2
+  let g4 : order40_C4C2 := (Multiplicative.ofAdd (1 : ZMod 4), 1)
+  let g2 : order40_C4C2 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+  have ha : Multiplicative.ofAdd a = (Multiplicative.ofAdd (1 : ZMod 4)) ^ a.val := by
+    calc
+      Multiplicative.ofAdd a = Multiplicative.ofAdd ((a.val : ZMod 4)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (a.val • (1 : ZMod 4)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 4)) ^ a.val := by rw [ofAdd_nsmul]
+  have hb : Multiplicative.ofAdd b = (Multiplicative.ofAdd (1 : ZMod 2)) ^ b.val := by
+    calc
+      Multiplicative.ofAdd b = Multiplicative.ofAdd ((b.val : ZMod 2)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (b.val • (1 : ZMod 2)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 2)) ^ b.val := by rw [ofAdd_nsmul]
+  have hx : (Multiplicative.ofAdd a, Multiplicative.ofAdd b) = g4 ^ a.val * g2 ^ b.val := by
+    simp [g4, g2, Prod.pow_mk, ha, hb]
+  rw [hx, map_mul, map_mul, map_pow, map_pow, map_pow, map_pow, h4, h2]
+
+theorem order40_c4c2_unit_character_cases (χ : order40_C4C2 →* (ZMod 5)ˣ) :
+    χ = 1 ∨ χ = order40_chiC4C2_fst_two ∨ χ = order40_chiC4C2_snd_two ∨
+      χ = order40_chiC4C2_prod_two ∨ χ = order40_chiC4C2_fst_four ∨
+      χ = order40_chiC4C2_fst_four_snd ∨ χ = order40_chiC4C2_fst_four_inv ∨
+      χ = order40_chiC4C2_fst_four_inv_snd := by
+  let g4 : order40_C4C2 := (Multiplicative.ofAdd (1 : ZMod 4), 1)
+  let g2 : order40_C4C2 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+  have hsq2 : χ g2 ^ 2 = 1 := by
+    rw [← map_pow, show g2 ^ 2 = 1 by decide, map_one]
+  rcases order40_unit_cases (χ g4) with h4 | h4 | h4 | h4 <;>
+    rcases order40_unit_sq_eq_one_cases (χ g2) hsq2 with h2 | h2
+  · left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, h4, h2]
+  · right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, h4, h2]
+  · right
+    right
+    right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, h4, h2]
+  · right
+    right
+    right
+    right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, h4, h2]
+  · right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, h4, h2]
+  · right
+    right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, h4, h2]
+  · right
+    right
+    right
+    right
+    right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, h4, h2]
+  · right
+    right
+    right
+    right
+    right
+    right
+    right
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, h4, h2]
 
 /-- Homomorphisms out of `C₂³` are determined by the three standard generators. -/
 theorem order40_c2c2c2_hom_ext {M : Type} [Group M]
@@ -432,6 +730,75 @@ noncomputable def order40_c8_four_inv_equiv_four :
   order40_SD_equiv_of_character_comp order40_chiC8_four order40_chiC8_four_inv
     order40_C8_mulThree order40_chiC8_four_comp_mulThree
 
+noncomputable def order40_C4C2_mulThree : order40_C4C2 ≃* order40_C4C2 where
+  toFun x := (x.1 ^ 3, x.2)
+  invFun x := (x.1 ^ 3, x.2)
+  left_inv := by decide
+  right_inv := by decide
+  map_mul' := by decide
+
+noncomputable def order40_C4C2_addSecond : order40_C4C2 ≃* order40_C4C2 where
+  toFun x := (x.1 * (if x.2 = 1 then 1 else Multiplicative.ofAdd (2 : ZMod 4)), x.2)
+  invFun x := (x.1 * (if x.2 = 1 then 1 else Multiplicative.ofAdd (2 : ZMod 4)), x.2)
+  left_inv := by decide
+  right_inv := by decide
+  map_mul' := by decide
+
+noncomputable def order40_C4C2_mulThreeAddSecond : order40_C4C2 ≃* order40_C4C2 where
+  toFun x := (x.1 ^ 3 * (if x.2 = 1 then 1 else Multiplicative.ofAdd (2 : ZMod 4)), x.2)
+  invFun x := (x.1 ^ 3 * (if x.2 = 1 then 1 else Multiplicative.ofAdd (2 : ZMod 4)), x.2)
+  left_inv := by decide
+  right_inv := by decide
+  map_mul' := by decide
+
+theorem order40_chiC4C2_snd_two_comp_shear :
+    order40_chiC4C2_snd_two.comp order88_C4C2_shear.toMonoidHom =
+      order40_chiC4C2_prod_two := by
+  unfold order40_chiC4C2_snd_two order40_chiC4C2_prod_two
+  rw [MonoidHom.comp_assoc, order88_chiC4C2_snd_comp_shear]
+
+theorem order40_chiC4C2_fst_four_comp_addSecond :
+    order40_chiC4C2_fst_four.comp order40_C4C2_addSecond.toMonoidHom =
+      order40_chiC4C2_fst_four_snd := by
+  apply order40_c4c2_hom_ext <;> decide
+
+theorem order40_chiC4C2_fst_four_comp_mulThree :
+    order40_chiC4C2_fst_four.comp order40_C4C2_mulThree.toMonoidHom =
+      order40_chiC4C2_fst_four_inv := by
+  apply order40_c4c2_hom_ext <;> decide
+
+theorem order40_chiC4C2_fst_four_comp_mulThreeAddSecond :
+    order40_chiC4C2_fst_four.comp order40_C4C2_mulThreeAddSecond.toMonoidHom =
+      order40_chiC4C2_fst_four_inv_snd := by
+  apply order40_c4c2_hom_ext <;> decide
+
+noncomputable def order40_c4c2_prod_two_equiv_snd :
+    order40_SD order40_C4C2 order40_chiC4C2_prod_two ≃*
+      order40_RF :=
+  order40_SD_equiv_of_character_comp order40_chiC4C2_snd_two
+    order40_chiC4C2_prod_two order88_C4C2_shear order40_chiC4C2_snd_two_comp_shear
+
+noncomputable def order40_c4c2_fst_four_snd_equiv_four :
+    order40_SD order40_C4C2 order40_chiC4C2_fst_four_snd ≃*
+      order40_RG :=
+  order40_SD_equiv_of_character_comp order40_chiC4C2_fst_four
+    order40_chiC4C2_fst_four_snd order40_C4C2_addSecond
+    order40_chiC4C2_fst_four_comp_addSecond
+
+noncomputable def order40_c4c2_fst_four_inv_equiv_four :
+    order40_SD order40_C4C2 order40_chiC4C2_fst_four_inv ≃*
+      order40_RG :=
+  order40_SD_equiv_of_character_comp order40_chiC4C2_fst_four
+    order40_chiC4C2_fst_four_inv order40_C4C2_mulThree
+    order40_chiC4C2_fst_four_comp_mulThree
+
+noncomputable def order40_c4c2_fst_four_inv_snd_equiv_four :
+    order40_SD order40_C4C2 order40_chiC4C2_fst_four_inv_snd ≃*
+      order40_RG :=
+  order40_SD_equiv_of_character_comp order40_chiC4C2_fst_four
+    order40_chiC4C2_fst_four_inv_snd order40_C4C2_mulThreeAddSecond
+    order40_chiC4C2_fst_four_comp_mulThreeAddSecond
+
 theorem order40_chiC2C2C2_comp_swap12 :
     order40_chiC2C2C2.comp order88_C2C2C2_swap12.toMonoidHom =
       order40_chiC2C2C2_snd := by
@@ -531,6 +898,58 @@ theorem order40_c8_character_semidirect_cases (χ : order40_C8 →* (ZMod 5)ˣ) 
       rw [hχ]
     exact ⟨(semidirectProductCongr_eq haction).trans order40_c8_four_inv_equiv_four⟩
 
+theorem order40_c4c2_character_semidirect_cases (χ : order40_C4C2 →* (ZMod 5)ˣ) :
+    Nonempty (order40_SD order40_C4C2 χ ≃* order40_RD) ∨
+      Nonempty (order40_SD order40_C4C2 χ ≃* order40_RE) ∨
+      Nonempty (order40_SD order40_C4C2 χ ≃* order40_RF) ∨
+      Nonempty (order40_SD order40_C4C2 χ ≃* order40_RG) := by
+  rcases order40_c4c2_unit_character_cases χ with
+    hχ | hχ | hχ | hχ | hχ | hχ | hχ | hχ
+  · left
+    have haction : order40_action χ = 1 := by
+      rw [hχ]
+      ext h x
+      simp [order40_action]
+    exact ⟨(semidirectProductCongr_eq haction).trans SemidirectProduct.mulEquivProd⟩
+  · right
+    left
+    have haction : order40_action χ = order40_action order40_chiC4C2_fst_two := by rw [hχ]
+    exact ⟨semidirectProductCongr_eq haction⟩
+  · right
+    right
+    left
+    have haction : order40_action χ = order40_action order40_chiC4C2_snd_two := by rw [hχ]
+    exact ⟨semidirectProductCongr_eq haction⟩
+  · right
+    right
+    left
+    have haction : order40_action χ = order40_action order40_chiC4C2_prod_two := by rw [hχ]
+    exact ⟨(semidirectProductCongr_eq haction).trans order40_c4c2_prod_two_equiv_snd⟩
+  · right
+    right
+    right
+    have haction : order40_action χ = order40_action order40_chiC4C2_fst_four := by rw [hχ]
+    exact ⟨semidirectProductCongr_eq haction⟩
+  · right
+    right
+    right
+    have haction : order40_action χ = order40_action order40_chiC4C2_fst_four_snd := by
+      rw [hχ]
+    exact ⟨(semidirectProductCongr_eq haction).trans order40_c4c2_fst_four_snd_equiv_four⟩
+  · right
+    right
+    right
+    have haction : order40_action χ = order40_action order40_chiC4C2_fst_four_inv := by
+      rw [hχ]
+    exact ⟨(semidirectProductCongr_eq haction).trans order40_c4c2_fst_four_inv_equiv_four⟩
+  · right
+    right
+    right
+    have haction : order40_action χ =
+        order40_action order40_chiC4C2_fst_four_inv_snd := by rw [hχ]
+    exact ⟨(semidirectProductCongr_eq haction).trans
+      order40_c4c2_fst_four_inv_snd_equiv_four⟩
+
 theorem order40_c2c2c2_character_semidirect_cases
     (χ : order40_C2C2C2 →* (ZMod 5)ˣ) :
     Nonempty (order40_SD order40_C2C2C2 χ ≃* order40_RH) ∨
@@ -578,6 +997,74 @@ theorem order40_mulAut_sq_eq_one_cases (α : MulAut order40_C5) (hα : α ^ 2 = 
     rw [hu, h, map_one]
   · right
     rw [hu, h]
+
+theorem order40_c4c2_action_cases (φ : order40_C4C2 →* MulAut order40_C5) :
+    φ = 1 ∨ φ = order40_action order40_chiC4C2_fst_two ∨
+      φ = order40_action order40_chiC4C2_snd_two ∨
+      φ = order40_action order40_chiC4C2_prod_two ∨
+      φ = order40_action order40_chiC4C2_fst_four ∨
+      φ = order40_action order40_chiC4C2_fst_four_snd ∨
+      φ = order40_action order40_chiC4C2_fst_four_inv ∨
+      φ = order40_action order40_chiC4C2_fst_four_inv_snd := by
+  haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+  let g4 : order40_C4C2 := (Multiplicative.ofAdd (1 : ZMod 4), 1)
+  let g2 : order40_C4C2 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+  obtain ⟨u, hu4⟩ := exists_unitAutHom_eq (p := 5) (φ g4)
+  have hsq2 : (φ g2) ^ 2 = 1 := by
+    rw [← map_pow, show g2 ^ 2 = 1 by decide, map_one]
+  rcases order40_unit_cases u with h4 | h4 | h4 | h4 <;>
+    rcases order40_mulAut_sq_eq_one_cases (φ g2) hsq2 with h2 | h2
+  · left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, hu4, h4, h2]
+  · right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, hu4, h4, h2]
+  · right
+    right
+    right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, hu4, h4, h2]
+  · right
+    right
+    right
+    right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, hu4, h4, h2]
+  · right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, hu4, h4, h2]
+  · right
+    right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, hu4, h4, h2]
+  · right
+    right
+    right
+    right
+    right
+    right
+    left
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, hu4, h4, h2]
+  · right
+    right
+    right
+    right
+    right
+    right
+    right
+    apply order40_c4c2_hom_ext <;>
+      simp [g4, g2, hu4, h4, h2]
 
 theorem order40_c2c2c2_action_cases (φ : order40_C2C2C2 →* MulAut order40_C5) :
     φ = 1 ∨ φ = order40_action order40_chiC2C2C2 ∨
@@ -699,6 +1186,45 @@ theorem order40_c8_action_semidirect_cases (φ : order40_C8 →* MulAut order40_
         unitAutHom (order40_chiC8_four_inv (Multiplicative.ofAdd (1 : ZMod 8)))
       rw [order40_chiC8_four_inv_gen]
     exact ⟨(semidirectProductCongr_eq hφ).trans order40_c8_four_inv_equiv_four⟩
+
+theorem order40_c4c2_action_semidirect_cases
+    (φ : order40_C4C2 →* MulAut order40_C5) :
+    Nonempty (SemidirectProduct order40_C5 order40_C4C2 φ ≃* order40_RD) ∨
+      Nonempty (SemidirectProduct order40_C5 order40_C4C2 φ ≃* order40_RE) ∨
+      Nonempty (SemidirectProduct order40_C5 order40_C4C2 φ ≃* order40_RF) ∨
+      Nonempty (SemidirectProduct order40_C5 order40_C4C2 φ ≃* order40_RG) := by
+  rcases order40_c4c2_action_cases φ with
+    hφ | hφ | hφ | hφ | hφ | hφ | hφ | hφ
+  · left
+    exact ⟨(semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd⟩
+  · right
+    left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right
+    right
+    left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right
+    right
+    left
+    exact ⟨(semidirectProductCongr_eq hφ).trans order40_c4c2_prod_two_equiv_snd⟩
+  · right
+    right
+    right
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right
+    right
+    right
+    exact ⟨(semidirectProductCongr_eq hφ).trans order40_c4c2_fst_four_snd_equiv_four⟩
+  · right
+    right
+    right
+    exact ⟨(semidirectProductCongr_eq hφ).trans order40_c4c2_fst_four_inv_equiv_four⟩
+  · right
+    right
+    right
+    exact ⟨(semidirectProductCongr_eq hφ).trans
+      order40_c4c2_fst_four_inv_snd_equiv_four⟩
 
 theorem order40_c2c2c2_action_semidirect_cases
     (φ : order40_C2C2C2 →* MulAut order40_C5) :
