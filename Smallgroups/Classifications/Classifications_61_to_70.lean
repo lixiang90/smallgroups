@@ -7,6 +7,8 @@ import Smallgroups.Classifications.Classifications_61_to_70.Order61
 import Smallgroups.Classifications.Classifications_61_to_70.Order62
 import Smallgroups.Classifications.Classifications_61_to_70.Order63
 import Smallgroups.Classifications.Classifications_61_to_70.Order65
+import Smallgroups.Classifications.Classifications_61_to_70.Order66
 import Smallgroups.Classifications.Classifications_61_to_70.Order67
 import Smallgroups.Classifications.Classifications_61_to_70.Order68
 import Smallgroups.Classifications.Classifications_61_to_70.Order69
+import Smallgroups.Classifications.Classifications_61_to_70.Order70

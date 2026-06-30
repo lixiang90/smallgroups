@@ -11,3 +11,4 @@ import Smallgroups.Classifications.Classifications_21_to_30.Order26
 import Smallgroups.Classifications.Classifications_21_to_30.Order27
 import Smallgroups.Classifications.Classifications_21_to_30.Order28
 import Smallgroups.Classifications.Classifications_21_to_30.Order29
+import Smallgroups.Classifications.Classifications_21_to_30.Order30

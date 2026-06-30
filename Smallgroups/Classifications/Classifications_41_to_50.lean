@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.Classifications.Classifications_41_to_50.Order41
+import Smallgroups.Classifications.Classifications_41_to_50.Order42
 import Smallgroups.Classifications.Classifications_41_to_50.Order43
 import Smallgroups.Classifications.Classifications_41_to_50.Order44
 import Smallgroups.Classifications.Classifications_41_to_50.Order45

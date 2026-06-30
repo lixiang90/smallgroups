@@ -9,8 +9,8 @@ theorems:
 
 1. **Exhaustiveness** — exhibit all possible isomorphism classes and prove every group of
    order `n` is one of them.
-2. **Counting** — count the isomorphism classes.
-3. **Distinctness** — prove the listed classes are pairwise non-isomorphic.
+2. **Distinctness** — prove the listed classes are pairwise non-isomorphic.
+3. **Counting** — count the isomorphism classes.
 
 ## Done so far:
 
@@ -28,6 +28,10 @@ theorems:
 | `p²q` (`q ∣ p−1`) | 75 | 3 | `ℤ/p²q`, `ℤ/p × ℤ/pq`, `(ℤ/p)² ⋊ ℤ/q` | `PrimeSqPrimeNonabelian` |
 | `4p` (`p ≥ 5`) | 20,28,44,52,68,76,92 | 4 or 5 | 5 types (mod 1) / 4 types (mod 3) | `Order4P` |
 | `4·3` | 12 | 5 | `ℤ/12`, `ℤ/2×ℤ/6`, `Dic₃`, `ℤ/2×S₃`, `A₄` | `Order4P_12` |
+| `2pq` (`2<p<q`, `p∤q−1`) | 30,66,70 | 4 | `ℤ/2pq`, `D_pq`, `ℤ/q×D_p`, `ℤ/p×D_q` | `Order2PQ` |
+| `2pq` (`2<p<q`, `p∣q−1`) | 42,78 | 6 | + `(ℤ/q⋊ℤ/p)×ℤ/2`, `ℤ/q⋊ℤ/2p` | `Order2PQ` |
+| `7·3²` | 63 | 4 | `ℤ/63`, `ℤ/3×ℤ/21`, `(ℤ/7⋊ℤ/3)×ℤ/3`, `ℤ/7⋊ℤ/9` | `Order63` |
+| `8·11` | 88 | 12 | `ℤ/11 ⋊ H` (`H` of order 8) — 12 actions | `Order88` |
 
 ## Layout
 
@@ -223,9 +227,53 @@ theorems:
     `PairwiseNonMulEquiv rep` packages the distinctness condition (`rep i ≃* rep j → i = j`) for a
     family of groups; `PairwiseNonMulEquiv.sum` concatenates two internally-distinct families that are
     cross-disjoint, and `pairwise_disjoint_of_comm_noncomm` supplies that disjointness when one family
-    is all-abelian and the other all-non-abelian — so a long list of representatives is shown distinct
-    by checking each homogeneous block plus one block-vs-block fact, not every cross pair.
-  
+  is all-abelian and the other all-non-abelian — so a long list of representatives is shown distinct
+  by checking each homogeneous block plus one block-vs-block fact, not every cross pair.
+
+  * `Order2PQ.lean` — the **complete classification** of groups of order `2pq` for odd primes
+    `2 < p < q`. The sign homomorphism `χ : G → ℤˣ` of the left-regular action has kernel of
+    index `2` (since `|G|/2 = pq` is odd), giving a **normal subgroup `N` of order `pq`**
+    (`twoPQ_normal_pq_subgroup`); Schur–Zassenhaus then writes `G ≅ N ⋊ ℤ/2`
+    (`twoPQ_semidirect`). `N` is cyclic (`ℤ/pq`) or, when `p ∣ q − 1`, possibly non-abelian
+    (`ℤ/q ⋊ ℤ/p`, by `classification_card_eq_prime_mul`). The progression:
+    - **`¬ p ∣ q − 1`** (`twoPQ_classification_4` / `twoPQ_isClassif_4`): `N` is forced cyclic; the
+      involution `b` conjugates a generator `a` by `a^k` with `k² ≡ 1 (mod pq)`, and the four
+      sign-choices `k ≡ ±1 (mod p)`, `±1 (mod q)` give **4 classes** — `ℤ/2pq` (I), `D_{pq}` (II),
+      `ℤ/q × D_p` (III), `ℤ/p × D_q` (IV) — recognised by `nonempty_mulEquiv_dihedral_odd` and
+      `nonempty_mulEquiv_prod_dihedral`.
+    - **`p ∣ q − 1`** (`twoPQ_classification_6` / `twoPQ_isClassif_6`): when `N` is cyclic the same
+      four types appear (shared via `twoPQ_classif_cyclicCase`); when `N` is non-abelian, its
+      characteristic normal Sylow-`q` `⟨a⟩ ⊴ G` and the involution `b` satisfy `b a b⁻¹ = a^{±1}`.
+      `b` **inverts** `a` ⇒ `ℤ/q ⋊ ℤ/2p` (**VI**, via `nonempty_mulEquiv_nonabRep` with `w = yb`
+      of order `2p`); `b` **centralizes** `a` ⇒ `b` is central and `G ≅ (ℤ/q ⋊ ℤ/p) × ℤ/2` (**V**),
+      giving **6 classes**.
+    Distinctness (`twoPQ_pairwiseDistinct_4` / `_6`) is by **center cardinality** (`2pq,1,q,p`
+    resp. `2pq,1,q,p,2,1`); the only same-center pair II/VI is separated by maximal element order
+    (`twoPQ_II_not_VI`: `D_{pq}` has an element of order `pq`, `ℤ/q ⋊ ℤ/2p` has none). Instantiated
+    at **30, 66, 70** (4 classes) and **42, 78** (6 classes) in the `Classifications` decade
+    subfolders (each with `classification`, `distinct`, `isClassif`, `numIsoClasses_eq`).
+
+  * `Order63.lean` — the **complete classification** of groups of order `63 = 7 · 3²` into **four**
+    classes. Sylow counting makes the Sylow-`7` subgroup normal (`sylow7_normal_of_card63`), so
+    Schur–Zassenhaus splits `G ≅ ℤ/7 ⋊[φ] K` with `|K| = 9` (`order63_semidirect`). Casing the
+    complement `K` as `ℤ/9` or `(ℤ/3)²` (via `prime_sq_classification`) and the action
+    `φ : K → Aut(ℤ/7) ≅ (ℤ/7)ˣ` (cyclic of order `6`) by the order of its image gives
+    `order63_classification`: `ℤ/63`, `ℤ/3 × ℤ/21`, `(ℤ/7 ⋊ ℤ/3) × ℤ/3`, and `ℤ/7 ⋊ ℤ/9`. They are
+    pairwise non-isomorphic (`order63_pairwise`, separated by commutativity and by order-`9` /
+    order-`21` element witnesses). Instantiated at **63** in `Classifications_61_to_70/Order63`.
+
+  * `Order88.lean` — the **complete classification** of groups of order `88 = 8 · 11` into **twelve**
+    classes. The Sylow-`11` subgroup is normal (`card_sylow_11_eq_one_of_card_88`), so
+    `G ≅ ℤ/11 ⋊[φ] H` with `|H| = 8` (`order88_semidirectProduct`). Casing `H` over the five groups
+    of order `8` (`C₈`, `C₄×C₂`, `(C₂)³`, `D₈`, `Q₈`, via `P3Group.classification`) and the
+    homomorphisms `φ : H → Aut(ℤ/11) ≅ (ℤ/11)ˣ` (cyclic of order `10`) up to the
+    `Aut H × Aut(ℤ/11)`-orbit gives the twelve representatives `order88_reps` (five direct products
+    `ℤ/11 × H` plus seven non-trivial semidirect products): `order88_classification`
+    (exhaustiveness), `order88_reps_pairwise` (distinctness, by center-cardinality / element-order
+    invariants), and `order88_isClassif`. Instantiated at **88** in
+    `Classifications_81_to_90/Order88`.
+
+
 * `Smallgroups/Classifications/` — one file per order, grouped into decade subfolders
   `Classifications_1_to_10`, `Classifications_11_to_20`, …, `Classifications_91_to_100`.
   Each `OrderN.lean` proves the three classification theorems for order `N` in namespace
