@@ -952,14 +952,101 @@ theorem card_center_twoPQ_VI [NeZero (2 * p)]
     have := NeZero.ne (2 * p); omega
   exact card_center_nonabRep q (2 * p) hq d₀ hd₀ hd₀ne' hd₀ord
 
-/-- **II ≇ VI**: both have trivial center, so we need a different
-invariant (e.g. abelianization size or maximal cyclic-subgroup order).
--/
+/-- **II ≇ VI**: both have trivial center, so we distinguish them by a different
+invariant: `D_{pq}` has an element of order `pq` (the rotation `r 1`), but in the
+faithful semidirect product `ℤ/q ⋊ ℤ/2p` every element is conjugate either into the
+cyclic factor `ℤ/q` (order dividing `q`) or into the complement `ℤ/2p` (order dividing
+`2p`), so no element has order `pq`. -/
 theorem twoPQ_II_not_VI [NeZero (2 * p)]
-    (_hp : p.Prime) (_hq : q.Prime)
-    (_h2p : 2 < p) (_hpq : p < q)
-    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) :
-    ¬ Nonempty (twoPQ_II p q ≃* twoPQ_VI p q d₀ hd₀) := sorry
+    (hp : p.Prime) (hq : q.Prime)
+    (h2p : 2 < p) (hpq : p < q)
+    (d₀ : (ZMod q)ˣ) (hd₀ : d₀ ^ (2 * p) = 1) (hd₀ord : orderOf d₀ = 2 * p) :
+    ¬ Nonempty (twoPQ_II p q ≃* twoPQ_VI p q d₀ hd₀) := by
+  haveI : NeZero q := ⟨hq.pos.ne'⟩
+  haveI : Fact q.Prime := ⟨hq⟩
+  have hHcard : Fintype.card (Multiplicative (ZMod (2 * p))) = 2 * p :=
+    (Fintype.card_congr Multiplicative.toAdd).trans (ZMod.card (2 * p))
+  -- Type VI has no element of order `p * q`.
+  have no_order_pq : ∀ g : twoPQ_VI p q d₀ hd₀, orderOf g ≠ p * q := by
+    intro g hord
+    by_cases hgr : g.right = 1
+    · -- `g` lies in the `ℤ/q` factor, so its order divides `q`.
+      have hg_inl : g = SemidirectProduct.inl g.left := by
+        apply SemidirectProduct.ext
+        · rw [SemidirectProduct.left_inl]
+        · rw [SemidirectProduct.right_inl]; exact hgr
+      have hdvd : orderOf g ∣ q := by
+        rw [hg_inl, orderOf_injective SemidirectProduct.inl SemidirectProduct.inl_injective]
+        have hNcard : Fintype.card (Multiplicative (ZMod q)) = q :=
+          (Fintype.card_congr Multiplicative.toAdd).trans (ZMod.card q)
+        have hdc := orderOf_dvd_card (x := g.left)
+        rw [hNcard] at hdc
+        exact hdc
+      rw [hord] at hdvd
+      have hpdvd : p ∣ q := dvd_trans (dvd_mul_right p q) hdvd
+      have : p = q := (Nat.prime_dvd_prime_iff_eq hp hq).mp hpdvd
+      omega
+    · -- `g.right ≠ 1`: `g` is conjugate to `inr g.right`, so its order divides `2 * p`.
+      set h := g.right with hh_def
+      set v := g.left with hv_def
+      set j := Multiplicative.toAdd h with hj_def
+      have hj_ne : j ≠ 0 := by
+        intro hj
+        apply hgr
+        rw [← ofAdd_toAdd h, ← hj_def, hj, ofAdd_zero]
+      have hd0_ne : d₀ ^ j.val ≠ 1 := by
+        intro hpow
+        have hdvd : orderOf d₀ ∣ j.val := orderOf_dvd_of_pow_eq_one hpow
+        rw [hd₀ord] at hdvd
+        have hlt : j.val < 2 * p := ZMod.val_lt j
+        have hne0 : j.val ≠ 0 := by rw [Ne, ZMod.val_eq_zero]; exact hj_ne
+        have := Nat.le_of_dvd (Nat.pos_of_ne_zero hne0) hdvd
+        omega
+      set ζ : ZMod q := ((d₀ ^ j.val : (ZMod q)ˣ) : ZMod q) with hζ_def
+      have hζ_ne : ζ ≠ 1 := by
+        rw [hζ_def]; intro hz; exact hd0_ne (Units.val_eq_one.mp hz)
+      set U : ZMod q := (ζ - 1)⁻¹ * Multiplicative.toAdd v with hU_def
+      set u₀ : Multiplicative (ZMod q) := Multiplicative.ofAdd U with hu_def
+      have hAdd : U + Multiplicative.toAdd v = ζ * U := by
+        have hsub : ζ - 1 ≠ 0 := sub_ne_zero.mpr hζ_ne
+        rw [hU_def]; field_simp; ring
+      have e1 : u₀ * v = Multiplicative.ofAdd (U + Multiplicative.toAdd v) := by
+        rw [hu_def, ofAdd_add, ofAdd_toAdd]
+      have e2 : (actionHom d₀ hd₀ h) u₀ = Multiplicative.ofAdd (ζ * U) := by
+        rw [hu_def, show h = Multiplicative.ofAdd j from (ofAdd_toAdd h).symm, actionHom_apply,
+          ← hζ_def]
+      have key_eq : u₀ * v = (actionHom d₀ hd₀ h) u₀ := by
+        rw [e1, e2]; exact congrArg Multiplicative.ofAdd hAdd
+      have hconj : SemidirectProduct.inl u₀ * g * (SemidirectProduct.inl u₀)⁻¹
+          = SemidirectProduct.inr h := by
+        apply SemidirectProduct.ext
+        · simp only [SemidirectProduct.mul_left, SemidirectProduct.mul_right,
+            SemidirectProduct.inv_left, SemidirectProduct.left_inl, SemidirectProduct.right_inl,
+            SemidirectProduct.left_inr, map_one, MulAut.one_apply, inv_one, one_mul]
+          rw [map_inv, ← key_eq, mul_inv_cancel]
+        · simp [SemidirectProduct.mul_right, SemidirectProduct.inv_right, hh_def]
+      have hh2p : h ^ (2 * p) = 1 := by
+        have hpc : h ^ Fintype.card (Multiplicative (ZMod (2 * p))) = 1 := pow_card_eq_one
+        rwa [hHcard] at hpc
+      have hg2p : g ^ (2 * p) = 1 := by
+        have key : SemidirectProduct.inl u₀ * g ^ (2 * p) * (SemidirectProduct.inl u₀)⁻¹ = 1 := by
+          rw [← conj_pow, hconj, ← map_pow, hh2p, map_one]
+        calc g ^ (2 * p)
+            = (SemidirectProduct.inl u₀)⁻¹
+                * (SemidirectProduct.inl u₀ * g ^ (2 * p) * (SemidirectProduct.inl u₀)⁻¹)
+                * SemidirectProduct.inl u₀ := by group
+          _ = (SemidirectProduct.inl u₀)⁻¹ * 1 * SemidirectProduct.inl u₀ := by rw [key]
+          _ = 1 := by group
+      have hco : orderOf g ∣ 2 * p := orderOf_dvd_of_pow_eq_one hg2p
+      have hpq_dvd : p * q ∣ 2 * p := by rw [← hord]; exact hco
+      have hqdvd : q ∣ 2 * p := dvd_trans (dvd_mul_left q p) hpq_dvd
+      rcases hq.dvd_mul.mp hqdvd with h2 | hp2
+      · have := Nat.le_of_dvd (by norm_num) h2; omega
+      · have := Nat.le_of_dvd hp.pos hp2; omega
+  rintro ⟨e⟩
+  exact no_order_pq (e (DihedralGroup.r 1)) (by
+    rw [MulEquiv.orderOf_eq]; exact DihedralGroup.orderOf_r_one)
+
 
 /-- **6-class distinctness via center cardinality.**
 Center sizes `2pq, 1, q, p, 2, 1`: the invariant handles 14 of 15
@@ -989,10 +1076,10 @@ theorem twoPQ_pairwiseDistinct_6 [NeZero p] [NeZero (2 * p)]
         | rfl
         | (unfold twoPQ_center_sizes_6 at heq; first | omega | nlinarith)
         | (dsimp [rep6] at hiso;
-           exact absurd hiso (twoPQ_II_not_VI p q hp hq h2p hpq d₀ hd₀))
+           exact absurd hiso (twoPQ_II_not_VI p q hp hq h2p hpq d₀ hd₀ hd₀ord))
         | (dsimp [rep6] at hiso;
            exact absurd (hiso.map MulEquiv.symm)
-             (twoPQ_II_not_VI p q hp hq h2p hpq d₀ hd₀))
+             (twoPQ_II_not_VI p q hp hq h2p hpq d₀ hd₀ hd₀ord))
 
 /-! ### IsClassif bundles -/
 
