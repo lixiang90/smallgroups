@@ -6,6 +6,7 @@ Authors: Smallgroups contributors
 import Mathlib.GroupTheory.Subgroup.Center
 import Mathlib.Algebra.Group.Subgroup.Finite
 import Mathlib.SetTheory.Cardinal.Finite
+import Mathlib.GroupTheory.PGroup
 
 /-!
 # Center cardinality as a group invariant
@@ -70,5 +71,42 @@ theorem pairwise_disjoint_of_card_center_ne {ι κ : Type*} {A : ι → Type}
     (hne : ∀ i j, cA i ≠ cB j) :
     ∀ i j, ¬ Nonempty (A i ≃* B j) :=
   fun i j => not_nonempty_mulEquiv_of_card_center_ne (by rw [hA, hB]; exact hne i j)
+
+/-- **The center of a nontrivial finite p-group is nontrivial.**
+If `G` is a finite group whose order is `p ^ n` with `0 < n` and `p` prime, then the center
+`Z(G)` contains more than one element (i.e. there exists a nontrivial central element). -/
+theorem center_nontrivial_of_card_prime_pow {G : Type*} [Group G] [Finite G] {p n : ℕ}
+    [Fact p.Prime] (hcard : Nat.card G = p ^ n) (hn : 0 < n) :
+    Nontrivial (Subgroup.center G) := by
+  have hG : IsPGroup p G := IsPGroup.of_card hcard
+  haveI : Nontrivial G := by
+    rw [← Finite.one_lt_card_iff_nontrivial, hcard]
+    exact Nat.one_lt_pow hn.ne' (Fact.out (p := p.Prime)).one_lt
+  exact hG.center_nontrivial
+
+/-- A finite group is abelian iff its center is the whole group. -/
+theorem center_eq_top_iff {G : Type*} [Group G] :
+    Subgroup.center G = ⊤ ↔ (∀ a b : G, a * b = b * a) := by
+  constructor
+  · intro h a b
+    have ha : a ∈ Subgroup.center G := by rw [h]; exact Subgroup.mem_top a
+    rw [Subgroup.mem_center_iff] at ha
+    exact (ha b).symm
+  · intro hcomm
+    rw [Subgroup.eq_top_iff']
+    intro a
+    rw [Subgroup.mem_center_iff]
+    intro g
+    exact hcomm g a
+
+/-- A finite group is abelian iff the cardinality of its center equals the cardinality of the
+whole group. -/
+theorem card_center_eq_card_iff {G : Type*} [Group G] [Finite G] :
+    Nat.card (Subgroup.center G) = Nat.card G ↔ (∀ a b : G, a * b = b * a) := by
+  constructor
+  · intro h
+    have h_top : Subgroup.center G = ⊤ := Subgroup.eq_top_of_card_eq _ h
+    exact center_eq_top_iff.mp h_top
+  · exact card_center_eq_card_of_comm G
 
 end Smallgroups.UsefulTheorems
