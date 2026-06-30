@@ -301,6 +301,104 @@ theorem order100_E25_mulAut_eq_matrixAut (α : MulAut order100_E25) :
   · rw [order100_E25_matrixAut_e2]
     ext <;> simp
 
+theorem order100_E25_mulAut_apply_matrix (α : MulAut order100_E25) (x y : ZMod 5) :
+    α ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order100_E25) =
+      (Multiplicative.ofAdd
+        ((α order100_E25_e1).1.toAdd * x + (α order100_E25_e2).1.toAdd * y),
+       Multiplicative.ofAdd
+        ((α order100_E25_e1).2.toAdd * x + (α order100_E25_e2).2.toAdd * y)) := by
+  rw [order100_E25_vec_decomp x y, map_mul, map_pow, map_pow]
+  apply Prod.ext
+  · change (α order100_E25_e1).1 ^ x.val * (α order100_E25_e2).1 ^ y.val =
+      Multiplicative.ofAdd
+        ((α order100_E25_e1).1.toAdd * x + (α order100_E25_e2).1.toAdd * y)
+    rw [← ofAdd_toAdd (α order100_E25_e1).1, ← ofAdd_toAdd (α order100_E25_e2).1]
+    rw [← ofAdd_nsmul, ← ofAdd_nsmul, ← ofAdd_add]
+    apply congrArg Multiplicative.ofAdd
+    simp [nsmul_eq_mul, mul_comm]
+  · change (α order100_E25_e1).2 ^ x.val * (α order100_E25_e2).2 ^ y.val =
+      Multiplicative.ofAdd
+        ((α order100_E25_e1).2.toAdd * x + (α order100_E25_e2).2.toAdd * y)
+    rw [← ofAdd_toAdd (α order100_E25_e1).2, ← ofAdd_toAdd (α order100_E25_e2).2]
+    rw [← ofAdd_nsmul, ← ofAdd_nsmul, ← ofAdd_add]
+    apply congrArg Multiplicative.ofAdd
+    simp [nsmul_eq_mul, mul_comm]
+
+theorem order100_E25_mulAut_pow_four_entries (α : MulAut order100_E25) (hα : α ^ 4 = 1) :
+    let a := (α order100_E25_e1).1.toAdd
+    let b := (α order100_E25_e2).1.toAdd
+    let c := (α order100_E25_e1).2.toAdd
+    let d := (α order100_E25_e2).2.toAdd
+    let a2 := a * a + b * c
+    let b2 := a * b + b * d
+    let c2 := c * a + d * c
+    let d2 := c * b + d * d
+    a2 * a2 + b2 * c2 = 1 ∧ a2 * b2 + b2 * d2 = 0 ∧
+      c2 * a2 + d2 * c2 = 0 ∧ c2 * b2 + d2 * d2 = 1 := by
+  let a := (α order100_E25_e1).1.toAdd
+  let b := (α order100_E25_e2).1.toAdd
+  let c := (α order100_E25_e1).2.toAdd
+  let d := (α order100_E25_e2).2.toAdd
+  let a2 := a * a + b * c
+  let b2 := a * b + b * d
+  let c2 := c * a + d * c
+  let d2 := c * b + d * d
+  have he1 : α order100_E25_e1 = (Multiplicative.ofAdd a, Multiplicative.ofAdd c) := by
+    ext <;> simp [a, c]
+  have he2 : α order100_E25_e2 = (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
+    ext <;> simp [b, d]
+  let β : MulAut order100_E25 := α ^ 2
+  have hβ2 : β ^ 2 = 1 := by
+    rw [show β ^ 2 = α ^ 4 by dsimp [β]; group]
+    exact hα
+  have hβe1 : β order100_E25_e1 = (Multiplicative.ofAdd a2, Multiplicative.ofAdd c2) := by
+    dsimp [β]
+    rw [pow_two]
+    change α (α order100_E25_e1) = _
+    rw [he1, order100_E25_mulAut_apply_matrix α a c]
+  have hβe2 : β order100_E25_e2 = (Multiplicative.ofAdd b2, Multiplicative.ofAdd d2) := by
+    dsimp [β]
+    rw [pow_two]
+    change α (α order100_E25_e2) = _
+    rw [he2, order100_E25_mulAut_apply_matrix α b d]
+  have hββe1 : (β ^ 2) order100_E25_e1 =
+      (Multiplicative.ofAdd (a2 * a2 + b2 * c2),
+       Multiplicative.ofAdd (c2 * a2 + d2 * c2)) := by
+    rw [pow_two]
+    change β (β order100_E25_e1) = _
+    rw [hβe1, order100_E25_mulAut_apply_matrix β a2 c2]
+    rw [hβe1, hβe2]
+    simp only [toAdd_ofAdd]
+  have hββe2 : (β ^ 2) order100_E25_e2 =
+      (Multiplicative.ofAdd (a2 * b2 + b2 * d2),
+       Multiplicative.ofAdd (c2 * b2 + d2 * d2)) := by
+    rw [pow_two]
+    change β (β order100_E25_e2) = _
+    rw [hβe2, order100_E25_mulAut_apply_matrix β b2 d2]
+    rw [hβe1, hβe2]
+    simp only [toAdd_ofAdd]
+  have heq1 : (Multiplicative.ofAdd (a2 * a2 + b2 * c2),
+      Multiplicative.ofAdd (c2 * a2 + d2 * c2)) = order100_E25_e1 := by
+    rw [← hββe1]
+    exact congrArg (fun γ : MulAut order100_E25 => γ order100_E25_e1) hβ2
+  have heq2 : (Multiplicative.ofAdd (a2 * b2 + b2 * d2),
+      Multiplicative.ofAdd (c2 * b2 + d2 * d2)) = order100_E25_e2 := by
+    rw [← hββe2]
+    exact congrArg (fun γ : MulAut order100_E25 => γ order100_E25_e2) hβ2
+  have h11 : a2 * a2 + b2 * c2 = 1 := by
+    have h := congrArg (fun z : order100_E25 => z.1.toAdd) heq1
+    simpa [order100_E25_e1] using h
+  have h21 : c2 * a2 + d2 * c2 = 0 := by
+    have h := congrArg (fun z : order100_E25 => z.2.toAdd) heq1
+    simpa [order100_E25_e1] using h
+  have h12 : a2 * b2 + b2 * d2 = 0 := by
+    have h := congrArg (fun z : order100_E25 => z.1.toAdd) heq2
+    simpa [order100_E25_e2] using h
+  have h22 : c2 * b2 + d2 * d2 = 1 := by
+    have h := congrArg (fun z : order100_E25 => z.2.toAdd) heq2
+    simpa [order100_E25_e2] using h
+  exact ⟨h11, h12, h21, h22⟩
+
 theorem order100_E25_diag_det_ne_zero (u v : (ZMod 5)ˣ) :
     (u : ZMod 5) * (v : ZMod 5) - 0 * 0 ≠ 0 := by
   haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
@@ -660,6 +758,155 @@ theorem order100_zmod5_unit_sq_eq_one_cases (u : (ZMod 5)ˣ) (hu : u ^ 2 = 1) :
 theorem order100_zmod5_unit_pow_four (u : (ZMod 5)ˣ) : u ^ 4 = 1 := by
   decide +revert
 
+theorem order100_matrix_pow_four_trace_det_unit_cases (a b c d : ZMod 5)
+    (hdet : a * d - b * c ≠ 0)
+    (hpow :
+      let a2 := a * a + b * c
+      let b2 := a * b + b * d
+      let c2 := c * a + d * c
+      let d2 := c * b + d * d
+      a2 * a2 + b2 * c2 = 1 ∧ a2 * b2 + b2 * d2 = 0 ∧
+      c2 * a2 + d2 * c2 = 0 ∧ c2 * b2 + d2 * d2 = 1) :
+    ∃ u v : (ZMod 5)ˣ,
+      a + d = (u : ZMod 5) + (v : ZMod 5) ∧
+      a * d - b * c = (u : ZMod 5) * (v : ZMod 5) ∧
+      ((u : ZMod 5) ≠ (v : ZMod 5) ∨
+        (a = (u : ZMod 5) ∧ b = 0 ∧ c = 0 ∧ d = (u : ZMod 5))) := by
+  decide +revert
+
+theorem order100_eigenvectors_det_ne_zero
+    (a b c d p r q s : ZMod 5) (u v : (ZMod 5)ˣ)
+    (huv : (u : ZMod 5) ≠ (v : ZMod 5))
+    (hpr : (p, r) ≠ (0, 0))
+    (hqs : (q, s) ≠ (0, 0))
+    (hup1 : a * p + b * r = (u : ZMod 5) * p)
+    (hup2 : c * p + d * r = (u : ZMod 5) * r)
+    (hvq1 : a * q + b * s = (v : ZMod 5) * q)
+    (hvq2 : c * q + d * s = (v : ZMod 5) * s) :
+    p * s - q * r ≠ 0 := by
+  haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+  intro hdet
+  obtain ⟨x, y, hxy, hx, hy⟩ := order100_singular_matrix_has_nonzero_kernel p q r s hdet
+  have hA1 : (a * p + b * r) * x + (a * q + b * s) * y = 0 := by
+    calc
+      (a * p + b * r) * x + (a * q + b * s) * y =
+          a * (p * x + q * y) + b * (r * x + s * y) := by ring
+      _ = 0 := by rw [hx, hy]; ring
+  have hA2 : (c * p + d * r) * x + (c * q + d * s) * y = 0 := by
+    calc
+      (c * p + d * r) * x + (c * q + d * s) * y =
+          c * (p * x + q * y) + d * (r * x + s * y) := by ring
+      _ = 0 := by rw [hx, hy]; ring
+  have huv1 : ((u : ZMod 5) * p) * x + ((v : ZMod 5) * q) * y = 0 := by
+    simpa [hup1, hvq1] using hA1
+  have huv2 : ((u : ZMod 5) * r) * x + ((v : ZMod 5) * s) * y = 0 := by
+    simpa [hup2, hvq2] using hA2
+  have hv1 : ((v : ZMod 5) * p) * x + ((v : ZMod 5) * q) * y = 0 := by
+    calc
+      ((v : ZMod 5) * p) * x + ((v : ZMod 5) * q) * y =
+          (v : ZMod 5) * (p * x + q * y) := by ring
+      _ = 0 := by rw [hx]; ring
+  have hv2 : ((v : ZMod 5) * r) * x + ((v : ZMod 5) * s) * y = 0 := by
+    calc
+      ((v : ZMod 5) * r) * x + ((v : ZMod 5) * s) * y =
+          (v : ZMod 5) * (r * x + s * y) := by ring
+      _ = 0 := by rw [hy]; ring
+  have hxcoord1 : ((u : ZMod 5) - (v : ZMod 5)) * p * x = 0 := by
+    calc
+      ((u : ZMod 5) - (v : ZMod 5)) * p * x =
+          (((u : ZMod 5) * p) * x + ((v : ZMod 5) * q) * y) -
+            (((v : ZMod 5) * p) * x + ((v : ZMod 5) * q) * y) := by ring
+      _ = 0 := by rw [huv1, hv1]; ring
+  have hxcoord2 : ((u : ZMod 5) - (v : ZMod 5)) * r * x = 0 := by
+    calc
+      ((u : ZMod 5) - (v : ZMod 5)) * r * x =
+          (((u : ZMod 5) * r) * x + ((v : ZMod 5) * s) * y) -
+            (((v : ZMod 5) * r) * x + ((v : ZMod 5) * s) * y) := by ring
+      _ = 0 := by rw [huv2, hv2]; ring
+  have hdiff : (u : ZMod 5) - (v : ZMod 5) ≠ 0 := sub_ne_zero.mpr huv
+  have hxzero : x = 0 := by
+    by_cases hp : p = 0
+    · have hr : r ≠ 0 := by
+        intro hr
+        exact hpr (by ext <;> simp [hp, hr])
+      exact (mul_eq_zero.mp hxcoord2).resolve_left (mul_ne_zero hdiff hr)
+    · exact (mul_eq_zero.mp hxcoord1).resolve_left (mul_ne_zero hdiff hp)
+  have hyq : q * y = 0 := by simpa [hxzero] using hx
+  have hys : s * y = 0 := by simpa [hxzero] using hy
+  have hyzero : y = 0 := by
+    by_cases hq : q = 0
+    · have hs : s ≠ 0 := by
+        intro hs
+        exact hqs (by ext <;> simp [hq, hs])
+      exact (mul_eq_zero.mp hys).resolve_left hs
+    · exact (mul_eq_zero.mp hyq).resolve_left hq
+  exact hxy (by ext <;> simp [hxzero, hyzero])
+
+theorem order100_matrix_pow_four_has_eigenbasis (a b c d : ZMod 5)
+    (hdet : a * d - b * c ≠ 0)
+    (hpow :
+      let a2 := a * a + b * c
+      let b2 := a * b + b * d
+      let c2 := c * a + d * c
+      let d2 := c * b + d * d
+      a2 * a2 + b2 * c2 = 1 ∧ a2 * b2 + b2 * d2 = 0 ∧
+      c2 * a2 + d2 * c2 = 0 ∧ c2 * b2 + d2 * d2 = 1) :
+    ∃ (p q r s : ZMod 5) (u v : (ZMod 5)ˣ),
+      p * s - q * r ≠ 0 ∧
+      a * p + b * r = (u : ZMod 5) * p ∧
+      c * p + d * r = (u : ZMod 5) * r ∧
+      a * q + b * s = (v : ZMod 5) * q ∧
+      c * q + d * s = (v : ZMod 5) * s := by
+  obtain ⟨u, v, htr, hdetuv, hcase⟩ :=
+    order100_matrix_pow_four_trace_det_unit_cases a b c d hdet hpow
+  rcases hcase with huv | hscalar
+  · have hkeru : (a - (u : ZMod 5)) * (d - (u : ZMod 5)) - b * c = 0 := by
+      calc
+        (a - (u : ZMod 5)) * (d - (u : ZMod 5)) - b * c =
+            (a * d - b * c) - (u : ZMod 5) * (a + d) + (u : ZMod 5) * (u : ZMod 5) := by ring
+        _ = (u : ZMod 5) * (v : ZMod 5) -
+            (u : ZMod 5) * ((u : ZMod 5) + (v : ZMod 5)) +
+            (u : ZMod 5) * (u : ZMod 5) := by rw [hdetuv, htr]
+        _ = 0 := by ring
+    have hkerv : (a - (v : ZMod 5)) * (d - (v : ZMod 5)) - b * c = 0 := by
+      calc
+        (a - (v : ZMod 5)) * (d - (v : ZMod 5)) - b * c =
+            (a * d - b * c) - (v : ZMod 5) * (a + d) + (v : ZMod 5) * (v : ZMod 5) := by ring
+        _ = (u : ZMod 5) * (v : ZMod 5) -
+            (v : ZMod 5) * ((u : ZMod 5) + (v : ZMod 5)) +
+            (v : ZMod 5) * (v : ZMod 5) := by rw [hdetuv, htr]
+        _ = 0 := by ring
+    obtain ⟨p, r, hpr, hp1, hp2⟩ :=
+      order100_singular_matrix_has_nonzero_kernel (a - (u : ZMod 5)) b c
+        (d - (u : ZMod 5)) hkeru
+    obtain ⟨q, s, hqs, hq1, hq2⟩ :=
+      order100_singular_matrix_has_nonzero_kernel (a - (v : ZMod 5)) b c
+        (d - (v : ZMod 5)) hkerv
+    have hup1 : a * p + b * r = (u : ZMod 5) * p := by
+      calc
+        a * p + b * r = ((a - (u : ZMod 5)) * p + b * r) + (u : ZMod 5) * p := by ring
+        _ = (u : ZMod 5) * p := by rw [hp1]; ring
+    have hup2 : c * p + d * r = (u : ZMod 5) * r := by
+      calc
+        c * p + d * r = (c * p + (d - (u : ZMod 5)) * r) + (u : ZMod 5) * r := by ring
+        _ = (u : ZMod 5) * r := by rw [hp2]; ring
+    have hvq1 : a * q + b * s = (v : ZMod 5) * q := by
+      calc
+        a * q + b * s = ((a - (v : ZMod 5)) * q + b * s) + (v : ZMod 5) * q := by ring
+        _ = (v : ZMod 5) * q := by rw [hq1]; ring
+    have hvq2 : c * q + d * s = (v : ZMod 5) * s := by
+      calc
+        c * q + d * s = (c * q + (d - (v : ZMod 5)) * s) + (v : ZMod 5) * s := by ring
+        _ = (v : ZMod 5) * s := by rw [hq2]; ring
+    exact ⟨p, q, r, s, u, v,
+      order100_eigenvectors_det_ne_zero a b c d p r q s u v huv hpr hqs
+        hup1 hup2 hvq1 hvq2,
+      hup1, hup2, hvq1, hvq2⟩
+  · rcases hscalar with ⟨ha, hb, hc, hd⟩
+    haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+    have hbasis : (1 : ZMod 5) * 1 - 0 * 0 ≠ 0 := by norm_num
+    refine ⟨1, 0, 0, 1, u, u, hbasis, ?_, ?_, ?_, ?_⟩ <;> simp [ha, hb, hc, hd]
+
 /-- The diagonal automorphism of `(C₅)²` multiplying the two coordinates by `u` and `v`. -/
 noncomputable abbrev order100_e25DiagAut (u v : (ZMod 5)ˣ) : MulAut order100_E25 :=
   MulEquiv.prodCongr (unitAutHom u) (unitAutHom v)
@@ -868,6 +1115,176 @@ noncomputable def order100_e25C4_action_eigenbasis_mulEquiv
   (semidirectProductCongrConj (N := order100_E25) (H := order100_C4) (φ := φ) θ.symm).trans
     (semidirectProductCongr_eq
       (order100_e25C4_action_conj_symm_eq_diag_of_generator_eigenbasis φ θ u v h1 h2))
+
+/-- Every order-four automorphism of `(C₅)²` admits an eigenbasis over `ZMod 5`. -/
+theorem order100_E25_mulAut_pow_four_has_eigenbasis
+    (α : MulAut order100_E25) (hα : α ^ 4 = 1) :
+    ∃ (θ : MulAut order100_E25) (u v : (ZMod 5)ˣ),
+      α (θ order100_E25_e1) = θ (order100_e25DiagAut u v order100_E25_e1) ∧
+      α (θ order100_E25_e2) = θ (order100_e25DiagAut u v order100_E25_e2) := by
+  let a := (α order100_E25_e1).1.toAdd
+  let b := (α order100_E25_e2).1.toAdd
+  let c := (α order100_E25_e1).2.toAdd
+  let d := (α order100_E25_e2).2.toAdd
+  have hdet : a * d - b * c ≠ 0 := order100_E25_mulAut_det_ne_zero α
+  have hpow :
+      let a2 := a * a + b * c
+      let b2 := a * b + b * d
+      let c2 := c * a + d * c
+      let d2 := c * b + d * d
+      a2 * a2 + b2 * c2 = 1 ∧ a2 * b2 + b2 * d2 = 0 ∧
+      c2 * a2 + d2 * c2 = 0 ∧ c2 * b2 + d2 * d2 = 1 := by
+    simpa [a, b, c, d] using order100_E25_mulAut_pow_four_entries α hα
+  obtain ⟨p, q, r, s, u, v, hbasis, hup1, hup2, hvq1, hvq2⟩ :=
+    order100_matrix_pow_four_has_eigenbasis a b c d hdet hpow
+  let θ : MulAut order100_E25 := order100_E25_matrixAut p q r s hbasis
+  refine ⟨θ, u, v, ?_, ?_⟩
+  · have hθe1 : θ order100_E25_e1 = (Multiplicative.ofAdd p, Multiplicative.ofAdd r) := by
+      dsimp [θ]
+      rw [order100_E25_matrixAut_e1]
+    have hθe2 : θ order100_E25_e2 = (Multiplicative.ofAdd q, Multiplicative.ofAdd s) := by
+      dsimp [θ]
+      rw [order100_E25_matrixAut_e2]
+    rw [hθe1]
+    rw [order100_E25_mulAut_apply_matrix α p r]
+    have hdiag : order100_e25DiagAut u v order100_E25_e1 =
+        (Multiplicative.ofAdd (u : ZMod 5), Multiplicative.ofAdd 0) := by
+      change (unitAutHom u (Multiplicative.ofAdd (1 : ZMod 5)), unitAutHom v 1) = _
+      rw [unitAutHom_apply]
+      ext <;> simp
+    rw [hdiag]
+    rw [order100_E25_mulAut_apply_matrix θ (u : ZMod 5) 0]
+    rw [hθe1, hθe2]
+    ext
+    · simp only [toAdd_ofAdd, mul_zero, add_zero]
+      calc
+        (α order100_E25_e1).1.toAdd * p + (α order100_E25_e2).1.toAdd * r =
+            a * p + b * r := by simp [a, b]
+        _ = (u : ZMod 5) * p := hup1
+        _ = p * (u : ZMod 5) := by ring
+    · simp only [toAdd_ofAdd, mul_zero, add_zero]
+      calc
+        (α order100_E25_e1).2.toAdd * p + (α order100_E25_e2).2.toAdd * r =
+            c * p + d * r := by simp [c, d]
+        _ = (u : ZMod 5) * r := hup2
+        _ = r * (u : ZMod 5) := by ring
+  · have hθe1 : θ order100_E25_e1 = (Multiplicative.ofAdd p, Multiplicative.ofAdd r) := by
+      dsimp [θ]
+      rw [order100_E25_matrixAut_e1]
+    have hθe2 : θ order100_E25_e2 = (Multiplicative.ofAdd q, Multiplicative.ofAdd s) := by
+      dsimp [θ]
+      rw [order100_E25_matrixAut_e2]
+    rw [hθe2]
+    rw [order100_E25_mulAut_apply_matrix α q s]
+    have hdiag : order100_e25DiagAut u v order100_E25_e2 =
+        (Multiplicative.ofAdd 0, Multiplicative.ofAdd (v : ZMod 5)) := by
+      change (unitAutHom u 1, unitAutHom v (Multiplicative.ofAdd (1 : ZMod 5))) = _
+      rw [unitAutHom_apply]
+      ext <;> simp
+    rw [hdiag]
+    rw [order100_E25_mulAut_apply_matrix θ 0 (v : ZMod 5)]
+    rw [hθe1, hθe2]
+    ext
+    · simp only [toAdd_ofAdd, mul_zero, zero_add]
+      calc
+        (α order100_E25_e1).1.toAdd * q + (α order100_E25_e2).1.toAdd * s =
+            a * q + b * s := by simp [a, b]
+        _ = (v : ZMod 5) * q := hvq1
+        _ = q * (v : ZMod 5) := by ring
+    · simp only [toAdd_ofAdd, mul_zero, zero_add]
+      calc
+        (α order100_E25_e1).2.toAdd * q + (α order100_E25_e2).2.toAdd * s =
+            c * q + d * s := by simp [c, d]
+        _ = (v : ZMod 5) * s := hvq2
+        _ = s * (v : ZMod 5) := by ring
+
+/-- The centralizer of a diagonal automorphism with distinct diagonal entries is diagonal. -/
+theorem order100_E25_commuting_diag_distinct_is_diag
+    (β : MulAut order100_E25) (u v : (ZMod 5)ˣ)
+    (huv : (u : ZMod 5) ≠ (v : ZMod 5))
+    (hcomm : β * order100_e25DiagAut u v = order100_e25DiagAut u v * β) :
+    ∃ w z : (ZMod 5)ˣ,
+      β order100_E25_e1 = (Multiplicative.ofAdd (w : ZMod 5), 1) ∧
+      β order100_E25_e2 = (1, Multiplicative.ofAdd (z : ZMod 5)) := by
+  haveI : Fact (Nat.Prime 5) := ⟨by norm_num⟩
+  let a := (β order100_E25_e1).1.toAdd
+  let b := (β order100_E25_e2).1.toAdd
+  let c := (β order100_E25_e1).2.toAdd
+  let d := (β order100_E25_e2).2.toAdd
+  have hdiag_e1 : order100_e25DiagAut u v order100_E25_e1 =
+      (Multiplicative.ofAdd (u : ZMod 5), Multiplicative.ofAdd 0) := by
+    change (unitAutHom u (Multiplicative.ofAdd (1 : ZMod 5)), unitAutHom v 1) = _
+    rw [unitAutHom_apply]
+    ext <;> simp
+  have hdiag_e2 : order100_e25DiagAut u v order100_E25_e2 =
+      (Multiplicative.ofAdd 0, Multiplicative.ofAdd (v : ZMod 5)) := by
+    change (unitAutHom u 1, unitAutHom v (Multiplicative.ofAdd (1 : ZMod 5))) = _
+    rw [unitAutHom_apply]
+    ext <;> simp
+  have hβe1 : β order100_E25_e1 = (Multiplicative.ofAdd a, Multiplicative.ofAdd c) := by
+    ext <;> simp [a, c]
+  have hβe2 : β order100_E25_e2 = (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
+    ext <;> simp [b, d]
+  have he1 := congrArg (fun γ : MulAut order100_E25 => γ order100_E25_e1) hcomm
+  have he2 := congrArg (fun γ : MulAut order100_E25 => γ order100_E25_e2) hcomm
+  change β (order100_e25DiagAut u v order100_E25_e1) =
+    order100_e25DiagAut u v (β order100_E25_e1) at he1
+  change β (order100_e25DiagAut u v order100_E25_e2) =
+    order100_e25DiagAut u v (β order100_E25_e2) at he2
+  have hc_eq : c * (u : ZMod 5) = (v : ZMod 5) * c := by
+    rw [hdiag_e1] at he1
+    rw [order100_E25_mulAut_apply_matrix β (u : ZMod 5) 0] at he1
+    rw [hβe1, hβe2] at he1
+    rw [order100_E25_mulAut_apply_matrix (order100_e25DiagAut u v) a c] at he1
+    rw [hdiag_e1, hdiag_e2] at he1
+    have h := congrArg (fun z : order100_E25 => z.2.toAdd) he1
+    simpa [a, b, c, d, mul_comm] using h
+  have hb_eq : b * (v : ZMod 5) = (u : ZMod 5) * b := by
+    rw [hdiag_e2] at he2
+    rw [order100_E25_mulAut_apply_matrix β 0 (v : ZMod 5)] at he2
+    rw [hβe1, hβe2] at he2
+    rw [order100_E25_mulAut_apply_matrix (order100_e25DiagAut u v) b d] at he2
+    rw [hdiag_e1, hdiag_e2] at he2
+    have h := congrArg (fun z : order100_E25 => z.1.toAdd) he2
+    simpa [a, b, c, d, mul_comm] using h
+  have hc : c = 0 := by
+    have hzero : ((u : ZMod 5) - (v : ZMod 5)) * c = 0 := by
+      calc
+        ((u : ZMod 5) - (v : ZMod 5)) * c =
+            c * (u : ZMod 5) - (v : ZMod 5) * c := by ring
+        _ = 0 := by rw [hc_eq]; ring
+    exact (mul_eq_zero.mp hzero).resolve_left (sub_ne_zero.mpr huv)
+  have hb : b = 0 := by
+    have hzero : ((v : ZMod 5) - (u : ZMod 5)) * b = 0 := by
+      calc
+        ((v : ZMod 5) - (u : ZMod 5)) * b =
+            b * (v : ZMod 5) - (u : ZMod 5) * b := by ring
+        _ = 0 := by rw [hb_eq]; ring
+    exact (mul_eq_zero.mp hzero).resolve_left (sub_ne_zero.mpr huv.symm)
+  have hdet : a * d ≠ 0 := by
+    have h := order100_E25_mulAut_det_ne_zero β
+    simpa [a, b, c, d, hb, hc] using h
+  have ha : a ≠ 0 := (mul_ne_zero_iff.mp hdet).1
+  have hd : d ≠ 0 := (mul_ne_zero_iff.mp hdet).2
+  refine ⟨Units.mk0 a ha, Units.mk0 d hd, ?_, ?_⟩
+  · rw [hβe1]
+    ext <;> simp [hc]
+  · rw [hβe2]
+    ext <;> simp [hb]
+
+/-- Every `C₄`-action on `(C₅)²` is isomorphic to a diagonal action. -/
+theorem order100_e25C4_action_has_diagonal_form
+    (φ : order100_C4 →* MulAut order100_E25) :
+    ∃ χ₁ χ₂ : order100_C4 →* (ZMod 5)ˣ,
+      Nonempty (SemidirectProduct order100_E25 order100_C4 φ ≃*
+        SemidirectProduct order100_E25 order100_C4 (order100_e25DiagAction χ₁ χ₂)) := by
+  let g : order100_C4 := Multiplicative.ofAdd (1 : ZMod 4)
+  have hg4 : g ^ 4 = 1 := by decide
+  have hφg4 : (φ g) ^ 4 = 1 := by
+    rw [← map_pow, hg4, map_one]
+  obtain ⟨θ, u, v, h1, h2⟩ := order100_E25_mulAut_pow_four_has_eigenbasis (φ g) hφg4
+  refine ⟨order100_chi5C4_ofUnit u, order100_chi5C4_ofUnit v, ?_⟩
+  exact ⟨order100_e25C4_action_eigenbasis_mulEquiv φ θ u v h1 h2⟩
 
 noncomputable abbrev order100_chi5C4_four : order100_C4 →* (ZMod 5)ˣ :=
   powHom (p := 5) (q := 4) order100_u5_4 (by decide)
@@ -1248,6 +1665,45 @@ theorem order100_e25C4_diagAction_cases (χ₁ χ₂ : order100_C4 →* (ZMod 5)
   · subst χ₁; subst χ₂
     right; right; right; right; right; left
     exact ⟨order100_e25C4_four_inv_four_inv_equiv_44⟩
+
+theorem order100_e25C4_action_cases (φ : order100_C4 →* MulAut order100_E25) :
+    Nonempty (SemidirectProduct order100_E25 order100_C4 φ ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_00) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 φ ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_20) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 φ ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_40) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 φ ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_22) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 φ ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_42) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 φ ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_44) ∨
+    Nonempty (SemidirectProduct order100_E25 order100_C4 φ ≃*
+      SemidirectProduct order100_E25 order100_C4 order100_e25C4_44i) := by
+  obtain ⟨χ₁, χ₂, ⟨eφ⟩⟩ := order100_e25C4_action_has_diagonal_form φ
+  rcases order100_e25C4_diagAction_cases χ₁ χ₂ with h | h | h | h | h | h | h
+  · rcases h with ⟨e⟩
+    left
+    exact ⟨eφ.trans e⟩
+  · rcases h with ⟨e⟩
+    right; left
+    exact ⟨eφ.trans e⟩
+  · rcases h with ⟨e⟩
+    right; right; left
+    exact ⟨eφ.trans e⟩
+  · rcases h with ⟨e⟩
+    right; right; right; left
+    exact ⟨eφ.trans e⟩
+  · rcases h with ⟨e⟩
+    right; right; right; right; left
+    exact ⟨eφ.trans e⟩
+  · rcases h with ⟨e⟩
+    right; right; right; right; right; left
+    exact ⟨eφ.trans e⟩
+  · rcases h with ⟨e⟩
+    right; right; right; right; right; right
+    exact ⟨eφ.trans e⟩
 
 /-! For `V₄`, the four diagonal representatives are: no non-trivial character, one character,
 the same character twice, and two independent characters. -/
