@@ -645,6 +645,40 @@ noncomputable def order84_HB_mulFive : order84_HB ≃* order84_HB :=
   MulEquiv.prodCongr (MulEquiv.refl (Multiplicative (ZMod 2)))
     (unitAutHom (p := 6) (ZMod.unitOfCoprime 5 (by norm_num : Nat.Coprime 5 6)))
 
+noncomputable def order84_HB_shearRight : order84_HB ≃* order84_HB where
+  toFun x :=
+    (Multiplicative.ofAdd (Multiplicative.toAdd x.1 +
+      ZMod.castHom (by norm_num : 2 ∣ 6) (ZMod 2) (Multiplicative.toAdd x.2)), x.2)
+  invFun x :=
+    (Multiplicative.ofAdd (Multiplicative.toAdd x.1 +
+      ZMod.castHom (by norm_num : 2 ∣ 6) (ZMod 2) (Multiplicative.toAdd x.2)), x.2)
+  left_inv := by
+    rintro ⟨a, b⟩
+    ext <;> decide +revert
+  right_inv := by
+    rintro ⟨a, b⟩
+    ext <;> decide +revert
+  map_mul' := by
+    rintro ⟨a, b⟩ ⟨c, d⟩
+    ext <;> decide +revert
+
+noncomputable def order84_HB_shearLeft : order84_HB ≃* order84_HB where
+  toFun x :=
+    (x.1, Multiplicative.ofAdd (Multiplicative.toAdd x.2 +
+      (3 : ZMod 6) * ((Multiplicative.toAdd x.1).val : ZMod 6)))
+  invFun x :=
+    (x.1, Multiplicative.ofAdd (Multiplicative.toAdd x.2 +
+      (3 : ZMod 6) * ((Multiplicative.toAdd x.1).val : ZMod 6)))
+  left_inv := by
+    rintro ⟨a, b⟩
+    ext <;> decide +revert
+  right_inv := by
+    rintro ⟨a, b⟩
+    ext <;> decide +revert
+  map_mul' := by
+    rintro ⟨a, b⟩ ⟨c, d⟩
+    ext <;> decide +revert
+
 theorem order84_chiC2C6_snd_six_comp_mulFive :
     order84_chiC2C6_snd_six.comp order84_HB_mulFive.toMonoidHom =
       order84_chiC2C6_snd_six_inv := by
@@ -673,6 +707,26 @@ theorem order84_chiC2C6_fst_two_snd_three_comp_mulFive :
 theorem order84_chiC2C6_fst_two_snd_two_comp_mulFive :
     order84_chiC2C6_fst_two_snd_two.comp order84_HB_mulFive.toMonoidHom =
       order84_chiC2C6_fst_two_snd_two := by
+  apply order84_c2c6_hom_ext <;> decide
+
+theorem order84_chiC2C6_fst_two_comp_shearRight :
+    order84_chiC2C6_fst_two.comp order84_HB_shearRight.toMonoidHom =
+      order84_chiC2C6_fst_two_snd_two := by
+  apply order84_c2c6_hom_ext <;> decide
+
+theorem order84_chiC2C6_snd_two_comp_shearLeft :
+    order84_chiC2C6_snd_two.comp order84_HB_shearLeft.toMonoidHom =
+      order84_chiC2C6_fst_two_snd_two := by
+  apply order84_c2c6_hom_ext <;> decide
+
+theorem order84_chiC2C6_snd_six_comp_shearLeft :
+    order84_chiC2C6_snd_six.comp order84_HB_shearLeft.toMonoidHom =
+      order84_chiC2C6_fst_two_snd_six := by
+  apply order84_c2c6_hom_ext <;> decide
+
+theorem order84_chiC2C6_fst_two_snd_three_comp_shearRight :
+    order84_chiC2C6_fst_two_snd_three.comp order84_HB_shearRight.toMonoidHom =
+      order84_chiC2C6_fst_two_snd_six_inv := by
   apply order84_c2c6_hom_ext <;> decide
 
 noncomputable abbrev order84_c2c6_trivial : Type :=
@@ -731,6 +785,32 @@ noncomputable def order84_c2c6_fst_two_snd_three_inv_equiv_fst_two_snd_three :
     order84_chiC2C6_fst_two_snd_three_inv order84_HB_mulFive
     order84_chiC2C6_fst_two_snd_three_comp_mulFive
 
+noncomputable def order84_c2c6_fst_two_snd_two_equiv_fst_two :
+    order84_c2c6_fst_two_snd_two ≃* order84_c2c6_fst_two :=
+  order84_action_precomp_eq_mulEquiv order84_chiC2C6_fst_two
+    order84_chiC2C6_fst_two_snd_two order84_HB_shearRight
+    order84_chiC2C6_fst_two_comp_shearRight
+
+noncomputable def order84_c2c6_snd_two_equiv_fst_two :
+    order84_c2c6_snd_two ≃* order84_c2c6_fst_two :=
+  (order84_action_precomp_eq_mulEquiv order84_chiC2C6_snd_two
+      order84_chiC2C6_fst_two_snd_two order84_HB_shearLeft
+      order84_chiC2C6_snd_two_comp_shearLeft).symm.trans
+    order84_c2c6_fst_two_snd_two_equiv_fst_two
+
+noncomputable def order84_c2c6_snd_six_equiv_fst_two_snd_six :
+    order84_c2c6_snd_six ≃* order84_c2c6_fst_two_snd_six :=
+  (order84_action_precomp_eq_mulEquiv order84_chiC2C6_snd_six
+      order84_chiC2C6_fst_two_snd_six order84_HB_shearLeft
+      order84_chiC2C6_snd_six_comp_shearLeft).symm
+
+noncomputable def order84_c2c6_fst_two_snd_three_equiv_fst_two_snd_six :
+    order84_c2c6_fst_two_snd_three ≃* order84_c2c6_fst_two_snd_six :=
+  (order84_action_precomp_eq_mulEquiv order84_chiC2C6_fst_two_snd_three
+      order84_chiC2C6_fst_two_snd_six_inv order84_HB_shearRight
+      order84_chiC2C6_fst_two_snd_three_comp_shearRight).symm.trans
+    order84_c2c6_fst_two_snd_six_inv_equiv_fst_two_snd_six
+
 theorem order84_c2c6_action_semidirect_cases (φ : order84_HB →* MulAut order84_C7) :
     Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_trivial) ∨
       Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_snd_six) ∨
@@ -773,6 +853,35 @@ theorem order84_c2c6_action_semidirect_cases (φ : order84_HB →* MulAut order8
   · right; right; right; right; right; left
     exact ⟨(semidirectProductCongr_eq hφ).trans
       order84_c2c6_fst_two_snd_six_inv_equiv_fst_two_snd_six⟩
+
+theorem order84_c2c6_action_semidirect_cases_four (φ : order84_HB →* MulAut order84_C7) :
+    Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_trivial) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_fst_two) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_snd_three) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃*
+        order84_c2c6_fst_two_snd_six) := by
+  rcases order84_c2c6_action_semidirect_cases φ with hφ | hφ | hφ | hφ |
+    hφ | hφ | hφ | hφ
+  · left
+    exact hφ
+  · right; right; right
+    obtain ⟨e⟩ := hφ
+    exact ⟨e.trans order84_c2c6_snd_six_equiv_fst_two_snd_six⟩
+  · right; right; left
+    exact hφ
+  · right; left
+    obtain ⟨e⟩ := hφ
+    exact ⟨e.trans order84_c2c6_snd_two_equiv_fst_two⟩
+  · right; left
+    exact hφ
+  · right; right; right
+    exact hφ
+  · right; right; right
+    obtain ⟨e⟩ := hφ
+    exact ⟨e.trans order84_c2c6_fst_two_snd_three_equiv_fst_two_snd_six⟩
+  · right; left
+    obtain ⟨e⟩ := hφ
+    exact ⟨e.trans order84_c2c6_fst_two_snd_two_equiv_fst_two⟩
 
 /-! ### `(C₃ ⋊ C₄)`-complement actions -/
 
