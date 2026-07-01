@@ -236,6 +236,16 @@ theorem order54_semidirectP2P_mulAut_ext {α β : MulAut order54_SemidirectP2P}
     _ = β x := by
       rw [← order54_semidirectP2P_elem_decomp x]
 
+/-- The value of an automorphism on any element is determined by the images of `A` and `B`. -/
+theorem order54_semidirectP2P_mulAut_apply_decomp
+    (α : MulAut order54_SemidirectP2P) (x : order54_SemidirectP2P) :
+    α x = (α order54_p2pA) ^ x.a.val * (α order54_p2pB) ^ x.b.val := by
+  calc
+    α x = α (order54_p2pA ^ x.a.val * order54_p2pB ^ x.b.val) := by
+      exact congrArg α (order54_semidirectP2P_elem_decomp x)
+    _ = (α order54_p2pA) ^ x.a.val * (α order54_p2pB) ^ x.b.val := by
+      rw [map_mul, map_pow, map_pow]
+
 noncomputable instance order54_semidirectP2P_mulAut_decidableEq :
     DecidableEq (MulAut order54_SemidirectP2P) := fun α β =>
   if hA : α order54_p2pA = β order54_p2pA then
@@ -405,6 +415,104 @@ theorem order54_semidirectP2P_mulAut_p2pA_cube_cases
     exact hA3ne (by simpa using hpre)
   have hcases := order54_semidirectP2P_center_nontrivial_cases hz hne
   simpa [map_pow] using hcases
+
+/-- If `x` has nontrivial cube and `y` satisfies the standard `B*A=A⁴*B` relation with
+`x`, then `y` is one of the three possible images of the `B` generator. -/
+theorem order54_semidirectP2P_relation_forces_B_coset
+    {x y : order54_SemidirectP2P}
+    (hx3ne : x ^ 3 ≠ 1)
+    (hy3 : y ^ 3 = 1) (hyne : y ≠ 1)
+    (hrel : y * x = x ^ 4 * y) :
+    y = order54_p2pB ∨ y = order54_p2pA ^ 3 * order54_p2pB ∨
+      y = order54_p2pA ^ 6 * order54_p2pB := by
+  cases x with
+  | mk a b =>
+      cases y with
+      | mk c d =>
+          fin_cases a <;> fin_cases b <;> fin_cases c <;> fin_cases d <;>
+            first
+            | exact Or.inl (by decide +kernel)
+            | exact Or.inr (Or.inl (by decide +kernel))
+            | exact Or.inr (Or.inr (by decide +kernel))
+            | exfalso; revert hx3ne; decide +kernel
+            | exfalso; revert hy3; decide +kernel
+            | exfalso; revert hyne; decide +kernel
+            | exfalso; revert hrel; decide +kernel
+
+/-- An automorphism sends `B` to one of the three elements `B`, `a³B`, or `a⁶B`. -/
+theorem order54_semidirectP2P_mulAut_p2pB_cases
+    (α : MulAut order54_SemidirectP2P) :
+    α order54_p2pB = order54_p2pB ∨
+      α order54_p2pB = order54_p2pA ^ 3 * order54_p2pB ∨
+      α order54_p2pB = order54_p2pA ^ 6 * order54_p2pB := by
+  have hx3ne : (α order54_p2pA) ^ 3 ≠ 1 := by
+    intro h
+    have hdvd : orderOf (α order54_p2pA) ∣ 3 := orderOf_dvd_of_pow_eq_one h
+    rw [orderOf_order54_semidirectP2P_mulAut_p2pA α] at hdvd
+    norm_num at hdvd
+  have hy3 : (α order54_p2pB) ^ 3 = 1 := by
+    rw [← orderOf_dvd_iff_pow_eq_one, orderOf_order54_semidirectP2P_mulAut_p2pB α]
+  have hyne : α order54_p2pB ≠ 1 := by
+    intro h
+    have horder := orderOf_order54_semidirectP2P_mulAut_p2pB α
+    rw [orderOf_eq_one_iff.mpr h] at horder
+    norm_num at horder
+  exact order54_semidirectP2P_relation_forces_B_coset hx3ne hy3 hyne
+    (order54_semidirectP2P_mulAut_relation α)
+
+/-- A `C₂` action on the exponent-`9` kernel that preserves `A³` is trivial. -/
+theorem order54_semidirectP2P_mulAut_eq_one_of_p2pA_cube
+    (α : MulAut order54_SemidirectP2P)
+    (hα : α ^ 2 = 1)
+    (hcube : (α order54_p2pA) ^ 3 = order54_p2pA ^ 3) :
+    α = 1 := by
+  have hsqA : α (α order54_p2pA) = order54_p2pA := by
+    have h := DFunLike.congr_fun hα order54_p2pA
+    simpa [sq] using h
+  have hsqB : α (α order54_p2pB) = order54_p2pB := by
+    have h := DFunLike.congr_fun hα order54_p2pB
+    simpa [sq] using h
+  rcases order54_semidirectP2P_mulAut_p2pB_cases α with hB | hB | hB
+  · have hsqA' := hsqA
+    have hsqB' := hsqB
+    rw [order54_semidirectP2P_mulAut_apply_decomp α (α order54_p2pA)] at hsqA'
+    rw [order54_semidirectP2P_mulAut_apply_decomp α (α order54_p2pB)] at hsqB'
+    rw [hB] at hsqA' hsqB'
+    generalize hx : α order54_p2pA = x at hcube hsqA' hsqB'
+    cases x with
+    | mk a b =>
+        fin_cases a <;> fin_cases b <;>
+          first
+          | exfalso; revert hcube; decide
+          | exfalso; revert hsqA'; decide
+          | exact order54_semidirectP2P_mulAut_ext
+              (hx.trans (by decide)) (hB.trans (by decide))
+  · have hsqA' := hsqA
+    have hsqB' := hsqB
+    rw [order54_semidirectP2P_mulAut_apply_decomp α (α order54_p2pA)] at hsqA'
+    rw [order54_semidirectP2P_mulAut_apply_decomp α (α order54_p2pB)] at hsqB'
+    rw [hB] at hsqA' hsqB'
+    generalize hx : α order54_p2pA = x at hcube hsqA' hsqB'
+    cases x with
+    | mk a b =>
+        fin_cases a <;> fin_cases b <;>
+          first
+          | exfalso; revert hcube; decide
+          | exfalso; revert hsqA'; decide
+          | exfalso; revert hsqB'; decide
+  · have hsqA' := hsqA
+    have hsqB' := hsqB
+    rw [order54_semidirectP2P_mulAut_apply_decomp α (α order54_p2pA)] at hsqA'
+    rw [order54_semidirectP2P_mulAut_apply_decomp α (α order54_p2pB)] at hsqB'
+    rw [hB] at hsqA' hsqB'
+    generalize hx : α order54_p2pA = x at hcube hsqA' hsqB'
+    cases x with
+    | mk a b =>
+        fin_cases a <;> fin_cases b <;>
+          first
+          | exfalso; revert hcube; decide
+          | exfalso; revert hsqA'; decide
+          | exfalso; revert hsqB'; decide
 
 /-! ### Cardinalities of the standard factors -/
 
