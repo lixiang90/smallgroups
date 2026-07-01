@@ -2090,4 +2090,313 @@ theorem order54_cases_after_nonabelian_kernels [Finite G] (hG : Nat.card G = 54)
     · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl hP2P0))))
     · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr hP2P1))))
 
+/-! ### Indexed classification package -/
+
+noncomputable instance instFintypeOrder54SemidirectProduct {N H : Type*} [Group N] [Group H]
+    [Fintype N] [Fintype H] (φ : H →* MulAut N) :
+    Fintype (SemidirectProduct N H φ) :=
+  Fintype.ofEquiv (N × H) SemidirectProduct.equivProd.symm
+
+/-- The fifteen displayed representatives for groups of order `54`. -/
+noncomputable abbrev order54_reps : Fin 15 → Type
+  | 0 => order54_C54
+  | 1 => order54_D27
+  | 2 => order54_Mixed0
+  | 3 => order54_Mixed1
+  | 4 => order54_Mixed2
+  | 5 => order54_Mixed3
+  | 6 => order54_Elem0
+  | 7 => order54_Elem1
+  | 8 => order54_Elem2
+  | 9 => order54_Elem3
+  | 10 => order54_Heis0
+  | 11 => order54_Heis1
+  | 12 => order54_Heis2
+  | 13 => order54_P2P0
+  | 14 => order54_P2P1
+
+noncomputable instance instGroupOrder54Reps : ∀ i, Group (order54_reps i)
+  | 0 => inferInstanceAs (Group order54_C54)
+  | 1 => inferInstanceAs (Group order54_D27)
+  | 2 => inferInstanceAs (Group order54_Mixed0)
+  | 3 => inferInstanceAs (Group order54_Mixed1)
+  | 4 => inferInstanceAs (Group order54_Mixed2)
+  | 5 => inferInstanceAs (Group order54_Mixed3)
+  | 6 => inferInstanceAs (Group order54_Elem0)
+  | 7 => inferInstanceAs (Group order54_Elem1)
+  | 8 => inferInstanceAs (Group order54_Elem2)
+  | 9 => inferInstanceAs (Group order54_Elem3)
+  | 10 => inferInstanceAs (Group order54_Heis0)
+  | 11 => inferInstanceAs (Group order54_Heis1)
+  | 12 => inferInstanceAs (Group order54_Heis2)
+  | 13 => inferInstanceAs (Group order54_P2P0)
+  | 14 => inferInstanceAs (Group order54_P2P1)
+
+theorem card_order54_Mixed0 : Nat.card order54_Mixed0 = 54 := by
+  rw [Nat.card_prod, card_order54_C9C3, card_order54_C2]
+
+theorem card_order54_Mixed1 : Nat.card order54_Mixed1 = 54 := by
+  rw [Nat.card_prod, card_cyclicRep (by norm_num : (9 : ℕ) ≠ 0), DihedralGroup.nat_card]
+
+theorem card_order54_Mixed2 : Nat.card order54_Mixed2 = 54 := by
+  rw [Nat.card_prod, card_cyclicRep (by norm_num : (3 : ℕ) ≠ 0), DihedralGroup.nat_card]
+
+theorem card_order54_Mixed3 : Nat.card order54_Mixed3 = 54 :=
+  card_order54_semidirect_C9C3 (invActionHom order54_C9C3)
+
+theorem card_order54_Elem0 : Nat.card order54_Elem0 = 54 := by
+  rw [Nat.card_prod, card_order54_C3C3C3, card_order54_C2]
+
+theorem card_order54_Elem1 : Nat.card order54_Elem1 = 54 := by
+  rw [Nat.card_prod, card_elemAbelianRep (by norm_num : (3 : ℕ) ≠ 0),
+    DihedralGroup.nat_card]
+  norm_num
+
+theorem card_order54_Elem2 : Nat.card order54_Elem2 = 54 := by
+  rw [Nat.card_prod, card_cyclicRep (by norm_num : (3 : ℕ) ≠ 0),
+    SemidirectProduct.card, card_elemAbelianRep (by norm_num : (3 : ℕ) ≠ 0),
+    card_order54_C2]
+  norm_num
+
+theorem card_order54_Elem3 : Nat.card order54_Elem3 = 54 :=
+  card_order54_semidirect_C3C3C3 (invActionHom order54_C3C3C3)
+
+theorem card_order54_reps (i : Fin 15) : Nat.card (order54_reps i) = 54 := by
+  fin_cases i
+  · exact card_order54_C54
+  · exact card_order54_D27
+  · exact card_order54_Mixed0
+  · exact card_order54_Mixed1
+  · exact card_order54_Mixed2
+  · exact card_order54_Mixed3
+  · exact card_order54_Elem0
+  · exact card_order54_Elem1
+  · exact card_order54_Elem2
+  · exact card_order54_Elem3
+  · exact card_order54_Heis0
+  · exact card_order54_Heis1
+  · exact card_order54_Heis2
+  · exact card_order54_P2P0
+  · exact card_order54_P2P1
+
+/-- The displayed representatives exhaust the groups of order `54`. -/
+theorem order54_complete (G : Type) [Group G] (hG : Nat.card G = 54) :
+    ∃ i, Nonempty (G ≃* order54_reps i) := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hG]; norm_num)
+  rcases order54_cases_after_nonabelian_kernels (G := G) hG with
+    hAbelian | hHeis0 | hHeis1 | hHeis2 | hP2P0 | hP2P1
+  · rcases hAbelian with
+      hC54 | hD27 | hMixed0 | hMixed1 | hMixed2 | hMixed3 | hElem0 | hElem1 | hElem2 | hElem3
+    exacts [⟨0, by simpa [order54_reps] using hC54⟩,
+      ⟨1, by simpa [order54_reps] using hD27⟩,
+      ⟨2, by simpa [order54_reps] using hMixed0⟩,
+      ⟨3, by simpa [order54_reps] using hMixed1⟩,
+      ⟨4, by simpa [order54_reps] using hMixed2⟩,
+      ⟨5, by simpa [order54_reps] using hMixed3⟩,
+      ⟨6, by simpa [order54_reps] using hElem0⟩,
+      ⟨7, by simpa [order54_reps] using hElem1⟩,
+      ⟨8, by simpa [order54_reps] using hElem2⟩,
+      ⟨9, by simpa [order54_reps] using hElem3⟩]
+  · exact ⟨10, by simpa [order54_reps] using hHeis0⟩
+  · exact ⟨11, by simpa [order54_reps] using hHeis1⟩
+  · exact ⟨12, by simpa [order54_reps] using hHeis2⟩
+  · exact ⟨13, by simpa [order54_reps] using hP2P0⟩
+  · exact ⟨14, by simpa [order54_reps] using hP2P1⟩
+
+private theorem order54_nat_card_eq_of_fintype_card_eq {α : Type*} [Fintype α] {n : Nat}
+    (h : Fintype.card α = n) : Nat.card α = n :=
+  Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq h)
+
+noncomputable def order54_pow_eq_one_card (H : Type*) [Group H] (n : ℕ) : ℕ :=
+  Nat.card {x : H // x ^ n = 1}
+
+noncomputable def order54_powEqOneEquivOfMulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) : {x : H // x ^ n = 1} ≃ {x : K // x ^ n = 1} where
+  toFun x := ⟨e x.1, by rw [← map_pow, x.2, map_one]⟩
+  invFun x := ⟨e.symm x.1, by
+    rw [← map_pow]
+    exact e.injective (by simp [x.2])⟩
+  left_inv x := by
+    ext
+    simp
+  right_inv x := by
+    ext
+    simp
+
+theorem order54_pow_eq_one_card_eq_of_mulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) :
+    order54_pow_eq_one_card H n = order54_pow_eq_one_card K n := by
+  exact Nat.card_congr (order54_powEqOneEquivOfMulEquiv n e)
+
+noncomputable def order54_order_three_commuting_pair_card (H : Type*) [Group H] : ℕ :=
+  Nat.card {p : H × H // p.1 ^ 3 = 1 ∧ p.1 * p.2 = p.2 * p.1}
+
+noncomputable def order54_orderThreeCommutingPairEquivOfMulEquiv {H K : Type*} [Group H]
+    [Group K] (e : H ≃* K) :
+    {p : H × H // p.1 ^ 3 = 1 ∧ p.1 * p.2 = p.2 * p.1} ≃
+      {p : K × K // p.1 ^ 3 = 1 ∧ p.1 * p.2 = p.2 * p.1} where
+  toFun p := ⟨(e p.1.1, e p.1.2), by
+    constructor
+    · rw [← map_pow, p.2.1, map_one]
+    · simpa [map_mul] using congrArg e p.2.2⟩
+  invFun p := ⟨(e.symm p.1.1, e.symm p.1.2), by
+    constructor
+    · rw [← map_pow]
+      exact e.injective (by simp [p.2.1])
+    · simpa [map_mul] using congrArg e.symm p.2.2⟩
+  left_inv p := by
+    ext <;> simp
+  right_inv p := by
+    ext <;> simp
+
+theorem order54_order_three_commuting_pair_card_eq_of_mulEquiv {H K : Type*} [Group H]
+    [Group K] (e : H ≃* K) :
+    order54_order_three_commuting_pair_card H = order54_order_three_commuting_pair_card K :=
+  Nat.card_congr (order54_orderThreeCommutingPairEquivOfMulEquiv e)
+
+def order54_center_card : Fin 15 → Nat
+  | 0 => 54
+  | 1 => 1
+  | 2 => 54
+  | 3 => 9
+  | 4 => 3
+  | 5 => 1
+  | 6 => 54
+  | 7 => 9
+  | 8 => 3
+  | 9 => 1
+  | 10 => 6
+  | 11 => 3
+  | 12 => 1
+  | 13 => 6
+  | 14 => 1
+
+theorem card_center_order54_reps (i : Fin 15) :
+    Nat.card (Subgroup.center (order54_reps i)) = order54_center_card i := by
+  fin_cases i <;> exact order54_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+def order54_pow_two_eq_one_card : Fin 15 → Nat
+  | 0 => 2
+  | 1 => 28
+  | 2 => 2
+  | 3 => 4
+  | 4 => 10
+  | 5 => 28
+  | 6 => 2
+  | 7 => 4
+  | 8 => 10
+  | 9 => 28
+  | 10 => 2
+  | 11 => 10
+  | 12 => 10
+  | 13 => 2
+  | 14 => 10
+
+theorem card_pow_two_eq_one_order54_reps (i : Fin 15) :
+    order54_pow_eq_one_card (order54_reps i) 2 = order54_pow_two_eq_one_card i := by
+  fin_cases i <;> exact order54_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+def order54_pow_three_eq_one_card : Fin 15 → Nat
+  | 0 => 3
+  | 1 => 3
+  | 2 => 9
+  | 3 => 9
+  | 4 => 9
+  | 5 => 9
+  | 6 => 27
+  | 7 => 27
+  | 8 => 27
+  | 9 => 27
+  | 10 => 27
+  | 11 => 27
+  | 12 => 27
+  | 13 => 9
+  | 14 => 9
+
+theorem card_pow_three_eq_one_order54_reps (i : Fin 15) :
+    order54_pow_eq_one_card (order54_reps i) 3 = order54_pow_three_eq_one_card i := by
+  fin_cases i <;> exact order54_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+def order54_pow_six_eq_one_card : Fin 15 → Nat
+  | 0 => 6
+  | 1 => 30
+  | 2 => 18
+  | 3 => 18
+  | 4 => 36
+  | 5 => 36
+  | 6 => 54
+  | 7 => 54
+  | 8 => 54
+  | 9 => 54
+  | 10 => 54
+  | 11 => 54
+  | 12 => 54
+  | 13 => 18
+  | 14 => 36
+
+theorem card_pow_six_eq_one_order54_reps (i : Fin 15) :
+    order54_pow_eq_one_card (order54_reps i) 6 = order54_pow_six_eq_one_card i := by
+  fin_cases i <;> exact order54_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+def order54_reps_base_invariant (i : Fin 15) : Nat × Nat × Nat × Nat :=
+  (order54_center_card i, order54_pow_two_eq_one_card i,
+    order54_pow_three_eq_one_card i, order54_pow_six_eq_one_card i)
+
+theorem order54_reps_base_invariant_eq_of_mulEquiv {i j : Fin 15}
+    (hiso : Nonempty (order54_reps i ≃* order54_reps j)) :
+    order54_reps_base_invariant i = order54_reps_base_invariant j := by
+  rcases hiso with ⟨e⟩
+  apply Prod.ext
+  · change order54_center_card i = order54_center_card j
+    rw [← card_center_order54_reps i, ← card_center_order54_reps j]
+    exact card_center_eq_of_mulEquiv e
+  · apply Prod.ext
+    · change order54_pow_two_eq_one_card i = order54_pow_two_eq_one_card j
+      rw [← card_pow_two_eq_one_order54_reps i, ← card_pow_two_eq_one_order54_reps j]
+      exact order54_pow_eq_one_card_eq_of_mulEquiv 2 e
+    · apply Prod.ext
+      · change order54_pow_three_eq_one_card i = order54_pow_three_eq_one_card j
+        rw [← card_pow_three_eq_one_order54_reps i, ← card_pow_three_eq_one_order54_reps j]
+        exact order54_pow_eq_one_card_eq_of_mulEquiv 3 e
+      · change order54_pow_six_eq_one_card i = order54_pow_six_eq_one_card j
+        rw [← card_pow_six_eq_one_order54_reps i, ← card_pow_six_eq_one_order54_reps j]
+        exact order54_pow_eq_one_card_eq_of_mulEquiv 6 e
+
+set_option maxHeartbeats 800000 in
+-- This finite count separates `Elem2` from `Heis1`; it enumerates pairs in a 54-element group.
+theorem order54_order_three_commuting_pair_card_Elem2 :
+    order54_order_three_commuting_pair_card order54_Elem2 = 810 :=
+  order54_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+set_option maxHeartbeats 800000 in
+-- This is the matching finite count for the Heisenberg-kernel representative.
+theorem order54_order_three_commuting_pair_card_Heis1 :
+    order54_order_three_commuting_pair_card order54_Heis1 = 378 :=
+  order54_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem order54_Elem2_not_mulEquiv_Heis1 :
+    ¬ Nonempty (order54_Elem2 ≃* order54_Heis1) := by
+  rintro ⟨e⟩
+  have h := order54_order_three_commuting_pair_card_eq_of_mulEquiv e
+  rw [order54_order_three_commuting_pair_card_Elem2,
+    order54_order_three_commuting_pair_card_Heis1] at h
+  norm_num at h
+
+theorem order54_reps_pairwise : PairwiseNonMulEquiv order54_reps := by
+  intro i j hiso
+  have hbase := order54_reps_base_invariant_eq_of_mulEquiv hiso
+  fin_cases i <;> fin_cases j <;>
+    simp [order54_reps_base_invariant, order54_center_card, order54_pow_two_eq_one_card,
+      order54_pow_three_eq_one_card, order54_pow_six_eq_one_card] at hbase
+  all_goals first
+    | rfl
+    | exact False.elim (order54_Elem2_not_mulEquiv_Heis1 hiso)
+    | exact False.elim (order54_Elem2_not_mulEquiv_Heis1 ⟨hiso.some.symm⟩)
+
+/-- The displayed representatives form a complete classification of groups of order `54`. -/
+theorem order54_isClassif : IsClassif 54 order54_reps where
+  card := card_order54_reps
+  complete := order54_complete
+  distinct := order54_reps_pairwise
+
 end Smallgroups.UsefulTheorems
