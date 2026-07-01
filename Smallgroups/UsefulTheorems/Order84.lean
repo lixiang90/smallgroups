@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order4P_12
+import Smallgroups.UsefulTheorems.CenterInvariant
 import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Smallgroups.UsefulTheorems.SemidirectProductClassify
@@ -25,6 +26,10 @@ order-`12` classification for `H` and classify the actions `H → Aut(C₇)`.
 namespace Smallgroups.UsefulTheorems
 
 open Sylow
+
+noncomputable local instance instFintypeSemidirectProduct {N H : Type*} [Group N] [Group H]
+    [Fintype N] [Fintype H] (φ : H →* MulAut N) : Fintype (SemidirectProduct N H φ) :=
+  Fintype.ofEquiv (N × H) SemidirectProduct.equivProd.symm
 
 variable {G : Type*} [Group G]
 
@@ -1718,6 +1723,84 @@ theorem order84_a4_three_pow_three_of_not_mem_kleinFour
     exact order84_c7_geom_three_eq_one (order84_chiA4_three h) hχ3 hχne n
   · simpa [pow_succ, SemidirectProduct.mul_right, mul_assoc] using h3
 
+noncomputable def order84_a4_three_pow2Equiv :
+    {x : order84_a4_three // x ^ 2 = 1} ≃
+      {h : order84_HE // h ∈ alternatingGroup.kleinFour (Fin 4)} where
+  toFun x := by
+    refine ⟨x.1.right, ?_⟩
+    have hright : x.1.right ^ 2 = 1 := by
+      have hxright := congrArg SemidirectProduct.right x.2
+      change x.1.right * x.1.right = 1 at hxright
+      simpa [pow_two] using hxright
+    exact order84_a4_order_two_mem_kleinFour x.1.right hright
+  invFun h := by
+    refine ⟨⟨1, h.1⟩, ?_⟩
+    have h2 : h.1 ^ 2 = 1 := order84_a4_mem_kleinFour_sq h.2
+    apply SemidirectProduct.ext
+    · simp [pow_two]
+    · change h.1 * h.1 = 1
+      simpa [pow_two] using h2
+  left_inv x := by
+    apply Subtype.ext
+    have hxK : x.1.right ∈ alternatingGroup.kleinFour (Fin 4) := by
+      have hright : x.1.right ^ 2 = 1 := by
+        have hxright := congrArg SemidirectProduct.right x.2
+        change x.1.right * x.1.right = 1 at hxright
+        simpa [pow_two] using hxright
+      exact order84_a4_order_two_mem_kleinFour x.1.right hright
+    have hx6 : x.1 ^ 6 = 1 := by
+      calc
+        x.1 ^ 6 = (x.1 ^ 2) ^ 3 := by group
+        _ = 1 := by rw [x.2]; simp
+    have hxleft : x.1.left = 1 := by
+      apply (order84_a4_three_pow_six_iff_of_mem_kleinFour x.1.left hxK).mp
+      simpa using hx6
+    apply SemidirectProduct.ext <;> simp [hxleft]
+  right_inv h := by
+    simp
+
+noncomputable def order84_a4_three_pow3Equiv :
+    {x : order84_a4_three // x ^ 3 = 1} ≃
+      (Unit ⊕ (order84_C7 × {h : order84_HE //
+        h ∉ alternatingGroup.kleinFour (Fin 4)})) where
+  toFun x := by
+    by_cases hxK : x.1.right ∈ alternatingGroup.kleinFour (Fin 4)
+    · exact Sum.inl ()
+    · exact Sum.inr (x.1.left, ⟨x.1.right, hxK⟩)
+  invFun y := by
+    rcases y with _ | nh
+    · exact ⟨⟨1, 1⟩, by simp⟩
+    · exact ⟨⟨nh.1, nh.2.1⟩,
+        order84_a4_three_pow_three_of_not_mem_kleinFour nh.1 nh.2.2⟩
+  left_inv x := by
+    apply Subtype.ext
+    by_cases hxK : x.1.right ∈ alternatingGroup.kleinFour (Fin 4)
+    · have hright3 : x.1.right ^ 3 = 1 := by
+        have hxright := congrArg SemidirectProduct.right x.2
+        change x.1.right * x.1.right * x.1.right = 1 at hxright
+        simpa [pow_succ, pow_two, mul_assoc] using hxright
+      have hright2 : x.1.right ^ 2 = 1 := order84_a4_mem_kleinFour_sq hxK
+      have hright : x.1.right = 1 := by
+        have hcube : x.1.right ^ 3 = x.1.right := by
+          calc
+            x.1.right ^ 3 = x.1.right ^ 2 * x.1.right := by group
+            _ = x.1.right := by rw [hright2, one_mul]
+        rw [← hcube, hright3]
+      have hx6 : x.1 ^ 6 = 1 := by
+        calc
+          x.1 ^ 6 = (x.1 ^ 3) ^ 2 := by group
+          _ = 1 := by rw [x.2]; simp
+      have hleft : x.1.left = 1 := by
+        apply (order84_a4_three_pow_six_iff_of_mem_kleinFour x.1.left hxK).mp
+        simpa using hx6
+      apply SemidirectProduct.ext <;> simp [hleft, hright]
+    · apply SemidirectProduct.ext <;> simp [hxK]
+  right_inv y := by
+    rcases y with u | nh
+    · cases u
+      simp
+    · simp [nh.2.2]
+
 noncomputable def order84_a4_three_pow6Equiv :
     {x : order84_a4_three // x ^ 6 = 1} ≃
       ({h : order84_HE // h ∈ alternatingGroup.kleinFour (Fin 4)} ⊕
@@ -1820,6 +1903,31 @@ noncomputable instance instGroupOrder84Reps : (i : Fin 15) → Group (order84_re
   | 13 => inferInstanceAs (Group order84_a4_trivial)
   | 14 => inferInstanceAs (Group order84_a4_three)
 
+private theorem nat_card_eq_of_fintype_card_eq {α : Type*} [Fintype α] {n : Nat}
+    (h : Fintype.card α = n) : Nat.card α = n :=
+  Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq h)
+
+noncomputable def order84_pow_eq_one_card (H : Type*) [Group H] (n : ℕ) : ℕ :=
+  Nat.card {x : H // x ^ n = 1}
+
+noncomputable def order84_powEqOneEquivOfMulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) : {x : H // x ^ n = 1} ≃ {x : K // x ^ n = 1} where
+  toFun x := ⟨e x.1, by rw [← map_pow, x.2, map_one]⟩
+  invFun x := ⟨e.symm x.1, by
+    rw [← map_pow]
+    exact e.injective (by simp [x.2])⟩
+  left_inv x := by
+    ext
+    simp
+  right_inv x := by
+    ext
+    simp
+
+theorem order84_pow_eq_one_card_eq_of_mulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) :
+    order84_pow_eq_one_card H n = order84_pow_eq_one_card K n := by
+  exact Nat.card_congr (order84_powEqOneEquivOfMulEquiv n e)
+
 theorem card_order84_C7 : Nat.card order84_C7 = 7 :=
   card_cyclicRep (by norm_num)
 
@@ -1838,22 +1946,37 @@ theorem card_order84_HD : Nat.card order84_HD = 12 :=
 theorem card_order84_HE : Nat.card order84_HE = 12 :=
   card_fourP_A4
 
-theorem card_pow6_order84_a4_three :
-    Nat.card {x : order84_a4_three // x ^ 6 = 1} = 60 := by
+theorem card_order84_a4_kleinFour :
+    Nat.card {h : order84_HE // h ∈ alternatingGroup.kleinFour (Fin 4)} = 4 := by
+  simpa using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+
+theorem card_order84_a4_not_kleinFour :
+    Nat.card {h : order84_HE // h ∉ alternatingGroup.kleinFour (Fin 4)} = 8 := by
   classical
-  rw [Nat.card_congr order84_a4_three_pow6Equiv]
-  rw [Nat.card_sum]
-  rw [Nat.card_prod]
-  have hK : Nat.card {h : order84_HE // h ∈ alternatingGroup.kleinFour (Fin 4)} = 4 := by
-    simpa using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
   have hKf : Fintype.card {h : order84_HE // h ∈ alternatingGroup.kleinFour (Fin 4)} = 4 := by
     rw [← Nat.card_eq_fintype_card]
-    exact hK
-  have hnotK : Nat.card {h : order84_HE // h ∉ alternatingGroup.kleinFour (Fin 4)} = 8 := by
-    rw [Nat.card_eq_fintype_card, Fintype.card_subtype_compl, hKf]
-    rw [show Fintype.card order84_HE = 12 by
-      exact Nat.card_eq_fintype_card.symm.trans card_order84_HE]
-  rw [hK, hnotK, card_order84_C7]
+    exact card_order84_a4_kleinFour
+  rw [Nat.card_eq_fintype_card, Fintype.card_subtype_compl, hKf]
+  rw [show Fintype.card order84_HE = 12 by
+    exact Nat.card_eq_fintype_card.symm.trans card_order84_HE]
+
+theorem card_pow_two_order84_a4_three :
+    order84_pow_eq_one_card order84_a4_three 2 = 4 := by
+  rw [order84_pow_eq_one_card, Nat.card_congr order84_a4_three_pow2Equiv,
+    card_order84_a4_kleinFour]
+
+theorem card_pow_three_order84_a4_three :
+    order84_pow_eq_one_card order84_a4_three 3 = 57 := by
+  rw [order84_pow_eq_one_card, Nat.card_congr order84_a4_three_pow3Equiv]
+  rw [Nat.card_sum, Nat.card_prod]
+  have hunit : Nat.card Unit = 1 := Nat.card_unique
+  rw [hunit, card_order84_a4_not_kleinFour, card_order84_C7]
+
+theorem card_pow_six_order84_a4_three :
+    order84_pow_eq_one_card order84_a4_three 6 = 60 := by
+  rw [order84_pow_eq_one_card, Nat.card_congr order84_a4_three_pow6Equiv]
+  rw [Nat.card_sum, Nat.card_prod]
+  rw [card_order84_a4_kleinFour, card_order84_a4_not_kleinFour, card_order84_C7]
 
 theorem card_order84_directProduct {H : Type} [Group H] (hH : Nat.card H = 12) :
     Nat.card (order84_C7 × H) = 84 := by
@@ -1882,9 +2005,287 @@ theorem card_order84_reps (i : Fin 15) : Nat.card (order84_reps i) = 84 := by
   · exact card_order84_directProduct card_order84_HE
   · exact card_order84_semidirect _ card_order84_HE
 
+def order84_center_card : Fin 15 → Nat
+  | 0 => 84
+  | 1 => 2
+  | 2 => 4
+  | 3 => 6
+  | 4 => 84
+  | 5 => 6
+  | 6 => 4
+  | 7 => 2
+  | 8 => 14
+  | 9 => 2
+  | 10 => 14
+  | 11 => 1
+  | 12 => 2
+  | 13 => 7
+  | 14 => 1
+
+theorem card_center_order84_reps (i : Fin 15) :
+    Nat.card (Subgroup.center (order84_reps i)) = order84_center_card i := by
+  fin_cases i
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_c12_trivial) = 84)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_c12_six) = 2)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_c12_three) = 4)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_c12_two) = 6)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_c2c6_trivial) = 84)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_c2c6_fst_two) = 6)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_c2c6_snd_three) = 4)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_c2c6_fst_two_snd_six) = 2)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_hc_trivial) = 14)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_hc_two) = 2)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_hd_trivial) = 14)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_hd_fst_two) = 1)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_hd_ref) = 2)
+  · exact (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+      Nat.card (Subgroup.center order84_a4_trivial) = 7)
+  · exact card_center_order84_a4_three
+
+def order84_pow_two_eq_one_card : Fin 15 → Nat
+  | 0 => 2
+  | 1 => 2
+  | 2 => 2
+  | 3 => 2
+  | 4 => 4
+  | 5 => 16
+  | 6 => 4
+  | 7 => 16
+  | 8 => 2
+  | 9 => 2
+  | 10 => 8
+  | 11 => 32
+  | 12 => 44
+  | 13 => 4
+  | 14 => 4
+
+theorem card_pow_two_eq_one_order84_reps (i : Fin 15) :
+    order84_pow_eq_one_card (order84_reps i) 2 = order84_pow_two_eq_one_card i := by
+  fin_cases i
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_trivial // x ^ 2 = 1} = 2)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_six // x ^ 2 = 1} = 2)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_three // x ^ 2 = 1} = 2)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_two // x ^ 2 = 1} = 2)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_trivial // x ^ 2 = 1} = 4)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_fst_two // x ^ 2 = 1} = 16)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_snd_three // x ^ 2 = 1} = 4)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_fst_two_snd_six // x ^ 2 = 1} = 16)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hc_trivial // x ^ 2 = 1} = 2)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hc_two // x ^ 2 = 1} = 2)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hd_trivial // x ^ 2 = 1} = 8)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hd_fst_two // x ^ 2 = 1} = 32)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hd_ref // x ^ 2 = 1} = 44)
+  · simpa [order84_pow_eq_one_card, order84_pow_two_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_a4_trivial // x ^ 2 = 1} = 4)
+  · simpa [order84_pow_two_eq_one_card] using card_pow_two_order84_a4_three
+
+def order84_pow_three_eq_one_card : Fin 15 → Nat
+  | 0 => 3
+  | 1 => 15
+  | 2 => 15
+  | 3 => 3
+  | 4 => 3
+  | 5 => 3
+  | 6 => 15
+  | 7 => 15
+  | 8 => 3
+  | 9 => 3
+  | 10 => 3
+  | 11 => 3
+  | 12 => 3
+  | 13 => 9
+  | 14 => 57
+
+theorem card_pow_three_eq_one_order84_reps (i : Fin 15) :
+    order84_pow_eq_one_card (order84_reps i) 3 = order84_pow_three_eq_one_card i := by
+  fin_cases i
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_trivial // x ^ 3 = 1} = 3)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_six // x ^ 3 = 1} = 15)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_three // x ^ 3 = 1} = 15)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_two // x ^ 3 = 1} = 3)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_trivial // x ^ 3 = 1} = 3)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_fst_two // x ^ 3 = 1} = 3)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_snd_three // x ^ 3 = 1} = 15)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_fst_two_snd_six // x ^ 3 = 1} = 15)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hc_trivial // x ^ 3 = 1} = 3)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hc_two // x ^ 3 = 1} = 3)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hd_trivial // x ^ 3 = 1} = 3)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hd_fst_two // x ^ 3 = 1} = 3)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hd_ref // x ^ 3 = 1} = 3)
+  · simpa [order84_pow_eq_one_card, order84_pow_three_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_a4_trivial // x ^ 3 = 1} = 9)
+  · simpa [order84_pow_three_eq_one_card] using card_pow_three_order84_a4_three
+
+def order84_pow_six_eq_one_card : Fin 15 → Nat
+  | 0 => 6
+  | 1 => 30
+  | 2 => 30
+  | 3 => 6
+  | 4 => 12
+  | 5 => 48
+  | 6 => 60
+  | 7 => 72
+  | 8 => 6
+  | 9 => 6
+  | 10 => 12
+  | 11 => 48
+  | 12 => 48
+  | 13 => 12
+  | 14 => 60
+
+theorem card_pow_six_eq_one_order84_reps (i : Fin 15) :
+    order84_pow_eq_one_card (order84_reps i) 6 = order84_pow_six_eq_one_card i := by
+  fin_cases i
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_trivial // x ^ 6 = 1} = 6)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_six // x ^ 6 = 1} = 30)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_three // x ^ 6 = 1} = 30)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c12_two // x ^ 6 = 1} = 6)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_trivial // x ^ 6 = 1} = 12)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_fst_two // x ^ 6 = 1} = 48)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_snd_three // x ^ 6 = 1} = 60)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_c2c6_fst_two_snd_six // x ^ 6 = 1} = 72)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hc_trivial // x ^ 6 = 1} = 6)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hc_two // x ^ 6 = 1} = 6)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hd_trivial // x ^ 6 = 1} = 12)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hd_fst_two // x ^ 6 = 1} = 48)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_hd_ref // x ^ 6 = 1} = 48)
+  · simpa [order84_pow_eq_one_card, order84_pow_six_eq_one_card] using
+      (nat_card_eq_of_fintype_card_eq (by decide +kernel) :
+        Nat.card {x : order84_a4_trivial // x ^ 6 = 1} = 12)
+  · simpa [order84_pow_six_eq_one_card] using card_pow_six_order84_a4_three
+
+def order84_reps_invariant (i : Fin 15) : Nat × Nat × Nat × Nat :=
+  (order84_center_card i, order84_pow_two_eq_one_card i,
+    order84_pow_three_eq_one_card i, order84_pow_six_eq_one_card i)
+
+theorem order84_reps_invariant_injective : Function.Injective order84_reps_invariant := by
+  intro i j h
+  fin_cases i <;> fin_cases j <;>
+    simp [order84_reps_invariant, order84_center_card, order84_pow_two_eq_one_card,
+      order84_pow_three_eq_one_card, order84_pow_six_eq_one_card] at h ⊢
+
+theorem order84_reps_invariant_eq_of_mulEquiv {i j : Fin 15}
+    (hiso : Nonempty (order84_reps i ≃* order84_reps j)) :
+    order84_reps_invariant i = order84_reps_invariant j := by
+  rcases hiso with ⟨e⟩
+  apply Prod.ext
+  · change order84_center_card i = order84_center_card j
+    rw [← card_center_order84_reps i, ← card_center_order84_reps j]
+    exact card_center_eq_of_mulEquiv e
+  · apply Prod.ext
+    · change order84_pow_two_eq_one_card i = order84_pow_two_eq_one_card j
+      rw [← card_pow_two_eq_one_order84_reps i, ← card_pow_two_eq_one_order84_reps j]
+      exact order84_pow_eq_one_card_eq_of_mulEquiv 2 e
+    · apply Prod.ext
+      · change order84_pow_three_eq_one_card i = order84_pow_three_eq_one_card j
+        rw [← card_pow_three_eq_one_order84_reps i,
+          ← card_pow_three_eq_one_order84_reps j]
+        exact order84_pow_eq_one_card_eq_of_mulEquiv 3 e
+      · change order84_pow_six_eq_one_card i = order84_pow_six_eq_one_card j
+        rw [← card_pow_six_eq_one_order84_reps i, ← card_pow_six_eq_one_order84_reps j]
+        exact order84_pow_eq_one_card_eq_of_mulEquiv 6 e
+
+theorem order84_reps_pairwise : PairwiseNonMulEquiv order84_reps := by
+  intro i j hiso
+  exact order84_reps_invariant_injective (order84_reps_invariant_eq_of_mulEquiv hiso)
+
 /-- Every group of order `84` is isomorphic to one of the fifteen displayed representatives. -/
-theorem order84_complete (G : Type) [Group G] [Finite G] (hG : Nat.card G = 84) :
+theorem order84_complete (G : Type) [Group G] (hG : Nat.card G = 84) :
     ∃ i : Fin 15, Nonempty (G ≃* order84_reps i) := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hG]; norm_num)
   rcases order84_semidirectProduct_standard_cases (G := G) hG with h | h | h | h | h
   · obtain ⟨φ, ⟨e⟩⟩ := h
     rcases order84_c12_action_semidirect_cases φ with hφ | hφ | hφ | hφ
@@ -1942,5 +2343,11 @@ theorem order84_complete (G : Type) [Group G] [Finite G] (hG : Nat.card G = 84) 
     · obtain ⟨eh⟩ := hφ
       exact ⟨14, by
         simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_a4_three))⟩
+
+/-- The displayed representatives form a complete classification of groups of order `84`. -/
+theorem order84_isClassif : IsClassif 84 order84_reps where
+  card := card_order84_reps
+  complete := order84_complete
+  distinct := order84_reps_pairwise
 
 end Smallgroups.UsefulTheorems
