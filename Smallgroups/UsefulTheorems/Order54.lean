@@ -581,6 +581,184 @@ theorem order54_heisenberg_mulAut_center_fixed_cases
             | exfalso; revert hsqB'; decide +kernel
             | exfalso; revert hrel; decide +kernel
 
+set_option maxHeartbeats 5000000 in
+-- This orbit calculation first discards impossible generator images using the involution
+-- and commutator constraints, then checks the remaining center-reversing images against
+-- explicit conjugates of the standard reflection-type automorphism.
+/-- A Heisenberg-kernel involution reversing the center is conjugate to the standard
+reflection-type automorphism. -/
+theorem order54_heisenberg_mulAut_center_reversal_conj_negB
+    (τ : MulAut order54_Heisenberg) (hτ : τ ^ 2 = 1)
+    (hC : τ order54_heisC = order54_heisC ^ 2) :
+    ∃ θ : MulAut order54_Heisenberg,
+      τ = θ * order54_heisenbergNegBAut * θ⁻¹ := by
+  have hsqA : τ (τ order54_heisA) = order54_heisA := by
+    have h := DFunLike.congr_fun hτ order54_heisA
+    simpa [sq] using h
+  have hsqB : τ (τ order54_heisB) = order54_heisB := by
+    have h := DFunLike.congr_fun hτ order54_heisB
+    simpa [sq] using h
+  have hrel := order54_heisenberg_mulAut_relation τ
+  rw [hC] at hrel
+  have hsqA' := hsqA
+  have hsqB' := hsqB
+  rw [order54_heisenberg_mulAut_apply_decomp τ (τ order54_heisA)] at hsqA'
+  rw [order54_heisenberg_mulAut_apply_decomp τ (τ order54_heisB)] at hsqB'
+  rw [hC] at hsqA' hsqB'
+  generalize hx : τ order54_heisA = x at hsqA' hsqB' hrel
+  generalize hy : τ order54_heisB = y at hsqA' hsqB' hrel
+  cases x with
+  | mk xa xb xc =>
+      cases y with
+      | mk ya yb yc =>
+          fin_cases xa <;> fin_cases xb <;> fin_cases xc <;>
+          fin_cases ya <;> fin_cases yb <;> fin_cases yc <;>
+            first
+            | exfalso; revert hsqA'; decide +kernel
+            | exfalso; revert hsqB'; decide +kernel
+            | exfalso; revert hrel; decide +kernel
+            | exact ⟨order54_heisenbergShearAut ^ 2 * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut ^ 2 *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2 * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut ^ 2 *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2 * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut ^ 2,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨1,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut ^ 2,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut * order54_heisenbergShearAut ^ 2 *
+                order54_heisenbergSwapAut,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut ^ 2 *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2 * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut ^ 2 *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2 * order54_heisenbergSwapAut *
+                order54_heisenbergShearAut *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2 *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2 *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut * order54_heisenbergShearAut ^ 2,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut * order54_heisenbergShearAut ^ 2 *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut * order54_heisenbergShearAut ^ 2 *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut * order54_heisenbergShearAut,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut * order54_heisenbergShearAut *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergSwapAut * order54_heisenbergShearAut *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut * order54_heisenbergSwapAut *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut * order54_heisenbergSwapAut,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut * order54_heisenbergSwapAut *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2 * order54_heisenbergSwapAut *
+                MulAut.conj ({ a := 0, b := 2, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2 * order54_heisenbergSwapAut *
+                MulAut.conj ({ a := 0, b := 1, c := 0 } : order54_Heisenberg),
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+            | exact ⟨order54_heisenbergShearAut ^ 2 * order54_heisenbergSwapAut,
+                order54_heisenberg_mulAut_ext (hx.trans (by decide +kernel))
+                  (hy.trans (by decide +kernel))⟩
+
 /-- The exponent-`9` non-abelian kernel with trivial `C₂` action. -/
 abbrev order54_P2P0 : Type := order54_SemidirectP2P × order54_C2
 
@@ -1086,6 +1264,39 @@ theorem order54_semidirectP2P_trivial_semidirect_iso :
     Nonempty (SemidirectProduct order54_SemidirectP2P order54_C2
       (1 : order54_C2 →* MulAut order54_SemidirectP2P) ≃* order54_P2P0) :=
   ⟨order54_trivial_semidirect_iso order54_SemidirectP2P⟩
+
+theorem order54_heisenberg_semidirect_cases
+    (φ : order54_C2 →* MulAut order54_Heisenberg) :
+    Nonempty (SemidirectProduct order54_Heisenberg order54_C2 φ ≃* order54_Heis0) ∨
+      Nonempty (SemidirectProduct order54_Heisenberg order54_C2 φ ≃* order54_Heis1) ∨
+      Nonempty (SemidirectProduct order54_Heisenberg order54_C2 φ ≃* order54_Heis2) := by
+  set τ := φ (Multiplicative.ofAdd (1 : ZMod 2)) with hτdef
+  have hτ2 : τ ^ 2 = 1 := by
+    rw [hτdef, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have haction : φ = order54_actionOfInvolution τ hτ2 := by
+    simpa [hτdef] using order54_action_eq_actionOfInvolution φ
+  rcases order54_heisenberg_mulAut_heisC_cases τ with hC | hC
+  · rcases order54_heisenberg_mulAut_center_fixed_cases τ hτ2 hC with htriv | hnegBoth
+    · have hφ : φ = 1 := by
+        rw [haction]
+        apply MonoidHom.ext
+        intro h
+        fin_cases h
+        · change (order54_actionOfInvolution τ hτ2) 1 = 1
+          simp
+        · change τ = 1
+          exact htriv
+      obtain ⟨e⟩ := order54_heisenberg_trivial_semidirect_iso
+      exact Or.inl ⟨(semidirectProductCongr_eq hφ).trans e⟩
+    · rcases hnegBoth with ⟨θ, hconj⟩
+      obtain ⟨e⟩ := order54_semidirect_conj_action_iso τ order54_heisenbergNegBothAut θ
+        hτ2 order54_heisenbergNegBothAut_sq hconj
+      exact Or.inr (Or.inl ⟨(semidirectProductCongr_eq haction).trans e.symm⟩)
+  · rcases order54_heisenberg_mulAut_center_reversal_conj_negB τ hτ2 hC with ⟨θ, hconj⟩
+    obtain ⟨e⟩ := order54_semidirect_conj_action_iso τ order54_heisenbergNegBAut θ
+      hτ2 order54_heisenbergNegBAut_sq hconj
+    exact Or.inr (Or.inr ⟨(semidirectProductCongr_eq haction).trans e.symm⟩)
 
 theorem order54_semidirectP2P_semidirect_cases
     (φ : order54_C2 →* MulAut order54_SemidirectP2P) :
@@ -1844,5 +2055,39 @@ theorem order54_cases_after_p2p_kernel [Finite G] (hG : Nat.card G = 54) :
       exact Or.inr (Or.inr (Or.inl ⟨eG.trans eP2P0⟩))
     · rcases hP2P1 with ⟨eP2P1⟩
       exact Or.inr (Or.inr (Or.inr ⟨eG.trans eP2P1⟩))
+
+/-- Assembled reduction for order `54`: after classifying both non-abelian order-`27`
+kernel action families, every group of order `54` is one of the standard representatives
+constructed in this file. -/
+theorem order54_cases_after_nonabelian_kernels [Finite G] (hG : Nat.card G = 54) :
+    (Nonempty (G ≃* order54_C54) ∨
+      Nonempty (G ≃* order54_D27) ∨
+      Nonempty (G ≃* order54_Mixed0) ∨
+      Nonempty (G ≃* order54_Mixed1) ∨
+      Nonempty (G ≃* order54_Mixed2) ∨
+      Nonempty (G ≃* order54_Mixed3) ∨
+      Nonempty (G ≃* order54_Elem0) ∨
+      Nonempty (G ≃* order54_Elem1) ∨
+      Nonempty (G ≃* order54_Elem2) ∨
+      Nonempty (G ≃* order54_Elem3)) ∨
+    Nonempty (G ≃* order54_Heis0) ∨
+    Nonempty (G ≃* order54_Heis1) ∨
+    Nonempty (G ≃* order54_Heis2) ∨
+    Nonempty (G ≃* order54_P2P0) ∨
+    Nonempty (G ≃* order54_P2P1) := by
+  rcases order54_cases_after_p2p_kernel (G := G) hG with hAbelian | hNonabelian
+  · exact Or.inl hAbelian
+  rcases hNonabelian with hHeisenberg | hP2P
+  · rcases hHeisenberg with ⟨φ, ⟨eG⟩⟩
+    rcases order54_heisenberg_semidirect_cases φ with hHeis0 | hHeis1 | hHeis2
+    · rcases hHeis0 with ⟨eHeis0⟩
+      exact Or.inr (Or.inl ⟨eG.trans eHeis0⟩)
+    · rcases hHeis1 with ⟨eHeis1⟩
+      exact Or.inr (Or.inr (Or.inl ⟨eG.trans eHeis1⟩))
+    · rcases hHeis2 with ⟨eHeis2⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inl ⟨eG.trans eHeis2⟩)))
+  · rcases hP2P with hP2P0 | hP2P1
+    · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl hP2P0))))
+    · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr hP2P1))))
 
 end Smallgroups.UsefulTheorems
