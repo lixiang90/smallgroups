@@ -34,6 +34,7 @@ theorems:
 | `8·5` | 40 | 14 | `ℤ/5 ⋊ H` (`H` of order 8) — 14 actions | `Order40` |
 | `8·7` | 56 | 13 | two Sylow cases: `ℤ/7 ⋊ H` and one `(ℤ/2)³ ⋊ ℤ/7` case | `Order56` |
 | `8·11` | 88 | 12 | `ℤ/11 ⋊ H` (`H` of order 8) — 12 actions | `Order88` |
+| `4·5²` | 100 | 16 | `P ⋊ H` with `|P| = 25`, `|H| = 4` — 16 actions | `Order100` |
 
 ## Layout
 
