@@ -711,6 +711,192 @@ theorem order84_hc_action_cases (φ : order84_HC →* MulAut order84_C7) :
     have hbad : (order84_u6 ^ 5) ^ 4 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu4
     exact order84_u6_pow5_pow4_ne_one hbad
 
+/-! ### `(C₂ × D₆)`-complement actions -/
+
+/-- The `D₆ → (ZMod 7)ˣ` character non-trivial on reflections. -/
+noncomputable def order84_chiD3_ref : DihedralGroup 3 →* (ZMod 7)ˣ where
+  toFun
+    | DihedralGroup.r _ => 1
+    | DihedralGroup.sr _ => order84_u6 ^ 3
+  map_one' := rfl
+  map_mul' := by
+    rintro (i | i) (j | j)
+    · rfl
+    · simp [DihedralGroup.r_mul_sr]
+    · simp [DihedralGroup.sr_mul_r]
+    · simp only [DihedralGroup.sr_mul_sr]
+      decide
+
+noncomputable abbrev order84_chiHD_fst_two : order84_HD →* (ZMod 7)ˣ :=
+  order84_c2UnitHom.comp
+    (MonoidHom.fst (Multiplicative (ZMod 2)) (DihedralGroup 3))
+
+noncomputable abbrev order84_chiHD_ref : order84_HD →* (ZMod 7)ˣ :=
+  order84_chiD3_ref.comp
+    (MonoidHom.snd (Multiplicative (ZMod 2)) (DihedralGroup 3))
+
+noncomputable abbrev order84_chiHD_prod : order84_HD →* (ZMod 7)ˣ :=
+  order84_chiHD_fst_two * order84_chiHD_ref
+
+@[simp]
+theorem order84_chiD3_ref_r1 :
+    order84_chiD3_ref (DihedralGroup.r (1 : ZMod 3)) = 1 := by
+  rfl
+
+@[simp]
+theorem order84_chiD3_ref_s0 :
+    order84_chiD3_ref (DihedralGroup.sr (0 : ZMod 3)) = order84_u6 ^ 3 := by
+  rfl
+
+/-- Homomorphisms out of `D₆` are determined by a rotation and a reflection. -/
+theorem order84_d3_hom_ext {M : Type} [Group M] {χ ψ : DihedralGroup 3 →* M}
+    (hr : χ (DihedralGroup.r (1 : ZMod 3)) =
+      ψ (DihedralGroup.r (1 : ZMod 3)))
+    (hs : χ (DihedralGroup.sr (0 : ZMod 3)) =
+      ψ (DihedralGroup.sr (0 : ZMod 3))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  rcases x with i | i
+  · have hi : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 3)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 3) * (i.val : ZMod 3)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by rw [DihedralGroup.r_pow]
+    rw [hi, map_pow, map_pow, hr]
+  · have hri : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 3)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 3) * (i.val : ZMod 3)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by rw [DihedralGroup.r_pow]
+    have hi : DihedralGroup.sr i =
+        DihedralGroup.sr (0 : ZMod 3) * (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by
+      rw [← hri]
+      simp [DihedralGroup.sr_mul_r]
+    rw [hi, map_mul, map_mul, map_pow, map_pow, hs, hr]
+
+/-- Homomorphisms out of `C₂ × D₆` are determined by the `C₂` generator, a rotation,
+and a reflection. -/
+theorem order84_hd_hom_ext {M : Type} [Group M] {χ ψ : order84_HD →* M}
+    (h2 : χ (Multiplicative.ofAdd (1 : ZMod 2), 1) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 2), 1))
+    (hr : χ (1, DihedralGroup.r (1 : ZMod 3)) =
+      ψ (1, DihedralGroup.r (1 : ZMod 3)))
+    (hs : χ (1, DihedralGroup.sr (0 : ZMod 3)) =
+      ψ (1, DihedralGroup.sr (0 : ZMod 3))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  rintro ⟨x2, xd⟩
+  obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x2
+  let g2 : order84_HD := (Multiplicative.ofAdd (1 : ZMod 2), 1)
+  let gr : order84_HD := (1, DihedralGroup.r (1 : ZMod 3))
+  let gs : order84_HD := (1, DihedralGroup.sr (0 : ZMod 3))
+  have ha : Multiplicative.ofAdd a = (Multiplicative.ofAdd (1 : ZMod 2)) ^ a.val := by
+    calc
+      Multiplicative.ofAdd a = Multiplicative.ofAdd ((a.val : ZMod 2)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (a.val • (1 : ZMod 2)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 2)) ^ a.val := by rw [ofAdd_nsmul]
+  rcases xd with i | i
+  · have hri : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 3)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 3) * (i.val : ZMod 3)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by rw [DihedralGroup.r_pow]
+    have hx : (Multiplicative.ofAdd a, DihedralGroup.r i) = g2 ^ a.val * gr ^ i.val := by
+      calc
+        (Multiplicative.ofAdd a, DihedralGroup.r i)
+            = ((Multiplicative.ofAdd (1 : ZMod 2)) ^ a.val,
+                (DihedralGroup.r (1 : ZMod 3)) ^ i.val) := by
+              rw [← ha, ← hri]
+        _ = g2 ^ a.val * gr ^ i.val := by
+              rw [Prod.pow_mk, Prod.pow_mk]
+              simp only [one_pow, Prod.mk_mul_mk, mul_one, one_mul]
+    rw [hx, map_mul, map_mul, map_pow, map_pow, map_pow, map_pow, h2, hr]
+  · have hri : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 3)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 3) * (i.val : ZMod 3)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by rw [DihedralGroup.r_pow]
+    have hsi : DihedralGroup.sr i =
+        DihedralGroup.sr (0 : ZMod 3) * (DihedralGroup.r (1 : ZMod 3)) ^ i.val := by
+      rw [← hri]
+      simp [DihedralGroup.sr_mul_r]
+    have hx : (Multiplicative.ofAdd a, DihedralGroup.sr i) =
+        g2 ^ a.val * gs * gr ^ i.val := by
+      calc
+        (Multiplicative.ofAdd a, DihedralGroup.sr i)
+            = ((Multiplicative.ofAdd (1 : ZMod 2)) ^ a.val,
+                DihedralGroup.sr (0 : ZMod 3) *
+                  (DihedralGroup.r (1 : ZMod 3)) ^ i.val) := by
+              rw [← ha, ← hsi]
+        _ = g2 ^ a.val * gs * gr ^ i.val := by
+              rw [Prod.pow_mk, Prod.pow_mk]
+              simp only [gs, one_pow, Prod.mk_mul_mk, mul_one, one_mul]
+    rw [hx, map_mul, map_mul, map_mul, map_mul, map_pow, map_pow, map_pow, map_pow,
+      h2, hs, hr]
+
+theorem order84_hd_rotation_maps_trivially
+    (φ : order84_HD →* MulAut order84_C7) :
+    φ (1, DihedralGroup.r (1 : ZMod 3)) = 1 := by
+  haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  let r : order84_HD := (1, DihedralGroup.r (1 : ZMod 3))
+  let s : order84_HD := (1, DihedralGroup.sr (0 : ZMod 3))
+  have hrel : s * r * s⁻¹ = r⁻¹ := by decide
+  have hφrel : φ s * φ r * (φ s)⁻¹ = (φ r)⁻¹ := by
+    simpa only [map_mul, map_inv] using congrArg (fun x => φ x) hrel
+  have hleft : φ s * φ r * (φ s)⁻¹ = φ r := by
+    rw [order84_mulAut_comm (φ s) (φ r)]
+    group
+  have hr_inv : φ r = (φ r)⁻¹ := hleft.symm.trans hφrel
+  have hr2 : (φ r) ^ 2 = 1 := by
+    rw [pow_two]
+    nth_rewrite 2 [hr_inv]
+    exact mul_inv_cancel _
+  rcases order84_mulAut_sq_eq_one_cases (φ r) hr2 with hr | hr
+  · simpa [r] using hr
+  · have hr3 : (φ r) ^ 3 = 1 := by
+      rw [← map_pow, show r ^ 3 = 1 by decide, map_one]
+    rw [hr] at hr3
+    have hunit : (order84_u6 ^ 3) ^ 3 = (1 : (ZMod 7)ˣ) := by
+      apply unitAutHom_injective (p := 7)
+      rw [map_pow, map_one]
+      exact hr3
+    exact False.elim (order84_u6_pow3_pow3_ne_one hunit)
+
+/-- Actions `C₂ × D₆ → Aut(C₇)` are the four displayed unit actions. -/
+theorem order84_hd_action_cases (φ : order84_HD →* MulAut order84_C7) :
+    φ = 1 ∨ φ = order84_action order84_chiHD_fst_two ∨
+      φ = order84_action order84_chiHD_ref ∨
+      φ = order84_action order84_chiHD_prod := by
+  let g2 : order84_HD := (Multiplicative.ofAdd (1 : ZMod 2), 1)
+  let gr : order84_HD := (1, DihedralGroup.r (1 : ZMod 3))
+  let gs : order84_HD := (1, DihedralGroup.sr (0 : ZMod 3))
+  have hr : φ gr = 1 := by
+    simpa [gr] using order84_hd_rotation_maps_trivially φ
+  have hg2sq : (φ g2) ^ 2 = 1 := by
+    rw [← map_pow, show g2 ^ 2 = 1 by decide, map_one]
+  have hgssq : (φ gs) ^ 2 = 1 := by
+    rw [← map_pow, show gs ^ 2 = 1 by decide, map_one]
+  rcases order84_mulAut_sq_eq_one_cases (φ g2) hg2sq with h2 | h2 <;>
+    rcases order84_mulAut_sq_eq_one_cases (φ gs) hgssq with hs | hs
+  · left
+    apply order84_hd_hom_ext <;>
+      simp [g2, gr, gs, h2, hr, hs]
+  · right; right; left
+    apply order84_hd_hom_ext <;>
+      simp [g2, gr, gs, h2, hr, hs]
+  · right; left
+    apply order84_hd_hom_ext <;>
+      simp [g2, gr, gs, h2, hr, hs]
+  · right; right; right
+    apply order84_hd_hom_ext <;>
+      simp [g2, gr, gs, h2, hr, hs]
+
 /-- Every group of order `84` is one of five standard semidirect-product action problems,
 according to the order-`12` complement. -/
 theorem order84_semidirectProduct_standard_cases [Finite G] (hG : Nat.card G = 84) :
