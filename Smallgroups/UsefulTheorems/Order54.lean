@@ -247,6 +247,25 @@ theorem card_order54_P2P0 : Nat.card order54_P2P0 = 54 := by
 theorem card_order54_P2P1 : Nat.card order54_P2P1 = 54 :=
   card_order54_semidirect_SemidirectP2P order54_semidirectP2PNegAAction
 
+/-- A trivial `C₂`-action semidirect product is the direct product. -/
+noncomputable def order54_trivial_semidirect_iso (N : Type*) [Group N] :
+    SemidirectProduct N order54_C2 (1 : order54_C2 →* MulAut N) ≃* N × order54_C2 :=
+  { toEquiv := SemidirectProduct.equivProd
+    map_mul' := fun x y => by
+      rcases x with ⟨n₁, h₁⟩
+      rcases y with ⟨n₂, h₂⟩
+      simp }
+
+theorem order54_heisenberg_trivial_semidirect_iso :
+    Nonempty (SemidirectProduct order54_Heisenberg order54_C2
+      (1 : order54_C2 →* MulAut order54_Heisenberg) ≃* order54_Heis0) :=
+  ⟨order54_trivial_semidirect_iso order54_Heisenberg⟩
+
+theorem order54_semidirectP2P_trivial_semidirect_iso :
+    Nonempty (SemidirectProduct order54_SemidirectP2P order54_C2
+      (1 : order54_C2 →* MulAut order54_SemidirectP2P) ≃* order54_P2P0) :=
+  ⟨order54_trivial_semidirect_iso order54_SemidirectP2P⟩
+
 /-! ### The cyclic kernel case `C₂₇ ⋊ C₂` -/
 
 theorem square_eq_one_zmod_27 (k : ZMod 27) (h : k ^ 2 = 1) : k = 1 ∨ k = -1 := by
