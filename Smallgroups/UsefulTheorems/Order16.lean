@@ -285,34 +285,6 @@ theorem center_order16_N8 : Nonempty (center (order16_N8) ≃* CyclicRep 2) := b
 theorem center_order16_N9 : Nonempty (center (order16_N9) ≃* CyclicRep 2) := by
   sorry
 
-/-! ### Characterization of `order16_N1` (C8 ⋊₅ C2)
-
-Among the two 16-groups with center C4, only `order16_N1` contains an element of order 8.
--/
-
-/-- A group of order 16 with center ≅ C4 and containing an element of order 8 is isomorphic to
-`order16_N1` (C8 ⋊₅ C2 via `x ↦ x⁵`). -/
-theorem order16_N1_classification {G : Type*} [Group G] [Finite G]
-    (hcard : Nat.card G = 16)
-    (hcenter : Nonempty (center G ≃* CyclicRep 4))
-    (hord8 : ∃ g : G, orderOf g = 8) :
-    Nonempty (G ≃* order16_N1) := by
-  rcases hord8 with ⟨g, hg⟩
-  have hg8 : g ^ 8 = 1 := by rw [← hg]; exact pow_orderOf_eq_one g
-  let H : Subgroup G := Subgroup.zpowers g
-  have hHcard : Nat.card H = 8 := by rw [Nat.card_zpowers, hg]
-  have hHindex : H.index = 2 := by
-    have hmul := H.card_mul_index; rw [hHcard, hcard] at hmul; omega
-  haveI hHnorm : H.Normal := Subgroup.normal_of_index_eq_two hHindex
-  have hZCcard : Nat.card (center G) = 4 := by
-    rcases hcenter with ⟨hc⟩
-    have hc4 : Nat.card (CyclicRep 4) = 4 := card_cyclicRep (by norm_num : 4 ≠ 0)
-    rw [← hc4, ← Nat.card_congr hc.toEquiv]
-
-  -- Proof strategy: show Z(G) = ⟨g²⟩ ≤ H, pick t ∉ H with t·g·t⁻¹ = g⁵,
-  -- find s with s² = 1 and s·g·s⁻¹ = g⁵, then build isomorphism to C8 ⋊₅ C2.
-  sorry
-
 /-! ### Main classification -/
 
 /-- **Completeness.** Every group of order 16 is isomorphic to one of the 14 representatives. -/
