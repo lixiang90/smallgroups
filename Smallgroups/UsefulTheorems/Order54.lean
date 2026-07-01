@@ -254,6 +254,31 @@ theorem order54_semidirectP2PNegAAut_p2pB :
     order54_semidirectP2PNegAAut order54_p2pB = order54_p2pB := by
   decide +kernel
 
+theorem orderOf_order54_p2pA : orderOf order54_p2pA = 9 := by
+  have h9 : order54_p2pA ^ 9 = 1 := by decide +kernel
+  have h3 : order54_p2pA ^ 3 ≠ 1 := by decide +kernel
+  have hdvd : orderOf order54_p2pA ∣ 9 := orderOf_dvd_of_pow_eq_one h9
+  have hle : orderOf order54_p2pA ≤ 9 := Nat.le_of_dvd (by norm_num) hdvd
+  have hpos : 0 < orderOf order54_p2pA := orderOf_pos _
+  interval_cases h : orderOf order54_p2pA <;> try omega
+  · have ha1 : order54_p2pA = 1 := orderOf_eq_one_iff.mp h
+    exact False.elim (h3 (by rw [ha1]; simp))
+  · have : order54_p2pA ^ 3 = 1 := by simpa [h] using pow_orderOf_eq_one order54_p2pA
+    exact False.elim (h3 this)
+
+theorem orderOf_order54_p2pB : orderOf order54_p2pB = 3 := by
+  have h3pow : order54_p2pB ^ 3 = 1 := by decide +kernel
+  have h1 : order54_p2pB ≠ 1 := by decide +kernel
+  exact orderOf_eq_prime h3pow h1
+
+theorem order54_p2pB_mul_p2pA :
+    order54_p2pB * order54_p2pA = order54_p2pA ^ 4 * order54_p2pB := by
+  decide +kernel
+
+theorem order54_p2pA_cube_comm_p2pB :
+    order54_p2pA ^ 3 * order54_p2pB = order54_p2pB * order54_p2pA ^ 3 := by
+  decide +kernel
+
 /-! ### Cardinalities of the standard factors -/
 
 theorem card_order54_C2 : Nat.card order54_C2 = 2 :=
