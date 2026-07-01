@@ -759,4 +759,87 @@ theorem order54_semidirectProduct_standard_cases [Finite G] (hG : Nat.card G = 5
   · exfalso
     exact (by norm_num : ¬ (3 : ℕ) = 2) hN.1
 
+/-! ### Assembled abelian-kernel cases -/
+
+/-- Once the Schur--Zassenhaus kernel is abelian, the order-`54` group is one of the
+ten explicit representatives coming from the `C₂₇`, `C₉ × C₃`, and `C₃³` kernel
+branches. -/
+theorem order54_abelian_kernel_cases
+    (h :
+      (∃ φ : order54_C2 →* MulAut order54_C27,
+        Nonempty (G ≃* SemidirectProduct order54_C27 order54_C2 φ)) ∨
+      (∃ φ : order54_C2 →* MulAut order54_C9C3,
+        Nonempty (G ≃* SemidirectProduct order54_C9C3 order54_C2 φ)) ∨
+      (∃ φ : order54_C2 →* MulAut order54_C3C3C3,
+        Nonempty (G ≃* SemidirectProduct order54_C3C3C3 order54_C2 φ))) :
+    Nonempty (G ≃* order54_C54) ∨
+      Nonempty (G ≃* order54_D27) ∨
+      Nonempty (G ≃* order54_Mixed0) ∨
+      Nonempty (G ≃* order54_Mixed1) ∨
+      Nonempty (G ≃* order54_Mixed2) ∨
+      Nonempty (G ≃* order54_Mixed3) ∨
+      Nonempty (G ≃* order54_Elem0) ∨
+      Nonempty (G ≃* order54_Elem1) ∨
+      Nonempty (G ≃* order54_Elem2) ∨
+      Nonempty (G ≃* order54_Elem3) := by
+  rcases h with hC27 | h
+  · rcases hC27 with ⟨φ, ⟨eG⟩⟩
+    rcases order54_c27_semidirect_cases φ with hC54 | hD27
+    · rcases hC54 with ⟨eC54⟩
+      exact Or.inl ⟨eG.trans eC54⟩
+    · rcases hD27 with ⟨eD27⟩
+      exact Or.inr (Or.inl ⟨eG.trans eD27⟩)
+  rcases h with hMixed | hElem
+  · rcases hMixed with ⟨φ, ⟨eG⟩⟩
+    rcases order54_c9c3_semidirect_cases φ with hMixed0 | hMixed1 | hMixed2 | hMixed3
+    · rcases hMixed0 with ⟨eMixed0⟩
+      exact Or.inr (Or.inr (Or.inl ⟨eG.trans eMixed0⟩))
+    · rcases hMixed1 with ⟨eMixed1⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inl ⟨eG.trans eMixed1⟩)))
+    · rcases hMixed2 with ⟨eMixed2⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨eG.trans eMixed2⟩))))
+    · rcases hMixed3 with ⟨eMixed3⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨eG.trans eMixed3⟩)))))
+  · rcases hElem with ⟨φ, ⟨eG⟩⟩
+    rcases order54_c3c3c3_semidirect_cases φ with hElem0 | hElem1 | hElem2 | hElem3
+    · rcases hElem0 with ⟨eElem0⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨eG.trans eElem0⟩))))))
+    · rcases hElem1 with ⟨eElem1⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr
+        (Or.inl ⟨eG.trans eElem1⟩)))))))
+    · rcases hElem2 with ⟨eElem2⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr
+        (Or.inl ⟨eG.trans eElem2⟩))))))))
+    · rcases hElem3 with ⟨eElem3⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr
+        (Or.inr ⟨eG.trans eElem3⟩))))))))
+
+/-- Current assembled reduction for order `54`: after the abelian-kernel work, an arbitrary
+group of order `54` is either one of the ten abelian-kernel representatives, or it comes from
+one of the two non-abelian order-`27` kernels. -/
+theorem order54_cases_after_abelian_kernels [Finite G] (hG : Nat.card G = 54) :
+    (Nonempty (G ≃* order54_C54) ∨
+      Nonempty (G ≃* order54_D27) ∨
+      Nonempty (G ≃* order54_Mixed0) ∨
+      Nonempty (G ≃* order54_Mixed1) ∨
+      Nonempty (G ≃* order54_Mixed2) ∨
+      Nonempty (G ≃* order54_Mixed3) ∨
+      Nonempty (G ≃* order54_Elem0) ∨
+      Nonempty (G ≃* order54_Elem1) ∨
+      Nonempty (G ≃* order54_Elem2) ∨
+      Nonempty (G ≃* order54_Elem3)) ∨
+    (∃ φ : order54_C2 →* MulAut order54_Heisenberg,
+      Nonempty (G ≃* SemidirectProduct order54_Heisenberg order54_C2 φ)) ∨
+    (∃ φ : order54_C2 →* MulAut order54_SemidirectP2P,
+      Nonempty (G ≃* SemidirectProduct order54_SemidirectP2P order54_C2 φ)) := by
+  rcases order54_semidirectProduct_standard_cases (G := G) hG with hC27 | h
+  · exact Or.inl (order54_abelian_kernel_cases (Or.inl hC27))
+  rcases h with hMixed | h
+  · exact Or.inl (order54_abelian_kernel_cases (Or.inr (Or.inl hMixed)))
+  rcases h with hElem | h
+  · exact Or.inl (order54_abelian_kernel_cases (Or.inr (Or.inr hElem)))
+  rcases h with hHeisenberg | hSemidirectP2P
+  · exact Or.inr (Or.inl hHeisenberg)
+  · exact Or.inr (Or.inr hSemidirectP2P)
+
 end Smallgroups.UsefulTheorems
