@@ -7,6 +7,8 @@ import Smallgroups.UsefulTheorems.Order4P_12
 import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Smallgroups.UsefulTheorems.SemidirectProductClassify
+import Mathlib.GroupTheory.Abelianization.Defs
+import Mathlib.GroupTheory.SpecificGroups.Alternating.KleinFour
 import Mathlib.GroupTheory.Sylow
 import Mathlib.Tactic.NormNum.Prime
 
@@ -173,6 +175,22 @@ theorem order84_unit_sq_eq_one_cases (u : (ZMod 7)ˣ) (hu : u ^ 2 = 1) :
     have hbad : (order84_u6 ^ 5) ^ 2 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu
     exact (by decide : (order84_u6 ^ 5) ^ 2 ≠ (1 : (ZMod 7)ˣ)) hbad
 
+theorem order84_unit_cube_eq_one_cases (u : (ZMod 7)ˣ) (hu : u ^ 3 = 1) :
+    u = 1 ∨ u = order84_u6 ^ 2 ∨ u = order84_u6 ^ 4 := by
+  rcases order84_unit_cases u with h | h | h | h | h | h
+  · exact Or.inl h
+  · exfalso
+    have hbad : order84_u6 ^ 3 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu
+    exact (by decide : order84_u6 ^ 3 ≠ (1 : (ZMod 7)ˣ)) hbad
+  · exact Or.inr <| Or.inl h
+  · exfalso
+    have hbad : (order84_u6 ^ 3) ^ 3 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu
+    exact order84_u6_pow3_pow3_ne_one hbad
+  · exact Or.inr <| Or.inr h
+  · exfalso
+    have hbad : (order84_u6 ^ 5) ^ 3 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu
+    exact (by decide : (order84_u6 ^ 5) ^ 3 ≠ (1 : (ZMod 7)ˣ)) hbad
+
 theorem order84_mulAut_sq_eq_one_cases (α : MulAut order84_C7) (hα : α ^ 2 = 1) :
     α = 1 ∨ α = unitAutHom (order84_u6 ^ 3) := by
   haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
@@ -185,6 +203,22 @@ theorem order84_mulAut_sq_eq_one_cases (α : MulAut order84_C7) (hα : α ^ 2 = 
     rw [hu, h]
     exact map_one (unitAutHom (p := 7))
   · right
+    rw [hu, h]
+
+theorem order84_mulAut_cube_eq_one_cases (α : MulAut order84_C7) (hα : α ^ 3 = 1) :
+    α = 1 ∨ α = unitAutHom (order84_u6 ^ 2) ∨ α = unitAutHom (order84_u6 ^ 4) := by
+  haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  obtain ⟨u, hu⟩ := exists_unitAutHom_eq (p := 7) α
+  have hu3 : u ^ 3 = 1 := by
+    apply unitAutHom_injective (p := 7)
+    rw [map_pow, ← hu, hα, map_one]
+  rcases order84_unit_cube_eq_one_cases u hu3 with h | h | h
+  · left
+    rw [hu, h]
+    exact map_one (unitAutHom (p := 7))
+  · right; left
+    rw [hu, h]
+  · right; right
     rw [hu, h]
 
 theorem order84_mulAut_comm (α β : MulAut order84_C7) : α * β = β * α := by
@@ -896,6 +930,203 @@ theorem order84_hd_action_cases (φ : order84_HD →* MulAut order84_C7) :
   · right; right; right
     apply order84_hd_hom_ext <;>
       simp [g2, gr, gs, h2, hr, hs]
+
+/-! ### Cyclic `C₃` actions -/
+
+noncomputable abbrev order84_chiC3_three : CyclicRep 3 →* (ZMod 7)ˣ :=
+  powHom (p := 7) (q := 3) (order84_u6 ^ 2) (by decide)
+
+noncomputable abbrev order84_chiC3_three_inv : CyclicRep 3 →* (ZMod 7)ˣ :=
+  powHom (p := 7) (q := 3) (order84_u6 ^ 4) (by decide)
+
+@[simp]
+theorem order84_powHom_zmod3_gen (c : (ZMod 7)ˣ) (hc : c ^ 3 = 1) :
+    powHom (p := 7) (q := 3) c hc (Multiplicative.ofAdd (1 : ZMod 3)) = c := by
+  change c ^ (1 : ZMod 3).val = c
+  haveI : Fact (1 < 3) := ⟨by norm_num⟩
+  rw [ZMod.val_one]
+  simp
+
+theorem order84_c3_action_hom_ext {φ ψ : CyclicRep 3 →* MulAut order84_C7}
+    (hgen : φ (Multiplicative.ofAdd (1 : ZMod 3)) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 3))) :
+    φ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  let n : ZMod 3 := Multiplicative.toAdd x
+  have hx : x = (Multiplicative.ofAdd (1 : ZMod 3)) ^ n.val := by
+    rw [show x = Multiplicative.ofAdd n from (ofAdd_toAdd _).symm]
+    calc
+      Multiplicative.ofAdd n = Multiplicative.ofAdd ((n.val : ZMod 3)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (n.val • (1 : ZMod 3)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 3)) ^ n.val := by rw [ofAdd_nsmul]
+  rw [hx, map_pow, map_pow, hgen]
+
+theorem order84_c3_action_cases (φ : CyclicRep 3 →* MulAut order84_C7) :
+    φ = 1 ∨ φ = order84_action order84_chiC3_three ∨
+      φ = order84_action order84_chiC3_three_inv := by
+  let g : CyclicRep 3 := Multiplicative.ofAdd (1 : ZMod 3)
+  have hg3 : g ^ 3 = 1 := by decide
+  have hφg3 : (φ g) ^ 3 = 1 := by
+    rw [← map_pow, hg3, map_one]
+  rcases order84_mulAut_cube_eq_one_cases (φ g) hφg3 with h | h | h
+  · left
+    apply order84_c3_action_hom_ext
+    rw [h]
+    simp
+  · right; left
+    apply order84_c3_action_hom_ext
+    rw [h]
+    simp [order84_chiC3_three]
+  · right; right
+    apply order84_c3_action_hom_ext
+    rw [h]
+    simp [order84_chiC3_three_inv]
+
+/-! ### Alternating-complement action reductions -/
+
+local instance order84_mulAutCommGroup : CommGroup (MulAut order84_C7) :=
+  { (inferInstance : Group (MulAut order84_C7)) with
+    mul_comm := order84_mulAut_comm }
+
+local instance order84_a4KleinFourNormal :
+    (alternatingGroup.kleinFour (Fin 4) : Subgroup order84_HE).Normal := by
+  simpa [order84_HE, fourP_A4] using
+    alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+
+abbrev order84_A4Quot : Type :=
+  order84_HE ⧸ (alternatingGroup.kleinFour (Fin 4) : Subgroup order84_HE)
+
+theorem order84_a4Quot_card : Nat.card order84_A4Quot = 3 := by
+  let K : Subgroup order84_HE := alternatingGroup.kleinFour (Fin 4)
+  have hcardA : Nat.card order84_HE = 12 := by
+    simpa [order84_HE] using card_fourP_A4
+  have hcardK : Nat.card K = 4 := by
+    simpa [K, order84_HE, fourP_A4] using
+      alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have h := Subgroup.card_eq_card_quotient_mul_card_subgroup K
+  change Nat.card order84_HE = Nat.card order84_A4Quot * Nat.card K at h
+  rw [hcardA, hcardK] at h
+  omega
+
+noncomputable def order84_A4QuotEquiv : order84_A4Quot ≃* CyclicRep 3 :=
+  (prime_classification (by norm_num : Nat.Prime 3) order84_a4Quot_card).some
+
+noncomputable abbrev order84_A4QuotMk : order84_HE →* order84_A4Quot :=
+  QuotientGroup.mk' (alternatingGroup.kleinFour (Fin 4) : Subgroup order84_HE)
+
+noncomputable abbrev order84_chiA4_three : order84_HE →* (ZMod 7)ˣ :=
+  order84_chiC3_three.comp (order84_A4QuotEquiv.toMonoidHom.comp order84_A4QuotMk)
+
+noncomputable abbrev order84_chiA4_three_inv : order84_HE →* (ZMod 7)ˣ :=
+  order84_chiC3_three_inv.comp (order84_A4QuotEquiv.toMonoidHom.comp order84_A4QuotMk)
+
+theorem order84_a4_kleinFour_eq_commutator :
+    (alternatingGroup.kleinFour (Fin 4) : Subgroup order84_HE) = commutator order84_HE := by
+  simpa [order84_HE, fourP_A4] using
+    alternatingGroup.kleinFour_eq_commutator (α := Fin 4) (by simp)
+
+theorem order84_a4_kleinFour_maps_trivially
+    (φ : order84_HE →* MulAut order84_C7) {g : order84_HE}
+    (hg : g ∈ alternatingGroup.kleinFour (Fin 4)) : φ g = 1 := by
+  have hcomm : commutator order84_HE ≤ φ.ker := Abelianization.commutator_subset_ker φ
+  rw [order84_a4_kleinFour_eq_commutator] at hg
+  exact MonoidHom.mem_ker.mp (hcomm hg)
+
+theorem order84_a4_order_two_mem_kleinFour (g : order84_HE) (hg : g ^ 2 = 1) :
+    g ∈ alternatingGroup.kleinFour (Fin 4) := by
+  have hgperm2 : ((g : Equiv.Perm (Fin 4)) ^ 2 = 1) := by
+    simpa using congrArg (fun x : order84_HE => (x : Equiv.Perm (Fin 4))) hg
+  have hdiv : orderOf (g : Equiv.Perm (Fin 4)) ∣ 2 ^ 1 := by
+    rw [pow_one]
+    exact orderOf_dvd_of_pow_eq_one hgperm2
+  have hcycle := alternatingGroup.mem_kleinFour_of_order_two_pow (α := Fin 4)
+    (by simp) g.property (n := 1) hdiv
+  rw [← SetLike.mem_coe, alternatingGroup.coe_kleinFour_of_card_eq_four (α := Fin 4) (by simp),
+    Set.mem_union, Set.mem_singleton_iff, Set.mem_setOf_eq]
+  rcases hcycle with hcycle | hcycle
+  · left
+    apply Subtype.ext
+    exact Equiv.Perm.cycleType_eq_zero.mp hcycle
+  · right
+    exact hcycle
+
+theorem order84_a4_action_cube_eq_one (φ : order84_HE →* MulAut order84_C7)
+    (g : order84_HE) : (φ g) ^ 3 = 1 := by
+  rcases fourP_A4_pow g with hg2 | hg3
+  · have hgK : g ∈ alternatingGroup.kleinFour (Fin 4) := by
+      exact order84_a4_order_two_mem_kleinFour g hg2
+    rw [order84_a4_kleinFour_maps_trivially φ hgK, one_pow]
+  · rw [← map_pow, hg3, map_one]
+
+theorem order84_a4_action_value_cases (φ : order84_HE →* MulAut order84_C7)
+    (g : order84_HE) :
+    φ g = 1 ∨ φ g = unitAutHom (order84_u6 ^ 2) ∨
+      φ g = unitAutHom (order84_u6 ^ 4) :=
+  order84_mulAut_cube_eq_one_cases (φ g) (order84_a4_action_cube_eq_one φ g)
+
+theorem order84_a4_action_cases (φ : order84_HE →* MulAut order84_C7) :
+    φ = 1 ∨ φ = order84_action order84_chiA4_three ∨
+      φ = order84_action order84_chiA4_three_inv := by
+  let K : Subgroup order84_HE := alternatingGroup.kleinFour (Fin 4)
+  have hKker : K ≤ φ.ker := by
+    intro g hg
+    exact MonoidHom.mem_ker.mpr (order84_a4_kleinFour_maps_trivially φ hg)
+  let φQ : order84_A4Quot →* MulAut order84_C7 := QuotientGroup.lift K φ hKker
+  let φC3 : CyclicRep 3 →* MulAut order84_C7 :=
+    φQ.comp order84_A4QuotEquiv.symm.toMonoidHom
+  rcases order84_c3_action_cases φC3 with h | h | h
+  · left
+    apply MonoidHom.ext
+    intro g
+    have hcomp : φQ.comp order84_A4QuotEquiv.symm.toMonoidHom = 1 := h
+    have hq : φQ (order84_A4QuotMk g) = 1 := by
+      calc
+        φQ (order84_A4QuotMk g) =
+            φQ (order84_A4QuotEquiv.symm (order84_A4QuotEquiv (order84_A4QuotMk g))) := by
+              simp
+        _ = (φQ.comp order84_A4QuotEquiv.symm.toMonoidHom)
+            (order84_A4QuotEquiv (order84_A4QuotMk g)) := rfl
+        _ = 1 := by rw [hcomp]; simp
+    simpa [φQ, order84_A4QuotMk] using hq
+  · right; left
+    apply MonoidHom.ext
+    intro g
+    have hcomp :
+        φQ.comp order84_A4QuotEquiv.symm.toMonoidHom =
+          order84_action order84_chiC3_three := h
+    have hq :
+        φQ (order84_A4QuotMk g) =
+          order84_action order84_chiC3_three (order84_A4QuotEquiv (order84_A4QuotMk g)) := by
+      calc
+        φQ (order84_A4QuotMk g) =
+            φQ (order84_A4QuotEquiv.symm (order84_A4QuotEquiv (order84_A4QuotMk g))) := by
+              simp
+        _ = (φQ.comp order84_A4QuotEquiv.symm.toMonoidHom)
+            (order84_A4QuotEquiv (order84_A4QuotMk g)) := rfl
+        _ = order84_action order84_chiC3_three
+            (order84_A4QuotEquiv (order84_A4QuotMk g)) := by rw [hcomp]
+    simpa [φQ, order84_A4QuotMk, order84_chiA4_three, order84_action] using hq
+  · right; right
+    apply MonoidHom.ext
+    intro g
+    have hcomp :
+        φQ.comp order84_A4QuotEquiv.symm.toMonoidHom =
+          order84_action order84_chiC3_three_inv := h
+    have hq :
+        φQ (order84_A4QuotMk g) =
+          order84_action order84_chiC3_three_inv
+            (order84_A4QuotEquiv (order84_A4QuotMk g)) := by
+      calc
+        φQ (order84_A4QuotMk g) =
+            φQ (order84_A4QuotEquiv.symm (order84_A4QuotEquiv (order84_A4QuotMk g))) := by
+              simp
+        _ = (φQ.comp order84_A4QuotEquiv.symm.toMonoidHom)
+            (order84_A4QuotEquiv (order84_A4QuotMk g)) := rfl
+        _ = order84_action order84_chiC3_three_inv
+            (order84_A4QuotEquiv (order84_A4QuotMk g)) := by rw [hcomp]
+    simpa [φQ, order84_A4QuotMk, order84_chiA4_three_inv, order84_action] using hq
 
 /-- Every group of order `84` is one of five standard semidirect-product action problems,
 according to the order-`12` complement. -/
