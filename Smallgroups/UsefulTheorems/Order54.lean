@@ -279,6 +279,27 @@ theorem order54_p2pA_cube_comm_p2pB :
     order54_p2pA ^ 3 * order54_p2pB = order54_p2pB * order54_p2pA ^ 3 := by
   decide +kernel
 
+theorem orderOf_order54_semidirectP2P_mulAut_p2pA (α : MulAut order54_SemidirectP2P) :
+    orderOf (α order54_p2pA) = 9 := by
+  rw [MulEquiv.orderOf_eq α]
+  exact orderOf_order54_p2pA
+
+theorem orderOf_order54_semidirectP2P_mulAut_p2pB (α : MulAut order54_SemidirectP2P) :
+    orderOf (α order54_p2pB) = 3 := by
+  rw [MulEquiv.orderOf_eq α]
+  exact orderOf_order54_p2pB
+
+theorem order54_semidirectP2P_mulAut_relation (α : MulAut order54_SemidirectP2P) :
+    α order54_p2pB * α order54_p2pA =
+      (α order54_p2pA) ^ 4 * α order54_p2pB := by
+  calc
+    α order54_p2pB * α order54_p2pA = α (order54_p2pB * order54_p2pA) := by
+      rw [map_mul]
+    _ = α (order54_p2pA ^ 4 * order54_p2pB) := by
+      rw [order54_p2pB_mul_p2pA]
+    _ = (α order54_p2pA) ^ 4 * α order54_p2pB := by
+      rw [map_mul, map_pow]
+
 /-! ### Cardinalities of the standard factors -/
 
 theorem card_order54_C2 : Nat.card order54_C2 = 2 :=
