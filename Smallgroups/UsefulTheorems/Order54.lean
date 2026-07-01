@@ -75,6 +75,13 @@ abbrev order54_Elem2 : Type :=
 abbrev order54_Elem3 : Type :=
   SemidirectProduct order54_C3C3C3 order54_C2 (invActionHom order54_C3C3C3)
 
+/-- The `(C₉ × C₃)` kernel with trivial `C₂` action. -/
+abbrev order54_Mixed0 : Type := order54_C9C3 × order54_C2
+
+/-- The `(C₉ × C₃)` kernel with full inversion action. -/
+abbrev order54_Mixed3 : Type :=
+  SemidirectProduct order54_C9C3 order54_C2 (invActionHom order54_C9C3)
+
 /-! ### Cardinalities of the standard factors -/
 
 theorem card_order54_C2 : Nat.card order54_C2 = 2 :=
@@ -459,6 +466,51 @@ theorem order54_c9c3_neg_card_cases (φ : order54_C2 →* MulAut order54_C9C3) :
   · exact Or.inr (Or.inl (by simpa using hi))
   · exact Or.inr (Or.inr (Or.inl (by simpa using hi)))
   · exact Or.inr (Or.inr (Or.inr (by simpa using hi)))
+
+theorem order54_c9c3_endpoint_cases (φ : order54_C2 →* MulAut order54_C9C3) :
+    (Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 1 →
+      Nonempty (SemidirectProduct order54_C9C3 order54_C2 φ ≃* order54_Mixed0)) ∧
+    (Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 27 →
+      Nonempty (SemidirectProduct order54_C9C3 order54_C2 φ ≃* order54_Mixed3)) := by
+  set τ := φ (Multiplicative.ofAdd 1) with hτ
+  have h2 : τ * τ = 1 := by
+    rw [← sq, hτ, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order54_C9C3, x ^ 9 = 1 := order54_c9c3_pow_nine
+  have ht : 2 * 5 = 9 + 1 := by norm_num
+  let eMain :
+      SemidirectProduct order54_C9C3 order54_C2 φ ≃*
+        fixSubgroup τ × SemidirectProduct (negSubgroup τ) order54_C2
+          (invActionHom (negSubgroup τ)) :=
+    elem_decomp_semidirect hinv hexp ht φ rfl
+  have hsplit : Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 27 := by
+    rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+    exact card_order54_C9C3
+  constructor
+  · intro hNeg1
+    change Nat.card (negSubgroup τ) = 1 at hNeg1
+    haveI : Subsingleton (negSubgroup τ) := (Nat.card_eq_one_iff_unique.mp hNeg1).1
+    haveI : Unique (negSubgroup τ) := uniqueOfSubsingleton 1
+    let eFix : order54_C9C3 ≃* fixSubgroup τ :=
+      (eigenEquiv hinv hexp ht).trans MulEquiv.prodUnique
+    exact ⟨eMain.trans <|
+      (MulEquiv.prodCongr eFix.symm semidirectUniqueLeft)⟩
+  · intro hNeg27
+    change Nat.card (negSubgroup τ) = 27 at hNeg27
+    have hFix1 : Nat.card (fixSubgroup τ) = 1 := by
+      have h := hsplit
+      rw [hNeg27] at h
+      have h' : Nat.card (fixSubgroup τ) * 27 = 1 * 27 := by omega
+      exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 27) h'
+    haveI : Subsingleton (fixSubgroup τ) := (Nat.card_eq_one_iff_unique.mp hFix1).1
+    haveI : Unique (fixSubgroup τ) := uniqueOfSubsingleton 1
+    let eNeg : order54_C9C3 ≃* negSubgroup τ :=
+      (eigenEquiv hinv hexp ht).trans MulEquiv.uniqueProd
+    exact ⟨eMain.trans <|
+      MulEquiv.uniqueProd.trans (genDihCongr eNeg.symm)⟩
 
 /-! ### Sylow-3 normality and semidirect-product reduction -/
 
