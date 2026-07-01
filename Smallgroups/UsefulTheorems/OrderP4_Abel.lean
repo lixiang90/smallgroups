@@ -61,9 +61,8 @@ def idxToPartition : Fin 5 → Nat.Partition 4
   | 3 => part211
   | 4 => part1111
 
-set_option linter.style.nativeDecide false in
 lemma idxToPartition_injective : Function.Injective idxToPartition := by
-  native_decide
+  decide +kernel
 
 /-! ### The five abelian representatives of order `p^4` -/
 
