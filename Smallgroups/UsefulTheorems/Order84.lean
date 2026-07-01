@@ -1718,6 +1718,37 @@ theorem order84_a4_three_pow_three_of_not_mem_kleinFour
     exact order84_c7_geom_three_eq_one (order84_chiA4_three h) hχ3 hχne n
   · simpa [pow_succ, SemidirectProduct.mul_right, mul_assoc] using h3
 
+noncomputable def order84_a4_three_pow6Equiv :
+    {x : order84_a4_three // x ^ 6 = 1} ≃
+      ({h : order84_HE // h ∈ alternatingGroup.kleinFour (Fin 4)} ⊕
+        (order84_C7 × {h : order84_HE // h ∉ alternatingGroup.kleinFour (Fin 4)})) where
+  toFun x := by
+    by_cases hxK : x.1.right ∈ alternatingGroup.kleinFour (Fin 4)
+    · exact Sum.inl ⟨x.1.right, hxK⟩
+    · exact Sum.inr (x.1.left, ⟨x.1.right, hxK⟩)
+  invFun y := by
+    rcases y with h | nh
+    · exact ⟨⟨1, h.1⟩,
+        (order84_a4_three_pow_six_iff_of_mem_kleinFour 1 h.2).mpr rfl⟩
+    · exact ⟨⟨nh.1, nh.2.1⟩, by
+        have h3 := order84_a4_three_pow_three_of_not_mem_kleinFour nh.1 nh.2.2
+        calc
+          (⟨nh.1, nh.2.1⟩ : order84_a4_three) ^ 6 =
+              ((⟨nh.1, nh.2.1⟩ : order84_a4_three) ^ 3) ^ 2 := by group
+          _ = 1 := by rw [h3]; simp⟩
+  left_inv x := by
+    apply Subtype.ext
+    by_cases hxK : x.1.right ∈ alternatingGroup.kleinFour (Fin 4)
+    · have hxleft : x.1.left = 1 := by
+        apply (order84_a4_three_pow_six_iff_of_mem_kleinFour x.1.left hxK).mp
+        simpa using x.2
+      apply SemidirectProduct.ext <;> simp [hxK, hxleft]
+    · apply SemidirectProduct.ext <;> simp [hxK]
+  right_inv y := by
+    rcases y with h | nh
+    · simp [h.2]
+    · simp [nh.2.2]
+
 /-- Every group of order `84` is one of five standard semidirect-product action problems,
 according to the order-`12` complement. -/
 theorem order84_semidirectProduct_standard_cases [Finite G] (hG : Nat.card G = 84) :
@@ -1806,6 +1837,23 @@ theorem card_order84_HD : Nat.card order84_HD = 12 :=
 
 theorem card_order84_HE : Nat.card order84_HE = 12 :=
   card_fourP_A4
+
+theorem card_pow6_order84_a4_three :
+    Nat.card {x : order84_a4_three // x ^ 6 = 1} = 60 := by
+  classical
+  rw [Nat.card_congr order84_a4_three_pow6Equiv]
+  rw [Nat.card_sum]
+  rw [Nat.card_prod]
+  have hK : Nat.card {h : order84_HE // h ∈ alternatingGroup.kleinFour (Fin 4)} = 4 := by
+    simpa using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have hKf : Fintype.card {h : order84_HE // h ∈ alternatingGroup.kleinFour (Fin 4)} = 4 := by
+    rw [← Nat.card_eq_fintype_card]
+    exact hK
+  have hnotK : Nat.card {h : order84_HE // h ∉ alternatingGroup.kleinFour (Fin 4)} = 8 := by
+    rw [Nat.card_eq_fintype_card, Fintype.card_subtype_compl, hKf]
+    rw [show Fintype.card order84_HE = 12 by
+      exact Nat.card_eq_fintype_card.symm.trans card_order84_HE]
+  rw [hK, hnotK, card_order84_C7]
 
 theorem card_order84_directProduct {H : Type} [Group H] (hH : Nat.card H = 12) :
     Nat.card (order84_C7 × H) = 84 := by
