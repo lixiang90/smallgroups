@@ -1202,6 +1202,33 @@ noncomputable abbrev order84_hd_ref : Type :=
 noncomputable abbrev order84_hd_prod : Type :=
   SemidirectProduct order84_C7 order84_HD (order84_action order84_chiHD_prod)
 
+noncomputable def order84_HD_shearRef : order84_HD ≃* order84_HD where
+  toFun x :=
+    match x.2 with
+    | DihedralGroup.r _ => x
+    | DihedralGroup.sr _ => (x.1 * Multiplicative.ofAdd (1 : ZMod 2), x.2)
+  invFun x :=
+    match x.2 with
+    | DihedralGroup.r _ => x
+    | DihedralGroup.sr _ => (x.1 * Multiplicative.ofAdd (1 : ZMod 2), x.2)
+  left_inv := by
+    rintro ⟨a, d⟩
+    rcases d with i | i <;> ext <;> decide +revert
+  right_inv := by
+    rintro ⟨a, d⟩
+    rcases d with i | i <;> ext <;> decide +revert
+  map_mul' := by
+    rintro ⟨a, d⟩ ⟨b, e⟩
+    rcases d with i | i <;> rcases e with j | j <;> ext <;> decide +revert
+
+theorem order84_chiHD_fst_two_comp_shearRef :
+    order84_chiHD_fst_two.comp order84_HD_shearRef.toMonoidHom = order84_chiHD_prod := by
+  apply order84_hd_hom_ext <;> decide
+
+noncomputable def order84_hd_prod_equiv_fst_two : order84_hd_prod ≃* order84_hd_fst_two :=
+  order84_action_precomp_eq_mulEquiv order84_chiHD_fst_two order84_chiHD_prod
+    order84_HD_shearRef order84_chiHD_fst_two_comp_shearRef
+
 theorem order84_hd_action_semidirect_cases (φ : order84_HD →* MulAut order84_C7) :
     Nonempty (SemidirectProduct order84_C7 order84_HD φ ≃* order84_hd_trivial) ∨
       Nonempty (SemidirectProduct order84_C7 order84_HD φ ≃* order84_hd_fst_two) ∨
@@ -1216,6 +1243,21 @@ theorem order84_hd_action_semidirect_cases (φ : order84_HD →* MulAut order84_
     exact ⟨semidirectProductCongr_eq hφ⟩
   · right; right; right
     exact ⟨semidirectProductCongr_eq hφ⟩
+
+theorem order84_hd_action_semidirect_cases_three (φ : order84_HD →* MulAut order84_C7) :
+    Nonempty (SemidirectProduct order84_C7 order84_HD φ ≃* order84_hd_trivial) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HD φ ≃* order84_hd_fst_two) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HD φ ≃* order84_hd_ref) := by
+  rcases order84_hd_action_semidirect_cases φ with hφ | hφ | hφ | hφ
+  · left
+    exact hφ
+  · right; left
+    exact hφ
+  · right; right
+    exact hφ
+  · right; left
+    obtain ⟨e⟩ := hφ
+    exact ⟨e.trans order84_hd_prod_equiv_fst_two⟩
 
 /-! ### Cyclic `C₃` actions -/
 
@@ -1270,6 +1312,11 @@ theorem order84_c3_action_cases (φ : CyclicRep 3 →* MulAut order84_C7) :
     rw [h]
     simp [order84_chiC3_three_inv]
 
+theorem order84_chiC3_three_inv_apply (x : CyclicRep 3) :
+    order84_chiC3_three x⁻¹ = order84_chiC3_three_inv x := by
+  obtain ⟨n, rfl⟩ := Multiplicative.ofAdd.surjective x
+  fin_cases n <;> decide
+
 /-! ### Alternating-complement action reductions -/
 
 local instance order84_mulAutCommGroup : CommGroup (MulAut order84_C7) :=
@@ -1307,6 +1354,61 @@ noncomputable abbrev order84_chiA4_three : order84_HE →* (ZMod 7)ˣ :=
 
 noncomputable abbrev order84_chiA4_three_inv : order84_HE →* (ZMod 7)ˣ :=
   order84_chiC3_three_inv.comp (order84_A4QuotEquiv.toMonoidHom.comp order84_A4QuotMk)
+
+noncomputable def order84_A4_conjSwap : order84_HE ≃* order84_HE where
+  toFun g := by
+    let τ : Equiv.Perm (Fin 4) := Equiv.swap (0 : Fin 4) 1
+    refine ⟨τ * (g : Equiv.Perm (Fin 4)) * τ⁻¹, ?_⟩
+    rw [Equiv.Perm.mem_alternatingGroup]
+    rw [map_mul, map_mul, Equiv.Perm.sign_inv]
+    have hg : Equiv.Perm.sign (g : Equiv.Perm (Fin 4)) = 1 :=
+      Equiv.Perm.mem_alternatingGroup.mp g.property
+    rw [hg]
+    decide
+  invFun g := by
+    let τ : Equiv.Perm (Fin 4) := Equiv.swap (0 : Fin 4) 1
+    refine ⟨τ * (g : Equiv.Perm (Fin 4)) * τ⁻¹, ?_⟩
+    rw [Equiv.Perm.mem_alternatingGroup]
+    rw [map_mul, map_mul, Equiv.Perm.sign_inv]
+    have hg : Equiv.Perm.sign (g : Equiv.Perm (Fin 4)) = 1 :=
+      Equiv.Perm.mem_alternatingGroup.mp g.property
+    rw [hg]
+    decide
+  left_inv := by
+    intro g
+    apply Subtype.ext
+    ext x
+    decide +revert
+  right_inv := by
+    intro g
+    apply Subtype.ext
+    ext x
+    decide +revert
+  map_mul' := by
+    intro g h
+    apply Subtype.ext
+    ext x
+    decide +revert
+
+theorem order84_A4QuotMk_conjSwap (g : order84_HE) :
+    order84_A4QuotMk (order84_A4_conjSwap g) = (order84_A4QuotMk g)⁻¹ := by
+  let K : Subgroup order84_HE := alternatingGroup.kleinFour (Fin 4)
+  change (QuotientGroup.mk' K) (order84_A4_conjSwap g) = ((QuotientGroup.mk' K) g)⁻¹
+  rw [QuotientGroup.mk'_apply, QuotientGroup.mk'_apply, ← QuotientGroup.mk_inv K g]
+  rw [QuotientGroup.eq]
+  rw [← SetLike.mem_coe, alternatingGroup.coe_kleinFour_of_card_eq_four (α := Fin 4) (by simp)]
+  fin_cases g <;> decide
+
+theorem order84_chiA4_three_comp_conjSwap :
+    order84_chiA4_three.comp order84_A4_conjSwap.toMonoidHom = order84_chiA4_three_inv := by
+  apply MonoidHom.ext
+  intro g
+  change order84_chiC3_three
+      (order84_A4QuotEquiv (order84_A4QuotMk (order84_A4_conjSwap g))) =
+    order84_chiC3_three_inv (order84_A4QuotEquiv (order84_A4QuotMk g))
+  rw [order84_A4QuotMk_conjSwap]
+  rw [map_inv]
+  exact order84_chiC3_three_inv_apply _
 
 theorem order84_a4_kleinFour_eq_commutator :
     (alternatingGroup.kleinFour (Fin 4) : Subgroup order84_HE) = commutator order84_HE := by
@@ -1423,6 +1525,10 @@ noncomputable abbrev order84_a4_three : Type :=
 noncomputable abbrev order84_a4_three_inv : Type :=
   SemidirectProduct order84_C7 order84_HE (order84_action order84_chiA4_three_inv)
 
+noncomputable def order84_a4_three_inv_equiv_three : order84_a4_three_inv ≃* order84_a4_three :=
+  order84_action_precomp_eq_mulEquiv order84_chiA4_three order84_chiA4_three_inv
+    order84_A4_conjSwap order84_chiA4_three_comp_conjSwap
+
 theorem order84_a4_action_semidirect_cases (φ : order84_HE →* MulAut order84_C7) :
     Nonempty (SemidirectProduct order84_C7 order84_HE φ ≃* order84_a4_trivial) ∨
       Nonempty (SemidirectProduct order84_C7 order84_HE φ ≃* order84_a4_three) ∨
@@ -1434,6 +1540,18 @@ theorem order84_a4_action_semidirect_cases (φ : order84_HE →* MulAut order84_
     exact ⟨semidirectProductCongr_eq hφ⟩
   · right; right
     exact ⟨semidirectProductCongr_eq hφ⟩
+
+theorem order84_a4_action_semidirect_cases_two (φ : order84_HE →* MulAut order84_C7) :
+    Nonempty (SemidirectProduct order84_C7 order84_HE φ ≃* order84_a4_trivial) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HE φ ≃* order84_a4_three) := by
+  rcases order84_a4_action_semidirect_cases φ with hφ | hφ | hφ
+  · left
+    exact hφ
+  · right
+    exact hφ
+  · right
+    obtain ⟨e⟩ := hφ
+    exact ⟨e.trans order84_a4_three_inv_equiv_three⟩
 
 /-- Every group of order `84` is one of five standard semidirect-product action problems,
 according to the order-`12` complement. -/
@@ -1468,5 +1586,103 @@ theorem order84_semidirectProduct_standard_cases [Finite G] (hG : Nat.card G = 8
     obtain ⟨eH⟩ := hH'
     exact Or.inr <| Or.inr <| Or.inr <|
       Or.inr ⟨_, ⟨e.trans (SemidirectProduct.congr' eN eH)⟩⟩
+
+/-! ### Indexed representatives and exhaustiveness -/
+
+/-- The fifteen displayed representatives for groups of order `84`. -/
+noncomputable abbrev order84_reps : Fin 15 → Type
+  | 0 => order84_c12_trivial
+  | 1 => order84_c12_six
+  | 2 => order84_c12_three
+  | 3 => order84_c12_two
+  | 4 => order84_c2c6_trivial
+  | 5 => order84_c2c6_fst_two
+  | 6 => order84_c2c6_snd_three
+  | 7 => order84_c2c6_fst_two_snd_six
+  | 8 => order84_hc_trivial
+  | 9 => order84_hc_two
+  | 10 => order84_hd_trivial
+  | 11 => order84_hd_fst_two
+  | 12 => order84_hd_ref
+  | 13 => order84_a4_trivial
+  | 14 => order84_a4_three
+
+noncomputable instance instGroupOrder84Reps : (i : Fin 15) → Group (order84_reps i)
+  | 0 => inferInstanceAs (Group order84_c12_trivial)
+  | 1 => inferInstanceAs (Group order84_c12_six)
+  | 2 => inferInstanceAs (Group order84_c12_three)
+  | 3 => inferInstanceAs (Group order84_c12_two)
+  | 4 => inferInstanceAs (Group order84_c2c6_trivial)
+  | 5 => inferInstanceAs (Group order84_c2c6_fst_two)
+  | 6 => inferInstanceAs (Group order84_c2c6_snd_three)
+  | 7 => inferInstanceAs (Group order84_c2c6_fst_two_snd_six)
+  | 8 => inferInstanceAs (Group order84_hc_trivial)
+  | 9 => inferInstanceAs (Group order84_hc_two)
+  | 10 => inferInstanceAs (Group order84_hd_trivial)
+  | 11 => inferInstanceAs (Group order84_hd_fst_two)
+  | 12 => inferInstanceAs (Group order84_hd_ref)
+  | 13 => inferInstanceAs (Group order84_a4_trivial)
+  | 14 => inferInstanceAs (Group order84_a4_three)
+
+/-- Every group of order `84` is isomorphic to one of the fifteen displayed representatives. -/
+theorem order84_complete (G : Type) [Group G] [Finite G] (hG : Nat.card G = 84) :
+    ∃ i : Fin 15, Nonempty (G ≃* order84_reps i) := by
+  rcases order84_semidirectProduct_standard_cases (G := G) hG with h | h | h | h | h
+  · obtain ⟨φ, ⟨e⟩⟩ := h
+    rcases order84_c12_action_semidirect_cases φ with hφ | hφ | hφ | hφ
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨0, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_c12_trivial))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨1, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_c12_six))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨2, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_c12_three))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨3, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_c12_two))⟩
+  · obtain ⟨φ, ⟨e⟩⟩ := h
+    rcases order84_c2c6_action_semidirect_cases_four φ with hφ | hφ | hφ | hφ
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨4, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_c2c6_trivial))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨5, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_c2c6_fst_two))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨6, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_c2c6_snd_three))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨7, by
+        simpa [order84_reps] using
+          (⟨e.trans eh⟩ : Nonempty (G ≃* order84_c2c6_fst_two_snd_six))⟩
+  · obtain ⟨φ, ⟨e⟩⟩ := h
+    rcases order84_hc_action_semidirect_cases φ with hφ | hφ
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨8, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_hc_trivial))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨9, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_hc_two))⟩
+  · obtain ⟨φ, ⟨e⟩⟩ := h
+    rcases order84_hd_action_semidirect_cases_three φ with hφ | hφ | hφ
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨10, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_hd_trivial))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨11, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_hd_fst_two))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨12, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_hd_ref))⟩
+  · obtain ⟨φ, ⟨e⟩⟩ := h
+    rcases order84_a4_action_semidirect_cases_two φ with hφ | hφ
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨13, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_a4_trivial))⟩
+    · obtain ⟨eh⟩ := hφ
+      exact ⟨14, by
+        simpa [order84_reps] using (⟨e.trans eh⟩ : Nonempty (G ≃* order84_a4_three))⟩
 
 end Smallgroups.UsefulTheorems
