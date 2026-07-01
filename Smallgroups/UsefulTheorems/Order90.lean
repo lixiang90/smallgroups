@@ -333,6 +333,10 @@ theorem order90_c45_semidirect_cases (φ : order90_C2 →* MulAut order90_C45) :
 
 /-! ### The noncyclic abelian order-45 kernel -/
 
+noncomputable def order90_psqPrimeRep1_iso : psqPrimeRep1 3 5 ≃* order90_C45 := by
+  refine AddEquiv.toMultiplicative (ZMod.ringEquivCongr ?_).toAddEquiv
+  norm_num
+
 noncomputable def order90_psqPrimeRep2_iso : psqPrimeRep2 3 5 ≃* order90_E33C5 := by
   have hcop : (3 : ℕ).Coprime 5 := by norm_num
   exact (MulEquiv.prodCongr (MulEquiv.refl order90_C3) (crtProd 3 5 hcop).symm).trans
@@ -487,5 +491,45 @@ theorem order90_semidirect_kernel_cases [Finite G] (hG : Nat.card G = 90) :
     psq_prime_abelian_classification (G := N) (p := 3) (q := 5) (by norm_num)
       (by norm_num) (by norm_num) (by decide) (by decide) hNcard'
   exact ⟨N, hNnormal, hNcard, K, φ, hiso, hcases⟩
+
+theorem order90_semidirect_standard_cases [Finite G] (hG : Nat.card G = 90) :
+    (∃ φ : order90_C2 →* MulAut order90_C45,
+      Nonempty (G ≃* SemidirectProduct order90_C45 order90_C2 φ)) ∨
+    (∃ φ : order90_C2 →* MulAut order90_E33C5,
+      Nonempty (G ≃* SemidirectProduct order90_E33C5 order90_C2 φ)) := by
+  obtain ⟨N, _, hNcard, K, φ, ⟨e⟩, hcases⟩ := order90_semidirect_kernel_cases hG
+  have hKcard : Nat.card K = 2 := by
+    have hsd : Nat.card (SemidirectProduct N K φ) = 90 := by
+      rw [← Nat.card_congr e.toEquiv, hG]
+    rw [SemidirectProduct.card, hNcard] at hsd
+    omega
+  obtain ⟨eK⟩ := prime_classification (by norm_num : Nat.Prime 2) hKcard
+  rcases hcases with hcyc | hnoncyc
+  · obtain ⟨eN₀⟩ := hcyc
+    let eN : N ≃* order90_C45 := eN₀.trans order90_psqPrimeRep1_iso
+    exact Or.inl ⟨_, ⟨e.trans (SemidirectProduct.congr' eN eK)⟩⟩
+  · obtain ⟨eN₀⟩ := hnoncyc
+    let eN : N ≃* order90_E33C5 := eN₀.trans order90_psqPrimeRep2_iso
+    exact Or.inr ⟨_, ⟨e.trans (SemidirectProduct.congr' eN eK)⟩⟩
+
+theorem order90_cases_after_cyclic_kernel [Finite G] (hG : Nat.card G = 90) :
+    (Nonempty (G ≃* order90_C90) ∨
+      Nonempty (G ≃* order90_C9D5) ∨
+      Nonempty (G ≃* order90_C5D9) ∨
+      Nonempty (G ≃* order90_D45)) ∨
+    (∃ φ : order90_C2 →* MulAut order90_E33C5,
+      Nonempty (G ≃* SemidirectProduct order90_E33C5 order90_C2 φ)) := by
+  rcases order90_semidirect_standard_cases hG with hcyc | hnoncyc
+  · rcases hcyc with ⟨φ, ⟨eG⟩⟩
+    rcases order90_c45_semidirect_cases φ with hC90 | hC9D5 | hC5D9 | hD45
+    · rcases hC90 with ⟨eC90⟩
+      exact Or.inl (Or.inl ⟨eG.trans eC90⟩)
+    · rcases hC9D5 with ⟨eC9D5⟩
+      exact Or.inl (Or.inr (Or.inl ⟨eG.trans eC9D5⟩))
+    · rcases hC5D9 with ⟨eC5D9⟩
+      exact Or.inl (Or.inr (Or.inr (Or.inl ⟨eG.trans eC5D9⟩)))
+    · rcases hD45 with ⟨eD45⟩
+      exact Or.inl (Or.inr (Or.inr (Or.inr ⟨eG.trans eD45⟩)))
+  · exact Or.inr hnoncyc
 
 end Smallgroups.UsefulTheorems
