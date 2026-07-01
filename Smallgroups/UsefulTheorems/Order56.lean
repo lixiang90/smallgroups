@@ -691,10 +691,167 @@ theorem order56_card_aut_c2c2c2 : Nat.card (MulAut order56_C2C2C2) = 168 := by
   rw [Nat.card_eq_fintype_card]
   native_decide
 
-set_option linter.style.nativeDecide false in
+/-- The automorphism of `D₈` sending `r i` to `r (u * i)` and `sr i` to `sr (v + u * i)`. -/
+noncomputable def order56_d8Aut (u : (ZMod 4)ˣ) (v : ZMod 4) : MulAut order56_D8 where
+  toFun
+    | DihedralGroup.r i => DihedralGroup.r ((u : ZMod 4) * i)
+    | DihedralGroup.sr i => DihedralGroup.sr (v + (u : ZMod 4) * i)
+  invFun
+    | DihedralGroup.r i => DihedralGroup.r ((↑u⁻¹ : ZMod 4) * i)
+    | DihedralGroup.sr i => DihedralGroup.sr ((↑u⁻¹ : ZMod 4) * (i - v))
+  left_inv := by
+    intro x
+    rcases x with i | i <;> simp [sub_eq_add_neg]
+  right_inv := by
+    intro x
+    rcases x with i | i <;> simp [sub_eq_add_neg, mul_add]
+  map_mul' := by
+    intro x y
+    rcases x with i | i <;> rcases y with j | j <;>
+      simp [DihedralGroup.r_mul_r, DihedralGroup.r_mul_sr, DihedralGroup.sr_mul_r,
+        DihedralGroup.sr_mul_sr, mul_add, add_comm, add_assoc, sub_eq_add_neg]; abel
+
+/-- Homomorphisms out of `D₈` are determined by a rotation and a reflection. -/
+theorem order56_d8_hom_ext {M : Type} [Group M] {χ ψ : order56_D8 →* M}
+    (hr : χ (DihedralGroup.r (1 : ZMod 4)) = ψ (DihedralGroup.r (1 : ZMod 4)))
+    (hs : χ (DihedralGroup.sr (0 : ZMod 4)) = ψ (DihedralGroup.sr (0 : ZMod 4))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  rcases x with i | i
+  · have hi : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 4) * (i.val : ZMod 4)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by rw [DihedralGroup.r_pow]
+    rw [hi, map_pow, map_pow, hr]
+  · have hri : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 4) * (i.val : ZMod 4)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by rw [DihedralGroup.r_pow]
+    have hi : DihedralGroup.sr i =
+        DihedralGroup.sr (0 : ZMod 4) * (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by
+      rw [← hri]
+      simp [DihedralGroup.sr_mul_r]
+    rw [hi, map_mul, map_mul, map_pow, map_pow, hs, hr]
+
+theorem order56_d8_mulAut_ext {α β : MulAut order56_D8}
+    (hr : α (DihedralGroup.r (1 : ZMod 4)) = β (DihedralGroup.r (1 : ZMod 4)))
+    (hs : α (DihedralGroup.sr (0 : ZMod 4)) = β (DihedralGroup.sr (0 : ZMod 4))) :
+    α = β := by
+  ext x
+  exact congrFun (congrArg DFunLike.coe
+    (order56_d8_hom_ext (χ := α.toMonoidHom) (ψ := β.toMonoidHom) hr hs)) x
+
+theorem order56_d8Aut_injective :
+    Function.Injective (fun p : (ZMod 4)ˣ × ZMod 4 => order56_d8Aut p.1 p.2) := by
+  rintro ⟨u, v⟩ ⟨u', v'⟩ h
+  have hr := congrArg (fun α : MulAut order56_D8 => α (DihedralGroup.r (1 : ZMod 4))) h
+  have hs := congrArg (fun α : MulAut order56_D8 => α (DihedralGroup.sr (0 : ZMod 4))) h
+  change DihedralGroup.r ((u : ZMod 4) * (1 : ZMod 4)) =
+    DihedralGroup.r ((u' : ZMod 4) * (1 : ZMod 4)) at hr
+  change DihedralGroup.sr (v + (u : ZMod 4) * (0 : ZMod 4)) =
+    DihedralGroup.sr (v' + (u' : ZMod 4) * (0 : ZMod 4)) at hs
+  have hu : u = u' := Units.ext (by simpa using DihedralGroup.r.inj hr)
+  have hv : v = v' := by
+    have hidx := DihedralGroup.sr.inj hs
+    simpa [hu] using hidx
+  simp [hu, hv]
+
+theorem order56_d8_aut_r_eq (α : MulAut order56_D8) :
+    ∃ u : (ZMod 4)ˣ, α (DihedralGroup.r (1 : ZMod 4)) = DihedralGroup.r (u : ZMod 4) := by
+  let r1 : order56_D8 := DihedralGroup.r (1 : ZMod 4)
+  have horder : orderOf (α r1) = 4 := by
+    rw [MulEquiv.orderOf_eq, DihedralGroup.orderOf_r_one]
+  rcases h : α r1 with i | i
+  · fin_cases i
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (0 : ZMod 4)) = 4) horder
+    · exact ⟨1, congrArg (fun z : ZMod 4 => DihedralGroup.r z) rfl⟩
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (2 : ZMod 4)) = 4) horder
+    · exact ⟨-1, congrArg (fun z : ZMod 4 => DihedralGroup.r z)
+        (by decide +kernel : (3 : ZMod 4) = (-1 : ZMod 4))⟩
+  · fin_cases i
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_sr] at horder
+      norm_num at horder
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_sr] at horder
+      norm_num at horder
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_sr] at horder
+      norm_num at horder
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_sr] at horder
+      norm_num at horder
+
+theorem order56_d8_aut_s_eq (α : MulAut order56_D8) (u : (ZMod 4)ˣ)
+    (hu : α (DihedralGroup.r (1 : ZMod 4)) = DihedralGroup.r (u : ZMod 4)) :
+    ∃ v : ZMod 4, α (DihedralGroup.sr (0 : ZMod 4)) = DihedralGroup.sr v := by
+  let r1 : order56_D8 := DihedralGroup.r (1 : ZMod 4)
+  let s0 : order56_D8 := DihedralGroup.sr (0 : ZMod 4)
+  have horder : orderOf (α s0) = 2 := by
+    rw [MulEquiv.orderOf_eq]
+    exact DihedralGroup.orderOf_sr 0
+  have hrel : α s0 * α r1 = (α r1)⁻¹ * α s0 := by
+    have rel : s0 * r1 = r1⁻¹ * s0 := by
+      simp [r1, s0, DihedralGroup.sr_mul_r, DihedralGroup.r_mul_sr, DihedralGroup.inv_r]
+    simpa [map_mul, map_inv] using congrArg α rel
+  rcases h : α s0 with i | i
+  · fin_cases i
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (0 : ZMod 4)) = 2) horder
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (1 : ZMod 4)) = 2) horder
+    · exfalso
+      rw [h, hu] at hrel
+      fin_cases u
+      · rw [DihedralGroup.r_mul_r, DihedralGroup.inv_r, DihedralGroup.r_mul_r] at hrel
+        exact (by decide +kernel : ¬ ((2 : ZMod 4) + 1 = -1 + (2 : ZMod 4)))
+          (DihedralGroup.r.inj hrel)
+      · rw [DihedralGroup.r_mul_r, DihedralGroup.inv_r, DihedralGroup.r_mul_r] at hrel
+        exact (by decide +kernel : ¬ ((2 : ZMod 4) + 3 = -3 + (2 : ZMod 4)))
+          (DihedralGroup.r.inj hrel)
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (3 : ZMod 4)) = 2) horder
+  · exact ⟨i, rfl⟩
+
+theorem order56_d8Aut_surjective :
+    Function.Surjective (fun p : (ZMod 4)ˣ × ZMod 4 => order56_d8Aut p.1 p.2) := by
+  intro α
+  obtain ⟨u, hu⟩ := order56_d8_aut_r_eq α
+  obtain ⟨v, hv⟩ := order56_d8_aut_s_eq α u hu
+  refine ⟨(u, v), ?_⟩
+  apply order56_d8_mulAut_ext
+  · simpa [order56_d8Aut] using hu.symm
+  · simpa [order56_d8Aut] using hv.symm
+
 theorem order56_card_aut_d8 : Nat.card (MulAut order56_D8) = 8 := by
+  let e : (ZMod 4)ˣ × ZMod 4 ≃ MulAut order56_D8 :=
+    Equiv.ofBijective (fun p : (ZMod 4)ˣ × ZMod 4 => order56_d8Aut p.1 p.2)
+      ⟨order56_d8Aut_injective, order56_d8Aut_surjective⟩
   rw [Nat.card_eq_fintype_card]
-  native_decide
+  change Fintype.card (MulAut order56_D8) = 8
+  rw [← Fintype.card_congr e]
+  decide +kernel
 
 set_option linter.style.nativeDecide false in
 theorem order56_card_aut_q8 : Nat.card (MulAut order56_Q8) = 24 := by
