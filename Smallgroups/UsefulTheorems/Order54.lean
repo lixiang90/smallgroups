@@ -393,6 +393,73 @@ theorem order54_c3c3c3_semidirect_cases (φ : order54_C2 →* MulAut order54_C3C
     exact Or.inr (Or.inr (Or.inr ⟨eMain.trans <|
       MulEquiv.uniqueProd.trans (genDihCongr eNeg)⟩))
 
+/-! ### First reductions for the mixed abelian kernel case `(C₉ × C₃) ⋊ C₂` -/
+
+theorem order54_c9c3_pow_nine (x : order54_C9C3) : x ^ 9 = 1 := by
+  obtain ⟨a, b⟩ := x
+  have ha : a ^ 9 = 1 := by
+    have h : a ^ Fintype.card (Multiplicative (ZMod 9)) = 1 := pow_card_eq_one
+    rwa [Fintype.card_multiplicative, ZMod.card] at h
+  have hb3 : b ^ 3 = 1 := by
+    have h : b ^ Fintype.card (Multiplicative (ZMod 3)) = 1 := pow_card_eq_one
+    rwa [Fintype.card_multiplicative, ZMod.card] at h
+  have hb : b ^ 9 = 1 := by
+    rw [show (9 : ℕ) = 3 * 3 by norm_num, pow_mul, hb3, one_pow]
+  rw [Prod.pow_mk, ha, hb]
+  rfl
+
+/-- The mixed abelian kernel case splits into fixed and inverted factors.  Since every element of
+`C₉ × C₃` has ninth power equal to `1`, the same eigenspace construction used for exponent-`p`
+elementary kernels works here with `p = 9` and `t = 5`. -/
+noncomputable def order54_c9c3_decompIso (φ : order54_C2 →* MulAut order54_C9C3) :
+    SemidirectProduct order54_C9C3 order54_C2 φ ≃*
+      fixSubgroup (φ (Multiplicative.ofAdd 1)) ×
+        SemidirectProduct (negSubgroup (φ (Multiplicative.ofAdd 1))) order54_C2
+          (invActionHom (negSubgroup (φ (Multiplicative.ofAdd 1)))) := by
+  set τ := φ (Multiplicative.ofAdd 1) with hτ
+  have h2 : τ * τ = 1 := by
+    rw [← sq, hτ, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order54_C9C3, x ^ 9 = 1 := order54_c9c3_pow_nine
+  have ht : 2 * 5 = 9 + 1 := by norm_num
+  exact elem_decomp_semidirect hinv hexp ht φ rfl
+
+theorem order54_c9c3_decomp_card (φ : order54_C2 →* MulAut order54_C9C3) :
+    Nat.card (fixSubgroup (φ (Multiplicative.ofAdd 1))) *
+      Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 27 := by
+  set τ := φ (Multiplicative.ofAdd 1) with hτ
+  have h2 : τ * τ = 1 := by
+    rw [← sq, hτ, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order54_C9C3, x ^ 9 = 1 := order54_c9c3_pow_nine
+  have ht : 2 * 5 = 9 + 1 := by norm_num
+  change Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 27
+  rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+  exact card_order54_C9C3
+
+theorem order54_c9c3_neg_card_cases (φ : order54_C2 →* MulAut order54_C9C3) :
+    Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 1 ∨
+      Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 3 ∨
+      Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 9 ∨
+      Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 27 := by
+  have hsplit := order54_c9c3_decomp_card φ
+  have hdvd : Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) ∣ 3 ^ 3 :=
+    ⟨Nat.card (fixSubgroup (φ (Multiplicative.ofAdd 1))), by
+      rw [mul_comm]
+      exact hsplit.symm⟩
+  obtain ⟨i, hi_le, hi⟩ := (Nat.dvd_prime_pow (by norm_num : Nat.Prime 3)).mp hdvd
+  interval_cases i
+  · exact Or.inl (by simpa using hi)
+  · exact Or.inr (Or.inl (by simpa using hi))
+  · exact Or.inr (Or.inr (Or.inl (by simpa using hi)))
+  · exact Or.inr (Or.inr (Or.inr (by simpa using hi)))
+
 /-! ### Sylow-3 normality and semidirect-product reduction -/
 
 /-- The Sylow `3`-subgroup is unique in a group of order `54`. -/
