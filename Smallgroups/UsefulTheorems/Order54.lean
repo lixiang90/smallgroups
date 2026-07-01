@@ -221,6 +221,77 @@ abbrev order54_Heis1 : Type :=
 abbrev order54_Heis2 : Type :=
   SemidirectProduct order54_Heisenberg order54_C2 order54_heisenbergNegBAction
 
+/-- The first quotient generator in the Heisenberg kernel. -/
+abbrev order54_heisA : order54_Heisenberg := ⟨1, 0, 0⟩
+
+/-- The second quotient generator in the Heisenberg kernel. -/
+abbrev order54_heisB : order54_Heisenberg := ⟨0, 1, 0⟩
+
+/-- The central generator in the Heisenberg kernel. -/
+abbrev order54_heisC : order54_Heisenberg := ⟨0, 0, 1⟩
+
+/-- Every element of the order-`27` Heisenberg group has the normal form
+`A^i B^j C^k`. The correction term compensates for the `a*b'` term in multiplication. -/
+theorem order54_heisenberg_elem_decomp (x : order54_Heisenberg) :
+    x = order54_heisA ^ x.a.val * order54_heisB ^ x.b.val *
+      order54_heisC ^ (x.c - x.a * x.b).val := by
+  cases x with
+  | mk a b c =>
+      fin_cases a <;> fin_cases b <;> fin_cases c <;> decide +kernel
+
+/-- The central generator is the commutator of the two quotient generators. -/
+theorem order54_heisC_eq_commutator :
+    order54_heisC = order54_heisA * order54_heisB * order54_heisA⁻¹ * order54_heisB⁻¹ := by
+  decide +kernel
+
+theorem order54_heisA_mul_heisB :
+    order54_heisA * order54_heisB = order54_heisC * order54_heisB * order54_heisA := by
+  decide +kernel
+
+/-- Automorphisms of the Heisenberg kernel are determined by the two quotient generators. -/
+theorem order54_heisenberg_mulAut_ext {α β : MulAut order54_Heisenberg}
+    (hA : α order54_heisA = β order54_heisA)
+    (hB : α order54_heisB = β order54_heisB) : α = β := by
+  have hC : α order54_heisC = β order54_heisC := by
+    rw [order54_heisC_eq_commutator]
+    rw [map_mul, map_mul, map_mul, map_mul, map_mul, map_mul, map_inv, map_inv, map_inv, map_inv,
+      hA, hB]
+  apply MulEquiv.ext
+  intro x
+  calc
+    α x = α (order54_heisA ^ x.a.val * order54_heisB ^ x.b.val *
+        order54_heisC ^ (x.c - x.a * x.b).val) := by
+      rw [← order54_heisenberg_elem_decomp x]
+    _ = β (order54_heisA ^ x.a.val * order54_heisB ^ x.b.val *
+        order54_heisC ^ (x.c - x.a * x.b).val) := by
+      rw [map_mul, map_mul, map_mul, map_mul, map_pow, map_pow, map_pow, map_pow, map_pow,
+        map_pow, hA, hB, hC]
+    _ = β x := by
+      rw [← order54_heisenberg_elem_decomp x]
+
+/-- The value of a Heisenberg automorphism is determined by the images of `A`, `B`, and `C`. -/
+theorem order54_heisenberg_mulAut_apply_decomp
+    (α : MulAut order54_Heisenberg) (x : order54_Heisenberg) :
+    α x = (α order54_heisA) ^ x.a.val * (α order54_heisB) ^ x.b.val *
+      (α order54_heisC) ^ (x.c - x.a * x.b).val := by
+  calc
+    α x = α (order54_heisA ^ x.a.val * order54_heisB ^ x.b.val *
+        order54_heisC ^ (x.c - x.a * x.b).val) := by
+      exact congrArg α (order54_heisenberg_elem_decomp x)
+    _ = (α order54_heisA) ^ x.a.val * (α order54_heisB) ^ x.b.val *
+        (α order54_heisC) ^ (x.c - x.a * x.b).val := by
+      rw [map_mul, map_mul, map_pow, map_pow, map_pow]
+
+noncomputable instance order54_heisenberg_mulAut_decidableEq :
+    DecidableEq (MulAut order54_Heisenberg) := fun α β =>
+  if hA : α order54_heisA = β order54_heisA then
+    if hB : α order54_heisB = β order54_heisB then
+      isTrue (order54_heisenberg_mulAut_ext hA hB)
+    else
+      isFalse (fun hαβ => hB (by rw [hαβ]))
+  else
+    isFalse (fun hαβ => hA (by rw [hαβ]))
+
 /-- The exponent-`9` non-abelian kernel with trivial `C₂` action. -/
 abbrev order54_P2P0 : Type := order54_SemidirectP2P × order54_C2
 
