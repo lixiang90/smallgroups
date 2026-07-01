@@ -248,6 +248,40 @@ theorem order54_heisA_mul_heisB :
     order54_heisA * order54_heisB = order54_heisC * order54_heisB * order54_heisA := by
   decide +kernel
 
+theorem orderOf_order54_heisA : orderOf order54_heisA = 3 := by
+  have hpow : order54_heisA ^ 3 = 1 := by decide +kernel
+  have hne : order54_heisA ≠ 1 := by decide +kernel
+  exact orderOf_eq_prime hpow hne
+
+theorem orderOf_order54_heisB : orderOf order54_heisB = 3 := by
+  have hpow : order54_heisB ^ 3 = 1 := by decide +kernel
+  have hne : order54_heisB ≠ 1 := by decide +kernel
+  exact orderOf_eq_prime hpow hne
+
+theorem order54_heisenbergNegBothAut_heisA :
+    order54_heisenbergNegBothAut order54_heisA = order54_heisA⁻¹ := by
+  decide +kernel
+
+theorem order54_heisenbergNegBothAut_heisB :
+    order54_heisenbergNegBothAut order54_heisB = order54_heisB⁻¹ := by
+  decide +kernel
+
+theorem order54_heisenbergNegBothAut_heisC :
+    order54_heisenbergNegBothAut order54_heisC = order54_heisC := by
+  decide +kernel
+
+theorem order54_heisenbergNegBAut_heisA :
+    order54_heisenbergNegBAut order54_heisA = order54_heisA := by
+  decide +kernel
+
+theorem order54_heisenbergNegBAut_heisB :
+    order54_heisenbergNegBAut order54_heisB = order54_heisB⁻¹ := by
+  decide +kernel
+
+theorem order54_heisenbergNegBAut_heisC :
+    order54_heisenbergNegBAut order54_heisC = order54_heisC⁻¹ := by
+  decide +kernel
+
 /-- Automorphisms of the Heisenberg kernel are determined by the two quotient generators. -/
 theorem order54_heisenberg_mulAut_ext {α β : MulAut order54_Heisenberg}
     (hA : α order54_heisA = β order54_heisA)
@@ -387,6 +421,26 @@ theorem order54_heisenberg_mulAut_heisC_cases
     have hCne : order54_heisC ≠ 1 := by decide +kernel
     exact hCne (by simpa using hpre)
   exact order54_heisenberg_center_nontrivial_cases hz hne
+
+theorem orderOf_order54_heisenberg_mulAut_heisA (α : MulAut order54_Heisenberg) :
+    orderOf (α order54_heisA) = 3 := by
+  rw [MulEquiv.orderOf_eq α]
+  exact orderOf_order54_heisA
+
+theorem orderOf_order54_heisenberg_mulAut_heisB (α : MulAut order54_Heisenberg) :
+    orderOf (α order54_heisB) = 3 := by
+  rw [MulEquiv.orderOf_eq α]
+  exact orderOf_order54_heisB
+
+theorem order54_heisenberg_mulAut_relation (α : MulAut order54_Heisenberg) :
+    α order54_heisA * α order54_heisB = α order54_heisC * α order54_heisB * α order54_heisA := by
+  calc
+    α order54_heisA * α order54_heisB = α (order54_heisA * order54_heisB) := by
+      rw [map_mul]
+    _ = α (order54_heisC * order54_heisB * order54_heisA) := by
+      rw [order54_heisA_mul_heisB]
+    _ = α order54_heisC * α order54_heisB * α order54_heisA := by
+      rw [map_mul, map_mul]
 
 /-- The exponent-`9` non-abelian kernel with trivial `C₂` action. -/
 abbrev order54_P2P0 : Type := order54_SemidirectP2P × order54_C2
