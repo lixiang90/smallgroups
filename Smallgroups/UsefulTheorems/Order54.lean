@@ -282,6 +282,79 @@ theorem order54_heisenbergNegBAut_heisC :
     order54_heisenbergNegBAut order54_heisC = order54_heisC⁻¹ := by
   decide +kernel
 
+/-- The Heisenberg automorphism swapping the two quotient generators. -/
+def order54_heisenbergSwapFun (x : order54_Heisenberg) : order54_Heisenberg :=
+  order54_heisB ^ x.a.val * order54_heisA ^ x.b.val *
+    order54_heisC ^ (-(x.c - x.a * x.b)).val
+
+def order54_heisenbergSwapAut : MulAut order54_Heisenberg where
+  toFun := order54_heisenbergSwapFun
+  invFun := order54_heisenbergSwapFun
+  left_inv x := by
+    cases x with
+    | mk a b c =>
+        fin_cases a <;> fin_cases b <;> fin_cases c <;> decide +kernel
+  right_inv x := by
+    cases x with
+    | mk a b c =>
+        fin_cases a <;> fin_cases b <;> fin_cases c <;> decide +kernel
+  map_mul' x y := by
+    cases x with
+    | mk xa xb xc =>
+        cases y with
+        | mk ya yb yc =>
+            fin_cases xa <;> fin_cases xb <;> fin_cases xc <;>
+            fin_cases ya <;> fin_cases yb <;> fin_cases yc <;> decide +kernel
+
+/-- The Heisenberg shear sending `A` to `A * B` and fixing `B`. -/
+def order54_heisenbergShearFun (s : ZMod 3) (x : order54_Heisenberg) :
+    order54_Heisenberg :=
+  (order54_heisA * order54_heisB ^ s.val) ^ x.a.val * order54_heisB ^ x.b.val *
+    order54_heisC ^ (x.c - x.a * x.b).val
+
+def order54_heisenbergShearAut : MulAut order54_Heisenberg where
+  toFun := order54_heisenbergShearFun 1
+  invFun := order54_heisenbergShearFun 2
+  left_inv x := by
+    cases x with
+    | mk a b c =>
+        fin_cases a <;> fin_cases b <;> fin_cases c <;> decide +kernel
+  right_inv x := by
+    cases x with
+    | mk a b c =>
+        fin_cases a <;> fin_cases b <;> fin_cases c <;> decide +kernel
+  map_mul' x y := by
+    cases x with
+    | mk xa xb xc =>
+        cases y with
+        | mk ya yb yc =>
+            fin_cases xa <;> fin_cases xb <;> fin_cases xc <;>
+            fin_cases ya <;> fin_cases yb <;> fin_cases yc <;> decide +kernel
+
+theorem order54_heisenbergSwapAut_heisA :
+    order54_heisenbergSwapAut order54_heisA = order54_heisB := by
+  decide +kernel
+
+theorem order54_heisenbergSwapAut_heisB :
+    order54_heisenbergSwapAut order54_heisB = order54_heisA := by
+  decide +kernel
+
+theorem order54_heisenbergSwapAut_heisC :
+    order54_heisenbergSwapAut order54_heisC = order54_heisC⁻¹ := by
+  decide +kernel
+
+theorem order54_heisenbergShearAut_heisA :
+    order54_heisenbergShearAut order54_heisA = order54_heisA * order54_heisB := by
+  decide +kernel
+
+theorem order54_heisenbergShearAut_heisB :
+    order54_heisenbergShearAut order54_heisB = order54_heisB := by
+  decide +kernel
+
+theorem order54_heisenbergShearAut_heisC :
+    order54_heisenbergShearAut order54_heisC = order54_heisC := by
+  decide +kernel
+
 /-- Automorphisms of the Heisenberg kernel are determined by the two quotient generators. -/
 theorem order54_heisenberg_mulAut_ext {α β : MulAut order54_Heisenberg}
     (hA : α order54_heisA = β order54_heisA)
