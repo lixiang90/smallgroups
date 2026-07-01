@@ -232,6 +232,22 @@ noncomputable abbrev order84_action {H : Type} [Group H] (χ : H →* (ZMod 7)ˣ
     H →* MulAut order84_C7 :=
   unitAutHom.comp χ
 
+theorem order84_unitAutHom_fixed_eq_one (u : (ZMod 7)ˣ) (hu : u ≠ 1) (x : order84_C7)
+    (h : unitAutHom u x = x) : x = 1 := by
+  haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+  rw [unitAutHom_apply] at h
+  have hm : (u : ZMod 7) * m = m := by
+    simpa using congrArg Multiplicative.toAdd h
+  have hm0 : m = 0 := by
+    by_contra hmne
+    have huval : (u : ZMod 7) = 1 := by
+      apply mul_right_cancel₀ hmne
+      simpa [one_mul] using hm
+    exact hu (Units.ext huval)
+  rw [hm0]
+  rfl
+
 noncomputable def order84_action_precomp_mulEquiv {H : Type} [Group H]
     (χ : H →* (ZMod 7)ˣ) (σ : H ≃* H) :
     SemidirectProduct order84_C7 H (order84_action (χ.comp σ.toMonoidHom)) ≃*
@@ -1267,6 +1283,21 @@ noncomputable abbrev order84_chiC3_three : CyclicRep 3 →* (ZMod 7)ˣ :=
 noncomputable abbrev order84_chiC3_three_inv : CyclicRep 3 →* (ZMod 7)ˣ :=
   powHom (p := 7) (q := 3) (order84_u6 ^ 4) (by decide)
 
+theorem order84_chiC3_three_eq_one_iff (x : CyclicRep 3) :
+    order84_chiC3_three x = 1 ↔ x = 1 := by
+  constructor
+  · intro h
+    obtain ⟨n, rfl⟩ := Multiplicative.ofAdd.surjective x
+    fin_cases n
+    · rfl
+    · exact False.elim ((by decide :
+        order84_chiC3_three (Multiplicative.ofAdd (1 : ZMod 3)) ≠ 1) h)
+    · exact False.elim ((by decide :
+        order84_chiC3_three (Multiplicative.ofAdd (2 : ZMod 3)) ≠ 1) h)
+  · intro h
+    rw [h]
+    simp
+
 @[simp]
 theorem order84_powHom_zmod3_gen (c : (ZMod 7)ˣ) (hc : c ^ 3 = 1) :
     powHom (p := 7) (q := 3) c hc (Multiplicative.ofAdd (1 : ZMod 3)) = c := by
@@ -1354,6 +1385,14 @@ noncomputable abbrev order84_chiA4_three : order84_HE →* (ZMod 7)ˣ :=
 
 noncomputable abbrev order84_chiA4_three_inv : order84_HE →* (ZMod 7)ˣ :=
   order84_chiC3_three_inv.comp (order84_A4QuotEquiv.toMonoidHom.comp order84_A4QuotMk)
+
+theorem order84_chiA4_three_eq_one_iff (g : order84_HE) :
+    order84_chiA4_three g = 1 ↔ g ∈ alternatingGroup.kleinFour (Fin 4) := by
+  change order84_chiC3_three (order84_A4QuotEquiv (order84_A4QuotMk g)) = 1 ↔
+    g ∈ alternatingGroup.kleinFour (Fin 4)
+  rw [order84_chiC3_three_eq_one_iff]
+  rw [MulEquiv.map_eq_one_iff]
+  rw [order84_A4QuotMk, QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
 
 noncomputable def order84_A4_conjSwap : order84_HE ≃* order84_HE where
   toFun g := by
@@ -1552,6 +1591,132 @@ theorem order84_a4_action_semidirect_cases_two (φ : order84_HE →* MulAut orde
   · right
     obtain ⟨e⟩ := hφ
     exact ⟨e.trans order84_a4_three_inv_equiv_three⟩
+
+theorem order84_a4_three_center_eq_bot :
+    Subgroup.center order84_a4_three = ⊥ := by
+  rw [Subgroup.eq_bot_iff_forall]
+  intro z hz
+  have hzright_one : z.right = 1 := by
+    have hzright_center : z.right ∈ Subgroup.center order84_HE := by
+      rw [Subgroup.mem_center_iff]
+      intro k
+      have hcomm := (Subgroup.mem_center_iff.mp hz) (SemidirectProduct.inr k)
+      have hright := congrArg SemidirectProduct.right hcomm
+      rw [SemidirectProduct.mul_right, SemidirectProduct.mul_right,
+        SemidirectProduct.right_inr] at hright
+      simpa using hright
+    have hcenter : Subgroup.center order84_HE = ⊥ := by
+      simpa [order84_HE, fourP_A4] using
+        alternatingGroup.center_eq_bot (α := Fin 4) (by simp : 4 ≤ Nat.card (Fin 4))
+    have : z.right ∈ (⊥ : Subgroup order84_HE) := by
+      simpa [hcenter] using hzright_center
+    simpa using (Subgroup.mem_bot.mp this)
+  let K : Subgroup order84_HE := alternatingGroup.kleinFour (Fin 4)
+  let q : order84_A4Quot := order84_A4QuotEquiv.symm (Multiplicative.ofAdd (1 : ZMod 3))
+  obtain ⟨k, hk⟩ := QuotientGroup.mk'_surjective K q
+  have hχk : order84_chiA4_three k ≠ 1 := by
+    change order84_chiC3_three (order84_A4QuotEquiv ((QuotientGroup.mk' K) k)) ≠ 1
+    have hq : order84_A4QuotEquiv ((QuotientGroup.mk' K) k) =
+        Multiplicative.ofAdd (1 : ZMod 3) := by
+      rw [hk]
+      simp [q]
+    rw [hq]
+    decide
+  have hfixed : unitAutHom (order84_chiA4_three k) z.left = z.left := by
+    have hcomm := (Subgroup.mem_center_iff.mp hz) (SemidirectProduct.inr k)
+    have hleft := congrArg SemidirectProduct.left hcomm
+    rw [SemidirectProduct.mul_left, SemidirectProduct.mul_left,
+      SemidirectProduct.left_inr, SemidirectProduct.right_inr, hzright_one] at hleft
+    simpa [order84_action] using hleft
+  have hzleft_one : z.left = 1 := order84_unitAutHom_fixed_eq_one _ hχk z.left hfixed
+  apply SemidirectProduct.ext <;> simp [hzleft_one, hzright_one]
+
+theorem card_center_order84_a4_three :
+    Nat.card (Subgroup.center order84_a4_three) = 1 := by
+  rw [order84_a4_three_center_eq_bot]
+  simp
+
+theorem order84_a4_mem_kleinFour_sq {h : order84_HE}
+    (hh : h ∈ alternatingGroup.kleinFour (Fin 4)) : h ^ 2 = 1 := by
+  let K : Subgroup order84_HE := alternatingGroup.kleinFour (Fin 4)
+  have hpow : (⟨h, hh⟩ : K) ^ Monoid.exponent K = 1 := Monoid.pow_exponent_eq_one _
+  have hKexp : Monoid.exponent K = 2 := by
+    simpa [K, order84_HE, fourP_A4] using
+      alternatingGroup.exponent_kleinFour_of_card_eq_four (α := Fin 4) (by simp)
+  rw [hKexp] at hpow
+  exact congrArg Subtype.val hpow
+
+theorem order84_a4_not_mem_kleinFour_cube {h : order84_HE}
+    (hh : h ∉ alternatingGroup.kleinFour (Fin 4)) : h ^ 3 = 1 := by
+  rcases fourP_A4_pow h with h2 | h3
+  · exact False.elim (hh (order84_a4_order_two_mem_kleinFour h h2))
+  · exact h3
+
+theorem order84_c7_pow_six_eq_one_iff (n : order84_C7) :
+    n ^ 6 = 1 ↔ n = 1 := by
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective n
+  fin_cases m <;> decide
+
+theorem order84_c7_geom_three_eq_one (u : (ZMod 7)ˣ) (hu : u ^ 3 = 1)
+    (hu1 : u ≠ 1) (n : order84_C7) :
+    n * unitAutHom u n * unitAutHom (u ^ 2) n = 1 := by
+  rcases order84_unit_cube_eq_one_cases u hu with h | h | h
+  · exact False.elim (hu1 h)
+  · rw [h]
+    obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective n
+    fin_cases m <;> decide
+  · rw [h]
+    obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective n
+    fin_cases m <;> decide
+
+theorem order84_a4_three_left_pow_six_of_mem_kleinFour
+    (n : order84_C7) {h : order84_HE} (hh : h ∈ alternatingGroup.kleinFour (Fin 4)) :
+    ((⟨n, h⟩ : order84_a4_three) ^ 6).left = n ^ 6 := by
+  have hχraw : order84_chiC3_three (order84_A4QuotEquiv (h : order84_A4Quot)) = 1 := by
+    have hχ : order84_chiA4_three h = 1 := (order84_chiA4_three_eq_one_iff h).mpr hh
+    simpa [order84_chiA4_three, order84_A4QuotMk] using hχ
+  simp [pow_succ, SemidirectProduct.mul_left, order84_action, hχraw, mul_assoc]
+
+theorem order84_a4_three_pow_six_iff_of_mem_kleinFour
+    (n : order84_C7) {h : order84_HE} (hh : h ∈ alternatingGroup.kleinFour (Fin 4)) :
+    ((⟨n, h⟩ : order84_a4_three) ^ 6 = 1 ↔ n = 1) := by
+  constructor
+  · intro hp
+    have hleft := congrArg SemidirectProduct.left hp
+    rw [order84_a4_three_left_pow_six_of_mem_kleinFour n hh] at hleft
+    simpa using (order84_c7_pow_six_eq_one_iff n).mp hleft
+  · intro hn
+    rw [hn]
+    apply SemidirectProduct.ext
+    · simp [pow_succ, SemidirectProduct.mul_left]
+    · have h2 : h ^ 2 = 1 := order84_a4_mem_kleinFour_sq hh
+      have h6 : h ^ 6 = 1 := by
+        calc
+          h ^ 6 = (h ^ 2) ^ 3 := by group
+          _ = 1 := by rw [h2]; simp
+      simpa [pow_succ, SemidirectProduct.mul_right, mul_assoc] using h6
+
+theorem order84_a4_three_pow_three_of_not_mem_kleinFour
+    (n : order84_C7) {h : order84_HE} (hh : h ∉ alternatingGroup.kleinFour (Fin 4)) :
+    (⟨n, h⟩ : order84_a4_three) ^ 3 = 1 := by
+  have h3 : h ^ 3 = 1 := order84_a4_not_mem_kleinFour_cube hh
+  have hχne : order84_chiA4_three h ≠ 1 := by
+    intro hχ
+    exact hh ((order84_chiA4_three_eq_one_iff h).mp hχ)
+  have hχ3 : order84_chiA4_three h ^ 3 = 1 := by
+    rw [← map_pow, h3, map_one]
+  apply SemidirectProduct.ext
+  · rw [show ((⟨n, h⟩ : order84_a4_three) ^ 3).left =
+        n * (order84_action order84_chiA4_three h) n *
+          (order84_action order84_chiA4_three (h * h)) n by
+      simp [pow_succ, SemidirectProduct.mul_left, mul_assoc]]
+    change n * unitAutHom (order84_chiA4_three h) n *
+        unitAutHom (order84_chiA4_three (h * h)) n = 1
+    have hχ2 : order84_chiA4_three (h * h) = order84_chiA4_three h ^ 2 := by
+      rw [map_mul, pow_two]
+    rw [hχ2]
+    exact order84_c7_geom_three_eq_one (order84_chiA4_three h) hχ3 hχne n
+  · simpa [pow_succ, SemidirectProduct.mul_right, mul_assoc] using h3
 
 /-- Every group of order `84` is one of five standard semidirect-product action problems,
 according to the order-`12` complement. -/
