@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.P3Group
+import Smallgroups.UsefulTheorems.Order2PSqElem
 import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Mathlib.GroupTheory.Sylow
@@ -33,8 +34,11 @@ variable {G : Type*} [Group G]
 /-- The complement in the order-`54` semidirect-product reduction. -/
 abbrev order54_C2 : Type := CyclicRep 2
 
+/-- `C₅₄`. -/
+abbrev order54_C54 : Type := CyclicRep 54
+
 /-- `C₂₇`. -/
-abbrev order54_C27 : Type := Multiplicative (P3Group.CyclicP3 3)
+abbrev order54_C27 : Type := CyclicRep 27
 
 /-- `C₉ × C₃`. -/
 abbrev order54_C9C3 : Type :=
@@ -50,9 +54,15 @@ abbrev order54_Heisenberg : Type := P3Group.HeisenbergGroup 3
 /-- The non-abelian exponent-`9` group of order `27`. -/
 abbrev order54_SemidirectP2P : Type := P3Group.SemidirectP2P 3
 
+/-- The dihedral group of order `54`. -/
+abbrev order54_D27 : Type := DihedralGroup 27
+
 /-! ### Cardinalities of the standard factors -/
 
 theorem card_order54_C2 : Nat.card order54_C2 = 2 :=
+  card_cyclicRep (by norm_num)
+
+theorem card_order54_C54 : Nat.card order54_C54 = 54 :=
   card_cyclicRep (by norm_num)
 
 theorem card_order54_C27 : Nat.card order54_C27 = 27 := by
@@ -75,6 +85,9 @@ theorem card_order54_SemidirectP2P : Nat.card order54_SemidirectP2P = 27 := by
   haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
   simpa using P3Group.SemidirectP2P.card_semidirectP2P 3
 
+theorem card_order54_D27 : Nat.card order54_D27 = 54 := by
+  rw [DihedralGroup.nat_card]
+
 theorem card_order54_semidirect_C27 (φ : order54_C2 →* MulAut order54_C27) :
     Nat.card (SemidirectProduct order54_C27 order54_C2 φ) = 54 := by
   rw [SemidirectProduct.card, card_order54_C27, card_order54_C2]
@@ -95,6 +108,151 @@ theorem card_order54_semidirect_SemidirectP2P
     (φ : order54_C2 →* MulAut order54_SemidirectP2P) :
     Nat.card (SemidirectProduct order54_SemidirectP2P order54_C2 φ) = 54 := by
   rw [SemidirectProduct.card, card_order54_SemidirectP2P, card_order54_C2]
+
+/-! ### The cyclic kernel case `C₂₇ ⋊ C₂` -/
+
+theorem square_eq_one_zmod_27 (k : ZMod 27) (h : k ^ 2 = 1) : k = 1 ∨ k = -1 := by
+  haveI : Fact (1 < 27) := ⟨by norm_num⟩
+  have hklt : k.val < 27 := k.val_lt
+  have hcast : ((k.val * k.val : ℕ) : ZMod 27) = 1 := by
+    calc
+      ((k.val * k.val : ℕ) : ZMod 27) = ((k.val : ZMod 27) * (k.val : ZMod 27)) := by
+        norm_num
+      _ = k * k := by rw [ZMod.natCast_zmod_val]
+      _ = k ^ 2 := by ring
+      _ = 1 := h
+  have hmod : k.val * k.val ≡ 1 [MOD 27] := by
+    exact (ZMod.natCast_eq_natCast_iff (k.val * k.val) 1 27).mp hcast
+  unfold Nat.ModEq at hmod
+  interval_cases hk : k.val <;> try exact False.elim (by omega)
+  · left
+    apply ZMod.val_injective 27
+    rw [hk, ZMod.val_one]
+  · right
+    apply ZMod.val_injective 27
+    rw [hk]
+    norm_num
+
+private lemma order54_c27_pow_gen (m : ℕ) :
+    ((Multiplicative.ofAdd 1 : order54_C27) ^ m) =
+      Multiplicative.ofAdd (m : ZMod 27) := by
+  induction m with
+  | zero => simp
+  | succ m ih =>
+      rw [pow_succ, ih]
+      simp
+
+private lemma order54_c27_cyclicRep_pow_gen (x : order54_C27) :
+    x = ((Multiplicative.ofAdd 1 : order54_C27) ^ (Multiplicative.toAdd x).val) := by
+  let v := (Multiplicative.toAdd x).val
+  calc
+    x = Multiplicative.ofAdd (Multiplicative.toAdd x) := rfl
+    _ = Multiplicative.ofAdd ((v : ZMod 27)) := by
+      rw [← ZMod.natCast_zmod_val (Multiplicative.toAdd x)]
+    _ = ((Multiplicative.ofAdd 1 : order54_C27) ^ v) := by
+      rw [← order54_c27_pow_gen v]
+
+theorem order54_c27_mulAut_involution (α : MulAut order54_C27) (hα : α ^ 2 = 1) :
+    α = 1 ∨ α = invAut order54_C27 := by
+  let g : order54_C27 := Multiplicative.ofAdd 1
+  let k := (Multiplicative.toAdd (α g)).val
+  have hαg : α g = g ^ k := by rw [order54_c27_cyclicRep_pow_gen (α g)]
+  have h_sq_eq : (α ^ 2) g = g := by rw [hα, MulAut.one_apply]
+  have h_pow_sq : (α ^ 2) g = g ^ (k * k) := by
+    calc
+      (α ^ 2) g = α (α g) := by simp [sq]
+      _ = α (g ^ k) := by rw [hαg]
+      _ = (α g) ^ k := map_pow _ _ _
+      _ = (g ^ k) ^ k := by rw [hαg]
+      _ = g ^ (k * k) := by rw [← pow_mul, mul_comm]
+  rw [h_pow_sq] at h_sq_eq
+  rw [order54_c27_pow_gen (k * k), ← pow_one g, order54_c27_pow_gen 1] at h_sq_eq
+  have h_sq_mod : ((k : ℕ) : ZMod 27) ^ 2 = 1 := by
+    have := congrArg Multiplicative.toAdd h_sq_eq
+    simpa [Nat.cast_mul, sq] using this
+  rcases square_eq_one_zmod_27 (k : ZMod 27) h_sq_mod with hk | hk
+  · have hαg_one : α g = g := by
+      rw [hαg, order54_c27_pow_gen, hk]
+    left
+    ext x
+    have hx : x = g ^ (Multiplicative.toAdd x).val := order54_c27_cyclicRep_pow_gen x
+    rw [hx]
+    simp [hαg_one]
+  · have hαg_inv : α g = invAut order54_C27 g := by
+      rw [hαg, invAut_apply, order54_c27_pow_gen, hk]
+      dsimp [g]
+    right
+    ext x
+    have hx : x = g ^ (Multiplicative.toAdd x).val := order54_c27_cyclicRep_pow_gen x
+    rw [hx]
+    simp [hαg_inv]
+
+theorem order54_c27_action_cases (φ : order54_C2 →* MulAut order54_C27) :
+    φ = 1 ∨ φ = invActionHom order54_C27 := by
+  let α := φ (Multiplicative.ofAdd 1)
+  have hα2 : α ^ 2 = 1 := by
+    have h_order_two : (Multiplicative.ofAdd (1 : ZMod 2) : order54_C2) ^ 2 = 1 := by
+      decide
+    calc
+      α ^ 2 = (φ (Multiplicative.ofAdd 1)) ^ 2 := rfl
+      _ = φ ((Multiplicative.ofAdd (1 : ZMod 2)) ^ 2) := by rw [map_pow]
+      _ = φ 1 := by rw [h_order_two]
+      _ = 1 := map_one _
+  rcases order54_c27_mulAut_involution α hα2 with hα | hα
+  · left
+    exact MonoidHom.ext fun h => MulEquiv.ext fun x => by
+      rcases multiplicative_zmod_two_cases h with rfl | rfl
+      · simp
+      · dsimp [α] at hα
+        rw [hα]
+        rfl
+  · right
+    exact MonoidHom.ext fun h => MulEquiv.ext fun x => by
+      rcases multiplicative_zmod_two_cases h with rfl | rfl
+      · simp
+      · dsimp [α] at hα
+        rw [hα, invActionHom_gen]
+
+noncomputable def order54_c27_trivial_prod_iso :
+    order54_C27 × order54_C2 ≃* order54_C54 := by
+  have hcop : (27 : ℕ).Coprime 2 := by norm_num
+  let e_crt : ZMod (27 * 2) ≃+* ZMod 27 × ZMod 2 := ZMod.chineseRemainder hcop
+  let e_add : Multiplicative (ZMod (27 * 2)) ≃* Multiplicative (ZMod 27 × ZMod 2) :=
+    AddEquiv.toMultiplicative e_crt.toAddEquiv
+  let e_prod : Multiplicative (ZMod 27 × ZMod 2) ≃*
+      Multiplicative (ZMod 27) × Multiplicative (ZMod 2) :=
+    MulEquiv.prodMultiplicative (ZMod 27) (ZMod 2)
+  let e_mul : order54_C54 ≃* Multiplicative (ZMod (27 * 2)) := by
+    refine AddEquiv.toMultiplicative (ZMod.ringEquivCongr ?_).toAddEquiv
+    norm_num
+  exact (e_mul.trans (e_add.trans e_prod)).symm
+
+noncomputable def order54_c27_trivial_semidirect_iso :
+    SemidirectProduct order54_C27 order54_C2
+      (1 : order54_C2 →* MulAut order54_C27) ≃* order54_C54 := by
+  let e : SemidirectProduct order54_C27 order54_C2
+      (1 : order54_C2 →* MulAut order54_C27) ≃* order54_C27 × order54_C2 :=
+    { toEquiv := SemidirectProduct.equivProd
+      map_mul' := fun x y => by
+        rcases x with ⟨n₁, h₁⟩
+        rcases y with ⟨n₂, h₂⟩
+        simp }
+  exact e.trans order54_c27_trivial_prod_iso
+
+theorem order54_c27_inv_semidirect_iso :
+    Nonempty (SemidirectProduct order54_C27 order54_C2
+      (invActionHom order54_C27) ≃* order54_D27) := by
+  haveI : NeZero 27 := ⟨by norm_num⟩
+  exact ⟨genDihedralCyclicIso 27⟩
+
+theorem order54_c27_semidirect_cases (φ : order54_C2 →* MulAut order54_C27) :
+    Nonempty (SemidirectProduct order54_C27 order54_C2 φ ≃* order54_C54) ∨
+      Nonempty (SemidirectProduct order54_C27 order54_C2 φ ≃* order54_D27) := by
+  rcases order54_c27_action_cases φ with hφ | hφ
+  · subst hφ
+    exact Or.inl ⟨order54_c27_trivial_semidirect_iso⟩
+  · subst hφ
+    exact Or.inr order54_c27_inv_semidirect_iso
 
 /-! ### Sylow-3 normality and semidirect-product reduction -/
 
