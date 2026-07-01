@@ -140,6 +140,21 @@ theorem order84_unit_cases (u : (ZMod 7)ˣ) :
       u = order84_u6 ^ 4 ∨ u = order84_u6 ^ 5 := by
   decide +revert
 
+theorem order84_u6_pow3_pow3_ne_one : (order84_u6 ^ 3) ^ 3 ≠ (1 : (ZMod 7)ˣ) := by
+  decide
+
+theorem order84_u6_pow4_ne_one : order84_u6 ^ 4 ≠ (1 : (ZMod 7)ˣ) := by
+  decide
+
+theorem order84_u6_pow2_pow4_ne_one : (order84_u6 ^ 2) ^ 4 ≠ (1 : (ZMod 7)ˣ) := by
+  decide
+
+theorem order84_u6_pow4_pow4_ne_one : (order84_u6 ^ 4) ^ 4 ≠ (1 : (ZMod 7)ˣ) := by
+  decide
+
+theorem order84_u6_pow5_pow4_ne_one : (order84_u6 ^ 5) ^ 4 ≠ (1 : (ZMod 7)ˣ) := by
+  decide
+
 theorem order84_unit_sq_eq_one_cases (u : (ZMod 7)ˣ) (hu : u ^ 2 = 1) :
     u = 1 ∨ u = order84_u6 ^ 3 := by
   rcases order84_unit_cases u with h | h | h | h | h | h
@@ -171,6 +186,12 @@ theorem order84_mulAut_sq_eq_one_cases (α : MulAut order84_C7) (hα : α ^ 2 = 
     exact map_one (unitAutHom (p := 7))
   · right
     rw [hu, h]
+
+theorem order84_mulAut_comm (α β : MulAut order84_C7) : α * β = β * α := by
+  haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  obtain ⟨u, hu⟩ := exists_unitAutHom_eq (p := 7) α
+  obtain ⟨v, hv⟩ := exists_unitAutHom_eq (p := 7) β
+  rw [hu, hv, ← map_mul, ← map_mul, mul_comm]
 
 /-- Turn a unit-valued character into the corresponding action on `C₇`. -/
 noncomputable abbrev order84_action {H : Type} [Group H] (χ : H →* (ZMod 7)ˣ) :
@@ -583,6 +604,112 @@ theorem order84_c2c6_action_cases (φ : order84_HB →* MulAut order84_C7) :
   · right; right; right; right; right; right; right; right; right; right; right
     apply order84_c2c6_hom_ext <;>
       simp [g2, g6, hu6, h2, h6]
+
+/-! ### `(C₃ ⋊ C₄)`-complement actions -/
+
+noncomputable abbrev order84_chiHC_two : order84_HC →* (ZMod 7)ˣ :=
+  (powHom (p := 7) (q := 4) (order84_u6 ^ 3) (by decide)).comp
+    SemidirectProduct.rightHom
+
+@[simp]
+theorem order84_powHom_zmod4_gen (c : (ZMod 7)ˣ) (hc : c ^ 4 = 1) :
+    powHom (p := 7) (q := 4) c hc (Multiplicative.ofAdd (1 : ZMod 4)) = c := by
+  change c ^ (1 : ZMod 4).val = c
+  haveI : Fact (1 < 4) := ⟨by norm_num⟩
+  rw [ZMod.val_one]
+  simp
+
+/-- Homomorphisms out of `C₃ ⋊ C₄` are determined by the two standard generators. -/
+theorem order84_hc_hom_ext {M : Type} [Group M] {χ ψ : order84_HC →* M}
+    (h3 : χ (SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 3))) =
+      ψ (SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 3))))
+    (h4 : χ (SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4))) =
+      ψ (SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4)))) :
+    χ = ψ := by
+  apply SemidirectProduct.hom_ext
+  · apply MonoidHom.ext
+    intro x
+    obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x
+    have hx : Multiplicative.ofAdd a = (Multiplicative.ofAdd (1 : ZMod 3)) ^ a.val := by
+      calc
+        Multiplicative.ofAdd a = Multiplicative.ofAdd ((a.val : ZMod 3)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = Multiplicative.ofAdd (a.val • (1 : ZMod 3)) := by simp
+        _ = (Multiplicative.ofAdd (1 : ZMod 3)) ^ a.val := by rw [ofAdd_nsmul]
+    rw [hx, map_pow, map_pow]
+    simpa using congrArg (fun y : M => y ^ a.val) h3
+  · apply MonoidHom.ext
+    intro x
+    obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x
+    have hx : Multiplicative.ofAdd a = (Multiplicative.ofAdd (1 : ZMod 4)) ^ a.val := by
+      calc
+        Multiplicative.ofAdd a = Multiplicative.ofAdd ((a.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = Multiplicative.ofAdd (a.val • (1 : ZMod 4)) := by simp
+        _ = (Multiplicative.ofAdd (1 : ZMod 4)) ^ a.val := by rw [ofAdd_nsmul]
+    rw [hx, map_pow, map_pow]
+    simpa using congrArg (fun y : M => y ^ a.val) h4
+
+theorem order84_hc_inl_generator_maps_trivially
+    (φ : order84_HC →* MulAut order84_C7) :
+    φ (SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 3))) = 1 := by
+  haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  let a : order84_HC := SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 3))
+  let b : order84_HC := SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4))
+  have hrel : b * a * b⁻¹ = a⁻¹ := by decide
+  have hφrel : φ b * φ a * (φ b)⁻¹ = (φ a)⁻¹ := by
+    simpa [a, b, map_mul] using congrArg (fun x => φ x) hrel
+  have hleft : φ b * φ a * (φ b)⁻¹ = φ a := by
+    rw [order84_mulAut_comm (φ b) (φ a)]
+    group
+  have ha_inv : φ a = (φ a)⁻¹ := hleft.symm.trans hφrel
+  have ha2 : (φ a) ^ 2 = 1 := by
+    rw [pow_two]
+    nth_rewrite 2 [ha_inv]
+    exact mul_inv_cancel _
+  rcases order84_mulAut_sq_eq_one_cases (φ a) ha2 with ha | ha
+  · simpa [a] using ha
+  · have ha3 : (φ a) ^ 3 = 1 := by
+      rw [← map_pow, show a ^ 3 = 1 by decide, map_one]
+    rw [ha] at ha3
+    have hunit : (order84_u6 ^ 3) ^ 3 = (1 : (ZMod 7)ˣ) := by
+      apply unitAutHom_injective (p := 7)
+      rw [map_pow, map_one]
+      exact ha3
+    exact False.elim (order84_u6_pow3_pow3_ne_one hunit)
+
+/-- Actions `(C₃ ⋊ C₄) → Aut(C₇)` are either trivial or factor through the order-`2`
+quotient of the `C₄` factor. -/
+theorem order84_hc_action_cases (φ : order84_HC →* MulAut order84_C7) :
+    φ = 1 ∨ φ = order84_action order84_chiHC_two := by
+  haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  let a : order84_HC := SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 3))
+  let b : order84_HC := SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4))
+  have ha : φ a = 1 := by
+    simpa [a] using order84_hc_inl_generator_maps_trivially φ
+  obtain ⟨u, hu⟩ := exists_unitAutHom_eq (p := 7) (φ b)
+  have hu4 : u ^ 4 = 1 := by
+    apply unitAutHom_injective (p := 7)
+    rw [map_pow, ← hu, ← map_pow, show b ^ 4 = 1 by decide, map_one, map_one]
+  rcases order84_unit_cases u with h | h | h | h | h | h
+  · left
+    apply order84_hc_hom_ext <;>
+      simp [a, b, ha, hu, h]
+  · exfalso
+    have hbad : order84_u6 ^ 4 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu4
+    exact order84_u6_pow4_ne_one hbad
+  · exfalso
+    have hbad : (order84_u6 ^ 2) ^ 4 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu4
+    exact order84_u6_pow2_pow4_ne_one hbad
+  · right
+    apply order84_hc_hom_ext <;>
+      simp [a, b, ha, hu, h]
+  · exfalso
+    have hbad : (order84_u6 ^ 4) ^ 4 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu4
+    exact order84_u6_pow4_pow4_ne_one hbad
+  · exfalso
+    have hbad : (order84_u6 ^ 5) ^ 4 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu4
+    exact order84_u6_pow5_pow4_ne_one hbad
 
 /-- Every group of order `84` is one of five standard semidirect-product action problems,
 according to the order-`12` complement. -/
