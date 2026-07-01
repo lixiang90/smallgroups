@@ -96,6 +96,35 @@ noncomputable def order54_actionOfInvolution {N : Type*} [Group N]
   MonoidHom.mk' (fun x => α ^ (Multiplicative.toAdd x).val)
     (fun x y => pow_val_add hα (Multiplicative.toAdd x) (Multiplicative.toAdd y))
 
+theorem order54_actionOfInvolution_ofAdd_one {N : Type*} [Group N]
+    (α : MulAut N) (hα : α ^ 2 = 1) :
+    order54_actionOfInvolution α hα (Multiplicative.ofAdd (1 : ZMod 2)) = α := by
+  change α ^ (1 : ZMod 2).val = α
+  rw [show (1 : ZMod 2).val = 1 by decide, pow_one]
+
+/-- Conjugate involutions of the kernel give isomorphic `C₂` semidirect products. -/
+theorem order54_semidirect_conj_action_iso {N : Type*} [Group N]
+    (α β θ : MulAut N) (hα : α ^ 2 = 1) (hβ : β ^ 2 = 1)
+    (hconj : α = θ * β * θ⁻¹) :
+    Nonempty (SemidirectProduct N order54_C2 (order54_actionOfInvolution β hβ) ≃*
+      SemidirectProduct N order54_C2 (order54_actionOfInvolution α hα)) := by
+  let e0 := SemidirectProduct.congr' θ (MulEquiv.refl order54_C2)
+    (φ₁ := order54_actionOfInvolution β hβ)
+  have haction :
+      ((MulAut.congr θ).toMonoidHom.comp
+        ((order54_actionOfInvolution β hβ).comp (MulEquiv.refl order54_C2).symm.toMonoidHom)) =
+        order54_actionOfInvolution α hα := by
+    ext h x
+    fin_cases h
+    · change θ ((β ^ 0) (θ.symm x)) = (α ^ 0) x
+      simp
+    · change θ ((β ^ 1) (θ.symm x)) = (α ^ 1) x
+      simp only [pow_one]
+      change (MulAut.congr θ) β x = α x
+      rw [hconj]
+      simp [MulAut.congr]
+  exact ⟨e0.trans (semidirectProductCongr_eq haction)⟩
+
 /-- The Heisenberg automorphism induced by `-I` on the central quotient. -/
 def order54_heisenbergNegBothAut : MulAut order54_Heisenberg where
   toFun x := ⟨-x.a, -x.b, x.c⟩
@@ -179,6 +208,51 @@ abbrev order54_P2P0 : Type := order54_SemidirectP2P × order54_C2
 /-- The exponent-`9` non-abelian kernel with the cyclic direction inverted. -/
 abbrev order54_P2P1 : Type :=
   SemidirectProduct order54_SemidirectP2P order54_C2 order54_semidirectP2PNegAAction
+
+/-- The order-`9` generator in the exponent-`9` non-abelian kernel. -/
+abbrev order54_p2pA : order54_SemidirectP2P := ⟨1, 0⟩
+
+/-- The order-`3` generator in the exponent-`9` non-abelian kernel. -/
+abbrev order54_p2pB : order54_SemidirectP2P := ⟨0, 1⟩
+
+/-- Every element of `SemidirectP2P 3` has the normal form `A^i B^j`. -/
+theorem order54_semidirectP2P_elem_decomp (x : order54_SemidirectP2P) :
+    x = order54_p2pA ^ x.a.val * order54_p2pB ^ x.b.val := by
+  cases x with
+  | mk a b =>
+      fin_cases a <;> fin_cases b <;> decide +kernel
+
+/-- Automorphisms of `SemidirectP2P 3` are determined by the two standard generators. -/
+theorem order54_semidirectP2P_mulAut_ext {α β : MulAut order54_SemidirectP2P}
+    (hA : α order54_p2pA = β order54_p2pA)
+    (hB : α order54_p2pB = β order54_p2pB) : α = β := by
+  apply MulEquiv.ext
+  intro x
+  calc
+    α x = α (order54_p2pA ^ x.a.val * order54_p2pB ^ x.b.val) := by
+      rw [← order54_semidirectP2P_elem_decomp x]
+    _ = β (order54_p2pA ^ x.a.val * order54_p2pB ^ x.b.val) := by
+      rw [map_mul, map_mul, map_pow, map_pow, map_pow, map_pow, hA, hB]
+    _ = β x := by
+      rw [← order54_semidirectP2P_elem_decomp x]
+
+noncomputable instance order54_semidirectP2P_mulAut_decidableEq :
+    DecidableEq (MulAut order54_SemidirectP2P) := fun α β =>
+  if hA : α order54_p2pA = β order54_p2pA then
+    if hB : α order54_p2pB = β order54_p2pB then
+      isTrue (order54_semidirectP2P_mulAut_ext hA hB)
+    else
+      isFalse (fun hαβ => hB (by rw [hαβ]))
+  else
+    isFalse (fun hαβ => hA (by rw [hαβ]))
+
+theorem order54_semidirectP2PNegAAut_p2pA :
+    order54_semidirectP2PNegAAut order54_p2pA = order54_p2pA⁻¹ := by
+  decide +kernel
+
+theorem order54_semidirectP2PNegAAut_p2pB :
+    order54_semidirectP2PNegAAut order54_p2pB = order54_p2pB := by
+  decide +kernel
 
 /-! ### Cardinalities of the standard factors -/
 
