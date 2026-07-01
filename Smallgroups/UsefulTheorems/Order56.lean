@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order88
+import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Card
 
 /-!
 # First reductions for groups of order 56
@@ -681,25 +682,703 @@ theorem order56_card_aut_c8 : Nat.card (MulAut order56_C8) = 4 := by
   rw [← Fintype.card_congr e]
   decide +kernel
 
-set_option linter.style.nativeDecide false in
+/-- The natural lift `ZMod 2 → ZMod 4` used to write endomorphisms of `C₄ × C₂`. -/
+abbrev order56_zmod2To4 (b : ZMod 2) : ZMod 4 := (b.val : ZMod 4)
+
+/-- The natural reduction `ZMod 4 → ZMod 2` used to write endomorphisms of `C₄ × C₂`. -/
+abbrev order56_zmod4To2 (a : ZMod 4) : ZMod 2 := (a.val : ZMod 2)
+
+abbrev order56_c4c2_e1 : order56_C4C2 := (Multiplicative.ofAdd (1 : ZMod 4), 1)
+
+abbrev order56_c4c2_e2 : order56_C4C2 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+
+/--
+The automorphism of `C₄ × C₂` with parameters
+`u : (ZMod 4)ˣ`, `t : ZMod 2`, and `w : ZMod 2`.
+
+It sends the standard generators to `(u, t)` and `(2w, 1)`.
+-/
+def order56_c4c2Map (u : (ZMod 4)ˣ) (t w : ZMod 2)
+    (x : order56_C4C2) : order56_C4C2 :=
+  (Multiplicative.ofAdd
+      ((u : ZMod 4) * x.1.toAdd +
+        (2 : ZMod 4) * order56_zmod2To4 w * order56_zmod2To4 x.2.toAdd),
+    Multiplicative.ofAdd (order56_zmod4To2 x.1.toAdd * t + x.2.toAdd))
+
+def order56_c4c2Inv (u : (ZMod 4)ˣ) (t w : ZMod 2)
+    (y : order56_C4C2) : order56_C4C2 :=
+  let b : ZMod 2 := y.2.toAdd - order56_zmod4To2 y.1.toAdd * t
+  (Multiplicative.ofAdd
+      ((↑u⁻¹ : ZMod 4) *
+        (y.1.toAdd - (2 : ZMod 4) * order56_zmod2To4 w * order56_zmod2To4 b)),
+    Multiplicative.ofAdd b)
+
+noncomputable def order56_c4c2Aut (u : (ZMod 4)ˣ) (t w : ZMod 2) :
+    MulAut order56_C4C2 where
+  toFun := order56_c4c2Map u t w
+  invFun := order56_c4c2Inv u t w
+  left_inv := by
+    intro x
+    rcases x with ⟨a, b⟩
+    fin_cases u <;> fin_cases t <;> fin_cases w <;> fin_cases a <;> fin_cases b <;>
+      decide
+  right_inv := by
+    intro x
+    rcases x with ⟨a, b⟩
+    fin_cases u <;> fin_cases t <;> fin_cases w <;> fin_cases a <;> fin_cases b <;>
+      decide
+  map_mul' := by
+    intro x y
+    rcases x with ⟨a, b⟩
+    rcases y with ⟨c, d⟩
+    fin_cases u <;> fin_cases t <;> fin_cases w <;>
+      fin_cases a <;> fin_cases b <;> fin_cases c <;> fin_cases d <;> decide
+
+/-- Homomorphisms out of `C₄ × C₂` are determined by the two standard generators. -/
+theorem order56_c4c2_hom_ext {M : Type} [Group M] {χ ψ : order56_C4C2 →* M}
+    (h1 : χ order56_c4c2_e1 = ψ order56_c4c2_e1)
+    (h2 : χ order56_c4c2_e2 = ψ order56_c4c2_e2) : χ = ψ := by
+  apply MonoidHom.ext
+  rintro ⟨x4, x2⟩
+  obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x4
+  obtain ⟨b, rfl⟩ := Multiplicative.ofAdd.surjective x2
+  have ha : Multiplicative.ofAdd a = (Multiplicative.ofAdd (1 : ZMod 4)) ^ a.val := by
+    calc
+      Multiplicative.ofAdd a = Multiplicative.ofAdd ((a.val : ZMod 4)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (a.val • (1 : ZMod 4)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 4)) ^ a.val := by rw [ofAdd_nsmul]
+  have hb : Multiplicative.ofAdd b = (Multiplicative.ofAdd (1 : ZMod 2)) ^ b.val := by
+    calc
+      Multiplicative.ofAdd b = Multiplicative.ofAdd ((b.val : ZMod 2)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (b.val • (1 : ZMod 2)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 2)) ^ b.val := by rw [ofAdd_nsmul]
+  have hx : (Multiplicative.ofAdd a, Multiplicative.ofAdd b) =
+      order56_c4c2_e1 ^ a.val * order56_c4c2_e2 ^ b.val := by
+    simp [order56_c4c2_e1, order56_c4c2_e2, Prod.pow_mk, ha, hb]
+  rw [hx, map_mul, map_mul, map_pow, map_pow, map_pow, map_pow, h1, h2]
+
+theorem order56_c4c2_mulAut_ext {α β : MulAut order56_C4C2}
+    (h1 : α order56_c4c2_e1 = β order56_c4c2_e1)
+    (h2 : α order56_c4c2_e2 = β order56_c4c2_e2) : α = β := by
+  apply DFunLike.ext
+  intro x
+  exact congrFun (congrArg DFunLike.coe
+    (order56_c4c2_hom_ext (χ := α.toMonoidHom) (ψ := β.toMonoidHom) h1 h2)) x
+
+theorem order56_c4c2Aut_injective :
+    Function.Injective
+      (fun p : (ZMod 4)ˣ × ZMod 2 × ZMod 2 => order56_c4c2Aut p.1 p.2.1 p.2.2) := by
+  rintro ⟨u, t, w⟩ ⟨u', t', w'⟩ h
+  have h1 := congrArg (fun α : MulAut order56_C4C2 => α order56_c4c2_e1) h
+  have h2 := congrArg (fun α : MulAut order56_C4C2 => α order56_c4c2_e2) h
+  have h1' : (u : ZMod 4) = (u' : ZMod 4) ∧ t = t' := by
+    simpa [order56_c4c2Aut, order56_c4c2Map, order56_c4c2_e1,
+      order56_zmod2To4, order56_zmod4To2] using h1
+  have h2' : (2 : ZMod 4) * order56_zmod2To4 w * order56_zmod2To4 (1 : ZMod 2) =
+      (2 : ZMod 4) * order56_zmod2To4 w' * order56_zmod2To4 (1 : ZMod 2) := by
+    simpa [order56_c4c2Aut, order56_c4c2Map, order56_c4c2_e2,
+      order56_zmod2To4, order56_zmod4To2] using h2
+  have hu : u = u' := Units.ext h1'.1
+  have ht : t = t' := h1'.2
+  have hw : w = w' := by
+    fin_cases w <;> fin_cases w'
+    · rfl
+    · exfalso
+      exact (by decide :
+        ¬ ((2 : ZMod 4) * order56_zmod2To4 (0 : ZMod 2) *
+            order56_zmod2To4 (1 : ZMod 2) =
+          (2 : ZMod 4) * order56_zmod2To4 (1 : ZMod 2) *
+            order56_zmod2To4 (1 : ZMod 2))) h2'
+    · exfalso
+      exact (by decide :
+        ¬ ((2 : ZMod 4) * order56_zmod2To4 (1 : ZMod 2) *
+            order56_zmod2To4 (1 : ZMod 2) =
+          (2 : ZMod 4) * order56_zmod2To4 (0 : ZMod 2) *
+            order56_zmod2To4 (1 : ZMod 2))) h2'
+    · rfl
+  simp [hu, ht, hw]
+
+theorem order56_c4c2_aut_e1_eq (α : MulAut order56_C4C2) :
+    ∃ (u : (ZMod 4)ˣ) (t : ZMod 2),
+      α order56_c4c2_e1 = (Multiplicative.ofAdd (u : ZMod 4), Multiplicative.ofAdd t) := by
+  have hsq_ne : (α order56_c4c2_e1) ^ 2 ≠ 1 := by
+    intro h
+    have hpre : order56_c4c2_e1 ^ 2 = 1 := by
+      have hmap : α (order56_c4c2_e1 ^ 2) = α 1 := by
+        rw [map_pow]
+        simpa using h
+      exact α.injective hmap
+    exact (by decide : order56_c4c2_e1 ^ 2 ≠ 1) hpre
+  rcases h : α order56_c4c2_e1 with ⟨a, b⟩
+  fin_cases a <;> fin_cases b
+  · exfalso
+    apply hsq_ne
+    rw [h]
+    decide
+  · exfalso
+    apply hsq_ne
+    rw [h]
+    decide
+  · refine ⟨1, 0, ?_⟩
+    rfl
+  · refine ⟨1, 1, ?_⟩
+    rfl
+  · exfalso
+    apply hsq_ne
+    rw [h]
+    decide
+  · exfalso
+    apply hsq_ne
+    rw [h]
+    decide
+  · refine ⟨-1, 0, ?_⟩
+    decide
+  · refine ⟨-1, 1, ?_⟩
+    decide
+
+theorem order56_c4c2_aut_e2_eq (α : MulAut order56_C4C2) (u : (ZMod 4)ˣ)
+    (t : ZMod 2)
+    (hu : α order56_c4c2_e1 =
+      (Multiplicative.ofAdd (u : ZMod 4), Multiplicative.ofAdd t)) :
+    ∃ w : ZMod 2,
+      α order56_c4c2_e2 =
+        (Multiplicative.ofAdd ((2 : ZMod 4) * order56_zmod2To4 w),
+          Multiplicative.ofAdd (1 : ZMod 2)) := by
+  have hsq : (α order56_c4c2_e2) ^ 2 = 1 := by
+    rw [← map_pow]
+    rw [show order56_c4c2_e2 ^ 2 = 1 by decide]
+    simp
+  have hne_one : α order56_c4c2_e2 ≠ 1 := by
+    intro h
+    have hmap : α order56_c4c2_e2 = α 1 := by
+      rw [h]
+      simp
+    have hpre : order56_c4c2_e2 = 1 := α.injective hmap
+    exact (by decide : order56_c4c2_e2 ≠ 1) hpre
+  have hne_sq : α order56_c4c2_e2 ≠ (α order56_c4c2_e1) ^ 2 := by
+    intro h
+    have hmap : α order56_c4c2_e2 = α (order56_c4c2_e1 ^ 2) := by
+      rw [map_pow]
+      exact h
+    have hpre : order56_c4c2_e2 = order56_c4c2_e1 ^ 2 := α.injective hmap
+    exact (by decide : order56_c4c2_e2 ≠ order56_c4c2_e1 ^ 2) hpre
+  rcases h : α order56_c4c2_e2 with ⟨a, b⟩
+  fin_cases a <;> fin_cases b
+  · exfalso
+    apply hne_one
+    rw [h]
+    rfl
+  · refine ⟨0, ?_⟩
+    rfl
+  · exfalso
+    have hbad := congrArg Prod.fst hsq
+    rw [h] at hbad
+    exact (by decide : ¬ ((Multiplicative.ofAdd (1 : ZMod 4)) ^ 2 = 1)) hbad
+  · exfalso
+    have hbad := congrArg Prod.fst hsq
+    rw [h] at hbad
+    exact (by decide : ¬ ((Multiplicative.ofAdd (1 : ZMod 4)) ^ 2 = 1)) hbad
+  · exfalso
+    apply hne_sq
+    rw [h, hu]
+    fin_cases u <;> fin_cases t <;> decide
+  · refine ⟨1, ?_⟩
+    decide
+  · exfalso
+    have hbad := congrArg Prod.fst hsq
+    rw [h] at hbad
+    exact (by decide : ¬ ((Multiplicative.ofAdd (3 : ZMod 4)) ^ 2 = 1)) hbad
+  · exfalso
+    have hbad := congrArg Prod.fst hsq
+    rw [h] at hbad
+    exact (by decide : ¬ ((Multiplicative.ofAdd (3 : ZMod 4)) ^ 2 = 1)) hbad
+
+theorem order56_c4c2Aut_surjective :
+    Function.Surjective
+      (fun p : (ZMod 4)ˣ × ZMod 2 × ZMod 2 => order56_c4c2Aut p.1 p.2.1 p.2.2) := by
+  intro α
+  obtain ⟨u, t, hu⟩ := order56_c4c2_aut_e1_eq α
+  obtain ⟨w, hw⟩ := order56_c4c2_aut_e2_eq α u t hu
+  refine ⟨(u, t, w), ?_⟩
+  apply order56_c4c2_mulAut_ext
+  · simpa [order56_c4c2Aut, order56_c4c2Map, order56_c4c2_e1, order56_zmod2To4,
+      order56_zmod4To2] using hu.symm
+  · have hmap : order56_c4c2Aut u t w order56_c4c2_e2 =
+        (Multiplicative.ofAdd ((2 : ZMod 4) * order56_zmod2To4 w),
+          Multiplicative.ofAdd (1 : ZMod 2)) := by
+      change order56_c4c2Map u t w order56_c4c2_e2 =
+        (Multiplicative.ofAdd ((2 : ZMod 4) * order56_zmod2To4 w),
+          Multiplicative.ofAdd (1 : ZMod 2))
+      fin_cases w <;> norm_num [order56_c4c2Map, order56_zmod2To4, order56_zmod4To2] <;>
+        decide
+    rw [hw]
+    exact hmap
+
 theorem order56_card_aut_c4c2 : Nat.card (MulAut order56_C4C2) = 8 := by
+  let e : (ZMod 4)ˣ × ZMod 2 × ZMod 2 ≃ MulAut order56_C4C2 :=
+    Equiv.ofBijective
+      (fun p : (ZMod 4)ˣ × ZMod 2 × ZMod 2 => order56_c4c2Aut p.1 p.2.1 p.2.2)
+      ⟨order56_c4c2Aut_injective, order56_c4c2Aut_surjective⟩
   rw [Nat.card_eq_fintype_card]
-  native_decide
+  change Fintype.card (MulAut order56_C4C2) = 8
+  rw [← Fintype.card_congr e]
+  decide +kernel
 
-set_option linter.style.nativeDecide false in
+abbrev order56_C2C2C2Add : Type :=
+  ZMod 2 × ZMod 2 × ZMod 2
+
+abbrev order56_C2C2C2Vec : Type := Fin 3 → ZMod 2
+
+/-- The additive coordinates of `(C₂)^3` as the standard three-dimensional vector space over
+`ZMod 2`. -/
+def order56_c2c2c2VecEquiv : order56_C2C2C2Add ≃ₗ[ZMod 2] order56_C2C2C2Vec where
+  toFun x
+    | 0 => x.1
+    | 1 => x.2.1
+    | 2 => x.2.2
+  invFun v := (v 0, v 1, v 2)
+  left_inv := by
+    rintro ⟨a, b, c⟩
+    rfl
+  right_inv := by
+    intro v
+    funext i
+    fin_cases i <;> rfl
+  map_add' := by
+    intro x y
+    funext i
+    fin_cases i <;> rfl
+  map_smul' := by
+    intro r x
+    funext i
+    fin_cases i <;> rfl
+
+/-- Identify the multiplicative presentation of `(C₂)^3` with the multiplicative type-tag of the
+standard additive vector space. -/
+def order56_c2c2c2MulEquivVec :
+    order56_C2C2C2 ≃* Multiplicative order56_C2C2C2Vec :=
+  (MulEquiv.prodCongr (MulEquiv.refl (Multiplicative (ZMod 2)))
+    (MulEquiv.prodCongr (MulEquiv.refl (Multiplicative (ZMod 2)))
+      (MulEquiv.refl (Multiplicative (ZMod 2))))).symm.trans
+    ((MulEquiv.prodMultiplicative (ZMod 2) (ZMod 2 × ZMod 2)).symm.trans
+      (AddEquiv.toMultiplicative order56_c2c2c2VecEquiv))
+
+/-- Additive automorphisms of a `ZMod 2`-vector space are automatically linear. -/
+def order56_addAutLinearEquiv (σ : AddAut order56_C2C2C2Vec) :
+    order56_C2C2C2Vec ≃ₗ[ZMod 2] order56_C2C2C2Vec where
+  toFun := σ
+  invFun := σ.symm
+  left_inv := σ.left_inv
+  right_inv := σ.right_inv
+  map_add' := map_add σ
+  map_smul' := by
+    rw [ZMod.forall]
+    intro z x
+    exact map_intCast_smul σ (ZMod 2) (ZMod 2) z x
+
+def order56_linearEquivAddAut (σ : order56_C2C2C2Vec ≃ₗ[ZMod 2] order56_C2C2C2Vec) :
+    AddAut order56_C2C2C2Vec :=
+  σ.toAddEquiv
+
+/-- Additive automorphisms of the three-dimensional `ZMod 2` vector space are the same as linear
+automorphisms. -/
+def order56_addAutEquivLinearEquiv :
+    AddAut order56_C2C2C2Vec ≃ order56_C2C2C2Vec ≃ₗ[ZMod 2] order56_C2C2C2Vec where
+  toFun := order56_addAutLinearEquiv
+  invFun := order56_linearEquivAddAut
+  left_inv := by
+    intro σ
+    ext x
+    rfl
+  right_inv := by
+    intro σ
+    ext x
+    rfl
+
 theorem order56_card_aut_c2c2c2 : Nat.card (MulAut order56_C2C2C2) = 168 := by
-  rw [Nat.card_eq_fintype_card]
-  native_decide
+  calc
+    Nat.card (MulAut order56_C2C2C2)
+        = Nat.card (MulAut (Multiplicative order56_C2C2C2Vec)) := by
+          exact Nat.card_congr (MulAut.congr order56_c2c2c2MulEquivVec).toEquiv
+    _ = Nat.card (Multiplicative (AddAut order56_C2C2C2Vec)) := by
+          exact Nat.card_congr (MulAutMultiplicative order56_C2C2C2Vec).toEquiv
+    _ = Nat.card (AddAut order56_C2C2C2Vec) := by
+          exact Nat.card_congr Multiplicative.toAdd
+    _ = Nat.card (order56_C2C2C2Vec ≃ₗ[ZMod 2] order56_C2C2C2Vec) := by
+          exact Nat.card_congr order56_addAutEquivLinearEquiv
+    _ = Nat.card (LinearMap.GeneralLinearGroup (ZMod 2) order56_C2C2C2Vec) := by
+          exact (Nat.card_congr (LinearMap.GeneralLinearGroup.generalLinearEquiv
+            (ZMod 2) order56_C2C2C2Vec).toEquiv).symm
+    _ = Nat.card (GL (Fin 3) (ZMod 2)) := by
+          exact (Nat.card_congr (Matrix.GeneralLinearGroup.toLin
+            (n := Fin 3) (R := ZMod 2)).toEquiv).symm
+    _ = 168 := by
+          rw [Matrix.card_GL_field]
+          decide +kernel
 
-set_option linter.style.nativeDecide false in
+/-- The automorphism of `D₈` sending `r i` to `r (u * i)` and `sr i` to `sr (v + u * i)`. -/
+noncomputable def order56_d8Aut (u : (ZMod 4)ˣ) (v : ZMod 4) : MulAut order56_D8 where
+  toFun
+    | DihedralGroup.r i => DihedralGroup.r ((u : ZMod 4) * i)
+    | DihedralGroup.sr i => DihedralGroup.sr (v + (u : ZMod 4) * i)
+  invFun
+    | DihedralGroup.r i => DihedralGroup.r ((↑u⁻¹ : ZMod 4) * i)
+    | DihedralGroup.sr i => DihedralGroup.sr ((↑u⁻¹ : ZMod 4) * (i - v))
+  left_inv := by
+    intro x
+    rcases x with i | i <;> simp [sub_eq_add_neg]
+  right_inv := by
+    intro x
+    rcases x with i | i <;> simp [sub_eq_add_neg, mul_add]
+  map_mul' := by
+    intro x y
+    rcases x with i | i <;> rcases y with j | j <;>
+      simp [DihedralGroup.r_mul_r, DihedralGroup.r_mul_sr, DihedralGroup.sr_mul_r,
+        DihedralGroup.sr_mul_sr, mul_add, add_comm, add_assoc, sub_eq_add_neg]; abel
+
+/-- Homomorphisms out of `D₈` are determined by a rotation and a reflection. -/
+theorem order56_d8_hom_ext {M : Type} [Group M] {χ ψ : order56_D8 →* M}
+    (hr : χ (DihedralGroup.r (1 : ZMod 4)) = ψ (DihedralGroup.r (1 : ZMod 4)))
+    (hs : χ (DihedralGroup.sr (0 : ZMod 4)) = ψ (DihedralGroup.sr (0 : ZMod 4))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  rcases x with i | i
+  · have hi : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 4) * (i.val : ZMod 4)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by rw [DihedralGroup.r_pow]
+    rw [hi, map_pow, map_pow, hr]
+  · have hri : DihedralGroup.r i = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by
+      calc
+        DihedralGroup.r i = DihedralGroup.r ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = DihedralGroup.r ((1 : ZMod 4) * (i.val : ZMod 4)) := by simp
+        _ = (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by rw [DihedralGroup.r_pow]
+    have hi : DihedralGroup.sr i =
+        DihedralGroup.sr (0 : ZMod 4) * (DihedralGroup.r (1 : ZMod 4)) ^ i.val := by
+      rw [← hri]
+      simp [DihedralGroup.sr_mul_r]
+    rw [hi, map_mul, map_mul, map_pow, map_pow, hs, hr]
+
+theorem order56_d8_mulAut_ext {α β : MulAut order56_D8}
+    (hr : α (DihedralGroup.r (1 : ZMod 4)) = β (DihedralGroup.r (1 : ZMod 4)))
+    (hs : α (DihedralGroup.sr (0 : ZMod 4)) = β (DihedralGroup.sr (0 : ZMod 4))) :
+    α = β := by
+  ext x
+  exact congrFun (congrArg DFunLike.coe
+    (order56_d8_hom_ext (χ := α.toMonoidHom) (ψ := β.toMonoidHom) hr hs)) x
+
+theorem order56_d8Aut_injective :
+    Function.Injective (fun p : (ZMod 4)ˣ × ZMod 4 => order56_d8Aut p.1 p.2) := by
+  rintro ⟨u, v⟩ ⟨u', v'⟩ h
+  have hr := congrArg (fun α : MulAut order56_D8 => α (DihedralGroup.r (1 : ZMod 4))) h
+  have hs := congrArg (fun α : MulAut order56_D8 => α (DihedralGroup.sr (0 : ZMod 4))) h
+  change DihedralGroup.r ((u : ZMod 4) * (1 : ZMod 4)) =
+    DihedralGroup.r ((u' : ZMod 4) * (1 : ZMod 4)) at hr
+  change DihedralGroup.sr (v + (u : ZMod 4) * (0 : ZMod 4)) =
+    DihedralGroup.sr (v' + (u' : ZMod 4) * (0 : ZMod 4)) at hs
+  have hu : u = u' := Units.ext (by simpa using DihedralGroup.r.inj hr)
+  have hv : v = v' := by
+    have hidx := DihedralGroup.sr.inj hs
+    simpa [hu] using hidx
+  simp [hu, hv]
+
+theorem order56_d8_aut_r_eq (α : MulAut order56_D8) :
+    ∃ u : (ZMod 4)ˣ, α (DihedralGroup.r (1 : ZMod 4)) = DihedralGroup.r (u : ZMod 4) := by
+  let r1 : order56_D8 := DihedralGroup.r (1 : ZMod 4)
+  have horder : orderOf (α r1) = 4 := by
+    rw [MulEquiv.orderOf_eq, DihedralGroup.orderOf_r_one]
+  rcases h : α r1 with i | i
+  · fin_cases i
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (0 : ZMod 4)) = 4) horder
+    · exact ⟨1, congrArg (fun z : ZMod 4 => DihedralGroup.r z) rfl⟩
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (2 : ZMod 4)) = 4) horder
+    · exact ⟨-1, congrArg (fun z : ZMod 4 => DihedralGroup.r z)
+        (by decide +kernel : (3 : ZMod 4) = (-1 : ZMod 4))⟩
+  · fin_cases i
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_sr] at horder
+      norm_num at horder
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_sr] at horder
+      norm_num at horder
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_sr] at horder
+      norm_num at horder
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_sr] at horder
+      norm_num at horder
+
+theorem order56_d8_aut_s_eq (α : MulAut order56_D8) (u : (ZMod 4)ˣ)
+    (hu : α (DihedralGroup.r (1 : ZMod 4)) = DihedralGroup.r (u : ZMod 4)) :
+    ∃ v : ZMod 4, α (DihedralGroup.sr (0 : ZMod 4)) = DihedralGroup.sr v := by
+  let r1 : order56_D8 := DihedralGroup.r (1 : ZMod 4)
+  let s0 : order56_D8 := DihedralGroup.sr (0 : ZMod 4)
+  have horder : orderOf (α s0) = 2 := by
+    rw [MulEquiv.orderOf_eq]
+    exact DihedralGroup.orderOf_sr 0
+  have hrel : α s0 * α r1 = (α r1)⁻¹ * α s0 := by
+    have rel : s0 * r1 = r1⁻¹ * s0 := by
+      simp [r1, s0, DihedralGroup.sr_mul_r, DihedralGroup.r_mul_sr, DihedralGroup.inv_r]
+    simpa [map_mul, map_inv] using congrArg α rel
+  rcases h : α s0 with i | i
+  · fin_cases i
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (0 : ZMod 4)) = 2) horder
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (1 : ZMod 4)) = 2) horder
+    · exfalso
+      rw [h, hu] at hrel
+      fin_cases u
+      · rw [DihedralGroup.r_mul_r, DihedralGroup.inv_r, DihedralGroup.r_mul_r] at hrel
+        exact (by decide +kernel : ¬ ((2 : ZMod 4) + 1 = -1 + (2 : ZMod 4)))
+          (DihedralGroup.r.inj hrel)
+      · rw [DihedralGroup.r_mul_r, DihedralGroup.inv_r, DihedralGroup.r_mul_r] at hrel
+        exact (by decide +kernel : ¬ ((2 : ZMod 4) + 3 = -3 + (2 : ZMod 4)))
+          (DihedralGroup.r.inj hrel)
+    · exfalso
+      rw [h] at horder
+      rw [DihedralGroup.orderOf_r] at horder
+      exact (by decide +kernel : ¬ 4 / Nat.gcd 4 (ZMod.val (3 : ZMod 4)) = 2) horder
+  · exact ⟨i, rfl⟩
+
+theorem order56_d8Aut_surjective :
+    Function.Surjective (fun p : (ZMod 4)ˣ × ZMod 4 => order56_d8Aut p.1 p.2) := by
+  intro α
+  obtain ⟨u, hu⟩ := order56_d8_aut_r_eq α
+  obtain ⟨v, hv⟩ := order56_d8_aut_s_eq α u hu
+  refine ⟨(u, v), ?_⟩
+  apply order56_d8_mulAut_ext
+  · simpa [order56_d8Aut] using hu.symm
+  · simpa [order56_d8Aut] using hv.symm
+
 theorem order56_card_aut_d8 : Nat.card (MulAut order56_D8) = 8 := by
+  let e : (ZMod 4)ˣ × ZMod 4 ≃ MulAut order56_D8 :=
+    Equiv.ofBijective (fun p : (ZMod 4)ˣ × ZMod 4 => order56_d8Aut p.1 p.2)
+      ⟨order56_d8Aut_injective, order56_d8Aut_surjective⟩
   rw [Nat.card_eq_fintype_card]
-  native_decide
+  change Fintype.card (MulAut order56_D8) = 8
+  rw [← Fintype.card_congr e]
+  decide +kernel
 
-set_option linter.style.nativeDecide false in
+abbrev order56_q8_a1 : order56_Q8 := QuaternionGroup.a (1 : ZMod 4)
+
+abbrev order56_q8_x0 : order56_Q8 := QuaternionGroup.xa (0 : ZMod 4)
+
+abbrev order56_q8_a2 : order56_Q8 := QuaternionGroup.a (2 : ZMod 4)
+
+/-- Homomorphisms out of `Q₈` are determined by the two displayed four-order generators. -/
+theorem order56_q8_hom_ext {M : Type} [Group M] {χ ψ : order56_Q8 →* M}
+    (ha : χ order56_q8_a1 = ψ order56_q8_a1)
+    (hx : χ order56_q8_x0 = ψ order56_q8_x0) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  rcases x with i | i
+  · have hi : QuaternionGroup.a i = order56_q8_a1 ^ i.val := by
+      calc
+        QuaternionGroup.a i = QuaternionGroup.a ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = order56_q8_a1 ^ i.val := by
+          rw [QuaternionGroup.a_one_pow]
+    rw [hi, map_pow, map_pow, ha]
+  · have hai : QuaternionGroup.a i = order56_q8_a1 ^ i.val := by
+      calc
+        QuaternionGroup.a i = QuaternionGroup.a ((i.val : ZMod 4)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = order56_q8_a1 ^ i.val := by
+          rw [QuaternionGroup.a_one_pow]
+    have hi : QuaternionGroup.xa i = order56_q8_x0 * order56_q8_a1 ^ i.val := by
+      rw [← hai]
+      simp [order56_q8_x0, QuaternionGroup.xa_mul_a]
+    rw [hi, map_mul, map_mul, map_pow, map_pow, hx, ha]
+
+theorem order56_q8_mulAut_ext {α β : MulAut order56_Q8}
+    (ha : α order56_q8_a1 = β order56_q8_a1)
+    (hx : α order56_q8_x0 = β order56_q8_x0) : α = β := by
+  apply DFunLike.ext
+  intro x
+  exact congrFun (congrArg DFunLike.coe
+    (order56_q8_hom_ext (χ := α.toMonoidHom) (ψ := β.toMonoidHom) ha hx)) x
+
+theorem order56_q8_sq_eq_a2_of_sq_ne_one (x : order56_Q8) (hx : x ^ 2 ≠ 1) :
+    x ^ 2 = order56_q8_a2 := by
+  rcases x with i | i <;> fin_cases i
+  · exfalso
+    exact hx (by decide +kernel)
+  · decide +kernel
+  · exfalso
+    exact hx (by decide +kernel)
+  · decide +kernel
+  · decide +kernel
+  · decide +kernel
+  · decide +kernel
+  · decide +kernel
+
+theorem order56_q8_aut_sq_a1 (α : MulAut order56_Q8) :
+    (α order56_q8_a1) ^ 2 = order56_q8_a2 := by
+  apply order56_q8_sq_eq_a2_of_sq_ne_one
+  intro h
+  have hpre : order56_q8_a1 ^ 2 = 1 := by
+    have hmap : α (order56_q8_a1 ^ 2) = α 1 := by
+      rw [map_pow]
+      simpa using h
+    exact α.injective hmap
+  exact (by decide +kernel : order56_q8_a1 ^ 2 ≠ 1) hpre
+
+theorem order56_q8_aut_sq_x0 (α : MulAut order56_Q8) :
+    (α order56_q8_x0) ^ 2 = order56_q8_a2 := by
+  apply order56_q8_sq_eq_a2_of_sq_ne_one
+  intro h
+  have hpre : order56_q8_x0 ^ 2 = 1 := by
+    have hmap : α (order56_q8_x0 ^ 2) = α 1 := by
+      rw [map_pow]
+      simpa using h
+    exact α.injective hmap
+  exact (by decide +kernel : order56_q8_x0 ^ 2 ≠ 1) hpre
+
+abbrev order56_q8Pair : Type :=
+  {p : order56_Q8 × order56_Q8 //
+    p.1 ^ 2 = order56_q8_a2 ∧ p.2 ^ 2 = order56_q8_a2 ∧
+      p.2 ≠ p.1 ∧ p.2 ≠ p.1⁻¹}
+
+theorem order56_q8Pair_card : Fintype.card order56_q8Pair = 24 := by
+  decide +kernel
+
+def order56_q8AutPair (α : MulAut order56_Q8) : order56_q8Pair :=
+  ⟨(α order56_q8_a1, α order56_q8_x0),
+    order56_q8_aut_sq_a1 α,
+    order56_q8_aut_sq_x0 α,
+    by
+      intro h
+      have hpre : order56_q8_x0 = order56_q8_a1 := α.injective h
+      exact (by decide +kernel : order56_q8_x0 ≠ order56_q8_a1) hpre,
+    by
+      intro h
+      have hmap : α order56_q8_x0 = α order56_q8_a1⁻¹ := by
+        rw [map_inv]
+        exact h
+      have hpre : order56_q8_x0 = order56_q8_a1⁻¹ := α.injective hmap
+      exact (by decide +kernel : order56_q8_x0 ≠ order56_q8_a1⁻¹) hpre⟩
+
+theorem order56_q8AutPair_injective :
+    Function.Injective order56_q8AutPair := by
+  intro α β h
+  apply order56_q8_mulAut_ext
+  · exact congrArg (fun p : order56_q8Pair => p.1.1) h
+  · exact congrArg (fun p : order56_q8Pair => p.1.2) h
+
+def order56_q8ParamA : Fin 6 → order56_Q8
+  | 0 => QuaternionGroup.a (1 : ZMod 4)
+  | 1 => QuaternionGroup.a (3 : ZMod 4)
+  | 2 => QuaternionGroup.xa (0 : ZMod 4)
+  | 3 => QuaternionGroup.xa (1 : ZMod 4)
+  | 4 => QuaternionGroup.xa (2 : ZMod 4)
+  | 5 => QuaternionGroup.xa (3 : ZMod 4)
+
+def order56_q8ParamX : Fin 6 → Fin 4 → order56_Q8
+  | 0, 0 => QuaternionGroup.xa (0 : ZMod 4)
+  | 0, 1 => QuaternionGroup.xa (1 : ZMod 4)
+  | 0, 2 => QuaternionGroup.xa (2 : ZMod 4)
+  | 0, 3 => QuaternionGroup.xa (3 : ZMod 4)
+  | 1, 0 => QuaternionGroup.xa (0 : ZMod 4)
+  | 1, 1 => QuaternionGroup.xa (1 : ZMod 4)
+  | 1, 2 => QuaternionGroup.xa (2 : ZMod 4)
+  | 1, 3 => QuaternionGroup.xa (3 : ZMod 4)
+  | 2, 0 => QuaternionGroup.a (1 : ZMod 4)
+  | 2, 1 => QuaternionGroup.a (3 : ZMod 4)
+  | 2, 2 => QuaternionGroup.xa (1 : ZMod 4)
+  | 2, 3 => QuaternionGroup.xa (3 : ZMod 4)
+  | 3, 0 => QuaternionGroup.a (1 : ZMod 4)
+  | 3, 1 => QuaternionGroup.a (3 : ZMod 4)
+  | 3, 2 => QuaternionGroup.xa (0 : ZMod 4)
+  | 3, 3 => QuaternionGroup.xa (2 : ZMod 4)
+  | 4, 0 => QuaternionGroup.a (1 : ZMod 4)
+  | 4, 1 => QuaternionGroup.a (3 : ZMod 4)
+  | 4, 2 => QuaternionGroup.xa (1 : ZMod 4)
+  | 4, 3 => QuaternionGroup.xa (3 : ZMod 4)
+  | 5, 0 => QuaternionGroup.a (1 : ZMod 4)
+  | 5, 1 => QuaternionGroup.a (3 : ZMod 4)
+  | 5, 2 => QuaternionGroup.xa (0 : ZMod 4)
+  | 5, 3 => QuaternionGroup.xa (2 : ZMod 4)
+
+def order56_q8ParamMap (i : Fin 6) (j : Fin 4) : order56_Q8 → order56_Q8
+  | QuaternionGroup.a k => order56_q8ParamA i ^ k.val
+  | QuaternionGroup.xa k => order56_q8ParamX i j * order56_q8ParamA i ^ k.val
+
+noncomputable def order56_q8ParamHom (i : Fin 6) (j : Fin 4) : order56_Q8 →* order56_Q8 where
+  toFun := order56_q8ParamMap i j
+  map_one' := by
+    change order56_q8ParamA i ^ (0 : ZMod 4).val = 1
+    simp
+  map_mul' := by
+    intro x y
+    rcases x with k | k <;> rcases y with l | l <;>
+      fin_cases i <;> fin_cases j <;> fin_cases k <;> fin_cases l <;>
+      decide +kernel
+
+theorem order56_q8ParamHom_injective (i : Fin 6) (j : Fin 4) :
+    Function.Injective (order56_q8ParamHom i j) := by
+  intro x y h
+  rcases x with k | k <;> rcases y with l | l <;>
+    fin_cases i <;> fin_cases j <;> fin_cases k <;> fin_cases l <;>
+    first
+    | rfl
+    | exfalso
+      revert h
+      decide +kernel
+
+noncomputable def order56_q8ParamAut (i : Fin 6) (j : Fin 4) : MulAut order56_Q8 :=
+  MulEquiv.ofBijective (order56_q8ParamHom i j)
+    (order56_q8ParamHom_injective i j).bijective_of_finite
+
+theorem order56_q8ParamAut_injective :
+    Function.Injective (fun p : Fin 6 × Fin 4 => order56_q8ParamAut p.1 p.2) := by
+  intro p q h
+  rcases p with ⟨i, j⟩
+  rcases q with ⟨i', j'⟩
+  have ha := congrArg (fun α : MulAut order56_Q8 => α order56_q8_a1) h
+  have hx := congrArg (fun α : MulAut order56_Q8 => α order56_q8_x0) h
+  fin_cases i <;> fin_cases j <;> fin_cases i' <;> fin_cases j' <;>
+    first
+    | rfl
+    | exfalso
+      revert ha
+      decide +kernel
+    | exfalso
+      revert hx
+      decide +kernel
+
 theorem order56_card_aut_q8 : Nat.card (MulAut order56_Q8) = 24 := by
   rw [Nat.card_eq_fintype_card]
-  native_decide
+  apply le_antisymm
+  · have h :=
+      Fintype.card_le_of_injective order56_q8AutPair order56_q8AutPair_injective
+    simpa [order56_q8Pair_card] using h
+  · have h :=
+      Fintype.card_le_of_injective
+        (fun p : Fin 6 × Fin 4 => order56_q8ParamAut p.1 p.2)
+        order56_q8ParamAut_injective
+    simpa using h
 
 theorem order56_c7_action_c8_trivial (φ : order56_C7 →* MulAut order56_C8) : φ = 1 :=
   order56_c7_action_trivial_of_not_dvd_card (by rw [order56_card_aut_c8]; norm_num) φ
