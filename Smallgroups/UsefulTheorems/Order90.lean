@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order2PQ
+import Smallgroups.UsefulTheorems.Order2PSqElem
 import Smallgroups.UsefulTheorems.PrimeSqPrimeAbelian
 import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Mathlib.Tactic.NormNum.Prime
@@ -20,6 +21,233 @@ namespace Smallgroups.UsefulTheorems
 open Subgroup
 
 variable {G : Type*} [Group G]
+
+/-! ### The cyclic order-45 kernel -/
+
+abbrev order90_C2 : Type := CyclicRep 2
+abbrev order90_C45 : Type := CyclicRep 45
+abbrev order90_C90 : Type := CyclicRep 90
+abbrev order90_D45 : Type := DihedralGroup 45
+abbrev order90_C9D5 : Type := CyclicRep 9 × DihedralGroup 5
+abbrev order90_C5D9 : Type := CyclicRep 5 × DihedralGroup 9
+
+noncomputable abbrev order90_u19 : (ZMod 45)ˣ :=
+  ZMod.unitOfCoprime 19 (by norm_num : Nat.Coprime 19 45)
+
+noncomputable abbrev order90_u26 : (ZMod 45)ˣ :=
+  ZMod.unitOfCoprime 26 (by norm_num : Nat.Coprime 26 45)
+
+noncomputable abbrev order90_u44 : (ZMod 45)ˣ :=
+  ZMod.unitOfCoprime 44 (by norm_num : Nat.Coprime 44 45)
+
+theorem order90_u19_sq : order90_u19 ^ 2 = 1 := by
+  decide
+
+theorem order90_u26_sq : order90_u26 ^ 2 = 1 := by
+  decide
+
+theorem order90_u44_sq : order90_u44 ^ 2 = 1 := by
+  decide
+
+noncomputable abbrev order90_c45UnitHom (u : (ZMod 45)ˣ) (hu : u ^ 2 = 1) :
+    order90_C2 →* (ZMod 45)ˣ :=
+  powHom (p := 45) (q := 2) u hu
+
+noncomputable abbrev order90_c45Action (u : (ZMod 45)ˣ) (hu : u ^ 2 = 1) :
+    order90_C2 →* MulAut order90_C45 :=
+  unitAutHom.comp (order90_c45UnitHom u hu)
+
+noncomputable abbrev order90_c45Action_trivial : order90_C2 →* MulAut order90_C45 :=
+  order90_c45Action 1 (by simp)
+
+noncomputable abbrev order90_c45Action_19 : order90_C2 →* MulAut order90_C45 :=
+  order90_c45Action order90_u19 order90_u19_sq
+
+noncomputable abbrev order90_c45Action_26 : order90_C2 →* MulAut order90_C45 :=
+  order90_c45Action order90_u26 order90_u26_sq
+
+noncomputable abbrev order90_c45Action_44 : order90_C2 →* MulAut order90_C45 :=
+  order90_c45Action order90_u44 order90_u44_sq
+
+theorem order90_unit_sq_eq_one_cases (u : (ZMod 45)ˣ) (hu : u ^ 2 = 1) :
+    u = 1 ∨ u = order90_u19 ∨ u = order90_u26 ∨ u = order90_u44 := by
+  decide +revert
+
+/-- Multiplication by units embeds into the automorphism group of `C₄₅`. -/
+theorem order90_unitAutHom_injective : Function.Injective (unitAutHom (p := 45)) := by
+  intro u v h
+  have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod 45)) =
+      unitAutHom v (Multiplicative.ofAdd (1 : ZMod 45)) := by rw [h]
+  simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
+  exact Units.ext (congrArg Multiplicative.toAdd h1)
+
+/-- Every automorphism of `C₄₅` is multiplication by a unit of `ZMod 45`. -/
+theorem order90_mulAut_eq_unitAutHom (σ : MulAut order90_C45) :
+    ∃ u : (ZMod 45)ˣ, σ = unitAutHom u := by
+  let f : AddAut (ZMod 45) := Multiplicative.toAdd ((MulAutMultiplicative (ZMod 45)) σ)
+  let u : (ZMod 45)ˣ := Additive.toMul ((ZMod.AddAutEquivUnits 45) f)
+  refine ⟨u, ?_⟩
+  ext x
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+  change Multiplicative.ofAdd (f m) = unitAutHom u (Multiplicative.ofAdd m)
+  have hu : Additive.ofMul u = (ZMod.AddAutEquivUnits 45) f := by simp [u]
+  have hf : f = (ZMod.AddAutEquivUnits 45).symm (Additive.ofMul u) := by
+    symm
+    rw [hu]
+    exact AddEquiv.symm_apply_apply (ZMod.AddAutEquivUnits 45) f
+  rw [hf, unitAutHom_apply]
+  simp [ZMod.AddAutEquivUnits_symm_apply, Units.smul_def]
+
+theorem order90_c45UnitHom_gen (u : (ZMod 45)ˣ) (hu : u ^ 2 = 1) :
+    order90_c45UnitHom u hu (Multiplicative.ofAdd (1 : ZMod 2)) = u := by
+  change u ^ ((1 : ZMod 2).val) = u
+  rw [show (1 : ZMod 2).val = 1 from by decide, pow_one]
+
+theorem order90_c45Action_gen (u : (ZMod 45)ˣ) (hu : u ^ 2 = 1) :
+    order90_c45Action u hu (Multiplicative.ofAdd (1 : ZMod 2)) = unitAutHom u := by
+  change unitAutHom (order90_c45UnitHom u hu (Multiplicative.ofAdd (1 : ZMod 2))) =
+    unitAutHom u
+  rw [order90_c45UnitHom_gen]
+
+theorem order90_c45Action_trivial_gen :
+    order90_c45Action_trivial (Multiplicative.ofAdd (1 : ZMod 2)) =
+      unitAutHom (p := 45) 1 :=
+  order90_c45Action_gen 1 (by simp)
+
+theorem order90_c45Action_19_gen :
+    order90_c45Action_19 (Multiplicative.ofAdd (1 : ZMod 2)) = unitAutHom order90_u19 :=
+  order90_c45Action_gen order90_u19 order90_u19_sq
+
+theorem order90_c45Action_26_gen :
+    order90_c45Action_26 (Multiplicative.ofAdd (1 : ZMod 2)) = unitAutHom order90_u26 :=
+  order90_c45Action_gen order90_u26 order90_u26_sq
+
+theorem order90_c45Action_44_gen :
+    order90_c45Action_44 (Multiplicative.ofAdd (1 : ZMod 2)) = unitAutHom order90_u44 :=
+  order90_c45Action_gen order90_u44 order90_u44_sq
+
+private theorem order90_c2_cases (x : order90_C2) :
+    x = 1 ∨ x = Multiplicative.ofAdd (1 : ZMod 2) := by
+  fin_cases x <;> decide
+
+theorem order90_c2_action_hom_ext {φ ψ : order90_C2 →* MulAut order90_C45}
+    (hgen : φ (Multiplicative.ofAdd (1 : ZMod 2)) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 2))) :
+    φ = ψ := by
+  apply MonoidHom.ext
+  intro h
+  rcases order90_c2_cases h with rfl | rfl
+  · simp
+  · exact hgen
+
+theorem order90_c45_action_cases (φ : order90_C2 →* MulAut order90_C45) :
+    φ = order90_c45Action_trivial ∨ φ = order90_c45Action_19 ∨
+      φ = order90_c45Action_26 ∨ φ = order90_c45Action_44 := by
+  let gen : order90_C2 := Multiplicative.ofAdd (1 : ZMod 2)
+  let α := φ gen
+  have hgen_two : gen ^ 2 = 1 := by
+    decide
+  have hα2 : α ^ 2 = 1 := by
+    calc
+      α ^ 2 = φ (gen ^ 2) := by rw [map_pow]
+      _ = φ 1 := by rw [hgen_two]
+      _ = 1 := map_one _
+  obtain ⟨u, huα⟩ := order90_mulAut_eq_unitAutHom α
+  have huα2 : (unitAutHom (p := 45) u) ^ 2 = 1 := by
+    rw [← huα]
+    exact hα2
+  have hu2 : u ^ 2 = 1 := by
+    apply order90_unitAutHom_injective
+    calc
+      unitAutHom (p := 45) (u ^ 2) = (unitAutHom (p := 45) u) ^ 2 := by
+        rw [map_pow]
+      _ = 1 := huα2
+      _ = unitAutHom (p := 45) 1 := by rw [map_one]
+  rcases order90_unit_sq_eq_one_cases u hu2 with hu | hu | hu | hu
+  · left
+    apply order90_c2_action_hom_ext
+    change α = order90_c45Action_trivial gen
+    rw [huα, hu, order90_c45Action_trivial_gen]
+  · right
+    left
+    apply order90_c2_action_hom_ext
+    change α = order90_c45Action_19 gen
+    rw [huα, hu, order90_c45Action_19_gen]
+  · right
+    right
+    left
+    apply order90_c2_action_hom_ext
+    change α = order90_c45Action_26 gen
+    rw [huα, hu, order90_c45Action_26_gen]
+  · right
+    right
+    right
+    apply order90_c2_action_hom_ext
+    change α = order90_c45Action_44 gen
+    rw [huα, hu, order90_c45Action_44_gen]
+
+noncomputable def order90_c45_trivial_prod_iso :
+    order90_C45 × order90_C2 ≃* order90_C90 := by
+  have hcop : (45 : ℕ).Coprime 2 := by norm_num
+  let e_crt : ZMod (45 * 2) ≃+* ZMod 45 × ZMod 2 := ZMod.chineseRemainder hcop
+  let e_add : Multiplicative (ZMod (45 * 2)) ≃* Multiplicative (ZMod 45 × ZMod 2) :=
+    AddEquiv.toMultiplicative e_crt.toAddEquiv
+  let e_prod : Multiplicative (ZMod 45 × ZMod 2) ≃*
+      Multiplicative (ZMod 45) × Multiplicative (ZMod 2) :=
+    MulEquiv.prodMultiplicative (ZMod 45) (ZMod 2)
+  let e_mul : order90_C90 ≃* Multiplicative (ZMod (45 * 2)) := by
+    refine AddEquiv.toMultiplicative (ZMod.ringEquivCongr ?_).toAddEquiv
+    norm_num
+  exact (e_mul.trans (e_add.trans e_prod)).symm
+
+noncomputable def order90_c45_trivial_semidirect_iso :
+    SemidirectProduct order90_C45 order90_C2
+      (1 : order90_C2 →* MulAut order90_C45) ≃* order90_C90 := by
+  let e : SemidirectProduct order90_C45 order90_C2
+      (1 : order90_C2 →* MulAut order90_C45) ≃* order90_C45 × order90_C2 :=
+    { toEquiv := SemidirectProduct.equivProd
+      map_mul' := fun x y => by
+        rcases x with ⟨n₁, h₁⟩
+        rcases y with ⟨n₂, h₂⟩
+        simp }
+  exact e.trans order90_c45_trivial_prod_iso
+
+theorem order90_c45Action_trivial_eq_one :
+    order90_c45Action_trivial = (1 : order90_C2 →* MulAut order90_C45) := by
+  apply order90_c2_action_hom_ext
+  rw [order90_c45Action_trivial_gen]
+  exact map_one (unitAutHom (p := 45))
+
+theorem order90_c45_trivial_action_semidirect_iso :
+    Nonempty (SemidirectProduct order90_C45 order90_C2
+      order90_c45Action_trivial ≃* order90_C90) := by
+  exact ⟨(semidirectProductCongr_eq order90_c45Action_trivial_eq_one).trans
+    order90_c45_trivial_semidirect_iso⟩
+
+theorem order90_unitAutHom_u44_eq_inv :
+    unitAutHom order90_u44 = invAut order90_C45 := by
+  ext x
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+  rw [unitAutHom_apply, invAut_apply]
+  have h : (order90_u44 : ZMod 45) * m = -m := by
+    simp only [order90_u44, ZMod.unitOfCoprime, Units.val_mk]
+    change (44 : ZMod 45) * m = -m
+    have h44 : (44 : ZMod 45) = -1 := by decide
+    rw [h44]
+    simp
+  simpa [h]
+
+theorem order90_c45Action_44_eq_invAction :
+    order90_c45Action_44 = invActionHom order90_C45 := by
+  apply order90_c2_action_hom_ext
+  rw [order90_c45Action_44_gen, invActionHom_ofAdd_one, order90_unitAutHom_u44_eq_inv]
+
+theorem order90_c45_inv_semidirect_iso :
+    Nonempty (SemidirectProduct order90_C45 order90_C2
+      order90_c45Action_44 ≃* order90_D45) := by
+  haveI : NeZero 45 := ⟨by norm_num⟩
+  exact ⟨(semidirectProductCongr_eq order90_c45Action_44_eq_invAction).trans
+    (genDihedralCyclicIso 45)⟩
 
 private lemma order90_sign_mulLeft_of_orderOf_two [Fintype G] [DecidableEq G]
     (a : G) (ha : orderOf a = 2) (hcard : Odd (Nat.card G / 2)) :
