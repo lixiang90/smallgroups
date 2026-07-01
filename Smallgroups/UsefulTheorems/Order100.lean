@@ -2341,4 +2341,533 @@ theorem order100_classification_cases [Finite G] (hG : Nat.card G = 100) :
       right; right; right
       exact ⟨eG.trans e⟩
 
+/-! ### Representatives, cardinalities, and distinctness -/
+
+noncomputable instance instFintypeOrder100SemidirectProduct {N H : Type} [Group N] [Group H]
+    [Fintype N] [Fintype H] (φ : H →* MulAut N) :
+    Fintype (SemidirectProduct N H φ) :=
+  Fintype.ofEquiv (N × H) SemidirectProduct.equivProd.symm
+
+/-- `C₂₅ × C₄`. -/
+noncomputable abbrev order100_RA : Type :=
+  SemidirectProduct order100_C25 order100_C4 (1 : order100_C4 →* MulAut order100_C25)
+
+/-- `C₂₅ ⋊ C₄`, where the generator of `C₄` acts on `C₂₅` by a unit of order `4`. -/
+noncomputable abbrev order100_RB : Type :=
+  SemidirectProduct order100_C25 order100_C4 (order100_c25Action order100_chiC4_four)
+
+/-- `C₂₅ ⋊ C₄`, where the generator of `C₄` acts on `C₂₅` by inversion. -/
+noncomputable abbrev order100_RC : Type :=
+  SemidirectProduct order100_C25 order100_C4 (order100_c25Action order100_chiC4_two)
+
+/-- `C₂₅ × V₄`. -/
+noncomputable abbrev order100_RD : Type :=
+  SemidirectProduct order100_C25 order100_V4 (1 : order100_V4 →* MulAut order100_C25)
+
+/-- `C₂₅ ⋊ V₄`, with one `C₂` factor acting by inversion. -/
+noncomputable abbrev order100_RE : Type :=
+  SemidirectProduct order100_C25 order100_V4 (order100_c25Action order100_chiV4_fst)
+
+/-- `(C₅)² × C₄`. -/
+noncomputable abbrev order100_RF : Type :=
+  SemidirectProduct order100_E25 order100_C4 order100_e25C4_00
+
+/-- `(C₅)² ⋊ C₄`, with diagonal action `(−1, 1)`. -/
+noncomputable abbrev order100_RG : Type :=
+  SemidirectProduct order100_E25 order100_C4 order100_e25C4_20
+
+/-- `(C₅)² ⋊ C₄`, with diagonal action `(i, 1)`. -/
+noncomputable abbrev order100_RH : Type :=
+  SemidirectProduct order100_E25 order100_C4 order100_e25C4_40
+
+/-- `(C₅)² ⋊ C₄`, with diagonal action `(−1, −1)`. -/
+noncomputable abbrev order100_RI : Type :=
+  SemidirectProduct order100_E25 order100_C4 order100_e25C4_22
+
+/-- `(C₅)² ⋊ C₄`, with diagonal action `(i, −1)`. -/
+noncomputable abbrev order100_RJ : Type :=
+  SemidirectProduct order100_E25 order100_C4 order100_e25C4_42
+
+/-- `(C₅)² ⋊ C₄`, with scalar action `(i, i)`. -/
+noncomputable abbrev order100_RK : Type :=
+  SemidirectProduct order100_E25 order100_C4 order100_e25C4_44
+
+/-- `(C₅)² ⋊ C₄`, with diagonal action `(i, i⁻¹)`. -/
+noncomputable abbrev order100_RL : Type :=
+  SemidirectProduct order100_E25 order100_C4 order100_e25C4_44i
+
+/-- `(C₅)² × V₄`. -/
+noncomputable abbrev order100_RM : Type :=
+  SemidirectProduct order100_E25 order100_V4 order100_e25V4_00
+
+/-- `(C₅)² ⋊ V₄`, with one non-trivial character. -/
+noncomputable abbrev order100_RN : Type :=
+  SemidirectProduct order100_E25 order100_V4 order100_e25V4_10
+
+/-- `(C₅)² ⋊ V₄`, with the same non-trivial character on both coordinates. -/
+noncomputable abbrev order100_RO : Type :=
+  SemidirectProduct order100_E25 order100_V4 order100_e25V4_11
+
+/-- `(C₅)² ⋊ V₄`, with two independent non-trivial characters. -/
+noncomputable abbrev order100_RP : Type :=
+  SemidirectProduct order100_E25 order100_V4 order100_e25V4_12
+
+/-- The sixteen displayed representatives, indexed for the counting framework. -/
+noncomputable abbrev order100_reps : Fin 16 → Type
+  | ⟨0, _⟩ => order100_RA
+  | ⟨1, _⟩ => order100_RB
+  | ⟨2, _⟩ => order100_RC
+  | ⟨3, _⟩ => order100_RD
+  | ⟨4, _⟩ => order100_RE
+  | ⟨5, _⟩ => order100_RF
+  | ⟨6, _⟩ => order100_RG
+  | ⟨7, _⟩ => order100_RH
+  | ⟨8, _⟩ => order100_RI
+  | ⟨9, _⟩ => order100_RJ
+  | ⟨10, _⟩ => order100_RK
+  | ⟨11, _⟩ => order100_RL
+  | ⟨12, _⟩ => order100_RM
+  | ⟨13, _⟩ => order100_RN
+  | ⟨14, _⟩ => order100_RO
+  | ⟨15, _⟩ => order100_RP
+  | ⟨n + 16, h⟩ => False.elim (by omega)
+
+noncomputable instance instGroupOrder100Reps : ∀ i, Group (order100_reps i)
+  | ⟨0, _⟩ => inferInstanceAs (Group order100_RA)
+  | ⟨1, _⟩ => inferInstanceAs (Group order100_RB)
+  | ⟨2, _⟩ => inferInstanceAs (Group order100_RC)
+  | ⟨3, _⟩ => inferInstanceAs (Group order100_RD)
+  | ⟨4, _⟩ => inferInstanceAs (Group order100_RE)
+  | ⟨5, _⟩ => inferInstanceAs (Group order100_RF)
+  | ⟨6, _⟩ => inferInstanceAs (Group order100_RG)
+  | ⟨7, _⟩ => inferInstanceAs (Group order100_RH)
+  | ⟨8, _⟩ => inferInstanceAs (Group order100_RI)
+  | ⟨9, _⟩ => inferInstanceAs (Group order100_RJ)
+  | ⟨10, _⟩ => inferInstanceAs (Group order100_RK)
+  | ⟨11, _⟩ => inferInstanceAs (Group order100_RL)
+  | ⟨12, _⟩ => inferInstanceAs (Group order100_RM)
+  | ⟨13, _⟩ => inferInstanceAs (Group order100_RN)
+  | ⟨14, _⟩ => inferInstanceAs (Group order100_RO)
+  | ⟨15, _⟩ => inferInstanceAs (Group order100_RP)
+  | ⟨n + 16, h⟩ => False.elim (by omega)
+
+noncomputable instance instFintypeOrder100Reps : ∀ i, Fintype (order100_reps i)
+  | ⟨0, _⟩ => inferInstanceAs (Fintype order100_RA)
+  | ⟨1, _⟩ => inferInstanceAs (Fintype order100_RB)
+  | ⟨2, _⟩ => inferInstanceAs (Fintype order100_RC)
+  | ⟨3, _⟩ => inferInstanceAs (Fintype order100_RD)
+  | ⟨4, _⟩ => inferInstanceAs (Fintype order100_RE)
+  | ⟨5, _⟩ => inferInstanceAs (Fintype order100_RF)
+  | ⟨6, _⟩ => inferInstanceAs (Fintype order100_RG)
+  | ⟨7, _⟩ => inferInstanceAs (Fintype order100_RH)
+  | ⟨8, _⟩ => inferInstanceAs (Fintype order100_RI)
+  | ⟨9, _⟩ => inferInstanceAs (Fintype order100_RJ)
+  | ⟨10, _⟩ => inferInstanceAs (Fintype order100_RK)
+  | ⟨11, _⟩ => inferInstanceAs (Fintype order100_RL)
+  | ⟨12, _⟩ => inferInstanceAs (Fintype order100_RM)
+  | ⟨13, _⟩ => inferInstanceAs (Fintype order100_RN)
+  | ⟨14, _⟩ => inferInstanceAs (Fintype order100_RO)
+  | ⟨15, _⟩ => inferInstanceAs (Fintype order100_RP)
+  | ⟨n + 16, h⟩ => False.elim (by omega)
+
+noncomputable instance instDecidableEqOrder100Reps : ∀ i, DecidableEq (order100_reps i)
+  | ⟨0, _⟩ => inferInstanceAs (DecidableEq order100_RA)
+  | ⟨1, _⟩ => inferInstanceAs (DecidableEq order100_RB)
+  | ⟨2, _⟩ => inferInstanceAs (DecidableEq order100_RC)
+  | ⟨3, _⟩ => inferInstanceAs (DecidableEq order100_RD)
+  | ⟨4, _⟩ => inferInstanceAs (DecidableEq order100_RE)
+  | ⟨5, _⟩ => inferInstanceAs (DecidableEq order100_RF)
+  | ⟨6, _⟩ => inferInstanceAs (DecidableEq order100_RG)
+  | ⟨7, _⟩ => inferInstanceAs (DecidableEq order100_RH)
+  | ⟨8, _⟩ => inferInstanceAs (DecidableEq order100_RI)
+  | ⟨9, _⟩ => inferInstanceAs (DecidableEq order100_RJ)
+  | ⟨10, _⟩ => inferInstanceAs (DecidableEq order100_RK)
+  | ⟨11, _⟩ => inferInstanceAs (DecidableEq order100_RL)
+  | ⟨12, _⟩ => inferInstanceAs (DecidableEq order100_RM)
+  | ⟨13, _⟩ => inferInstanceAs (DecidableEq order100_RN)
+  | ⟨14, _⟩ => inferInstanceAs (DecidableEq order100_RO)
+  | ⟨15, _⟩ => inferInstanceAs (DecidableEq order100_RP)
+  | ⟨n + 16, h⟩ => False.elim (by omega)
+
+private theorem order100_nat_card_eq_of_fintype_card_eq {α : Type*} [Fintype α] {n : Nat}
+    (h : Fintype.card α = n) : Nat.card α = n :=
+  Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq h)
+
+theorem card_order100_C25 : Nat.card order100_C25 = 25 := card_cyclicRep (by norm_num)
+
+theorem card_order100_E25 : Nat.card order100_E25 = 25 := by
+  rw [order100_E25, ElemAbelianRep, Nat.card_prod]
+  norm_num [card_cyclicRep (by norm_num : 5 ≠ 0)]
+
+theorem card_order100_C4 : Nat.card order100_C4 = 4 := card_cyclicRep (by norm_num)
+
+theorem card_order100_V4 : Nat.card order100_V4 = 4 := by
+  rw [order100_V4, ElemAbelianRep, Nat.card_prod]
+  norm_num [card_cyclicRep (by norm_num : 2 ≠ 0)]
+
+theorem card_order100_SD_C25_C4 (φ : order100_C4 →* MulAut order100_C25) :
+    Nat.card (SemidirectProduct order100_C25 order100_C4 φ) = 100 := by
+  rw [SemidirectProduct.card, card_order100_C25, card_order100_C4]
+
+theorem card_order100_SD_C25_V4 (φ : order100_V4 →* MulAut order100_C25) :
+    Nat.card (SemidirectProduct order100_C25 order100_V4 φ) = 100 := by
+  rw [SemidirectProduct.card, card_order100_C25, card_order100_V4]
+
+theorem card_order100_SD_E25_C4 (φ : order100_C4 →* MulAut order100_E25) :
+    Nat.card (SemidirectProduct order100_E25 order100_C4 φ) = 100 := by
+  rw [SemidirectProduct.card, card_order100_E25, card_order100_C4]
+
+theorem card_order100_SD_E25_V4 (φ : order100_V4 →* MulAut order100_E25) :
+    Nat.card (SemidirectProduct order100_E25 order100_V4 φ) = 100 := by
+  rw [SemidirectProduct.card, card_order100_E25, card_order100_V4]
+
+theorem card_order100_reps (i : Fin 16) : Nat.card (order100_reps i) = 100 := by
+  fin_cases i
+  · exact card_order100_SD_C25_C4 _
+  · exact card_order100_SD_C25_C4 _
+  · exact card_order100_SD_C25_C4 _
+  · exact card_order100_SD_C25_V4 _
+  · exact card_order100_SD_C25_V4 _
+  · exact card_order100_SD_E25_C4 _
+  · exact card_order100_SD_E25_C4 _
+  · exact card_order100_SD_E25_C4 _
+  · exact card_order100_SD_E25_C4 _
+  · exact card_order100_SD_E25_C4 _
+  · exact card_order100_SD_E25_C4 _
+  · exact card_order100_SD_E25_C4 _
+  · exact card_order100_SD_E25_V4 _
+  · exact card_order100_SD_E25_V4 _
+  · exact card_order100_SD_E25_V4 _
+  · exact card_order100_SD_E25_V4 _
+
+/-- The cardinality of `{x | x ^ n = 1}`. -/
+noncomputable def order100_pow_eq_one_card (H : Type*) [Group H] (n : ℕ) : ℕ :=
+  Nat.card {x : H // x ^ n = 1}
+
+noncomputable def order100_powEqOneEquivOfMulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) : {x : H // x ^ n = 1} ≃ {x : K // x ^ n = 1} where
+  toFun x := ⟨e x.1, by rw [← map_pow, x.2, map_one]⟩
+  invFun x := ⟨e.symm x.1, by
+    rw [← map_pow]
+    exact e.injective (by simp [x.2])⟩
+  left_inv x := by ext; simp
+  right_inv x := by ext; simp
+
+theorem order100_pow_eq_one_card_eq_of_mulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) :
+    order100_pow_eq_one_card H n = order100_pow_eq_one_card K n :=
+  Nat.card_congr (order100_powEqOneEquivOfMulEquiv n e)
+
+/-- Membership in the first five powers of an element.  For elements with fifth power equal to
+`1`, this is the finite version of membership in the cyclic subgroup generated by the element. -/
+def order100_conj_mem_powers5 {H : Type*} [Group H] (x y : H) : Prop :=
+  y = 1 ∨ y = x ∨ y = x ^ 2 ∨ y = x ^ 3 ∨ y = x ^ 4
+
+instance instDecidableOrder100ConjMemPowers5 {H : Type*} [Group H] [DecidableEq H] (x y : H) :
+    Decidable (order100_conj_mem_powers5 x y) := by
+  unfold order100_conj_mem_powers5
+  infer_instance
+
+instance instDecidableOrder100ConjMemPowers5Forall {H : Type*} [Group H] [Fintype H]
+    [DecidableEq H] (x : H) :
+    Decidable (∀ g : H, order100_conj_mem_powers5 x (g * x * g⁻¹)) :=
+  Fintype.decidableForallFintype
+
+instance instDecidablePredOrder100NormalPowersFive {H : Type*} [Group H] [Fintype H]
+    [DecidableEq H] :
+    DecidablePred (fun x : H =>
+      x ≠ 1 ∧ x ^ 5 = 1 ∧ ∀ g : H, order100_conj_mem_powers5 x (g * x * g⁻¹)) :=
+  fun _ => inferInstance
+
+noncomputable instance instFintypeOrder100NormalPowersFiveSubtype {H : Type*} [Group H]
+    [Fintype H] [DecidableEq H] :
+    Fintype {x : H //
+      x ≠ 1 ∧ x ^ 5 = 1 ∧ ∀ g : H, order100_conj_mem_powers5 x (g * x * g⁻¹)} :=
+  Subtype.fintype _
+
+/-- Count nonidentity elements `x` with `x ^ 5 = 1` whose generated cyclic subgroup is stable under
+conjugation.  This separates the scalar `(i, i)` and split `(i, i⁻¹)` `C₄`-actions on `(C₅)²`. -/
+noncomputable def order100_normal_powers_five_card (H : Type*) [Group H] [Fintype H]
+    [DecidableEq H] : ℕ :=
+  Nat.card {x : H // x ≠ 1 ∧ x ^ 5 = 1 ∧
+    ∀ g : H, order100_conj_mem_powers5 x (g * x * g⁻¹)}
+
+theorem order100_conj_mem_powers5_map {H K : Type*} [Group H] [Group K] (e : H ≃* K)
+    {x y : H} (h : order100_conj_mem_powers5 x y) :
+    order100_conj_mem_powers5 (e x) (e y) := by
+  rcases h with h | h | h | h | h
+  · left
+    rw [h, map_one]
+  · right; left
+    rw [h]
+  · right; right; left
+    rw [h, map_pow]
+  · right; right; right; left
+    rw [h, map_pow]
+  · right; right; right; right
+    rw [h, map_pow]
+
+noncomputable def order100_normalPowersFiveEquivOfMulEquiv {H K : Type*} [Group H] [Group K]
+    (e : H ≃* K) :
+    {x : H // x ≠ 1 ∧ x ^ 5 = 1 ∧
+      ∀ g : H, order100_conj_mem_powers5 x (g * x * g⁻¹)} ≃
+    {x : K // x ≠ 1 ∧ x ^ 5 = 1 ∧
+      ∀ g : K, order100_conj_mem_powers5 x (g * x * g⁻¹)} where
+  toFun x := ⟨e x.1, by
+    refine ⟨?_, ?_, ?_⟩
+    · exact fun hx => x.2.1 (e.injective (by simpa using hx))
+    · rw [← map_pow, x.2.2.1, map_one]
+    · intro g
+      have hx := x.2.2.2 (e.symm g)
+      have hmap := order100_conj_mem_powers5_map e hx
+      simpa using hmap⟩
+  invFun x := ⟨e.symm x.1, by
+    refine ⟨?_, ?_, ?_⟩
+    · exact fun hx => x.2.1 (e.symm.injective (by simpa using hx))
+    · rw [← map_pow, x.2.2.1, map_one]
+    · intro g
+      have hx := x.2.2.2 (e g)
+      have hmap := order100_conj_mem_powers5_map e.symm hx
+      simpa using hmap⟩
+  left_inv x := by ext; simp
+  right_inv x := by ext; simp
+
+theorem order100_normal_powers_five_card_eq_of_mulEquiv {H K : Type*} [Group H] [Group K]
+    [Fintype H] [Fintype K] [DecidableEq H] [DecidableEq K] (e : H ≃* K) :
+    order100_normal_powers_five_card H = order100_normal_powers_five_card K :=
+  Nat.card_congr (order100_normalPowersFiveEquivOfMulEquiv e)
+
+/-- Center cardinalities of the sixteen displayed representatives. -/
+def order100_center_card : Fin 16 → Nat
+  | 0 => 100
+  | 1 => 1
+  | 2 => 2
+  | 3 => 100
+  | 4 => 2
+  | 5 => 100
+  | 6 => 10
+  | 7 => 5
+  | 8 => 2
+  | 9 => 1
+  | 10 => 1
+  | 11 => 1
+  | 12 => 100
+  | 13 => 10
+  | 14 => 2
+  | 15 => 1
+  | _ => 1
+
+set_option maxHeartbeats 800000 in
+-- Each branch computes a center cardinality by exhaustive finite enumeration.
+theorem card_center_order100_reps (i : Fin 16) :
+    Nat.card (Subgroup.center (order100_reps i)) = order100_center_card i := by
+  fin_cases i <;> exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Cardinalities of `{x | x ^ 2 = 1}` in the sixteen displayed representatives. -/
+def order100_pow_two_eq_one_card : Fin 16 → Nat
+  | 0 => 2
+  | 1 => 26
+  | 2 => 2
+  | 3 => 4
+  | 4 => 52
+  | 5 => 2
+  | 6 => 2
+  | 7 => 6
+  | 8 => 2
+  | 9 => 6
+  | 10 => 26
+  | 11 => 26
+  | 12 => 4
+  | 13 => 12
+  | 14 => 52
+  | 15 => 36
+  | _ => 36
+
+set_option maxHeartbeats 800000 in
+-- Each branch computes a finite power-equation cardinality by kernel reduction.
+theorem card_pow_two_eq_one_order100_reps (i : Fin 16) :
+    order100_pow_eq_one_card (order100_reps i) 2 = order100_pow_two_eq_one_card i := by
+  fin_cases i <;> exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Cardinalities of `{x | x ^ 4 = 1}` in the sixteen displayed representatives. -/
+def order100_pow_four_eq_one_card : Fin 16 → Nat
+  | 0 => 4
+  | 1 => 76
+  | 2 => 52
+  | 3 => 4
+  | 4 => 52
+  | 5 => 4
+  | 6 => 12
+  | 7 => 16
+  | 8 => 52
+  | 9 => 56
+  | 10 => 76
+  | 11 => 76
+  | 12 => 4
+  | 13 => 12
+  | 14 => 52
+  | 15 => 36
+  | _ => 36
+
+set_option maxHeartbeats 800000 in
+-- Each branch computes a finite power-equation cardinality by kernel reduction.
+theorem card_pow_four_eq_one_order100_reps (i : Fin 16) :
+    order100_pow_eq_one_card (order100_reps i) 4 = order100_pow_four_eq_one_card i := by
+  fin_cases i <;> exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Cardinalities of `{x | x ^ 5 = 1}` in the sixteen displayed representatives. -/
+def order100_pow_five_eq_one_card : Fin 16 → Nat
+  | 0 => 5
+  | 1 => 5
+  | 2 => 5
+  | 3 => 5
+  | 4 => 5
+  | 5 => 25
+  | 6 => 25
+  | 7 => 25
+  | 8 => 25
+  | 9 => 25
+  | 10 => 25
+  | 11 => 25
+  | 12 => 25
+  | 13 => 25
+  | 14 => 25
+  | 15 => 25
+  | _ => 25
+
+set_option maxHeartbeats 800000 in
+-- Each branch computes a finite power-equation cardinality by kernel reduction.
+theorem card_pow_five_eq_one_order100_reps (i : Fin 16) :
+    order100_pow_eq_one_card (order100_reps i) 5 = order100_pow_five_eq_one_card i := by
+  fin_cases i <;> exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Number of nonidentity fifth-power-trivial elements whose cyclic subgroup is
+conjugation-stable. -/
+def order100_normal_powers_five_elem_card : Fin 16 → Nat
+  | 0 => 4
+  | 1 => 4
+  | 2 => 4
+  | 3 => 4
+  | 4 => 4
+  | 5 => 24
+  | 6 => 8
+  | 7 => 8
+  | 8 => 24
+  | 9 => 8
+  | 10 => 24
+  | 11 => 8
+  | 12 => 24
+  | 13 => 8
+  | 14 => 24
+  | 15 => 8
+  | _ => 8
+
+set_option maxHeartbeats 800000 in
+-- Each branch computes a finite conjugation-stability cardinality by exhaustive enumeration.
+theorem card_normal_powers_five_order100_reps (i : Fin 16) :
+    order100_normal_powers_five_card (order100_reps i) =
+      order100_normal_powers_five_elem_card i := by
+  fin_cases i
+  · change order100_normal_powers_five_card order100_RA = 4
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RB = 4
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RC = 4
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RD = 4
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RE = 4
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RF = 24
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RG = 8
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RH = 8
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RI = 24
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RJ = 8
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RK = 24
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RL = 8
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RM = 24
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RN = 8
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RO = 24
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · change order100_normal_powers_five_card order100_RP = 8
+    exact order100_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+def order100_reps_invariant (i : Fin 16) : Nat × Nat × Nat × Nat × Nat :=
+  (order100_center_card i, order100_pow_two_eq_one_card i, order100_pow_four_eq_one_card i,
+    order100_pow_five_eq_one_card i, order100_normal_powers_five_elem_card i)
+
+theorem order100_reps_invariant_injective : Function.Injective order100_reps_invariant := by
+  decide +kernel
+
+theorem order100_reps_invariant_eq_of_mulEquiv {i j : Fin 16}
+    (hiso : Nonempty (order100_reps i ≃* order100_reps j)) :
+    order100_reps_invariant i = order100_reps_invariant j := by
+  rcases hiso with ⟨e⟩
+  apply Prod.ext
+  · change order100_center_card i = order100_center_card j
+    rw [← card_center_order100_reps i, ← card_center_order100_reps j]
+    exact card_center_eq_of_mulEquiv e
+  · apply Prod.ext
+    · change order100_pow_two_eq_one_card i = order100_pow_two_eq_one_card j
+      rw [← card_pow_two_eq_one_order100_reps i, ← card_pow_two_eq_one_order100_reps j]
+      exact order100_pow_eq_one_card_eq_of_mulEquiv 2 e
+    · apply Prod.ext
+      · change order100_pow_four_eq_one_card i = order100_pow_four_eq_one_card j
+        rw [← card_pow_four_eq_one_order100_reps i, ← card_pow_four_eq_one_order100_reps j]
+        exact order100_pow_eq_one_card_eq_of_mulEquiv 4 e
+      · apply Prod.ext
+        · change order100_pow_five_eq_one_card i = order100_pow_five_eq_one_card j
+          rw [← card_pow_five_eq_one_order100_reps i, ← card_pow_five_eq_one_order100_reps j]
+          exact order100_pow_eq_one_card_eq_of_mulEquiv 5 e
+        · change order100_normal_powers_five_elem_card i =
+            order100_normal_powers_five_elem_card j
+          rw [← card_normal_powers_five_order100_reps i,
+            ← card_normal_powers_five_order100_reps j]
+          exact order100_normal_powers_five_card_eq_of_mulEquiv e
+
+theorem order100_reps_pairwise : PairwiseNonMulEquiv order100_reps := by
+  intro i j hiso
+  exact order100_reps_invariant_injective (order100_reps_invariant_eq_of_mulEquiv hiso)
+
+/-- The displayed representatives exhaust the groups of order `100`, in `IsClassif` form. -/
+theorem order100_complete (G : Type) [Group G] (hG : Nat.card G = 100) :
+    ∃ i, Nonempty (G ≃* order100_reps i) := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hG]; norm_num)
+  rcases order100_classification_cases (G := G) hG with h | h | h | h
+  · rcases h with h | h | h
+    exacts [⟨0, by simpa [order100_reps, order100_RA] using h⟩,
+      ⟨1, by simpa [order100_reps, order100_RB] using h⟩,
+      ⟨2, by simpa [order100_reps, order100_RC] using h⟩]
+  · rcases h with h | h
+    exacts [⟨3, by simpa [order100_reps, order100_RD] using h⟩,
+      ⟨4, by simpa [order100_reps, order100_RE] using h⟩]
+  · rcases h with h | h | h | h | h | h | h
+    exacts [⟨5, by simpa [order100_reps, order100_RF] using h⟩,
+      ⟨6, by simpa [order100_reps, order100_RG] using h⟩,
+      ⟨7, by simpa [order100_reps, order100_RH] using h⟩,
+      ⟨8, by simpa [order100_reps, order100_RI] using h⟩,
+      ⟨9, by simpa [order100_reps, order100_RJ] using h⟩,
+      ⟨10, by simpa [order100_reps, order100_RK] using h⟩,
+      ⟨11, by simpa [order100_reps, order100_RL] using h⟩]
+  · rcases h with h | h | h | h
+    exacts [⟨12, by simpa [order100_reps, order100_RM] using h⟩,
+      ⟨13, by simpa [order100_reps, order100_RN] using h⟩,
+      ⟨14, by simpa [order100_reps, order100_RO] using h⟩,
+      ⟨15, by simpa [order100_reps, order100_RP] using h⟩]
+
+/-- The displayed representatives form a complete classification of groups of order `100`. -/
+theorem order100_isClassif : IsClassif 100 order100_reps where
+  card := card_order100_reps
+  complete := order100_complete
+  distinct := order100_reps_pairwise
+
 end Smallgroups.UsefulTheorems
