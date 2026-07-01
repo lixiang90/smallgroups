@@ -6,6 +6,7 @@ Authors: Smallgroups contributors
 import Smallgroups.UsefulTheorems.Order4P_12
 import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.SchurZassenhaus
+import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Mathlib.GroupTheory.Sylow
 import Mathlib.Tactic.NormNum.Prime
 
@@ -144,6 +145,22 @@ noncomputable abbrev order84_action {H : Type} [Group H] (χ : H →* (ZMod 7)ˣ
     H →* MulAut order84_C7 :=
   unitAutHom.comp χ
 
+noncomputable def order84_action_precomp_mulEquiv {H : Type} [Group H]
+    (χ : H →* (ZMod 7)ˣ) (σ : H ≃* H) :
+    SemidirectProduct order84_C7 H (order84_action (χ.comp σ.toMonoidHom)) ≃*
+      SemidirectProduct order84_C7 H (order84_action χ) :=
+  semidirectProductCongrAut (N := order84_C7) (H := H) (φ := order84_action χ) σ
+
+noncomputable def order84_action_precomp_eq_mulEquiv {H : Type} [Group H]
+    (χ ψ : H →* (ZMod 7)ˣ) (σ : H ≃* H)
+    (h : χ.comp σ.toMonoidHom = ψ) :
+    SemidirectProduct order84_C7 H (order84_action ψ) ≃*
+      SemidirectProduct order84_C7 H (order84_action χ) := by
+  have haction : order84_action ψ = order84_action (χ.comp σ.toMonoidHom) := by
+    rw [h]
+  exact (semidirectProductCongr_eq haction).trans
+    (order84_action_precomp_mulEquiv χ σ)
+
 noncomputable abbrev order84_chiC12_six : order84_HA →* (ZMod 7)ˣ :=
   powHom (p := 7) (q := 12) order84_u6 (by decide)
 
@@ -183,6 +200,8 @@ theorem order84_chiC12_three_inv_gen :
 theorem order84_chiC12_six_inv_gen :
     order84_chiC12_six_inv (Multiplicative.ofAdd (1 : ZMod 12)) = order84_u6 ^ 5 := by
   decide
+
+/-! ### Automorphism orbits for cyclic-complement actions -/
 
 /-- Homomorphisms out of `C₁₂` are determined by the additive generator `1`. -/
 theorem order84_c12_unit_hom_ext {χ ψ : order84_HA →* (ZMod 7)ˣ}
@@ -289,6 +308,76 @@ theorem order84_c12_action_cases (φ : order84_HA →* MulAut order84_C7) :
     change unitAutHom (order84_u6 ^ 5) =
       unitAutHom (order84_chiC12_six_inv (Multiplicative.ofAdd (1 : ZMod 12)))
     rw [order84_chiC12_six_inv_gen]
+
+/-! ### Cyclic-complement semidirect-product cases -/
+
+/-- The automorphism of `C₁₂` sending the additive generator to five times itself. -/
+noncomputable def order84_C12_mulFive : order84_HA ≃* order84_HA :=
+  unitAutHom (p := 12) (ZMod.unitOfCoprime 5 (by norm_num : Nat.Coprime 5 12))
+
+/-- The two faithful characters of `C₁₂` lie in the same automorphism orbit. -/
+theorem order84_chiC12_six_comp_mulFive :
+    order84_chiC12_six.comp order84_C12_mulFive.toMonoidHom =
+      order84_chiC12_six_inv := by
+  apply order84_c12_unit_hom_ext
+  decide
+
+/-- The two order-`3` characters of `C₁₂` lie in the same automorphism orbit. -/
+theorem order84_chiC12_three_comp_mulFive :
+    order84_chiC12_three.comp order84_C12_mulFive.toMonoidHom =
+      order84_chiC12_three_inv := by
+  apply order84_c12_unit_hom_ext
+  decide
+
+/-- The order-`2` character of `C₁₂` is fixed by the multiplication-by-five automorphism. -/
+theorem order84_chiC12_two_comp_mulFive :
+    order84_chiC12_two.comp order84_C12_mulFive.toMonoidHom =
+      order84_chiC12_two := by
+  apply order84_c12_unit_hom_ext
+  decide
+
+noncomputable abbrev order84_c12_trivial : Type :=
+  order84_C7 × order84_HA
+
+noncomputable abbrev order84_c12_six : Type :=
+  SemidirectProduct order84_C7 order84_HA (order84_action order84_chiC12_six)
+
+noncomputable abbrev order84_c12_three : Type :=
+  SemidirectProduct order84_C7 order84_HA (order84_action order84_chiC12_three)
+
+noncomputable abbrev order84_c12_two : Type :=
+  SemidirectProduct order84_C7 order84_HA (order84_action order84_chiC12_two)
+
+noncomputable def order84_c12_six_inv_equiv_six :
+    SemidirectProduct order84_C7 order84_HA (order84_action order84_chiC12_six_inv) ≃*
+      order84_c12_six :=
+  order84_action_precomp_eq_mulEquiv order84_chiC12_six order84_chiC12_six_inv
+    order84_C12_mulFive order84_chiC12_six_comp_mulFive
+
+noncomputable def order84_c12_three_inv_equiv_three :
+    SemidirectProduct order84_C7 order84_HA (order84_action order84_chiC12_three_inv) ≃*
+      order84_c12_three :=
+  order84_action_precomp_eq_mulEquiv order84_chiC12_three order84_chiC12_three_inv
+    order84_C12_mulFive order84_chiC12_three_comp_mulFive
+
+theorem order84_c12_action_semidirect_cases (φ : order84_HA →* MulAut order84_C7) :
+    Nonempty (SemidirectProduct order84_C7 order84_HA φ ≃* order84_c12_trivial) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HA φ ≃* order84_c12_six) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HA φ ≃* order84_c12_three) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HA φ ≃* order84_c12_two) := by
+  rcases order84_c12_action_cases φ with hφ | hφ | hφ | hφ | hφ | hφ
+  · left
+    exact ⟨(semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd⟩
+  · right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; right
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; left
+    exact ⟨(semidirectProductCongr_eq hφ).trans order84_c12_three_inv_equiv_three⟩
+  · right; left
+    exact ⟨(semidirectProductCongr_eq hφ).trans order84_c12_six_inv_equiv_six⟩
 
 /-- Every group of order `84` is one of five standard semidirect-product action problems,
 according to the order-`12` complement. -/
