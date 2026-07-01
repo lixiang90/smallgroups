@@ -57,6 +57,24 @@ abbrev order54_SemidirectP2P : Type := P3Group.SemidirectP2P 3
 /-- The dihedral group of order `54`. -/
 abbrev order54_D27 : Type := DihedralGroup 27
 
+/-- The dihedral group of order `6`. -/
+abbrev order54_D3 : Type := DihedralGroup 3
+
+/-- The `C₃³` kernel with trivial `C₂` action. -/
+abbrev order54_Elem0 : Type := order54_C3C3C3 × order54_C2
+
+/-- The `C₃³` kernel with a one-dimensional inversion eigenspace. -/
+abbrev order54_Elem1 : Type := ElemAbelianRep 3 × order54_D3
+
+/-- The `C₃³` kernel with a two-dimensional inversion eigenspace. -/
+abbrev order54_Elem2 : Type :=
+  CyclicRep 3 × SemidirectProduct (ElemAbelianRep 3) order54_C2
+    (invActionHom (ElemAbelianRep 3))
+
+/-- The `C₃³` kernel with full inversion action. -/
+abbrev order54_Elem3 : Type :=
+  SemidirectProduct order54_C3C3C3 order54_C2 (invActionHom order54_C3C3C3)
+
 /-! ### Cardinalities of the standard factors -/
 
 theorem card_order54_C2 : Nat.card order54_C2 = 2 :=
@@ -253,6 +271,127 @@ theorem order54_c27_semidirect_cases (φ : order54_C2 →* MulAut order54_C27) :
     exact Or.inl ⟨order54_c27_trivial_semidirect_iso⟩
   · subst hφ
     exact Or.inr order54_c27_inv_semidirect_iso
+
+/-! ### The elementary kernel case `C₃³ ⋊ C₂` -/
+
+theorem order54_c3c3c3_pow_three (x : order54_C3C3C3) : x ^ 3 = 1 := by
+  have hpow : ∀ y : CyclicRep 3, y ^ 3 = 1 := fun y => by
+    have h1 : y ^ Fintype.card (Multiplicative (ZMod 3)) = 1 := pow_card_eq_one
+    rwa [Fintype.card_multiplicative, ZMod.card] at h1
+  obtain ⟨a, b, c⟩ := x
+  rw [Prod.pow_mk, Prod.pow_mk, hpow, hpow, hpow]
+  rfl
+
+/-- A commutative group of order `27` and exponent dividing `3` is `(C₃)³`. -/
+theorem order54_mulEquiv_c3c3c3_of_exp {H : Type*} [CommGroup H]
+    (hcard : Nat.card H = 27) (hexp : ∀ x : H, x ^ 3 = 1) :
+    Nonempty (H ≃* order54_C3C3C3) := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  haveI : Finite H := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  haveI : Fintype H := Fintype.ofFinite H
+  rcases P3Group.abelian_p3_classification 3 H (hcard.trans (by norm_num)) with
+    hcyc | hp2p | helem
+  · exfalso
+    obtain ⟨e⟩ := hcyc
+    let x : H := e.symm (Multiplicative.ofAdd (1 : P3Group.CyclicP3 3))
+    have hxord : orderOf x = 27 := by
+      dsimp [x, P3Group.CyclicP3]
+      rw [show e.symm (Multiplicative.ofAdd (1 : ZMod (3 ^ 3))) =
+            e.symm.toMonoidHom (Multiplicative.ofAdd 1) from rfl,
+        orderOf_injective e.symm.toMonoidHom e.symm.injective,
+        orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+      norm_num
+    have hdvd : 27 ∣ 3 := by
+      rw [← hxord]
+      exact orderOf_dvd_of_pow_eq_one (hexp x)
+    norm_num at hdvd
+  · exfalso
+    obtain ⟨e⟩ := hp2p
+    let x : H := e.symm (Multiplicative.ofAdd (1 : ZMod (3 ^ 2)),
+      (1 : Multiplicative (ZMod 3)))
+    have hxord : orderOf x = 9 := by
+      dsimp [x]
+      rw [show e.symm (Multiplicative.ofAdd (1 : ZMod (3 ^ 2)),
+            (1 : Multiplicative (ZMod 3))) =
+            e.symm.toMonoidHom (Multiplicative.ofAdd 1, 1) from rfl,
+        orderOf_injective e.symm.toMonoidHom e.symm.injective]
+      rw [Prod.orderOf_mk, orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one, orderOf_one]
+      norm_num
+    have hdvd : 9 ∣ 3 := by
+      rw [← hxord]
+      exact orderOf_dvd_of_pow_eq_one (hexp x)
+    norm_num at hdvd
+  · exact helem
+
+theorem order54_c3c3c3_semidirect_cases (φ : order54_C2 →* MulAut order54_C3C3C3) :
+    Nonempty (SemidirectProduct order54_C3C3C3 order54_C2 φ ≃* order54_Elem0) ∨
+      Nonempty (SemidirectProduct order54_C3C3C3 order54_C2 φ ≃* order54_Elem1) ∨
+      Nonempty (SemidirectProduct order54_C3C3C3 order54_C2 φ ≃* order54_Elem2) ∨
+      Nonempty (SemidirectProduct order54_C3C3C3 order54_C2 φ ≃* order54_Elem3) := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  set τ := φ (Multiplicative.ofAdd 1) with hτ
+  have h2 : τ * τ = 1 := by
+    rw [← sq, hτ, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order54_C3C3C3, x ^ 3 = 1 := order54_c3c3c3_pow_three
+  have ht : 2 * 2 = 3 + 1 := by norm_num
+  have expFix : ∀ x : fixSubgroup τ, x ^ 3 = 1 := fun x =>
+    Subtype.ext (by rw [SubmonoidClass.coe_pow, OneMemClass.coe_one]; exact hexp _)
+  have expNeg : ∀ x : negSubgroup τ, x ^ 3 = 1 := fun x =>
+    Subtype.ext (by rw [SubmonoidClass.coe_pow, OneMemClass.coe_one]; exact hexp _)
+  let eMain :
+      SemidirectProduct order54_C3C3C3 order54_C2 φ ≃*
+        fixSubgroup τ × SemidirectProduct (negSubgroup τ) order54_C2
+          (invActionHom (negSubgroup τ)) :=
+    elem_decomp_semidirect hinv hexp ht φ rfl
+  have hsplit : Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 3 ^ 3 := by
+    rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+    exact card_order54_C3C3C3
+  have hd_dvd : Nat.card (negSubgroup τ) ∣ 3 ^ 3 :=
+    ⟨Nat.card (fixSubgroup τ), by rw [mul_comm]; exact hsplit.symm⟩
+  obtain ⟨i, hi_le, hi⟩ := (Nat.dvd_prime_pow (by norm_num : Nat.Prime 3)).mp hd_dvd
+  interval_cases i
+  · have hNeg1 : Nat.card (negSubgroup τ) = 1 := by simpa using hi
+    haveI : Subsingleton (negSubgroup τ) := (Nat.card_eq_one_iff_unique.mp hNeg1).1
+    have hFix27 : Nat.card (fixSubgroup τ) = 27 := by
+      have h := hsplit
+      rwa [hNeg1, mul_one] at h
+    obtain ⟨eFix⟩ := order54_mulEquiv_c3c3c3_of_exp hFix27 expFix
+    exact Or.inl ⟨eMain.trans (MulEquiv.prodCongr eFix semidirectUniqueLeft)⟩
+  · have hNeg3 : Nat.card (negSubgroup τ) = 3 := by simpa using hi
+    have hFix9 : Nat.card (fixSubgroup τ) = 9 := by
+      have h := hsplit
+      rw [hNeg3] at h
+      have h' : Nat.card (fixSubgroup τ) * 3 = 9 * 3 := by omega
+      exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 3) h'
+    obtain ⟨eFix⟩ := mulEquiv_elemAbelian_of_exp (p := 3) hFix9 expFix
+    obtain ⟨eNeg⟩ := prime_classification (by norm_num : Nat.Prime 3) hNeg3
+    exact Or.inr (Or.inl ⟨eMain.trans <|
+      MulEquiv.prodCongr eFix ((genDihCongr eNeg).trans (genDihedralCyclicIso 3))⟩)
+  · have hNeg9 : Nat.card (negSubgroup τ) = 9 := by simpa using hi
+    have hFix3 : Nat.card (fixSubgroup τ) = 3 := by
+      have h := hsplit
+      rw [hNeg9] at h
+      have h' : Nat.card (fixSubgroup τ) * 9 = 3 * 9 := by omega
+      exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 9) h'
+    obtain ⟨eFix⟩ := prime_classification (by norm_num : Nat.Prime 3) hFix3
+    obtain ⟨eNeg⟩ := mulEquiv_elemAbelian_of_exp (p := 3) hNeg9 expNeg
+    exact Or.inr (Or.inr (Or.inl ⟨eMain.trans <|
+      MulEquiv.prodCongr eFix (genDihCongr eNeg)⟩))
+  · have hNeg27 : Nat.card (negSubgroup τ) = 27 := by simpa using hi
+    have hFix1 : Nat.card (fixSubgroup τ) = 1 := by
+      have h := hsplit
+      rw [hNeg27] at h
+      have h' : Nat.card (fixSubgroup τ) * 27 = 1 * 27 := by omega
+      exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 27) h'
+    haveI : Subsingleton (fixSubgroup τ) := (Nat.card_eq_one_iff_unique.mp hFix1).1
+    haveI : Unique (fixSubgroup τ) := uniqueOfSubsingleton 1
+    obtain ⟨eNeg⟩ := order54_mulEquiv_c3c3c3_of_exp hNeg27 expNeg
+    exact Or.inr (Or.inr (Or.inr ⟨eMain.trans <|
+      MulEquiv.uniqueProd.trans (genDihCongr eNeg)⟩))
 
 /-! ### Sylow-3 normality and semidirect-product reduction -/
 
