@@ -102,6 +102,25 @@ theorem order54_actionOfInvolution_ofAdd_one {N : Type*} [Group N]
   change α ^ (1 : ZMod 2).val = α
   rw [show (1 : ZMod 2).val = 1 by decide, pow_one]
 
+/-- A `C₂` action is determined by the image of the additive generator. -/
+theorem order54_action_eq_actionOfInvolution {N : Type*} [Group N]
+    (φ : order54_C2 →* MulAut N) :
+    let τ := φ (Multiplicative.ofAdd (1 : ZMod 2))
+    let hτ : τ ^ 2 = 1 := by
+      rw [← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+        map_one]
+    φ = order54_actionOfInvolution τ hτ := by
+  intro τ hτ
+  apply MonoidHom.ext
+  intro h
+  fin_cases h
+  · change φ 1 = τ ^ (0 : ℕ)
+    simp
+  · apply MulEquiv.ext
+    intro x
+    change φ (Multiplicative.ofAdd (1 : ZMod 2)) x = (τ ^ (1 : ℕ)) x
+    simp [τ]
+
 /-- Conjugate involutions of the kernel give isomorphic `C₂` semidirect products. -/
 theorem order54_semidirect_conj_action_iso {N : Type*} [Group N]
     (α β θ : MulAut N) (hα : α ^ 2 = 1) (hβ : β ^ 2 = 1)
@@ -214,6 +233,39 @@ abbrev order54_p2pA : order54_SemidirectP2P := ⟨1, 0⟩
 
 /-- The order-`3` generator in the exponent-`9` non-abelian kernel. -/
 abbrev order54_p2pB : order54_SemidirectP2P := ⟨0, 1⟩
+
+/-- The coordinate formula for the shear automorphisms `A ↦ A B^s`, `B ↦ B`. -/
+def order54_semidirectP2PShearFun (s : ZMod 3)
+    (x : order54_SemidirectP2P) : order54_SemidirectP2P :=
+  ⟨x.a + (3 : ZMod 9) * (s.val : ZMod 9) * (Nat.choose x.a.val 2 : ZMod 9),
+    (x.a.val : ZMod 3) * s + x.b⟩
+
+/-- The shear automorphism `A ↦ A B`, `B ↦ B` of the exponent-`9` kernel. -/
+noncomputable def order54_semidirectP2PShearAut : MulAut order54_SemidirectP2P where
+  toFun := order54_semidirectP2PShearFun 1
+  invFun := order54_semidirectP2PShearFun 2
+  left_inv x := by
+    cases x with
+    | mk a b =>
+        fin_cases a <;> fin_cases b <;> decide
+  right_inv x := by
+    cases x with
+    | mk a b =>
+        fin_cases a <;> fin_cases b <;> decide
+  map_mul' x y := by
+    cases x with
+    | mk a b =>
+        cases y with
+        | mk c d =>
+            fin_cases a <;> fin_cases b <;> fin_cases c <;> fin_cases d <;> decide
+
+theorem order54_semidirectP2PShearAut_p2pA :
+    order54_semidirectP2PShearAut order54_p2pA = order54_p2pA * order54_p2pB := by
+  decide
+
+theorem order54_semidirectP2PShearAut_p2pB :
+    order54_semidirectP2PShearAut order54_p2pB = order54_p2pB := by
+  decide
 
 /-- Every element of `SemidirectP2P 3` has the normal form `A^i B^j`. -/
 theorem order54_semidirectP2P_elem_decomp (x : order54_SemidirectP2P) :
@@ -522,6 +574,73 @@ theorem order54_semidirectP2P_mulAut_involution_center_cases
   · exact Or.inl (order54_semidirectP2P_mulAut_eq_one_of_p2pA_cube α hα hcube)
   · exact Or.inr hcube
 
+/-- A nontrivial `C₂` action on the exponent-`9` kernel is conjugate to the standard
+`A ↦ A⁻¹`, `B ↦ B` action. -/
+theorem order54_semidirectP2P_mulAut_conj_negA_of_center_reversal
+    (α : MulAut order54_SemidirectP2P)
+    (hα : α ^ 2 = 1)
+    (hcube : (α order54_p2pA) ^ 3 = order54_p2pA ^ 6) :
+    ∃ θ : MulAut order54_SemidirectP2P,
+      α = θ * order54_semidirectP2PNegAAut * θ⁻¹ := by
+  have hsqA : α (α order54_p2pA) = order54_p2pA := by
+    have h := DFunLike.congr_fun hα order54_p2pA
+    simpa [sq] using h
+  rcases order54_semidirectP2P_mulAut_p2pB_cases α with hB | hB | hB
+  · have hsqA' := hsqA
+    rw [order54_semidirectP2P_mulAut_apply_decomp α (α order54_p2pA)] at hsqA'
+    rw [hB] at hsqA'
+    generalize hx : α order54_p2pA = x at hcube hsqA'
+    cases x with
+    | mk a b =>
+        fin_cases a <;> fin_cases b <;>
+          first
+          | exact ⟨order54_semidirectP2PShearAut ^ ((0 : ZMod 3).val),
+              order54_semidirectP2P_mulAut_ext (hx.trans (by decide)) (hB.trans (by decide))⟩
+          | exact ⟨order54_semidirectP2PShearAut ^ ((1 : ZMod 3).val),
+              order54_semidirectP2P_mulAut_ext (hx.trans (by decide)) (hB.trans (by decide))⟩
+          | exact ⟨order54_semidirectP2PShearAut ^ ((2 : ZMod 3).val),
+              order54_semidirectP2P_mulAut_ext (hx.trans (by decide)) (hB.trans (by decide))⟩
+          | exfalso; revert hcube; decide
+          | exfalso; revert hsqA'; decide
+  · have hsqA' := hsqA
+    rw [order54_semidirectP2P_mulAut_apply_decomp α (α order54_p2pA)] at hsqA'
+    rw [hB] at hsqA'
+    generalize hx : α order54_p2pA = x at hcube hsqA'
+    cases x with
+    | mk a b =>
+        fin_cases a <;> fin_cases b <;>
+          first
+          | exact ⟨order54_semidirectP2PShearAut ^ ((0 : ZMod 3).val) *
+                MulAut.conj (order54_p2pA ^ 4),
+              order54_semidirectP2P_mulAut_ext (hx.trans (by decide)) (hB.trans (by decide))⟩
+          | exact ⟨order54_semidirectP2PShearAut ^ ((1 : ZMod 3).val) *
+                MulAut.conj (order54_p2pA ^ 4),
+              order54_semidirectP2P_mulAut_ext (hx.trans (by decide)) (hB.trans (by decide))⟩
+          | exact ⟨order54_semidirectP2PShearAut ^ ((2 : ZMod 3).val) *
+                MulAut.conj (order54_p2pA ^ 4),
+              order54_semidirectP2P_mulAut_ext (hx.trans (by decide)) (hB.trans (by decide))⟩
+          | exfalso; revert hcube; decide
+          | exfalso; revert hsqA'; decide
+  · have hsqA' := hsqA
+    rw [order54_semidirectP2P_mulAut_apply_decomp α (α order54_p2pA)] at hsqA'
+    rw [hB] at hsqA'
+    generalize hx : α order54_p2pA = x at hcube hsqA'
+    cases x with
+    | mk a b =>
+        fin_cases a <;> fin_cases b <;>
+          first
+          | exact ⟨order54_semidirectP2PShearAut ^ ((0 : ZMod 3).val) *
+                MulAut.conj (order54_p2pA ^ 2),
+              order54_semidirectP2P_mulAut_ext (hx.trans (by decide)) (hB.trans (by decide))⟩
+          | exact ⟨order54_semidirectP2PShearAut ^ ((1 : ZMod 3).val) *
+                MulAut.conj (order54_p2pA ^ 2),
+              order54_semidirectP2P_mulAut_ext (hx.trans (by decide)) (hB.trans (by decide))⟩
+          | exact ⟨order54_semidirectP2PShearAut ^ ((2 : ZMod 3).val) *
+                MulAut.conj (order54_p2pA ^ 2),
+              order54_semidirectP2P_mulAut_ext (hx.trans (by decide)) (hB.trans (by decide))⟩
+          | exfalso; revert hcube; decide
+          | exfalso; revert hsqA'; decide
+
 /-! ### Cardinalities of the standard factors -/
 
 theorem card_order54_C2 : Nat.card order54_C2 = 2 :=
@@ -607,6 +726,34 @@ theorem order54_semidirectP2P_trivial_semidirect_iso :
     Nonempty (SemidirectProduct order54_SemidirectP2P order54_C2
       (1 : order54_C2 →* MulAut order54_SemidirectP2P) ≃* order54_P2P0) :=
   ⟨order54_trivial_semidirect_iso order54_SemidirectP2P⟩
+
+theorem order54_semidirectP2P_semidirect_cases
+    (φ : order54_C2 →* MulAut order54_SemidirectP2P) :
+    Nonempty (SemidirectProduct order54_SemidirectP2P order54_C2 φ ≃* order54_P2P0) ∨
+      Nonempty (SemidirectProduct order54_SemidirectP2P order54_C2 φ ≃* order54_P2P1) := by
+  set τ := φ (Multiplicative.ofAdd (1 : ZMod 2)) with hτdef
+  have hτ2 : τ ^ 2 = 1 := by
+    rw [hτdef, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have haction : φ = order54_actionOfInvolution τ hτ2 := by
+    simpa [hτdef] using order54_action_eq_actionOfInvolution φ
+  rcases order54_semidirectP2P_mulAut_involution_center_cases τ hτ2 with htriv | hrev
+  · have hφ : φ = 1 := by
+      rw [haction]
+      apply MonoidHom.ext
+      intro h
+      fin_cases h
+      · change (order54_actionOfInvolution τ hτ2) 1 = 1
+        simp
+      · change τ = 1
+        exact htriv
+    obtain ⟨e⟩ := order54_semidirectP2P_trivial_semidirect_iso
+    exact Or.inl ⟨(semidirectProductCongr_eq hφ).trans e⟩
+  · rcases order54_semidirectP2P_mulAut_conj_negA_of_center_reversal τ hτ2 hrev with
+      ⟨θ, hconj⟩
+    obtain ⟨e⟩ := order54_semidirect_conj_action_iso τ order54_semidirectP2PNegAAut θ
+      hτ2 order54_semidirectP2PNegAAut_sq hconj
+    exact Or.inr ⟨(semidirectProductCongr_eq haction).trans e.symm⟩
 
 /-! ### The cyclic kernel case `C₂₇ ⋊ C₂` -/
 
@@ -1309,5 +1456,33 @@ theorem order54_cases_after_abelian_kernels [Finite G] (hG : Nat.card G = 54) :
   rcases h with hHeisenberg | hSemidirectP2P
   · exact Or.inr (Or.inl hHeisenberg)
   · exact Or.inr (Or.inr hSemidirectP2P)
+
+/-- Current assembled reduction for order `54`: after the abelian-kernel work and the
+exponent-`9` non-abelian kernel work, only the Heisenberg-kernel actions remain unclassified. -/
+theorem order54_cases_after_p2p_kernel [Finite G] (hG : Nat.card G = 54) :
+    (Nonempty (G ≃* order54_C54) ∨
+      Nonempty (G ≃* order54_D27) ∨
+      Nonempty (G ≃* order54_Mixed0) ∨
+      Nonempty (G ≃* order54_Mixed1) ∨
+      Nonempty (G ≃* order54_Mixed2) ∨
+      Nonempty (G ≃* order54_Mixed3) ∨
+      Nonempty (G ≃* order54_Elem0) ∨
+      Nonempty (G ≃* order54_Elem1) ∨
+      Nonempty (G ≃* order54_Elem2) ∨
+      Nonempty (G ≃* order54_Elem3)) ∨
+    (∃ φ : order54_C2 →* MulAut order54_Heisenberg,
+      Nonempty (G ≃* SemidirectProduct order54_Heisenberg order54_C2 φ)) ∨
+    Nonempty (G ≃* order54_P2P0) ∨
+    Nonempty (G ≃* order54_P2P1) := by
+  rcases order54_cases_after_abelian_kernels (G := G) hG with hAbelian | hNonabelian
+  · exact Or.inl hAbelian
+  rcases hNonabelian with hHeisenberg | hSemidirectP2P
+  · exact Or.inr (Or.inl hHeisenberg)
+  · rcases hSemidirectP2P with ⟨φ, ⟨eG⟩⟩
+    rcases order54_semidirectP2P_semidirect_cases φ with hP2P0 | hP2P1
+    · rcases hP2P0 with ⟨eP2P0⟩
+      exact Or.inr (Or.inr (Or.inl ⟨eG.trans eP2P0⟩))
+    · rcases hP2P1 with ⟨eP2P1⟩
+      exact Or.inr (Or.inr (Or.inr ⟨eG.trans eP2P1⟩))
 
 end Smallgroups.UsefulTheorems
