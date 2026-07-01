@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order88
+import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Card
 
 /-!
 # First reductions for groups of order 56
@@ -925,10 +926,97 @@ theorem order56_card_aut_c4c2 : Nat.card (MulAut order56_C4C2) = 8 := by
   rw [← Fintype.card_congr e]
   decide +kernel
 
-set_option linter.style.nativeDecide false in
+abbrev order56_C2C2C2Add : Type :=
+  ZMod 2 × ZMod 2 × ZMod 2
+
+abbrev order56_C2C2C2Vec : Type := Fin 3 → ZMod 2
+
+/-- The additive coordinates of `(C₂)^3` as the standard three-dimensional vector space over
+`ZMod 2`. -/
+def order56_c2c2c2VecEquiv : order56_C2C2C2Add ≃ₗ[ZMod 2] order56_C2C2C2Vec where
+  toFun x
+    | 0 => x.1
+    | 1 => x.2.1
+    | 2 => x.2.2
+  invFun v := (v 0, v 1, v 2)
+  left_inv := by
+    rintro ⟨a, b, c⟩
+    rfl
+  right_inv := by
+    intro v
+    funext i
+    fin_cases i <;> rfl
+  map_add' := by
+    intro x y
+    funext i
+    fin_cases i <;> rfl
+  map_smul' := by
+    intro r x
+    funext i
+    fin_cases i <;> rfl
+
+/-- Identify the multiplicative presentation of `(C₂)^3` with the multiplicative type-tag of the
+standard additive vector space. -/
+def order56_c2c2c2MulEquivVec :
+    order56_C2C2C2 ≃* Multiplicative order56_C2C2C2Vec :=
+  (MulEquiv.prodCongr (MulEquiv.refl (Multiplicative (ZMod 2)))
+    (MulEquiv.prodCongr (MulEquiv.refl (Multiplicative (ZMod 2)))
+      (MulEquiv.refl (Multiplicative (ZMod 2))))).symm.trans
+    ((MulEquiv.prodMultiplicative (ZMod 2) (ZMod 2 × ZMod 2)).symm.trans
+      (AddEquiv.toMultiplicative order56_c2c2c2VecEquiv))
+
+/-- Additive automorphisms of a `ZMod 2`-vector space are automatically linear. -/
+def order56_addAutLinearEquiv (σ : AddAut order56_C2C2C2Vec) :
+    order56_C2C2C2Vec ≃ₗ[ZMod 2] order56_C2C2C2Vec where
+  toFun := σ
+  invFun := σ.symm
+  left_inv := σ.left_inv
+  right_inv := σ.right_inv
+  map_add' := map_add σ
+  map_smul' := by
+    rw [ZMod.forall]
+    intro z x
+    exact map_intCast_smul σ (ZMod 2) (ZMod 2) z x
+
+def order56_linearEquivAddAut (σ : order56_C2C2C2Vec ≃ₗ[ZMod 2] order56_C2C2C2Vec) :
+    AddAut order56_C2C2C2Vec :=
+  σ.toAddEquiv
+
+/-- Additive automorphisms of the three-dimensional `ZMod 2` vector space are the same as linear
+automorphisms. -/
+def order56_addAutEquivLinearEquiv :
+    AddAut order56_C2C2C2Vec ≃ order56_C2C2C2Vec ≃ₗ[ZMod 2] order56_C2C2C2Vec where
+  toFun := order56_addAutLinearEquiv
+  invFun := order56_linearEquivAddAut
+  left_inv := by
+    intro σ
+    ext x
+    rfl
+  right_inv := by
+    intro σ
+    ext x
+    rfl
+
 theorem order56_card_aut_c2c2c2 : Nat.card (MulAut order56_C2C2C2) = 168 := by
-  rw [Nat.card_eq_fintype_card]
-  native_decide
+  calc
+    Nat.card (MulAut order56_C2C2C2)
+        = Nat.card (MulAut (Multiplicative order56_C2C2C2Vec)) := by
+          exact Nat.card_congr (MulAut.congr order56_c2c2c2MulEquivVec).toEquiv
+    _ = Nat.card (Multiplicative (AddAut order56_C2C2C2Vec)) := by
+          exact Nat.card_congr (MulAutMultiplicative order56_C2C2C2Vec).toEquiv
+    _ = Nat.card (AddAut order56_C2C2C2Vec) := by
+          exact Nat.card_congr Multiplicative.toAdd
+    _ = Nat.card (order56_C2C2C2Vec ≃ₗ[ZMod 2] order56_C2C2C2Vec) := by
+          exact Nat.card_congr order56_addAutEquivLinearEquiv
+    _ = Nat.card (LinearMap.GeneralLinearGroup (ZMod 2) order56_C2C2C2Vec) := by
+          exact (Nat.card_congr (LinearMap.GeneralLinearGroup.generalLinearEquiv
+            (ZMod 2) order56_C2C2C2Vec).toEquiv).symm
+    _ = Nat.card (GL (Fin 3) (ZMod 2)) := by
+          exact (Nat.card_congr (Matrix.GeneralLinearGroup.toLin
+            (n := Fin 3) (R := ZMod 2)).toEquiv).symm
+    _ = 168 := by
+          rw [Matrix.card_GL_field]
+          decide +kernel
 
 /-- The automorphism of `D₈` sending `r i` to `r (u * i)` and `sr i` to `sr (v + u * i)`. -/
 noncomputable def order56_d8Aut (u : (ZMod 4)ˣ) (v : ZMod 4) : MulAut order56_D8 where
