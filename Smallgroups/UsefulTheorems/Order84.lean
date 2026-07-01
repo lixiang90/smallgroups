@@ -1624,6 +1624,51 @@ noncomputable instance instGroupOrder84Reps : (i : Fin 15) → Group (order84_re
   | 13 => inferInstanceAs (Group order84_a4_trivial)
   | 14 => inferInstanceAs (Group order84_a4_three)
 
+theorem card_order84_C7 : Nat.card order84_C7 = 7 :=
+  card_cyclicRep (by norm_num)
+
+theorem card_order84_HA : Nat.card order84_HA = 12 :=
+  card_fourP_I (p := 3)
+
+theorem card_order84_HB : Nat.card order84_HB = 12 :=
+  card_fourP_II (p := 3)
+
+theorem card_order84_HC : Nat.card order84_HC = 12 :=
+  card_fourP_III (p := 3) (by norm_num)
+
+theorem card_order84_HD : Nat.card order84_HD = 12 :=
+  card_fourP_V (p := 3)
+
+theorem card_order84_HE : Nat.card order84_HE = 12 :=
+  card_fourP_A4
+
+theorem card_order84_directProduct {H : Type} [Group H] (hH : Nat.card H = 12) :
+    Nat.card (order84_C7 × H) = 84 := by
+  rw [Nat.card_prod, card_order84_C7, hH]
+
+theorem card_order84_semidirect {H : Type} [Group H] (φ : H →* MulAut order84_C7)
+    (hH : Nat.card H = 12) :
+    Nat.card (SemidirectProduct order84_C7 H φ) = 84 := by
+  rw [SemidirectProduct.card, card_order84_C7, hH]
+
+theorem card_order84_reps (i : Fin 15) : Nat.card (order84_reps i) = 84 := by
+  fin_cases i
+  · exact card_order84_directProduct card_order84_HA
+  · exact card_order84_semidirect _ card_order84_HA
+  · exact card_order84_semidirect _ card_order84_HA
+  · exact card_order84_semidirect _ card_order84_HA
+  · exact card_order84_directProduct card_order84_HB
+  · exact card_order84_semidirect _ card_order84_HB
+  · exact card_order84_semidirect _ card_order84_HB
+  · exact card_order84_semidirect _ card_order84_HB
+  · exact card_order84_directProduct card_order84_HC
+  · exact card_order84_semidirect _ card_order84_HC
+  · exact card_order84_directProduct card_order84_HD
+  · exact card_order84_semidirect _ card_order84_HD
+  · exact card_order84_semidirect _ card_order84_HD
+  · exact card_order84_directProduct card_order84_HE
+  · exact card_order84_semidirect _ card_order84_HE
+
 /-- Every group of order `84` is isomorphic to one of the fifteen displayed representatives. -/
 theorem order84_complete (G : Type) [Group G] [Finite G] (hG : Nat.card G = 84) :
     ∃ i : Fin 15, Nonempty (G ≃* order84_reps i) := by
