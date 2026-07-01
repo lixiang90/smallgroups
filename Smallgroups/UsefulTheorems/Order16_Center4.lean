@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order16
 import Mathlib.GroupTheory.QuotientGroup.Basic
+import Mathlib.Algebra.Group.Conj
 
 /-!
 # Groups of order 16 with center ≅ C4
@@ -255,7 +256,93 @@ theorem order16_N1_classification {G : Type*} [Group G] [Finite G]
   rw [h_sol] at h_mem
   rcases Finset.mem_insert.mp h_mem with (hk1 | hk5)
   · -- (k : ZMod 8) = 1 → g^k = g → t*g = g*t → G abelian, contradicting |Z(G)|=4
-    sorry
+    have hk_modEq_one : (k : ℤ) ≡ (1 : ℤ) [ZMOD (8 : ℤ)] :=
+      (ZMod.intCast_eq_intCast_iff (k : ℤ) (1 : ℤ) 8).mp hk1
+    have h_gk_eq_g : (g : G) ^ (k : ℤ) = g := by
+      have := (zpow_eq_zpow_iff_modEq (x := g) (m := (k : ℤ)) (n := (1 : ℤ))).mpr
+        (by rw [hg]; exact hk_modEq_one)
+      simpa [zpow_one] using this
+    have h_conj_eq_g : t * g * t⁻¹ = g :=
+      hk.symm.trans h_gk_eq_g
+    have h_comm_tg_eq : t * g = g * t := by
+      calc
+        t * g = (t * g * t⁻¹) * t := by group
+        _ = g * t := by rw [h_conj_eq_g]
+    have h_comm_tg : Commute t g := h_comm_tg_eq
+    -- t commutes with all elements of H (H = ⟨g⟩)
+    have h_comm_t_H (h : H) : Commute t (h : G) := by
+      rcases Subgroup.mem_zpowers_iff.mp h.2 with ⟨n, hn⟩
+      have hcomm : Commute t (g ^ n) := h_comm_tg.zpow_right n
+      simpa [hn] using hcomm
+    -- H is abelian (cyclic)
+    have h_comm_H (h1 h2 : H) : Commute (h1 : G) (h2 : G) := by
+      rcases Subgroup.mem_zpowers_iff.mp h1.2 with ⟨m, hm⟩
+      rcases Subgroup.mem_zpowers_iff.mp h2.2 with ⟨n, hn⟩
+      have hcomm : Commute (g ^ m) (g ^ n) := ((Commute.refl g).zpow_zpow m n)
+      simpa [hm, hn] using hcomm
+    -- Every x ∉ H can be written as h * t for some h ∈ H
+    have h_coset (x : G) (hx : x ∉ H) : ∃ h : H, (h : G) * t = x := by
+      have h_xt_H : x * t ∈ H := by
+        have h_iff := Subgroup.mul_mem_iff_of_index_two (a := x) (b := t) hHindex
+        apply h_iff.mpr
+        simp [hx, ht_not_H]
+      have h_sq_t_H : t ^ 2 ∈ H := Subgroup.sq_mem_of_index_two hHindex t
+      have h_sq_t_inv_H : (t ^ 2)⁻¹ ∈ H := Subgroup.inv_mem _ h_sq_t_H
+      have h_t2inv_t : (t ^ 2)⁻¹ * t = t⁻¹ := by group
+      set h := (x * t) * (t ^ 2)⁻¹ with hh
+      have h_mem_H : h ∈ H := Subgroup.mul_mem H h_xt_H h_sq_t_inv_H
+      refine ⟨⟨h, h_mem_H⟩, ?_⟩
+      calc
+        (h : G) * t = ((x * t) * (t ^ 2)⁻¹) * t := rfl
+        _ = (x * t) * ((t ^ 2)⁻¹ * t) := by group
+        _ = (x * t) * t⁻¹ := by rw [h_t2inv_t]
+        _ = x := by group
+    -- Now prove G is abelian via case analysis
+    have hab : ∀ a b : G, a * b = b * a := by
+      intro a b
+      by_cases haH : a ∈ H
+      · by_cases hbH : b ∈ H
+        · -- both in H
+          exact (h_comm_H ⟨a, haH⟩ ⟨b, hbH⟩).eq
+        · -- a ∈ H, b ∉ H → b = hb' * t
+          rcases h_coset b hbH with ⟨hb', hb_eq⟩
+          calc
+            a * b = a * ((hb' : G) * t) := by rw [hb_eq]
+            _ = (a * (hb' : G)) * t := by group
+            _ = ((hb' : G) * a) * t := by rw [(h_comm_H ⟨a, haH⟩ hb').eq]
+            _ = (hb' : G) * (a * t) := by group
+            _ = (hb' : G) * (t * a) := by rw [(h_comm_t_H ⟨a, haH⟩).eq]
+            _ = ((hb' : G) * t) * a := by group
+            _ = b * a := by rw [← hb_eq]
+      · by_cases hbH : b ∈ H
+        · -- a ∉ H, b ∈ H → symmetric to above
+          rcases h_coset a haH with ⟨ha', ha_eq⟩
+          calc
+            a * b = (ha' : G) * t * b := by rw [ha_eq]
+            _ = (ha' : G) * (t * b) := by group
+            _ = (ha' : G) * (b * t) := by rw [(h_comm_t_H ⟨b, hbH⟩).eq]
+            _ = ((ha' : G) * b) * t := by group
+            _ = (b * (ha' : G)) * t := by rw [(h_comm_H ha' ⟨b, hbH⟩).eq]
+            _ = b * ((ha' : G) * t) := by group
+            _ = b * a := by rw [← ha_eq]
+        · -- both ∉ H
+          rcases h_coset a haH with ⟨ha', ha_eq⟩
+          rcases h_coset b hbH with ⟨hb', hb_eq⟩
+          calc
+            a * b = ((ha' : G) * t) * ((hb' : G) * t) := by rw [ha_eq, hb_eq]
+            _ = (ha' : G) * (t * (hb' : G)) * t := by group
+            _ = (ha' : G) * ((hb' : G) * t) * t := by rw [(h_comm_t_H hb').eq]
+            _ = ((ha' : G) * (hb' : G)) * (t * t) := by group
+            _ = ((hb' : G) * (ha' : G)) * (t * t) := by rw [(h_comm_H ha' hb').eq]
+            _ = (hb' : G) * ((ha' : G) * t) * t := by group
+            _ = (hb' : G) * (t * (ha' : G)) * t := by rw [(h_comm_t_H ha').eq]
+            _ = ((hb' : G) * t) * ((ha' : G) * t) := by group
+            _ = b * a := by rw [ha_eq, hb_eq]
+    -- Contradiction: G abelian → |Z(G)| = 16, but we have |Z(G)| = 4
+    have hZCcard16 : Nat.card (center G) = 16 := by
+      rw [card_center_eq_card_of_comm G hab, hcard]
+    rw [hZCcard] at hZCcard16
+    omega
   · -- (k : ZMod 8) = 5 → g^k = g⁵
     have hk_modEq_five : (k : ℤ) ≡ (5 : ℤ) [ZMOD (8 : ℤ)] :=
       (ZMod.intCast_eq_intCast_iff (k : ℤ) (5 : ℤ) 8).mp (Finset.mem_singleton.mp hk5)
@@ -270,6 +357,221 @@ theorem order16_N1_classification {G : Type*} [Group G] [Finite G]
       hk.symm.trans h_gk_eq_g5
     -- Step 4: find s ∈ G \ H with s² = 1 and s·g·s⁻¹ = g⁵
     -- (splitting of the extension 1 → C8 → G → C2 → 1)
+    -- g⁴ ∈ center G (since g² ∈ Z and g⁴ = (g²)²)
+    have h_g4_central : g ^ 4 ∈ center G := by
+      have h_sq_eq : g ^ 4 = (g ^ 2) * (g ^ 2) := by
+        calc
+          g ^ 4 = g ^ (2 + 2) := by norm_num
+          _ = (g ^ 2) * (g ^ 2) := by rw [pow_add]
+      rw [h_sq_eq]
+      exact Subgroup.mul_mem (center G) hg2_in_Z hg2_in_Z
+    have h_g4_central' (x : G) : (g ^ 4) * x = x * (g ^ 4) :=
+      (Subgroup.mem_center_iff.mp h_g4_central x).symm
+    have h_g4_inv : (g ^ 4)⁻¹ = g ^ 4 := by
+      have h_sq : g ^ 4 * g ^ 4 = 1 := by
+        calc
+          g ^ 4 * g ^ 4 = g ^ (4 + 4) := by rw [pow_add]
+          _ = g ^ 8 := by norm_num
+          _ = 1 := hg8
+      exact (eq_inv_of_mul_eq_one_left h_sq).symm
+    have h_g_pow_add_4_1 : g ^ 4 * g = g * g ^ 4 := by
+      calc
+        g ^ 4 * g = g ^ (4 + 1) := by rw [← pow_succ]
+        _ = g ^ 5 := by norm_num
+        _ = g ^ (1 + 4) := by norm_num
+        _ = g ^ 1 * g ^ 4 := by rw [pow_add]
+        _ = g * g ^ 4 := by simp
+    -- t⁻¹ * g * t = g⁵
+    have h_conj_inv : t⁻¹ * g * t = g ^ 5 := by
+      have h_g_eq : g = t⁻¹ * g ^ 5 * t := by
+        calc
+          g = t⁻¹ * (t * g * t⁻¹) * t := by group
+          _ = t⁻¹ * (g ^ 5) * t := by rw [h_conj_eq_g5]
+      have h_g5_eq : g ^ 5 = g * g ^ 4 := by
+        calc
+          g ^ 5 = g ^ (4 + 1) := by norm_num
+          _ = g ^ 4 * g := by rw [pow_succ]
+          _ = g * g ^ 4 := h_g_pow_add_4_1
+      have h_g_eq2 : g = t⁻¹ * g * t * g ^ 4 := by
+        calc
+          g = t⁻¹ * (g ^ 5) * t := h_g_eq
+          _ = t⁻¹ * (g * g ^ 4) * t := by rw [h_g5_eq]
+          _ = (t⁻¹ * g) * (g ^ 4) * t := by group
+          _ = t⁻¹ * g * (g ^ 4 * t) := by group
+          _ = t⁻¹ * g * (t * g ^ 4) := by rw [h_g4_central' t]
+          _ = t⁻¹ * g * t * g ^ 4 := by group
+      calc
+        t⁻¹ * g * t = (t⁻¹ * g * t * g ^ 4) * (g ^ 4)⁻¹ := by group
+        _ = g * (g ^ 4)⁻¹ := by rw [← h_g_eq2]
+        _ = g * g ^ 4 := by rw [h_g4_inv]
+        _ = g ^ 5 := by
+          calc
+            g * g ^ 4 = g ^ 1 * g ^ 4 := by simp
+            _ = g ^ (1 + 4) := by rw [pow_add]
+            _ = g ^ 5 := by norm_num
+    -- t² ∈ H, so t² = g^m for some m : ℤ
+    have h_sq_t : t ^ 2 ∈ H := Subgroup.sq_mem_of_index_two hHindex t
+    rcases Subgroup.mem_zpowers_iff.mp h_sq_t with ⟨m, hm⟩
+    -- hm : g ^ (m : ℤ) = t ^ 2
+    -- Prove m is even
+    have hm_even : (2 : ℤ) ∣ (m : ℤ) := by
+      have h_conj_sq : t * (t ^ 2) * t⁻¹ = t ^ 2 := by group
+      rw [← hm] at h_conj_sq
+      -- h_conj_sq : t * (g ^ (m : ℤ)) * t⁻¹ = g ^ (m : ℤ)
+      have h_conj_zpow_lemma : t * g ^ (m : ℤ) * t⁻¹ = (t * g * t⁻¹) ^ (m : ℤ) :=
+        (conj_zpow (a := t) (b := g) (i := m)).symm
+      have h_conj_gm : t * (g ^ (m : ℤ)) * t⁻¹ = (t * g * t⁻¹) ^ (m : ℤ) := by
+        simp only [h_conj_zpow_lemma]
+      rw [h_conj_gm, h_conj_eq_g5] at h_conj_sq
+      -- h_conj_sq : (g ^ 5) ^ (m : ℤ) = g ^ (m : ℤ)
+      -- Convert (g^5) to (g^(5:ℤ)) for zpow_mul
+      have h_temp_base : g ^ 5 = g ^ (5 : ℤ) := (zpow_natCast g 5).symm
+      have h_convert : (g ^ 5) ^ (m : ℤ) = g ^ ((5 : ℤ) * (m : ℤ)) := by
+        calc
+          (g ^ 5) ^ (m : ℤ) = (g ^ (5 : ℤ)) ^ (m : ℤ) := by
+            simpa using congrArg (· ^ (m : ℤ)) h_temp_base
+          _ = g ^ ((5 : ℤ) * (m : ℤ)) := (zpow_mul g (5 : ℤ) (m : ℤ)).symm
+      rw [h_convert] at h_conj_sq
+      -- h_conj_sq : g ^ ((5 : ℤ) * (m : ℤ)) = g ^ (m : ℤ)
+      have h_modEq := (zpow_eq_zpow_iff_modEq (x := g)
+        (m := (5 : ℤ) * (m : ℤ)) (n := (m : ℤ))).mp h_conj_sq
+      rw [hg] at h_modEq
+      have h_four_modEq : (4 : ℤ) * (m : ℤ) ≡ (0 : ℤ) [ZMOD (8 : ℤ)] := by
+        have h_refl : (m : ℤ) ≡ (m : ℤ) [ZMOD (8 : ℤ)] := by rfl
+        have h_sub := h_modEq.sub h_refl
+        have h_simp : (5 : ℤ) * (m : ℤ) - (m : ℤ) = (4 : ℤ) * (m : ℤ) := by ring
+        simpa [h_simp, sub_self] using h_sub
+      have h_dvd : (8 : ℤ) ∣ (4 : ℤ) * (m : ℤ) :=
+        (Int.modEq_zero_iff_dvd (a := (4 : ℤ) * (m : ℤ)) (n := 8)).mp h_four_modEq
+      omega
+    rcases hm_even with ⟨k, hk⟩
+    set s := t * (g ^ (k : ℤ)) with hs
+    have h_conj_zpow_inv : ∀ (k : ℤ), t⁻¹ * g ^ k * t = (t⁻¹ * g * t) ^ k := by
+      intro k
+      simpa using (conj_zpow (a := t⁻¹) (b := g) (i := k)).symm
+    have h_base5 : g ^ 5 = g ^ (5 : ℤ) := (zpow_natCast g 5).symm
+    have h_gk_comm : g ^ (k : ℤ) * t = t * (g ^ ((5 : ℤ) * (k : ℤ))) := by
+      calc
+        g ^ (k : ℤ) * t = t * (t⁻¹ * g ^ (k : ℤ) * t) := by group
+        _ = t * ((t⁻¹ * g * t) ^ (k : ℤ)) := by rw [h_conj_zpow_inv]
+        _ = t * ((g ^ 5) ^ (k : ℤ)) := by rw [h_conj_inv]
+        _ = t * ((g ^ (5 : ℤ)) ^ (k : ℤ)) := by
+          simpa using congrArg (fun x => t * (x ^ (k : ℤ))) h_base5
+        _ = t * (g ^ ((5 : ℤ) * (k : ℤ))) := by rw [zpow_mul g (5 : ℤ) (k : ℤ)]
+    have hg_zpow8 : g ^ (8 : ℤ) = 1 :=
+      (zpow_natCast g 8).trans hg8
+    have hs_sq : s ^ 2 = 1 := by
+      calc
+        s ^ 2 = (t * (g ^ (k : ℤ))) * (t * (g ^ (k : ℤ))) := by rw [hs, sq]
+        _ = t * g ^ (k : ℤ) * t * g ^ (k : ℤ) := by group
+        _ = t * (g ^ (k : ℤ) * t) * g ^ (k : ℤ) := by group
+        _ = t * (t * (g ^ ((5 : ℤ) * (k : ℤ)))) * g ^ (k : ℤ) := by rw [h_gk_comm]
+        _ = (t ^ 2) * (g ^ ((5 : ℤ) * (k : ℤ))) * (g ^ (k : ℤ)) := by
+          simp [sq, mul_assoc]
+        _ = (g ^ (m : ℤ)) * (g ^ ((5 : ℤ) * (k : ℤ))) * (g ^ (k : ℤ)) := by rw [hm]
+        _ = (g ^ ((2 : ℤ) * (k : ℤ))) * (g ^ ((5 : ℤ) * (k : ℤ))) * (g ^ (k : ℤ)) := by rw [hk]
+         _ = (g ^ (((2 : ℤ) * (k : ℤ)) + ((5 : ℤ) * (k : ℤ)))) * (g ^ (k : ℤ)) := by
+          rw [zpow_add g ((2 : ℤ) * (k : ℤ)) ((5 : ℤ) * (k : ℤ))]
+        _ = (g ^ ((7 : ℤ) * (k : ℤ))) * (g ^ (k : ℤ)) := by ring
+        _ = g ^ (((7 : ℤ) * (k : ℤ)) + (k : ℤ)) := by
+          rw [zpow_add g ((7 : ℤ) * (k : ℤ)) (k : ℤ)]
+        _ = g ^ ((8 : ℤ) * (k : ℤ)) := by ring
+        _ = (g ^ (8 : ℤ)) ^ (k : ℤ) := by rw [zpow_mul g (8 : ℤ) (k : ℤ)]
+        _ = 1 ^ (k : ℤ) := by rw [hg_zpow8]
+        _ = 1 := by simp
+    have hs_not_H : s ∉ H := by
+      intro hsH
+      have h_div : t ∈ H := by
+        have : t = s * (g ^ (-(k : ℤ))) := by
+          calc
+            t = s * (g ^ (k : ℤ))⁻¹ := by
+              dsimp [s]; group
+            _ = s * (g ^ (-(k : ℤ))) := by rw [zpow_neg g (k : ℤ)]
+        rw [this]
+        have h_gk_inv_H : g ^ (-(k : ℤ)) ∈ H :=
+        Subgroup.zpow_mem H (Subgroup.mem_zpowers g) (-(k : ℤ))
+        exact Subgroup.mul_mem H hsH h_gk_inv_H
+      exact ht_not_H h_div
+    have hs_conj : s * g * s⁻¹ = g ^ 5 := by
+      have h_comm_g_gnegk : Commute g (g ^ (-(k : ℤ))) :=
+        (Commute.refl g).zpow_right (-(k : ℤ))
+      have h_conj_gk_g : (g ^ (k : ℤ)) * g * (g ^ (k : ℤ))⁻¹ = g := by
+        calc
+          (g ^ (k : ℤ)) * g * (g ^ (k : ℤ))⁻¹ = (g ^ (k : ℤ)) * g * (g ^ (-(k : ℤ))) := by simp
+          _ = (g ^ (k : ℤ)) * (g * g ^ (-(k : ℤ))) := by group
+          _ = (g ^ (k : ℤ)) * (g ^ (-(k : ℤ)) * g) := by rw [h_comm_g_gnegk.eq]
+          _ = ((g ^ (k : ℤ)) * g ^ (-(k : ℤ))) * g := by group
+          _ = 1 * g := by simp
+          _ = g := by simp
+      calc
+        s * g * s⁻¹ = (t * (g ^ (k : ℤ))) * g * (t * (g ^ (k : ℤ)))⁻¹ := by rw [hs]
+        _ = t * (g ^ (k : ℤ)) * g * ((g ^ (k : ℤ))⁻¹ * t⁻¹) := by group
+        _ = t * ((g ^ (k : ℤ)) * g * (g ^ (k : ℤ))⁻¹) * t⁻¹ := by group
+        _ = t * g * t⁻¹ := by rw [h_conj_gk_g]
+        _ = g ^ 5 := h_conj_eq_g5
+
+    -- Step 5: Build isomorphism G ≃* order16_N1
+    let K : Subgroup G := Subgroup.zpowers s
+    have h_s_ne_one : s ≠ 1 := by
+      intro h_eq
+      apply hs_not_H
+      rw [h_eq]
+      exact Subgroup.one_mem H
+    have h_order_s : orderOf s = 2 := by
+      have h_dvd : orderOf s ∣ 2 := orderOf_dvd_of_pow_eq_one (x := s) (n := 2) hs_sq
+      have h_ne_one : orderOf s ≠ 1 := by
+        intro h
+        apply h_s_ne_one
+        exact orderOf_eq_one_iff.mp h
+      have h_pos : 0 < orderOf s := orderOf_pos s
+      have h_le : orderOf s ≤ 2 := Nat.le_of_dvd (by norm_num) h_dvd
+      interval_cases orderOf s
+      · exact absurd rfl h_ne_one
+      · rfl
+    have hKcard : Nat.card K = 2 := by
+      rw [Nat.card_zpowers, h_order_s]
+    have h_card_mul : Nat.card H * Nat.card K = Nat.card G := by
+      calc
+        Nat.card H * Nat.card K = 8 * 2 := by rw [hHcard, hKcard]
+        _ = 16 := by norm_num
+        _ = Nat.card G := by rw [hcard]
+    -- H and K are disjoint
+    have h_s_zpow2 : s ^ (2 : ℤ) = 1 :=
+      (zpow_natCast s 2).trans hs_sq
+    have h_disjoint : Disjoint H K := by
+      refine (Subgroup.disjoint_def (H₁ := H) (H₂ := K)).mpr ?_
+      intro x hxH hxK
+      rcases Subgroup.mem_zpowers_iff.mp hxK with ⟨b, hb⟩
+      rcases Int.even_or_odd b with (⟨k, hk⟩ | ⟨k, hk⟩)
+      · -- b = 2*k → s^b = 1 → x = 1
+        have hs_b_one : s ^ (b : ℤ) = 1 := by
+          rw [hk, ← two_mul (k : ℤ), zpow_mul, h_s_zpow2]
+          simp
+        rw [← hb, hs_b_one]
+      · -- b = 2*k + 1 → s^b = s → x = s, contradicting s ∉ H
+        have hs_b_s : s ^ (b : ℤ) = s := by
+          rw [hk]
+          rw [zpow_add_one, zpow_mul, h_s_zpow2]
+          simp
+        have hs_eq_x : s = x := by
+          calc
+            s = s ^ (b : ℤ) := hs_b_s.symm
+            _ = x := hb
+        have hsH : s ∈ H := hs_eq_x.symm ▸ hxH
+        exact absurd hsH hs_not_H
+    -- H and K are complementary
+    have h_complement : H.IsComplement' K :=
+      isComplement'_of_card_mul_and_disjoint h_card_mul h_disjoint
+    -- Isomorphism G ≅ H ⋊ K via internal semidirect product
+    have h_iso_sd : G ≃* (H ⋊[(H.normalizerMonoidHom).comp
+      (Subgroup.inclusion (H.normalizer_eq_top ▸ le_top : K ≤ Subgroup.normalizer H))] K) :=
+      (SemidirectProduct.mulEquivSubgroup h_complement).symm
+    -- Now build an isomorphism from H ⋊ K to order16_N1
+    -- H = ⟨g⟩ ≅ Z/8Z, K = ⟨s⟩ ≅ Z/2Z, and the action sgs⁻¹ = g⁵ matches x ↦ 5x
+    -- order16_N1 = (Z/8Z) ⋊ (Z/2Z) via x ↦ 5x
+    -- By the classification of semidirect products C8 ⋊ C2 with action x ↦ 5x,
+    -- any two such semidirect products are isomorphic.
+    -- This is a standard fact: there is only one non-abelian C8 ⋊ C2 with this action.
     sorry
 
 end Smallgroups.UsefulTheorems
