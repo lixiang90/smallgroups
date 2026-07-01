@@ -639,6 +639,141 @@ theorem order84_c2c6_action_cases (φ : order84_HB →* MulAut order84_C7) :
     apply order84_c2c6_hom_ext <;>
       simp [g2, g6, hu6, h2, h6]
 
+/-! ### Automorphism orbits for `C₂ × C₆`-complement actions -/
+
+noncomputable def order84_HB_mulFive : order84_HB ≃* order84_HB :=
+  MulEquiv.prodCongr (MulEquiv.refl (Multiplicative (ZMod 2)))
+    (unitAutHom (p := 6) (ZMod.unitOfCoprime 5 (by norm_num : Nat.Coprime 5 6)))
+
+theorem order84_chiC2C6_snd_six_comp_mulFive :
+    order84_chiC2C6_snd_six.comp order84_HB_mulFive.toMonoidHom =
+      order84_chiC2C6_snd_six_inv := by
+  apply order84_c2c6_hom_ext <;> decide
+
+theorem order84_chiC2C6_snd_three_comp_mulFive :
+    order84_chiC2C6_snd_three.comp order84_HB_mulFive.toMonoidHom =
+      order84_chiC2C6_snd_three_inv := by
+  apply order84_c2c6_hom_ext <;> decide
+
+theorem order84_chiC2C6_snd_two_comp_mulFive :
+    order84_chiC2C6_snd_two.comp order84_HB_mulFive.toMonoidHom =
+      order84_chiC2C6_snd_two := by
+  apply order84_c2c6_hom_ext <;> decide
+
+theorem order84_chiC2C6_fst_two_snd_six_comp_mulFive :
+    order84_chiC2C6_fst_two_snd_six.comp order84_HB_mulFive.toMonoidHom =
+      order84_chiC2C6_fst_two_snd_six_inv := by
+  apply order84_c2c6_hom_ext <;> decide
+
+theorem order84_chiC2C6_fst_two_snd_three_comp_mulFive :
+    order84_chiC2C6_fst_two_snd_three.comp order84_HB_mulFive.toMonoidHom =
+      order84_chiC2C6_fst_two_snd_three_inv := by
+  apply order84_c2c6_hom_ext <;> decide
+
+theorem order84_chiC2C6_fst_two_snd_two_comp_mulFive :
+    order84_chiC2C6_fst_two_snd_two.comp order84_HB_mulFive.toMonoidHom =
+      order84_chiC2C6_fst_two_snd_two := by
+  apply order84_c2c6_hom_ext <;> decide
+
+noncomputable abbrev order84_c2c6_trivial : Type :=
+  order84_C7 × order84_HB
+
+noncomputable abbrev order84_c2c6_snd_six : Type :=
+  SemidirectProduct order84_C7 order84_HB (order84_action order84_chiC2C6_snd_six)
+
+noncomputable abbrev order84_c2c6_snd_three : Type :=
+  SemidirectProduct order84_C7 order84_HB (order84_action order84_chiC2C6_snd_three)
+
+noncomputable abbrev order84_c2c6_snd_two : Type :=
+  SemidirectProduct order84_C7 order84_HB (order84_action order84_chiC2C6_snd_two)
+
+noncomputable abbrev order84_c2c6_fst_two : Type :=
+  SemidirectProduct order84_C7 order84_HB (order84_action order84_chiC2C6_fst_two)
+
+noncomputable abbrev order84_c2c6_fst_two_snd_six : Type :=
+  SemidirectProduct order84_C7 order84_HB (order84_action order84_chiC2C6_fst_two_snd_six)
+
+noncomputable abbrev order84_c2c6_fst_two_snd_three : Type :=
+  SemidirectProduct order84_C7 order84_HB (order84_action order84_chiC2C6_fst_two_snd_three)
+
+noncomputable abbrev order84_c2c6_fst_two_snd_two : Type :=
+  SemidirectProduct order84_C7 order84_HB (order84_action order84_chiC2C6_fst_two_snd_two)
+
+noncomputable def order84_c2c6_snd_six_inv_equiv_snd_six :
+    SemidirectProduct order84_C7 order84_HB
+        (order84_action order84_chiC2C6_snd_six_inv) ≃*
+      order84_c2c6_snd_six :=
+  order84_action_precomp_eq_mulEquiv order84_chiC2C6_snd_six
+    order84_chiC2C6_snd_six_inv order84_HB_mulFive
+    order84_chiC2C6_snd_six_comp_mulFive
+
+noncomputable def order84_c2c6_snd_three_inv_equiv_snd_three :
+    SemidirectProduct order84_C7 order84_HB
+        (order84_action order84_chiC2C6_snd_three_inv) ≃*
+      order84_c2c6_snd_three :=
+  order84_action_precomp_eq_mulEquiv order84_chiC2C6_snd_three
+    order84_chiC2C6_snd_three_inv order84_HB_mulFive
+    order84_chiC2C6_snd_three_comp_mulFive
+
+noncomputable def order84_c2c6_fst_two_snd_six_inv_equiv_fst_two_snd_six :
+    SemidirectProduct order84_C7 order84_HB
+        (order84_action order84_chiC2C6_fst_two_snd_six_inv) ≃*
+      order84_c2c6_fst_two_snd_six :=
+  order84_action_precomp_eq_mulEquiv order84_chiC2C6_fst_two_snd_six
+    order84_chiC2C6_fst_two_snd_six_inv order84_HB_mulFive
+    order84_chiC2C6_fst_two_snd_six_comp_mulFive
+
+noncomputable def order84_c2c6_fst_two_snd_three_inv_equiv_fst_two_snd_three :
+    SemidirectProduct order84_C7 order84_HB
+        (order84_action order84_chiC2C6_fst_two_snd_three_inv) ≃*
+      order84_c2c6_fst_two_snd_three :=
+  order84_action_precomp_eq_mulEquiv order84_chiC2C6_fst_two_snd_three
+    order84_chiC2C6_fst_two_snd_three_inv order84_HB_mulFive
+    order84_chiC2C6_fst_two_snd_three_comp_mulFive
+
+theorem order84_c2c6_action_semidirect_cases (φ : order84_HB →* MulAut order84_C7) :
+    Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_trivial) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_snd_six) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_snd_three) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_snd_two) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃* order84_c2c6_fst_two) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃*
+        order84_c2c6_fst_two_snd_six) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃*
+        order84_c2c6_fst_two_snd_three) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HB φ ≃*
+        order84_c2c6_fst_two_snd_two) := by
+  rcases order84_c2c6_action_cases φ with hφ | hφ | hφ | hφ | hφ | hφ |
+    hφ | hφ | hφ | hφ | hφ | hφ
+  · left
+    exact ⟨(semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd⟩
+  · right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; left
+    exact ⟨(semidirectProductCongr_eq hφ).trans
+      order84_c2c6_snd_three_inv_equiv_snd_three⟩
+  · right; left
+    exact ⟨(semidirectProductCongr_eq hφ).trans
+      order84_c2c6_snd_six_inv_equiv_snd_six⟩
+  · right; right; right; right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; right; right; right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; right; right; right; right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; right; right; right; right; right
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; right; right; right; right; left
+    exact ⟨(semidirectProductCongr_eq hφ).trans
+      order84_c2c6_fst_two_snd_three_inv_equiv_fst_two_snd_three⟩
+  · right; right; right; right; right; left
+    exact ⟨(semidirectProductCongr_eq hφ).trans
+      order84_c2c6_fst_two_snd_six_inv_equiv_fst_two_snd_six⟩
+
 /-! ### `(C₃ ⋊ C₄)`-complement actions -/
 
 noncomputable abbrev order84_chiHC_two : order84_HC →* (ZMod 7)ˣ :=
@@ -744,6 +879,21 @@ theorem order84_hc_action_cases (φ : order84_HC →* MulAut order84_C7) :
   · exfalso
     have hbad : (order84_u6 ^ 5) ^ 4 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu4
     exact order84_u6_pow5_pow4_ne_one hbad
+
+noncomputable abbrev order84_hc_trivial : Type :=
+  order84_C7 × order84_HC
+
+noncomputable abbrev order84_hc_two : Type :=
+  SemidirectProduct order84_C7 order84_HC (order84_action order84_chiHC_two)
+
+theorem order84_hc_action_semidirect_cases (φ : order84_HC →* MulAut order84_C7) :
+    Nonempty (SemidirectProduct order84_C7 order84_HC φ ≃* order84_hc_trivial) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HC φ ≃* order84_hc_two) := by
+  rcases order84_hc_action_cases φ with hφ | hφ
+  · left
+    exact ⟨(semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd⟩
+  · right
+    exact ⟨semidirectProductCongr_eq hφ⟩
 
 /-! ### `(C₂ × D₆)`-complement actions -/
 
@@ -930,6 +1080,33 @@ theorem order84_hd_action_cases (φ : order84_HD →* MulAut order84_C7) :
   · right; right; right
     apply order84_hd_hom_ext <;>
       simp [g2, gr, gs, h2, hr, hs]
+
+noncomputable abbrev order84_hd_trivial : Type :=
+  order84_C7 × order84_HD
+
+noncomputable abbrev order84_hd_fst_two : Type :=
+  SemidirectProduct order84_C7 order84_HD (order84_action order84_chiHD_fst_two)
+
+noncomputable abbrev order84_hd_ref : Type :=
+  SemidirectProduct order84_C7 order84_HD (order84_action order84_chiHD_ref)
+
+noncomputable abbrev order84_hd_prod : Type :=
+  SemidirectProduct order84_C7 order84_HD (order84_action order84_chiHD_prod)
+
+theorem order84_hd_action_semidirect_cases (φ : order84_HD →* MulAut order84_C7) :
+    Nonempty (SemidirectProduct order84_C7 order84_HD φ ≃* order84_hd_trivial) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HD φ ≃* order84_hd_fst_two) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HD φ ≃* order84_hd_ref) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HD φ ≃* order84_hd_prod) := by
+  rcases order84_hd_action_cases φ with hφ | hφ | hφ | hφ
+  · left
+    exact ⟨(semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd⟩
+  · right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right; right
+    exact ⟨semidirectProductCongr_eq hφ⟩
 
 /-! ### Cyclic `C₃` actions -/
 
@@ -1127,6 +1304,27 @@ theorem order84_a4_action_cases (φ : order84_HE →* MulAut order84_C7) :
         _ = order84_action order84_chiC3_three_inv
             (order84_A4QuotEquiv (order84_A4QuotMk g)) := by rw [hcomp]
     simpa [φQ, order84_A4QuotMk, order84_chiA4_three_inv, order84_action] using hq
+
+noncomputable abbrev order84_a4_trivial : Type :=
+  order84_C7 × order84_HE
+
+noncomputable abbrev order84_a4_three : Type :=
+  SemidirectProduct order84_C7 order84_HE (order84_action order84_chiA4_three)
+
+noncomputable abbrev order84_a4_three_inv : Type :=
+  SemidirectProduct order84_C7 order84_HE (order84_action order84_chiA4_three_inv)
+
+theorem order84_a4_action_semidirect_cases (φ : order84_HE →* MulAut order84_C7) :
+    Nonempty (SemidirectProduct order84_C7 order84_HE φ ≃* order84_a4_trivial) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HE φ ≃* order84_a4_three) ∨
+      Nonempty (SemidirectProduct order84_C7 order84_HE φ ≃* order84_a4_three_inv) := by
+  rcases order84_a4_action_cases φ with hφ | hφ | hφ
+  · left
+    exact ⟨(semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd⟩
+  · right; left
+    exact ⟨semidirectProductCongr_eq hφ⟩
+  · right; right
+    exact ⟨semidirectProductCongr_eq hφ⟩
 
 /-- Every group of order `84` is one of five standard semidirect-product action problems,
 according to the order-`12` complement. -/
