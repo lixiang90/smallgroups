@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.Classifications.Classifications_81_to_90.Order82
 import Smallgroups.Classifications.Classifications_81_to_90.Order83
+import Smallgroups.Classifications.Classifications_81_to_90.Order84
 import Smallgroups.Classifications.Classifications_81_to_90.Order85
 import Smallgroups.Classifications.Classifications_81_to_90.Order86
 import Smallgroups.Classifications.Classifications_81_to_90.Order87
