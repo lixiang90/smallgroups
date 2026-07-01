@@ -516,6 +516,8 @@ theorem order54_heisenberg_mulAut_relation (α : MulAut order54_Heisenberg) :
       rw [map_mul, map_mul]
 
 set_option maxHeartbeats 1000000 in
+-- This finite orbit calculation enumerates the possible images of the two Heisenberg
+-- quotient generators and checks the central twists against explicit inner conjugacies.
 /-- A Heisenberg-kernel involution fixing the center is either trivial or conjugate to the
 standard automorphism negating both quotient generators. -/
 theorem order54_heisenberg_mulAut_center_fixed_cases
