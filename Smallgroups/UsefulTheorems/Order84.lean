@@ -140,6 +140,38 @@ theorem order84_unit_cases (u : (ZMod 7)ˣ) :
       u = order84_u6 ^ 4 ∨ u = order84_u6 ^ 5 := by
   decide +revert
 
+theorem order84_unit_sq_eq_one_cases (u : (ZMod 7)ˣ) (hu : u ^ 2 = 1) :
+    u = 1 ∨ u = order84_u6 ^ 3 := by
+  rcases order84_unit_cases u with h | h | h | h | h | h
+  · exact Or.inl h
+  · exfalso
+    have hbad : order84_u6 ^ 2 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu
+    exact (by decide : order84_u6 ^ 2 ≠ (1 : (ZMod 7)ˣ)) hbad
+  · exfalso
+    have hbad : (order84_u6 ^ 2) ^ 2 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu
+    exact (by decide : (order84_u6 ^ 2) ^ 2 ≠ (1 : (ZMod 7)ˣ)) hbad
+  · exact Or.inr h
+  · exfalso
+    have hbad : (order84_u6 ^ 4) ^ 2 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu
+    exact (by decide : (order84_u6 ^ 4) ^ 2 ≠ (1 : (ZMod 7)ˣ)) hbad
+  · exfalso
+    have hbad : (order84_u6 ^ 5) ^ 2 = (1 : (ZMod 7)ˣ) := by simpa [h] using hu
+    exact (by decide : (order84_u6 ^ 5) ^ 2 ≠ (1 : (ZMod 7)ˣ)) hbad
+
+theorem order84_mulAut_sq_eq_one_cases (α : MulAut order84_C7) (hα : α ^ 2 = 1) :
+    α = 1 ∨ α = unitAutHom (order84_u6 ^ 3) := by
+  haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  obtain ⟨u, hu⟩ := exists_unitAutHom_eq (p := 7) α
+  have hu2 : u ^ 2 = 1 := by
+    apply unitAutHom_injective (p := 7)
+    rw [map_pow, ← hu, hα, map_one]
+  rcases order84_unit_sq_eq_one_cases u hu2 with h | h
+  · left
+    rw [hu, h]
+    exact map_one (unitAutHom (p := 7))
+  · right
+    rw [hu, h]
+
 /-- Turn a unit-valued character into the corresponding action on `C₇`. -/
 noncomputable abbrev order84_action {H : Type} [Group H] (χ : H →* (ZMod 7)ˣ) :
     H →* MulAut order84_C7 :=
@@ -378,6 +410,179 @@ theorem order84_c12_action_semidirect_cases (φ : order84_HA →* MulAut order84
     exact ⟨(semidirectProductCongr_eq hφ).trans order84_c12_three_inv_equiv_three⟩
   · right; left
     exact ⟨(semidirectProductCongr_eq hφ).trans order84_c12_six_inv_equiv_six⟩
+
+/-! ### `C₂ × C₆`-complement actions -/
+
+noncomputable abbrev order84_c2UnitHom : Multiplicative (ZMod 2) →* (ZMod 7)ˣ :=
+  powHom (p := 7) (q := 2) (order84_u6 ^ 3) (by decide)
+
+noncomputable abbrev order84_chiC2C6_fst_two : order84_HB →* (ZMod 7)ˣ :=
+  order84_c2UnitHom.comp
+    (MonoidHom.fst (Multiplicative (ZMod 2)) (Multiplicative (ZMod 6)))
+
+noncomputable abbrev order84_chiC2C6_snd_six : order84_HB →* (ZMod 7)ˣ :=
+  (powHom (p := 7) (q := 6) order84_u6 (by decide)).comp
+    (MonoidHom.snd (Multiplicative (ZMod 2)) (Multiplicative (ZMod 6)))
+
+noncomputable abbrev order84_chiC2C6_snd_three : order84_HB →* (ZMod 7)ˣ :=
+  (powHom (p := 7) (q := 6) (order84_u6 ^ 2) (by decide)).comp
+    (MonoidHom.snd (Multiplicative (ZMod 2)) (Multiplicative (ZMod 6)))
+
+noncomputable abbrev order84_chiC2C6_snd_two : order84_HB →* (ZMod 7)ˣ :=
+  (powHom (p := 7) (q := 6) (order84_u6 ^ 3) (by decide)).comp
+    (MonoidHom.snd (Multiplicative (ZMod 2)) (Multiplicative (ZMod 6)))
+
+noncomputable abbrev order84_chiC2C6_snd_three_inv : order84_HB →* (ZMod 7)ˣ :=
+  (powHom (p := 7) (q := 6) (order84_u6 ^ 4) (by decide)).comp
+    (MonoidHom.snd (Multiplicative (ZMod 2)) (Multiplicative (ZMod 6)))
+
+noncomputable abbrev order84_chiC2C6_snd_six_inv : order84_HB →* (ZMod 7)ˣ :=
+  (powHom (p := 7) (q := 6) (order84_u6 ^ 5) (by decide)).comp
+    (MonoidHom.snd (Multiplicative (ZMod 2)) (Multiplicative (ZMod 6)))
+
+noncomputable abbrev order84_chiC2C6_fst_two_snd_six : order84_HB →* (ZMod 7)ˣ :=
+  order84_chiC2C6_fst_two * order84_chiC2C6_snd_six
+
+noncomputable abbrev order84_chiC2C6_fst_two_snd_three : order84_HB →* (ZMod 7)ˣ :=
+  order84_chiC2C6_fst_two * order84_chiC2C6_snd_three
+
+noncomputable abbrev order84_chiC2C6_fst_two_snd_two : order84_HB →* (ZMod 7)ˣ :=
+  order84_chiC2C6_fst_two * order84_chiC2C6_snd_two
+
+noncomputable abbrev order84_chiC2C6_fst_two_snd_three_inv : order84_HB →* (ZMod 7)ˣ :=
+  order84_chiC2C6_fst_two * order84_chiC2C6_snd_three_inv
+
+noncomputable abbrev order84_chiC2C6_fst_two_snd_six_inv : order84_HB →* (ZMod 7)ˣ :=
+  order84_chiC2C6_fst_two * order84_chiC2C6_snd_six_inv
+
+@[simp]
+theorem order84_c2UnitHom_gen :
+    order84_c2UnitHom (Multiplicative.ofAdd (1 : ZMod 2)) = order84_u6 ^ 3 := by
+  decide
+
+@[simp]
+theorem order84_powHom_zmod6_gen (c : (ZMod 7)ˣ) (hc : c ^ 6 = 1) :
+    powHom (p := 7) (q := 6) c hc (Multiplicative.ofAdd (1 : ZMod 6)) = c := by
+  change c ^ (1 : ZMod 6).val = c
+  haveI : Fact (1 < 6) := ⟨by norm_num⟩
+  rw [ZMod.val_one]
+  simp
+
+@[simp]
+theorem order84_chiC2C6_snd_six_g6 :
+    order84_chiC2C6_snd_six (1, Multiplicative.ofAdd (1 : ZMod 6)) = order84_u6 := by
+  decide
+
+@[simp]
+theorem order84_chiC2C6_snd_three_g6 :
+    order84_chiC2C6_snd_three (1, Multiplicative.ofAdd (1 : ZMod 6)) =
+      order84_u6 ^ 2 := by
+  decide
+
+@[simp]
+theorem order84_chiC2C6_snd_two_g6 :
+    order84_chiC2C6_snd_two (1, Multiplicative.ofAdd (1 : ZMod 6)) =
+      order84_u6 ^ 3 := by
+  decide
+
+@[simp]
+theorem order84_chiC2C6_snd_three_inv_g6 :
+    order84_chiC2C6_snd_three_inv (1, Multiplicative.ofAdd (1 : ZMod 6)) =
+      order84_u6 ^ 4 := by
+  decide
+
+@[simp]
+theorem order84_chiC2C6_snd_six_inv_g6 :
+    order84_chiC2C6_snd_six_inv (1, Multiplicative.ofAdd (1 : ZMod 6)) =
+      order84_u6 ^ 5 := by
+  decide
+
+/-- Homomorphisms out of `C₂ × C₆` are determined by the two standard generators. -/
+theorem order84_c2c6_hom_ext {M : Type} [Group M] {χ ψ : order84_HB →* M}
+    (h2 : χ (Multiplicative.ofAdd (1 : ZMod 2), 1) =
+      ψ (Multiplicative.ofAdd (1 : ZMod 2), 1))
+    (h6 : χ (1, Multiplicative.ofAdd (1 : ZMod 6)) =
+      ψ (1, Multiplicative.ofAdd (1 : ZMod 6))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  rintro ⟨x2, x6⟩
+  obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x2
+  obtain ⟨b, rfl⟩ := Multiplicative.ofAdd.surjective x6
+  let g2 : order84_HB := (Multiplicative.ofAdd (1 : ZMod 2), 1)
+  let g6 : order84_HB := (1, Multiplicative.ofAdd (1 : ZMod 6))
+  have ha : Multiplicative.ofAdd a = (Multiplicative.ofAdd (1 : ZMod 2)) ^ a.val := by
+    calc
+      Multiplicative.ofAdd a = Multiplicative.ofAdd ((a.val : ZMod 2)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (a.val • (1 : ZMod 2)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 2)) ^ a.val := by rw [ofAdd_nsmul]
+  have hb : Multiplicative.ofAdd b = (Multiplicative.ofAdd (1 : ZMod 6)) ^ b.val := by
+    calc
+      Multiplicative.ofAdd b = Multiplicative.ofAdd ((b.val : ZMod 6)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (b.val • (1 : ZMod 6)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 6)) ^ b.val := by rw [ofAdd_nsmul]
+  have hx : (Multiplicative.ofAdd a, Multiplicative.ofAdd b) = g2 ^ a.val * g6 ^ b.val := by
+    simp [g2, g6, Prod.pow_mk, ha, hb]
+  rw [hx, map_mul, map_mul, map_pow, map_pow, map_pow, map_pow, h2, h6]
+
+/-- Actions `C₂ × C₆ → Aut(C₇)` are the twelve displayed unit actions. -/
+theorem order84_c2c6_action_cases (φ : order84_HB →* MulAut order84_C7) :
+    φ = 1 ∨ φ = order84_action order84_chiC2C6_snd_six ∨
+      φ = order84_action order84_chiC2C6_snd_three ∨
+      φ = order84_action order84_chiC2C6_snd_two ∨
+      φ = order84_action order84_chiC2C6_snd_three_inv ∨
+      φ = order84_action order84_chiC2C6_snd_six_inv ∨
+      φ = order84_action order84_chiC2C6_fst_two ∨
+      φ = order84_action order84_chiC2C6_fst_two_snd_six ∨
+      φ = order84_action order84_chiC2C6_fst_two_snd_three ∨
+      φ = order84_action order84_chiC2C6_fst_two_snd_two ∨
+      φ = order84_action order84_chiC2C6_fst_two_snd_three_inv ∨
+      φ = order84_action order84_chiC2C6_fst_two_snd_six_inv := by
+  haveI : Fact (Nat.Prime 7) := ⟨by norm_num⟩
+  let g2 : order84_HB := (Multiplicative.ofAdd (1 : ZMod 2), 1)
+  let g6 : order84_HB := (1, Multiplicative.ofAdd (1 : ZMod 6))
+  obtain ⟨u, hu6⟩ := exists_unitAutHom_eq (p := 7) (φ g6)
+  have hsq2 : (φ g2) ^ 2 = 1 := by
+    rw [← map_pow, show g2 ^ 2 = 1 by decide, map_one]
+  rcases order84_mulAut_sq_eq_one_cases (φ g2) hsq2 with h2 | h2 <;>
+    rcases order84_unit_cases u with h6 | h6 | h6 | h6 | h6 | h6
+  · left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; right; right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; right; right; right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; right; right; right; right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; right; right; right; right; right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; right; right; right; right; right; right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; right; right; right; right; right; right; right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; right; right; right; right; right; right; right; right; left
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
+  · right; right; right; right; right; right; right; right; right; right; right
+    apply order84_c2c6_hom_ext <;>
+      simp [g2, g6, hu6, h2, h6]
 
 /-- Every group of order `84` is one of five standard semidirect-product action problems,
 according to the order-`12` complement. -/
