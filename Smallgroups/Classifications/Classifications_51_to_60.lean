@@ -6,6 +6,7 @@ Authors: Smallgroups contributors
 import Smallgroups.Classifications.Classifications_51_to_60.Order51
 import Smallgroups.Classifications.Classifications_51_to_60.Order52
 import Smallgroups.Classifications.Classifications_51_to_60.Order53
+import Smallgroups.Classifications.Classifications_51_to_60.Order54
 import Smallgroups.Classifications.Classifications_51_to_60.Order55
 import Smallgroups.Classifications.Classifications_51_to_60.Order56
 import Smallgroups.Classifications.Classifications_51_to_60.Order57
