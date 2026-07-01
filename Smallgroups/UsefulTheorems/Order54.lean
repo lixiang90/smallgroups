@@ -78,6 +78,12 @@ abbrev order54_Elem3 : Type :=
 /-- The `(C₉ × C₃)` kernel with trivial `C₂` action. -/
 abbrev order54_Mixed0 : Type := order54_C9C3 × order54_C2
 
+/-- The `(C₉ × C₃)` kernel with a cyclic order-`3` inversion eigenspace. -/
+abbrev order54_Mixed1 : Type := CyclicRep 9 × order54_D3
+
+/-- The `(C₉ × C₃)` kernel with a cyclic order-`9` inversion eigenspace. -/
+abbrev order54_Mixed2 : Type := CyclicRep 3 × DihedralGroup 9
+
 /-- The `(C₉ × C₃)` kernel with full inversion action. -/
 abbrev order54_Mixed3 : Type :=
   SemidirectProduct order54_C9C3 order54_C2 (invActionHom order54_C9C3)
@@ -415,6 +421,33 @@ theorem order54_c9c3_pow_nine (x : order54_C9C3) : x ^ 9 = 1 := by
   rw [Prod.pow_mk, ha, hb]
   rfl
 
+theorem order54_c9c3_not_exp_three : ¬ ∀ x : order54_C9C3, x ^ 3 = 1 := by
+  intro h
+  let x : order54_C9C3 := (Multiplicative.ofAdd (1 : ZMod 9),
+    (1 : Multiplicative (ZMod 3)))
+  have hx := congrArg Prod.fst (h x)
+  have hxpow : (Multiplicative.ofAdd (1 : ZMod 9)) ^ 3 = 1 := by
+    simpa [x] using hx
+  have hxord : orderOf (Multiplicative.ofAdd (1 : ZMod 9)) = 9 := by
+    rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+  have hdvd : 9 ∣ 3 := by
+    rw [← hxord]
+    exact orderOf_dvd_of_pow_eq_one hxpow
+  norm_num at hdvd
+
+theorem order54_pow_three_of_mulEquiv_cyclic3 {H : Type*} [Group H]
+    (e : H ≃* CyclicRep 3) (x : H) : x ^ 3 = 1 := by
+  apply e.injective
+  rw [map_pow, map_one]
+  have h : (e x) ^ Fintype.card (Multiplicative (ZMod 3)) = 1 := pow_card_eq_one
+  rwa [Fintype.card_multiplicative, ZMod.card] at h
+
+theorem order54_pow_three_of_mulEquiv_elemAbelian3 {H : Type*} [Group H]
+    (e : H ≃* ElemAbelianRep 3) (x : H) : x ^ 3 = 1 := by
+  apply e.injective
+  rw [map_pow, map_one]
+  exact pow_p_elemAbelian (p := 3) (e x)
+
 /-- The mixed abelian kernel case splits into fixed and inverted factors.  Since every element of
 `C₉ × C₃` has ninth power equal to `1`, the same eigenspace construction used for exponent-`p`
 elementary kernels works here with `p = 9` and `t = 5`. -/
@@ -511,6 +544,77 @@ theorem order54_c9c3_endpoint_cases (φ : order54_C2 →* MulAut order54_C9C3) :
       (eigenEquiv hinv hexp ht).trans MulEquiv.uniqueProd
     exact ⟨eMain.trans <|
       MulEquiv.uniqueProd.trans (genDihCongr eNeg.symm)⟩
+
+theorem order54_c9c3_semidirect_cases (φ : order54_C2 →* MulAut order54_C9C3) :
+    Nonempty (SemidirectProduct order54_C9C3 order54_C2 φ ≃* order54_Mixed0) ∨
+      Nonempty (SemidirectProduct order54_C9C3 order54_C2 φ ≃* order54_Mixed1) ∨
+      Nonempty (SemidirectProduct order54_C9C3 order54_C2 φ ≃* order54_Mixed2) ∨
+      Nonempty (SemidirectProduct order54_C9C3 order54_C2 φ ≃* order54_Mixed3) := by
+  set τ := φ (Multiplicative.ofAdd 1) with hτ
+  have h2 : τ * τ = 1 := by
+    rw [← sq, hτ, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order54_C9C3, x ^ 9 = 1 := order54_c9c3_pow_nine
+  have ht : 2 * 5 = 9 + 1 := by norm_num
+  let eMain :
+      SemidirectProduct order54_C9C3 order54_C2 φ ≃*
+        fixSubgroup τ × SemidirectProduct (negSubgroup τ) order54_C2
+          (invActionHom (negSubgroup τ)) :=
+    elem_decomp_semidirect hinv hexp ht φ rfl
+  let eSplit : order54_C9C3 ≃* fixSubgroup τ × negSubgroup τ := eigenEquiv hinv hexp ht
+  have hsplit : Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 27 := by
+    rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+    exact card_order54_C9C3
+  rcases order54_c9c3_neg_card_cases φ with hNeg1 | hNeg3 | hNeg9 | hNeg27
+  · exact Or.inl ((order54_c9c3_endpoint_cases φ).1 hNeg1)
+  · change Nat.card (negSubgroup τ) = 3 at hNeg3
+    have hFix9 : Nat.card (fixSubgroup τ) = 9 := by
+      have h := hsplit
+      rw [hNeg3] at h
+      have h' : Nat.card (fixSubgroup τ) * 3 = 9 * 3 := by omega
+      exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 3) h'
+    obtain ⟨eNeg⟩ := prime_classification (by norm_num : Nat.Prime 3) hNeg3
+    rcases prime_sq_classification (p := 3) hFix9 with hFixCyc | hFixElem
+    · change Nonempty (fixSubgroup τ ≃* CyclicRep 9) at hFixCyc
+      obtain ⟨eFix⟩ := hFixCyc
+      exact Or.inr (Or.inl ⟨eMain.trans <|
+        MulEquiv.prodCongr eFix ((genDihCongr eNeg).trans (genDihedralCyclicIso 3))⟩)
+    · exfalso
+      obtain ⟨eFix⟩ := hFixElem
+      have hAexp : ∀ x : order54_C9C3, x ^ 3 = 1 := by
+        intro x
+        apply eSplit.injective
+        rw [map_pow, map_one]
+        apply Prod.ext
+        · exact order54_pow_three_of_mulEquiv_elemAbelian3 eFix (eSplit x).1
+        · exact order54_pow_three_of_mulEquiv_cyclic3 eNeg (eSplit x).2
+      exact order54_c9c3_not_exp_three hAexp
+  · change Nat.card (negSubgroup τ) = 9 at hNeg9
+    have hFix3 : Nat.card (fixSubgroup τ) = 3 := by
+      have h := hsplit
+      rw [hNeg9] at h
+      have h' : Nat.card (fixSubgroup τ) * 9 = 3 * 9 := by omega
+      exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 9) h'
+    obtain ⟨eFix⟩ := prime_classification (by norm_num : Nat.Prime 3) hFix3
+    rcases prime_sq_classification (p := 3) hNeg9 with hNegCyc | hNegElem
+    · change Nonempty (negSubgroup τ ≃* CyclicRep 9) at hNegCyc
+      obtain ⟨eNeg⟩ := hNegCyc
+      exact Or.inr (Or.inr (Or.inl ⟨eMain.trans <|
+        MulEquiv.prodCongr eFix ((genDihCongr eNeg).trans (genDihedralCyclicIso 9))⟩))
+    · exfalso
+      obtain ⟨eNeg⟩ := hNegElem
+      have hAexp : ∀ x : order54_C9C3, x ^ 3 = 1 := by
+        intro x
+        apply eSplit.injective
+        rw [map_pow, map_one]
+        apply Prod.ext
+        · exact order54_pow_three_of_mulEquiv_cyclic3 eFix (eSplit x).1
+        · exact order54_pow_three_of_mulEquiv_elemAbelian3 eNeg (eSplit x).2
+      exact order54_c9c3_not_exp_three hAexp
+  · exact Or.inr (Or.inr (Or.inr ((order54_c9c3_endpoint_cases φ).2 hNeg27)))
 
 /-! ### Sylow-3 normality and semidirect-product reduction -/
 
