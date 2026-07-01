@@ -644,10 +644,42 @@ theorem order56_c7_action_trivial_of_not_dvd_card {A : Type} [Group A] [Finite A
     (show Nat.Prime 7 by norm_num).coprime_iff_not_dvd.mpr hA
   exact Nat.eq_one_of_dvd_coprimes hcop h7 hcard
 
-set_option linter.style.nativeDecide false in
+/-- Multiplication by units embeds into the automorphism group of `C₈`. -/
+theorem order56_unitAutHom8_injective : Function.Injective (unitAutHom (p := 8)) := by
+  intro u v h
+  have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod 8)) =
+      unitAutHom v (Multiplicative.ofAdd (1 : ZMod 8)) := by rw [h]
+  simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
+  exact Units.ext (congrArg Multiplicative.toAdd h1)
+
+/-- Every automorphism of `C₈` is multiplication by a unit of `ZMod 8`. -/
+theorem order56_mulAut_c8_eq_unitAutHom (σ : MulAut order56_C8) :
+    ∃ u : (ZMod 8)ˣ, σ = unitAutHom u := by
+  let f : AddAut (ZMod 8) := Multiplicative.toAdd ((MulAutMultiplicative (ZMod 8)) σ)
+  let u : (ZMod 8)ˣ := Additive.toMul ((ZMod.AddAutEquivUnits 8) f)
+  refine ⟨u, ?_⟩
+  ext x
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+  change Multiplicative.ofAdd (f m) = unitAutHom u (Multiplicative.ofAdd m)
+  have hu : Additive.ofMul u = (ZMod.AddAutEquivUnits 8) f := by simp [u]
+  have hf : f = (ZMod.AddAutEquivUnits 8).symm (Additive.ofMul u) := by
+    symm
+    rw [hu]
+    exact AddEquiv.symm_apply_apply (ZMod.AddAutEquivUnits 8) f
+  rw [hf, unitAutHom_apply]
+  simp [ZMod.AddAutEquivUnits_symm_apply, Units.smul_def]
+
 theorem order56_card_aut_c8 : Nat.card (MulAut order56_C8) = 4 := by
+  let e : (ZMod 8)ˣ ≃ MulAut order56_C8 :=
+    Equiv.ofBijective (unitAutHom (p := 8)) ⟨
+      order56_unitAutHom8_injective,
+      fun σ => by
+        obtain ⟨u, hu⟩ := order56_mulAut_c8_eq_unitAutHom σ
+        exact ⟨u, hu.symm⟩⟩
   rw [Nat.card_eq_fintype_card]
-  native_decide
+  change Fintype.card (MulAut order56_C8) = 4
+  rw [← Fintype.card_congr e]
+  decide +kernel
 
 set_option linter.style.nativeDecide false in
 theorem order56_card_aut_c4c2 : Nat.card (MulAut order56_C4C2) = 8 := by
@@ -681,11 +713,10 @@ theorem order56_c7_action_d8_trivial (φ : order56_C7 →* MulAut order56_D8) : 
 theorem order56_c7_action_q8_trivial (φ : order56_C7 →* MulAut order56_Q8) : φ = 1 :=
   order56_c7_action_trivial_of_not_dvd_card (by rw [order56_card_aut_q8]; norm_num) φ
 
-set_option linter.style.nativeDecide false in
 theorem order56_factorization_card_aut_c2c2c2_at_7 :
     Nat.factorization (Nat.card (MulAut order56_C2C2C2)) 7 = 1 := by
   rw [order56_card_aut_c2c2c2]
-  native_decide
+  decide +kernel
 
 theorem order56_tau7_zpow_eq_pow_unit_of_ne_one {k : ℤ} (hk : order56_tau7 ^ k ≠ 1) :
     ∃ u : (ZMod 7)ˣ, order56_tau7 ^ k = order56_tau7 ^ (u : ZMod 7).val := by
