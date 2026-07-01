@@ -25,11 +25,14 @@ variable {G : Type*} [Group G]
 /-! ### The cyclic order-45 kernel -/
 
 abbrev order90_C2 : Type := CyclicRep 2
+abbrev order90_C3 : Type := CyclicRep 3
 abbrev order90_C5 : Type := CyclicRep 5
 abbrev order90_C9 : Type := CyclicRep 9
 abbrev order90_C45 : Type := CyclicRep 45
 abbrev order90_C90 : Type := CyclicRep 90
 abbrev order90_D45 : Type := DihedralGroup 45
+abbrev order90_E33 : Type := ElemAbelianRep 3
+abbrev order90_E33C5 : Type := order90_E33 × order90_C5
 abbrev order90_C9D5 : Type := order90_C9 × DihedralGroup 5
 abbrev order90_C5D9 : Type := order90_C5 × DihedralGroup 9
 
@@ -327,6 +330,33 @@ theorem order90_c45_semidirect_cases (φ : order90_C2 →* MulAut order90_C45) :
     exact Or.inr (Or.inr (Or.inl order90_c45_26_semidirect_iso))
   · subst hφ
     exact Or.inr (Or.inr (Or.inr order90_c45_inv_semidirect_iso))
+
+/-! ### The noncyclic abelian order-45 kernel -/
+
+noncomputable def order90_psqPrimeRep2_iso : psqPrimeRep2 3 5 ≃* order90_E33C5 := by
+  have hcop : (3 : ℕ).Coprime 5 := by norm_num
+  exact (MulEquiv.prodCongr (MulEquiv.refl order90_C3) (crtProd 3 5 hcop).symm).trans
+    (MulEquiv.prodAssoc (M := order90_C3) (N := order90_C3) (P := order90_C5)).symm
+
+theorem order90_e33c5_pow_fifteen (x : order90_E33C5) : x ^ 15 = 1 := by
+  decide +revert
+
+noncomputable def order90_e33c5_decomp_semidirect
+    (φ : order90_C2 →* MulAut order90_E33C5) :
+    SemidirectProduct order90_E33C5 order90_C2 φ ≃*
+      fixSubgroup (φ (Multiplicative.ofAdd 1)) ×
+        SemidirectProduct (negSubgroup (φ (Multiplicative.ofAdd 1))) order90_C2
+          (invActionHom (negSubgroup (φ (Multiplicative.ofAdd 1)))) := by
+  let τ := φ (Multiplicative.ofAdd 1)
+  have h2 : τ * τ = 1 := by
+    rw [← sq, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order90_E33C5, x ^ 15 = 1 := order90_e33c5_pow_fifteen
+  have ht : 2 * 8 = 15 + 1 := by norm_num
+  exact elem_decomp_semidirect (p := 15) (t := 8) hinv hexp ht φ rfl
 
 private lemma order90_sign_mulLeft_of_orderOf_two [Fintype G] [DecidableEq G]
     (a : G) (ha : orderOf a = 2) (hcard : Odd (Nat.card G / 2)) :
