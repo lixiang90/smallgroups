@@ -514,6 +514,14 @@ theorem order54_semidirectP2P_mulAut_eq_one_of_p2pA_cube
           | exfalso; revert hsqA'; decide
           | exfalso; revert hsqB'; decide
 
+/-- A `C₂` action on the exponent-`9` kernel is either trivial or reverses the center. -/
+theorem order54_semidirectP2P_mulAut_involution_center_cases
+    (α : MulAut order54_SemidirectP2P) (hα : α ^ 2 = 1) :
+    α = 1 ∨ (α order54_p2pA) ^ 3 = order54_p2pA ^ 6 := by
+  rcases order54_semidirectP2P_mulAut_p2pA_cube_cases α with hcube | hcube
+  · exact Or.inl (order54_semidirectP2P_mulAut_eq_one_of_p2pA_cube α hα hcube)
+  · exact Or.inr hcube
+
 /-! ### Cardinalities of the standard factors -/
 
 theorem card_order54_C2 : Nat.card order54_C2 = 2 :=
