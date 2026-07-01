@@ -358,6 +358,42 @@ noncomputable def order90_e33c5_decomp_semidirect
   have ht : 2 * 8 = 15 + 1 := by norm_num
   exact elem_decomp_semidirect (p := 15) (t := 8) hinv hexp ht φ rfl
 
+theorem card_order90_E33 : Nat.card order90_E33 = 9 := by
+  rw [order90_E33, card_elemAbelianRep (by norm_num : 3 ≠ 0)]
+  norm_num
+
+theorem card_order90_E33C5 : Nat.card order90_E33C5 = 45 := by
+  rw [order90_E33C5, Nat.card_prod, card_order90_E33]
+  have hC5 : Nat.card order90_C5 = 5 := by
+    rw [order90_C5, Nat.card_eq_fintype_card, Fintype.card_multiplicative, ZMod.card]
+  rw [hC5]
+
+theorem order90_e33c5_neg_card_cases (φ : order90_C2 →* MulAut order90_E33C5) :
+    Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 1 ∨
+      Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 3 ∨
+      Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 5 ∨
+      Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 9 ∨
+      Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 15 ∨
+      Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 45 := by
+  let τ := φ (Multiplicative.ofAdd 1)
+  have h2 : τ * τ = 1 := by
+    rw [← sq, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order90_E33C5, x ^ 15 = 1 := order90_e33c5_pow_fifteen
+  have ht : 2 * 8 = 15 + 1 := by norm_num
+  have hsplit : Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 45 := by
+    rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+    exact card_order90_E33C5
+  have hdvd : Nat.card (negSubgroup τ) ∣ 45 :=
+    ⟨Nat.card (fixSubgroup τ), by rw [mul_comm]; exact hsplit.symm⟩
+  have hpos : 0 < Nat.card (negSubgroup τ) := Nat.card_pos
+  have hle : Nat.card (negSubgroup τ) ≤ 45 := Nat.le_of_dvd (by norm_num) hdvd
+  obtain ⟨k, hk⟩ := hdvd
+  interval_cases hneg : Nat.card (negSubgroup τ) <;> omega
+
 private lemma order90_sign_mulLeft_of_orderOf_two [Fintype G] [DecidableEq G]
     (a : G) (ha : orderOf a = 2) (hcard : Odd (Nat.card G / 2)) :
     Equiv.Perm.sign (Equiv.mulLeft a) = -1 := by
