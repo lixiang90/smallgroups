@@ -36,6 +36,7 @@ import Smallgroups.UsefulTheorems.Order16_Center4
 import Smallgroups.UsefulTheorems.Order40
 import Smallgroups.UsefulTheorems.Order54
 import Smallgroups.UsefulTheorems.Order88
+import Smallgroups.UsefulTheorems.Order90
 import Smallgroups.UsefulTheorems.Order100
 import Smallgroups.UsefulTheorems.Isoclinism
 import Smallgroups.UsefulTheorems.OrderP4_Abel
