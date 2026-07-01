@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.CenterInvariant
+import Smallgroups.UsefulTheorems.PrimeOrderClassification
+import Smallgroups.UsefulTheorems.PrimeSqClassification
 
 /-!
 # Center cardinality of non-abelian groups of order `p^4`
@@ -16,6 +18,12 @@ The possibilities `p^3` and `p^4` are ruled out:
   by `comm_of_cyclic_center_quotient`.
 
 This is the key structural input for the non-abelian classification of order `p^4`.
+
+## Main results
+
+* `center_card_eq_p_or_p_sq_of_nonabelian_p4` — the center has order `p` or `p^2`
+* `center_classification_of_nonabelian_p4` — the center is isomorphic to `CyclicRep p`,
+  `CyclicRep (p^2)`, or `ElemAbelianRep p` (`ℤ/p × ℤ/p`)
 -/
 
 namespace Smallgroups.UsefulTheorems
@@ -68,5 +76,19 @@ theorem center_card_eq_p_or_p_sq_of_nonabelian_p4 {G : Type*} [Group G] [Finite 
   rcases (by omega : k = 1 ∨ k = 2) with rfl | rfl
   · exact Or.inl (by simpa using hk_center)
   · exact Or.inr (by simpa using hk_center)
+
+/-- In a non-abelian group of order `p^4`, the center, as a group up to isomorphism, is either
+the cyclic group `ℤ/p`, the cyclic group `ℤ/p²`, or the elementary abelian group `ℤ/p × ℤ/p`. -/
+theorem center_classification_of_nonabelian_p4 {G : Type*} [Group G] [Finite G]
+    (hcard : Nat.card G = p ^ 4) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
+    Nonempty (center G ≃* CyclicRep p) ∨
+    Nonempty (center G ≃* CyclicRep (p ^ 2)) ∨
+    Nonempty (center G ≃* ElemAbelianRep p) := by
+  have hp : p.Prime := Fact.out
+  rcases center_card_eq_p_or_p_sq_of_nonabelian_p4 hcard hnonab with (hc | hc)
+  · left; exact prime_classification hp hc
+  · rcases prime_sq_classification hc with (hcyc | helab)
+    · right; left; exact hcyc
+    · right; right; exact helab
 
 end Smallgroups.UsefulTheorems
