@@ -12,7 +12,10 @@ import Smallgroups.UsefulTheorems.PrimePairNonabelian
 import Mathlib.GroupTheory.SemidirectProduct
 import Mathlib.GroupTheory.SpecificGroups.Dihedral
 import Mathlib.GroupTheory.SpecificGroups.Quaternion
+import Mathlib.GroupTheory.SpecificGroups.Cyclic
+import Mathlib.GroupTheory.IndexNormal
 import Mathlib.Data.ZMod.Basic
+import Mathlib.GroupTheory.GroupAction.ConjAct
 
 /-!
 # Classification of groups of order 16
@@ -211,11 +214,11 @@ noncomputable instance instGroupOrder16Reps (i : Fin 14) : Group (order16_reps i
 
 /-- The cardinality of `QuaternionGroup 2` (Q8) is 8. -/
 theorem card_quaternion_group_2 : Nat.card (QuaternionGroup 2) = 8 := by
-  sorry
+  rw [Nat.card_eq_fintype_card, QuaternionGroup.card]
 
 /-- The cardinality of `QuaternionGroup 4` (Q16) is 16. -/
 theorem card_quaternion_group_4 : Nat.card (QuaternionGroup 4) = 16 := by
-  sorry
+  rw [Nat.card_eq_fintype_card, QuaternionGroup.card]
 
 /-- Each representative has order 16. -/
 theorem card_order16_reps (i : Fin 14) : Nat.card (order16_reps i) = 16 :=
@@ -280,6 +283,34 @@ theorem center_order16_N8 : Nonempty (center (order16_N8) ≃* CyclicRep 2) := b
 
 /-- The center of `order16_N9` (semidihedral SD16) is C2. -/
 theorem center_order16_N9 : Nonempty (center (order16_N9) ≃* CyclicRep 2) := by
+  sorry
+
+/-! ### Characterization of `order16_N1` (C8 ⋊₅ C2)
+
+Among the two 16-groups with center C4, only `order16_N1` contains an element of order 8.
+-/
+
+/-- A group of order 16 with center ≅ C4 and containing an element of order 8 is isomorphic to
+`order16_N1` (C8 ⋊₅ C2 via `x ↦ x⁵`). -/
+theorem order16_N1_classification {G : Type*} [Group G] [Finite G]
+    (hcard : Nat.card G = 16)
+    (hcenter : Nonempty (center G ≃* CyclicRep 4))
+    (hord8 : ∃ g : G, orderOf g = 8) :
+    Nonempty (G ≃* order16_N1) := by
+  rcases hord8 with ⟨g, hg⟩
+  have hg8 : g ^ 8 = 1 := by rw [← hg]; exact pow_orderOf_eq_one g
+  let H : Subgroup G := Subgroup.zpowers g
+  have hHcard : Nat.card H = 8 := by rw [Nat.card_zpowers, hg]
+  have hHindex : H.index = 2 := by
+    have hmul := H.card_mul_index; rw [hHcard, hcard] at hmul; omega
+  haveI hHnorm : H.Normal := Subgroup.normal_of_index_eq_two hHindex
+  have hZCcard : Nat.card (center G) = 4 := by
+    rcases hcenter with ⟨hc⟩
+    have hc4 : Nat.card (CyclicRep 4) = 4 := card_cyclicRep (by norm_num : 4 ≠ 0)
+    rw [← hc4, ← Nat.card_congr hc.toEquiv]
+
+  -- Proof strategy: show Z(G) = ⟨g²⟩ ≤ H, pick t ∉ H with t·g·t⁻¹ = g⁵,
+  -- find s with s² = 1 and s·g·s⁻¹ = g⁵, then build isomorphism to C8 ⋊₅ C2.
   sorry
 
 /-! ### Main classification -/
