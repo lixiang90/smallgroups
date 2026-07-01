@@ -25,11 +25,13 @@ variable {G : Type*} [Group G]
 /-! ### The cyclic order-45 kernel -/
 
 abbrev order90_C2 : Type := CyclicRep 2
+abbrev order90_C5 : Type := CyclicRep 5
+abbrev order90_C9 : Type := CyclicRep 9
 abbrev order90_C45 : Type := CyclicRep 45
 abbrev order90_C90 : Type := CyclicRep 90
 abbrev order90_D45 : Type := DihedralGroup 45
-abbrev order90_C9D5 : Type := CyclicRep 9 × DihedralGroup 5
-abbrev order90_C5D9 : Type := CyclicRep 5 × DihedralGroup 9
+abbrev order90_C9D5 : Type := order90_C9 × DihedralGroup 5
+abbrev order90_C5D9 : Type := order90_C5 × DihedralGroup 9
 
 noncomputable abbrev order90_u19 : (ZMod 45)ˣ :=
   ZMod.unitOfCoprime 19 (by norm_num : Nat.Coprime 19 45)
@@ -248,6 +250,83 @@ theorem order90_c45_inv_semidirect_iso :
   haveI : NeZero 45 := ⟨by norm_num⟩
   exact ⟨(semidirectProductCongr_eq order90_c45Action_44_eq_invAction).trans
     (genDihedralCyclicIso 45)⟩
+
+noncomputable def order90_c45_crt_iso_9_5 : order90_C45 ≃* order90_C9 × order90_C5 := by
+  have hcop : (9 : ℕ).Coprime 5 := by norm_num
+  let e_mul : order90_C45 ≃* Multiplicative (ZMod (9 * 5)) := by
+    refine AddEquiv.toMultiplicative (ZMod.ringEquivCongr ?_).toAddEquiv
+    norm_num
+  exact e_mul.trans (crtProd 9 5 hcop).symm
+
+noncomputable def order90_c45_crt_iso_5_9 : order90_C45 ≃* order90_C5 × order90_C9 := by
+  have hcop : (5 : ℕ).Coprime 9 := by norm_num
+  let e_mul : order90_C45 ≃* Multiplicative (ZMod (5 * 9)) := by
+    refine AddEquiv.toMultiplicative (ZMod.ringEquivCongr ?_).toAddEquiv
+    norm_num
+  exact e_mul.trans (crtProd 5 9 hcop).symm
+
+noncomputable abbrev order90_c9c5Action_19 :
+    order90_C2 →* MulAut (order90_C9 × order90_C5) :=
+  prodTrivialAction (A := order90_C9) (B := order90_C5) (H := order90_C2)
+    (invActionHom order90_C5)
+
+noncomputable abbrev order90_c5c9Action_26 :
+    order90_C2 →* MulAut (order90_C5 × order90_C9) :=
+  prodTrivialAction (A := order90_C5) (B := order90_C9) (H := order90_C2)
+    (invActionHom order90_C9)
+
+theorem order90_c45Action_19_crt :
+    ∀ h, order90_c45_crt_iso_9_5.toMonoidHom.comp
+        (order90_c45Action_19 h).toMonoidHom =
+      (order90_c9c5Action_19 h).toMonoidHom.comp order90_c45_crt_iso_9_5.toMonoidHom := by
+  intro h
+  apply MonoidHom.ext
+  intro x
+  ext <;> decide +revert
+
+theorem order90_c45Action_26_crt :
+    ∀ h, order90_c45_crt_iso_5_9.toMonoidHom.comp
+        (order90_c45Action_26 h).toMonoidHom =
+      (order90_c5c9Action_26 h).toMonoidHom.comp order90_c45_crt_iso_5_9.toMonoidHom := by
+  intro h
+  apply MonoidHom.ext
+  intro x
+  ext <;> decide +revert
+
+theorem order90_c45_19_semidirect_iso :
+    Nonempty (SemidirectProduct order90_C45 order90_C2
+      order90_c45Action_19 ≃* order90_C9D5) := by
+  haveI : NeZero 5 := ⟨by norm_num⟩
+  exact ⟨(semidirectProductCongr order90_c45_crt_iso_9_5 (MulEquiv.refl order90_C2)
+    order90_c45Action_19_crt).trans
+      ((semidirectProdSplit (A := order90_C9) (B := order90_C5) (H := order90_C2)
+        (invActionHom order90_C5)).trans
+          (MulEquiv.prodCongr (MulEquiv.refl order90_C9) (genDihedralCyclicIso 5)))⟩
+
+theorem order90_c45_26_semidirect_iso :
+    Nonempty (SemidirectProduct order90_C45 order90_C2
+      order90_c45Action_26 ≃* order90_C5D9) := by
+  haveI : NeZero 9 := ⟨by norm_num⟩
+  exact ⟨(semidirectProductCongr order90_c45_crt_iso_5_9 (MulEquiv.refl order90_C2)
+    order90_c45Action_26_crt).trans
+      ((semidirectProdSplit (A := order90_C5) (B := order90_C9) (H := order90_C2)
+        (invActionHom order90_C9)).trans
+          (MulEquiv.prodCongr (MulEquiv.refl order90_C5) (genDihedralCyclicIso 9)))⟩
+
+theorem order90_c45_semidirect_cases (φ : order90_C2 →* MulAut order90_C45) :
+    Nonempty (SemidirectProduct order90_C45 order90_C2 φ ≃* order90_C90) ∨
+      Nonempty (SemidirectProduct order90_C45 order90_C2 φ ≃* order90_C9D5) ∨
+      Nonempty (SemidirectProduct order90_C45 order90_C2 φ ≃* order90_C5D9) ∨
+      Nonempty (SemidirectProduct order90_C45 order90_C2 φ ≃* order90_D45) := by
+  rcases order90_c45_action_cases φ with hφ | hφ | hφ | hφ
+  · subst hφ
+    exact Or.inl order90_c45_trivial_action_semidirect_iso
+  · subst hφ
+    exact Or.inr (Or.inl order90_c45_19_semidirect_iso)
+  · subst hφ
+    exact Or.inr (Or.inr (Or.inl order90_c45_26_semidirect_iso))
+  · subst hφ
+    exact Or.inr (Or.inr (Or.inr order90_c45_inv_semidirect_iso))
 
 private lemma order90_sign_mulLeft_of_orderOf_two [Fintype G] [DecidableEq G]
     (a : G) (ha : orderOf a = 2) (hcard : Odd (Nat.card G / 2)) :
