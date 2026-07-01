@@ -20,6 +20,9 @@ tool for classification.
 
 * `card_center_eq_of_mulEquiv` — center cardinality is an isomorphism invariant
 * `not_nonempty_mulEquiv_of_card_center_ne` — different center sizes ⇒ non-isomorphic
+* `not_nonempty_mulEquiv_of_center_not_mulEquiv` — non-isomorphic centers ⇒ non-isomorphic groups
+* `pairwise_disjoint_of_card_center_ne` — disjointness by center cardinality
+* `pairwise_disjoint_of_center_not_iso` — disjointness by center isomorphism class
 * `card_center_eq_card_of_comm` — center of a commutative group equals the whole group
 * `card_center_prod` — `|Z(G × H)| = |Z(G)| · |Z(H)|`
 * `card_center_bot` — `|Z(G)| = 1` when the center is trivial
@@ -72,6 +75,24 @@ theorem pairwise_disjoint_of_card_center_ne {ι κ : Type*} {A : ι → Type}
     (hne : ∀ i j, cA i ≠ cB j) :
     ∀ i j, ¬ Nonempty (A i ≃* B j) :=
   fun i j => not_nonempty_mulEquiv_of_card_center_ne (by rw [hA, hB]; exact hne i j)
+
+/-- Groups whose centers are non-isomorphic are themselves non-isomorphic.
+    The center, as a group up to isomorphism, is an invariant of the group. -/
+theorem not_nonempty_mulEquiv_of_center_not_mulEquiv {H K : Type*} [Group H] [Group K]
+    (h : ¬ Nonempty (Subgroup.center H ≃* Subgroup.center K)) :
+    ¬ Nonempty (H ≃* K) := by
+  rintro ⟨e⟩
+  apply h
+  exact ⟨centerCongr e⟩
+
+/-- Groups whose centers are non-isomorphic are in disjoint invariant classes.
+    Supplies the `hdisj` hypothesis of `PairwiseNonMulEquiv.sigma` or
+    the `hinv` hypothesis of `PairwiseNonMulEquiv.of_invariant`. -/
+theorem pairwise_disjoint_of_center_not_iso {ι κ : Type*} {A : ι → Type}
+    {B : κ → Type} [∀ i, Group (A i)] [∀ j, Group (B j)]
+    (hne : ∀ i j, ¬ Nonempty (Subgroup.center (A i) ≃* Subgroup.center (B j))) :
+    ∀ i j, ¬ Nonempty (A i ≃* B j) :=
+  fun i j => not_nonempty_mulEquiv_of_center_not_mulEquiv (hne i j)
 
 /-- **The center of a nontrivial finite p-group is nontrivial.**
 If `G` is a finite group whose order is `p ^ n` with `0 < n` and `p` prime, then the center
