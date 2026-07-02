@@ -2871,6 +2871,96 @@ theorem order36_A4_quotient_klein_preimage_complement [Finite G] (hG : Nat.card 
     exact hindex.symm
   exact ⟨W, hWnormal, hKW, hWcard, H, hHcomp, hHcard⟩
 
+theorem order36_A4_quotient_klein_preimage_quotient [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ⧸ K.subgroupOf W ≃* alternatingGroup.kleinFour (Fin 4)) := by
+  obtain ⟨e⟩ := hquot
+  let φ : G →* order36_A4 := e.toMonoidHom.comp (QuotientGroup.mk' K)
+  let V : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  let W : Subgroup G := V.comap φ
+  have hVnormal : V.Normal := by
+    dsimp [V]
+    exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+  have hWnormal : W.Normal := by
+    dsimp [W]
+    exact hVnormal.comap φ
+  have hKW : K ≤ W := by
+    intro k hk
+    have hkq : (QuotientGroup.mk' K) k = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hk
+    have hφk : φ k = 1 := by
+      change e ((QuotientGroup.mk' K) k) = 1
+      rw [hkq]
+      simp
+    change φ k ∈ V
+    rw [hφk]
+    exact V.one_mem
+  have hφ_surj : Function.Surjective φ := by
+    intro a
+    obtain ⟨q, hq⟩ := e.surjective a
+    obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective K q
+    refine ⟨g, ?_⟩
+    change e ((QuotientGroup.mk' K) g) = a
+    rw [hg, hq]
+  have hV_card : Nat.card V = 4 := by
+    simpa [V] using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have hV_index : V.index = 3 := by
+    have hmul := V.index_mul_card
+    rw [hV_card, card_order36_A4] at hmul
+    omega
+  have hW_index : W.index = 3 := by
+    dsimp [W]
+    rw [V.index_comap_of_surjective hφ_surj, hV_index]
+  have hWcard : Nat.card W = 12 := by
+    have hmul := W.index_mul_card
+    rw [hW_index, hG] at hmul
+    omega
+  let ψ : W →* order36_A4 := φ.comp W.subtype
+  have hψker : ψ.ker = K.subgroupOf W := by
+    ext w
+    constructor
+    · intro hw
+      rw [MonoidHom.mem_ker] at hw
+      rw [Subgroup.mem_subgroupOf]
+      have hq : (QuotientGroup.mk' K) (w : G) = 1 := by
+        apply e.injective
+        simpa [ψ, φ] using hw
+      rwa [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq
+    · intro hw
+      rw [Subgroup.mem_subgroupOf] at hw
+      rw [MonoidHom.mem_ker]
+      have hq : (QuotientGroup.mk' K) (w : G) = 1 := by
+        rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+        exact hw
+      change e ((QuotientGroup.mk' K) (w : G)) = 1
+      rw [hq]
+      simp
+  have hψrange : ψ.range = V := by
+    apply le_antisymm
+    · intro a ha
+      rw [MonoidHom.mem_range] at ha
+      obtain ⟨w, hw⟩ := ha
+      rw [← hw]
+      change φ (w : G) ∈ V
+      exact w.property
+    · intro a ha
+      rw [MonoidHom.mem_range]
+      obtain ⟨g, hg⟩ := hφ_surj a
+      have hgW : g ∈ W := by
+        change φ g ∈ V
+        rw [hg]
+        exact ha
+      refine ⟨⟨g, hgW⟩, ?_⟩
+      change φ g = a
+      exact hg
+  haveI : (K.subgroupOf W).Normal := hψker ▸ MonoidHom.normal_ker ψ
+  refine ⟨W, hWnormal, hKW, hWcard, ?_⟩
+  change Nonempty (W ⧸ K.subgroupOf W ≃* V)
+  exact ⟨(QuotientGroup.quotientMulEquivOfEq hψker.symm).trans
+    ((QuotientGroup.quotientKerEquivRange ψ).trans (MulEquiv.subgroupCongr hψrange))⟩
+
 noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
   toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
   map_one' := by rfl
