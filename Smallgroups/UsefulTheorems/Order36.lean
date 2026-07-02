@@ -1873,6 +1873,185 @@ theorem order36_normal_abelian_reps_pairwise :
     fin_cases i <;> fin_cases j <;>
       simp [order36_normal_abelian_reps_exponent] at hExp ⊢
 
+theorem order36_normal_abelian_reps_comm (i : Fin 4) :
+    ∀ a b : order36_normal_abelian_reps i, a * b = b * a := by
+  fin_cases i
+  · change ∀ a b : order36_C9 × order36_C4, a * b = b * a
+    intro a b
+    exact mul_comm a b
+  · change ∀ a b : order36_C9 × order36_V4, a * b = b * a
+    intro a b
+    exact mul_comm a b
+  · change ∀ a b : order36_E9 × order36_C4, a * b = b * a
+    intro a b
+    exact mul_comm a b
+  · change ∀ a b : order36_E9 × order36_V4, a * b = b * a
+    intro a b
+    exact mul_comm a b
+
+theorem semidirectProduct_not_comm_of_moved
+    {N H : Type*} [Group N] [Group H] (φ : H →* MulAut N) {h : H} {n : N}
+    (hmoved : φ h n ≠ n) :
+    ¬ ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
+  intro hcomm
+  have key := hcomm (SemidirectProduct.inr h) (SemidirectProduct.inl n)
+  have hleft := congrArg SemidirectProduct.left key
+  simp only [SemidirectProduct.mul_left, SemidirectProduct.left_inr,
+    SemidirectProduct.right_inr, SemidirectProduct.left_inl, SemidirectProduct.right_inl,
+    map_one, one_mul, mul_one] at hleft
+  exact hmoved hleft
+
+theorem not_comm_of_mulEquiv {G H : Type*} [Group G] [Group H]
+    (e : G ≃* H) (hG : ¬ ∀ a b : G, a * b = b * a) :
+    ¬ ∀ a b : H, a * b = b * a := by
+  intro hH
+  apply hG
+  intro a b
+  apply e.injective
+  simpa using hH (e a) (e b)
+
+/-- The eight non-abelian representatives in the normal Sylow-`3` branch. -/
+noncomputable def order36_normal_nonabelian_reps : Fin 8 → Type
+  | 0 => order36_normal_reps (1 : Fin 12)
+  | 1 => order36_normal_reps (3 : Fin 12)
+  | 2 => order36_normal_reps (5 : Fin 12)
+  | 3 => order36_normal_reps (6 : Fin 12)
+  | 4 => order36_normal_reps (7 : Fin 12)
+  | 5 => order36_normal_reps (9 : Fin 12)
+  | 6 => order36_normal_reps (10 : Fin 12)
+  | 7 => order36_normal_reps (11 : Fin 12)
+
+noncomputable instance order36_normal_nonabelian_reps_group :
+    ∀ i, Group (order36_normal_nonabelian_reps i)
+  | 0 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 3 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 4 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 5 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 6 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 7 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+
+theorem order36_C9_C4_invAction_moves_gen :
+    order36_C9_C4_invAction (Multiplicative.ofAdd (1 : ZMod 4))
+      (Multiplicative.ofAdd (1 : ZMod 9)) ≠ Multiplicative.ofAdd (1 : ZMod 9) := by
+  intro h
+  have hto := congrArg Multiplicative.toAdd h
+  norm_num [order36_C9_C4_invAction, order36_c9Action, unitAutHom_apply] at hto
+  exact (by decide : (-1 : ZMod 9) ≠ 1) hto
+
+theorem order36_c9_v4_fstAction_moves_gen :
+    (order36_c9Action order36_chiV4_fst) order36_V4_g1
+      (Multiplicative.ofAdd (1 : ZMod 9)) ≠ Multiplicative.ofAdd (1 : ZMod 9) := by
+  intro h
+  have hto := congrArg Multiplicative.toAdd h
+  norm_num [order36_c9Action, order36_chiV4_fst, order36_c2UnitHom, unitAutHom_apply,
+    order36_V4_g1, order36_C2] at hto
+  exact (by decide : (-1 : ZMod 9) ≠ 1) hto
+
+theorem order36_E9_C4_negBothAction_moves_e1 :
+    order36_E9_C4_negBothAction (Multiplicative.ofAdd (1 : ZMod 4)) order36_E9_e1 ≠
+      order36_E9_e1 := by
+  rw [order36_c4ActionOfAut_gen, order36_E9_negBothAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_E9_C4_negFirstAction_moves_e1 :
+    order36_E9_C4_negFirstAction (Multiplicative.ofAdd (1 : ZMod 4)) order36_E9_e1 ≠
+      order36_E9_e1 := by
+  rw [order36_c4ActionOfAut_gen, order36_E9_negFirstAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_E9_C4_rotAction_moves_e1 :
+    order36_E9_C4_rotAction (Multiplicative.ofAdd (1 : ZMod 4)) order36_E9_e1 ≠
+      order36_E9_e1 := by
+  rw [order36_c4ActionOfAut_gen, order36_E9_rotAut_e1]
+  intro h
+  exact (by decide : order36_E9_e2 ≠ order36_E9_e1) h
+
+theorem order36_E9_V4_negBothFstAction_moves_e1 :
+    order36_E9_V4_negBothFstAction order36_V4_g1 order36_E9_e1 ≠ order36_E9_e1 := by
+  rw [order36_E9_V4_negBothFstAction_g1, order36_E9_negBothAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_E9_V4_negFirstFstAction_moves_e1 :
+    order36_E9_V4_negFirstFstAction order36_V4_g1 order36_E9_e1 ≠ order36_E9_e1 := by
+  rw [order36_E9_V4_negFirstFstAction_g1, order36_E9_negFirstAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_E9_V4_diagAction_moves_e1 :
+    order36_E9_V4_diagAction order36_V4_g1 order36_E9_e1 ≠ order36_E9_e1 := by
+  rw [order36_E9_V4_diagAction_g1, order36_E9_negFirstAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_normal_nonabelian_reps_not_comm (i : Fin 8) :
+    ¬ ∀ a b : order36_normal_nonabelian_reps i, a * b = b * a := by
+  fin_cases i
+  · change ¬ ∀ a b : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction,
+      a * b = b * a
+    exact semidirectProduct_not_comm_of_moved order36_C9_C4_invAction
+      (h := Multiplicative.ofAdd (1 : ZMod 4)) (n := Multiplicative.ofAdd (1 : ZMod 9))
+      order36_C9_C4_invAction_moves_gen
+  · change ¬ ∀ a b : DihedralGroup 9 × order36_C2, a * b = b * a
+    have hmodel : ¬ ∀ a b : SemidirectProduct order36_C9 order36_V4
+        (order36_c9Action order36_chiV4_fst), a * b = b * a :=
+      semidirectProduct_not_comm_of_moved (order36_c9Action order36_chiV4_fst)
+        (h := order36_V4_g1) (n := Multiplicative.ofAdd (1 : ZMod 9))
+        order36_c9_v4_fstAction_moves_gen
+    exact not_comm_of_mulEquiv order36_c9V4_fst_equiv_dihedral_prod hmodel
+  · change ¬ ∀ a b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+      a * b = b * a
+    exact semidirectProduct_not_comm_of_moved order36_E9_C4_negBothAction
+      (h := Multiplicative.ofAdd (1 : ZMod 4)) (n := order36_E9_e1)
+      order36_E9_C4_negBothAction_moves_e1
+  · change ¬ ∀ a b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+      a * b = b * a
+    exact semidirectProduct_not_comm_of_moved order36_E9_C4_negFirstAction
+      (h := Multiplicative.ofAdd (1 : ZMod 4)) (n := order36_E9_e1)
+      order36_E9_C4_negFirstAction_moves_e1
+  · change ¬ ∀ a b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      a * b = b * a
+    exact semidirectProduct_not_comm_of_moved order36_E9_C4_rotAction
+      (h := Multiplicative.ofAdd (1 : ZMod 4)) (n := order36_E9_e1)
+      order36_E9_C4_rotAction_moves_e1
+  · change ¬ ∀ a b : SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9) ×
+      order36_C2, a * b = b * a
+    have hmodel : ¬ ∀ a b : SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_negBothFstAction, a * b = b * a :=
+      semidirectProduct_not_comm_of_moved order36_E9_V4_negBothFstAction
+        (h := order36_V4_g1) (n := order36_E9_e1)
+        order36_E9_V4_negBothFstAction_moves_e1
+    exact not_comm_of_mulEquiv order36_e9V4_negBothFst_equiv_inv_prod hmodel
+  · change ¬ ∀ a b : DihedralGroup 3 × CyclicRep 3 × order36_C2, a * b = b * a
+    have hmodel : ¬ ∀ a b : SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_negFirstFstAction, a * b = b * a :=
+      semidirectProduct_not_comm_of_moved order36_E9_V4_negFirstFstAction
+        (h := order36_V4_g1) (n := order36_E9_e1)
+        order36_E9_V4_negFirstFstAction_moves_e1
+    exact not_comm_of_mulEquiv
+      (order36_e9V4_negFirstFst_equiv_d3_c3_c2.trans
+        (MulEquiv.prodAssoc (M := DihedralGroup 3) (N := CyclicRep 3) (P := order36_C2)))
+      hmodel
+  · change ¬ ∀ a b : DihedralGroup 3 × DihedralGroup 3, a * b = b * a
+    have hmodel : ¬ ∀ a b : SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_diagAction, a * b = b * a :=
+      semidirectProduct_not_comm_of_moved order36_E9_V4_diagAction
+        (h := order36_V4_g1) (n := order36_E9_e1)
+        order36_E9_V4_diagAction_moves_e1
+    exact not_comm_of_mulEquiv order36_e9V4_diag_equiv_d3_d3 hmodel
+
+theorem order36_normal_abelian_nonabelian_reps_disjoint :
+    ∀ i j, ¬ Nonempty (order36_normal_abelian_reps i ≃*
+      order36_normal_nonabelian_reps j) := by
+  intro i j
+  exact isEmpty_mulEquiv_of_comm_noncomm
+    (order36_normal_abelian_reps_comm i)
+    (order36_normal_nonabelian_reps_not_comm j)
+
 theorem order36_c9_c4_action_rep_cases (φ : order36_C4 →* MulAut order36_C9) :
     Nonempty (SemidirectProduct order36_C9 order36_C4 φ ≃*
       order36_normal_reps (0 : Fin 12)) ∨
