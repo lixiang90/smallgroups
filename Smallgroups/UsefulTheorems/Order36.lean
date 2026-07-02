@@ -2776,6 +2776,33 @@ theorem order36_A4_quotient_pow_two_or_three_mem {G : Type*} [Group G]
     rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
     exact hq
 
+theorem order36_A4_quotient_pow_six_or_nine_eq_one {G : Type*} [Group G]
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) (g : G) :
+    g ^ 6 = 1 ∨ g ^ 9 = 1 := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hK]; norm_num)
+  rcases order36_A4_quotient_pow_two_or_three_mem K hquot g with h2 | h3
+  · left
+    have hk_dvd : orderOf (⟨g ^ 2, h2⟩ : K) ∣ 3 := by
+      have := orderOf_dvd_natCard (⟨g ^ 2, h2⟩ : K)
+      rwa [hK] at this
+    have hk : (⟨g ^ 2, h2⟩ : K) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hk_dvd
+    have hkG := congrArg (fun x : K => (x : G)) hk
+    calc
+      g ^ 6 = g ^ (2 * 3) := by norm_num
+      _ = (g ^ 2) ^ 3 := by rw [pow_mul]
+      _ = 1 := by simpa using hkG
+  · right
+    have hk_dvd : orderOf (⟨g ^ 3, h3⟩ : K) ∣ 3 := by
+      have := orderOf_dvd_natCard (⟨g ^ 3, h3⟩ : K)
+      rwa [hK] at this
+    have hk : (⟨g ^ 3, h3⟩ : K) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hk_dvd
+    have hkG := congrArg (fun x : K => (x : G)) hk
+    calc
+      g ^ 9 = g ^ (3 * 3) := by norm_num
+      _ = (g ^ 3) ^ 3 := by rw [pow_mul]
+      _ = 1 := by simpa using hkG
+
 noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
   toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
   map_one' := by rfl
