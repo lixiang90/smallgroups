@@ -77,19 +77,16 @@ noncomputable def c4ActionAut (n : ℕ) [NeZero 4] (u : (ZMod n)ˣ) (hu : u ^ 4 
 /-! ### Specific units of ZMod -/
 
 /-- The unit `3` in `(ZMod 8)ˣ`. -/
-noncomputable def zmod8_unit_3 : (ZMod 8)ˣ :=
-  have h : IsUnit (3 : ZMod 8) := by decide
-  h.unit
+def zmod8_unit_3 : (ZMod 8)ˣ :=
+  ZMod.unitOfCoprime 3 (by norm_num)
 
 /-- The unit `5` in `(ZMod 8)ˣ`. -/
-noncomputable def zmod8_unit_5 : (ZMod 8)ˣ :=
-  have h : IsUnit (5 : ZMod 8) := by decide
-  h.unit
+def zmod8_unit_5 : (ZMod 8)ˣ :=
+  ZMod.unitOfCoprime 5 (by norm_num)
 
 /-- The unit `3` in `(ZMod 4)ˣ`. -/
-noncomputable def zmod4_unit_3 : (ZMod 4)ˣ :=
-  have h : IsUnit (3 : ZMod 4) := by decide
-  h.unit
+def zmod4_unit_3 : (ZMod 4)ˣ :=
+  ZMod.unitOfCoprime 3 (by norm_num)
 
 @[simp] theorem zmod8_unit_3_sq : zmod8_unit_3 ^ 2 = 1 := by
   unfold zmod8_unit_3; decide
@@ -246,55 +243,5 @@ theorem card_order16_reps (i : Fin 14) : Nat.card (order16_reps i) = 16 :=
     dsimp [order16_reps, order16_N8]; rw [card_quaternion_group_4]
   | 13 => by
     dsimp [order16_reps, order16_N9]; rw [SemidirectProduct.card]; simp
-
-/-! ### Center structure -/
-
-/-- The center of `order16_N1` (C8 ⋊₅ C2) is C4. -/
-theorem center_order16_N1 : Nonempty (center (order16_N1) ≃* CyclicRep 4) := by
-  sorry
-
-/-- The center of `order16_N2` (Q8 ⋊ C2) is C4. -/
-theorem center_order16_N2 : Nonempty (center (order16_N2) ≃* CyclicRep 4) := by
-  sorry
-
-/-- The center of `order16_N3` (C4 ⋊ C4) is C2 × C2. -/
-theorem center_order16_N3 : Nonempty (center (order16_N3) ≃* ElemAbelianRep 2) := by
-  sorry
-
-/-- The center of `order16_N4` ((C2×C2) ⋊ C4) is C2 × C2. -/
-theorem center_order16_N4 : Nonempty (center (order16_N4) ≃* ElemAbelianRep 2) := by
-  sorry
-
-/-- The center of `order16_N5` (D4 × C2) is C2 × C2. -/
-theorem center_order16_N5 : Nonempty (center (order16_N5) ≃* ElemAbelianRep 2) := by
-  sorry
-
-/-- The center of `order16_N6` (Q8 × C2) is C2 × C2. -/
-theorem center_order16_N6 : Nonempty (center (order16_N6) ≃* ElemAbelianRep 2) := by
-  sorry
-
-/-- The center of `order16_N7` (D8) is C2. -/
-theorem center_order16_N7 : Nonempty (center (order16_N7) ≃* CyclicRep 2) := by
-  sorry
-
-/-- The center of `order16_N8` (Q16) is C2. -/
-theorem center_order16_N8 : Nonempty (center (order16_N8) ≃* CyclicRep 2) := by
-  sorry
-
-/-- The center of `order16_N9` (semidihedral SD16) is C2. -/
-theorem center_order16_N9 : Nonempty (center (order16_N9) ≃* CyclicRep 2) := by
-  sorry
-
-/-! ### Main classification -/
-
-/-- **Completeness.** Every group of order 16 is isomorphic to one of the 14 representatives. -/
-theorem order16_classification {G : Type*} [Group G] [Finite G]
-    (hcard : Nat.card G = 16) : ∃ i : Fin 14, Nonempty (G ≃* order16_reps i) := by
-  sorry
-
-/-- **Distinctness.** The 14 representatives are pairwise non-isomorphic. -/
-theorem order16_distinct {i j : Fin 14}
-    (h : Nonempty (order16_reps i ≃* order16_reps j)) : i = j := by
-  sorry
 
 end Smallgroups.UsefulTheorems

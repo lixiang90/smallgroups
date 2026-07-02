@@ -32,7 +32,6 @@ import Smallgroups.UsefulTheorems.Order2PSqElem
 import Smallgroups.UsefulTheorems.Order4P
 import Smallgroups.UsefulTheorems.Order4P_12
 import Smallgroups.UsefulTheorems.Order16
-import Smallgroups.UsefulTheorems.Order16_Center4
 import Smallgroups.UsefulTheorems.Order24
 import Smallgroups.UsefulTheorems.Order16_Wild
 import Smallgroups.UsefulTheorems.Order36
