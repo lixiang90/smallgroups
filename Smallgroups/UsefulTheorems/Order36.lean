@@ -2615,6 +2615,27 @@ noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
     ext
     fin_cases a <;> fin_cases b <;> decide
 
+theorem order36_C9ToC3_range_top : order36_C9ToC3.range = ⊤ := by
+  rw [Subgroup.eq_top_iff']
+  intro x
+  obtain ⟨n, rfl⟩ := Multiplicative.ofAdd.surjective x
+  fin_cases n
+  · rw [MonoidHom.mem_range]
+    refine ⟨1, ?_⟩
+    ext
+    simp [order36_C9ToC3]
+    rfl
+  · rw [MonoidHom.mem_range]
+    refine ⟨Multiplicative.ofAdd (1 : ZMod 9), ?_⟩
+    ext
+    simp [order36_C9ToC3]
+    rfl
+  · rw [MonoidHom.mem_range]
+    refine ⟨Multiplicative.ofAdd (2 : ZMod 9), ?_⟩
+    ext
+    simp only [Nat.reduceAdd, Fin.reduceFinMk, Fin.isValue, toAdd_ofAdd]
+    decide
+
 /-- The difference between the `A₄ → C₃` quotient map and the reduction `C₉ → C₃`. -/
 noncomputable abbrev order36_A4C9Diff : order36_A4 × order36_C9 →* order36_C3 :=
   (order36_A4ToC3.comp (MonoidHom.fst order36_A4 order36_C9)) *
@@ -2678,6 +2699,33 @@ theorem order36_C3A4_has_normal_order_three_and_A4_quotient :
       simpa using card_order36_A4
     have h := π.ker.card_mul_index
     rw [hidx, card_order36_C3A4] at h
+    omega
+  · exact ⟨((QuotientGroup.quotientKerEquivRange π).trans
+      (MulEquiv.subgroupCongr hrange_top)).trans Subgroup.topEquiv⟩
+
+theorem order36_A4C9_has_normal_order_three_and_A4_quotient :
+    ∃ (K : Subgroup order36_A4C9) (_ : K.Normal), Nat.card K = 3 ∧
+      Nonempty (order36_A4C9 ⧸ K ≃* order36_A4) := by
+  let π : order36_A4C9 →* order36_A4 :=
+    (MonoidHom.fst order36_A4 order36_C9).comp order36_A4C9Diff.ker.subtype
+  have hrange_top : π.range = ⊤ := by
+    rw [Subgroup.eq_top_iff']
+    intro a
+    have ha : order36_A4ToC3 a ∈ order36_C9ToC3.range := by
+      rw [order36_C9ToC3_range_top]
+      trivial
+    rw [MonoidHom.mem_range] at ha
+    obtain ⟨z, hz⟩ := ha
+    rw [MonoidHom.mem_range]
+    refine ⟨⟨(a, z), ?_⟩, rfl⟩
+    change order36_A4C9Diff (a, z) = 1
+    simp [order36_A4C9Diff, hz]
+  refine ⟨π.ker, MonoidHom.normal_ker π, ?_, ?_⟩
+  · have hidx : π.ker.index = 12 := by
+      rw [Subgroup.index_ker, hrange_top]
+      simpa using card_order36_A4
+    have h := π.ker.card_mul_index
+    rw [hidx, card_order36_A4C9] at h
     omega
   · exact ⟨((QuotientGroup.quotientKerEquivRange π).trans
       (MulEquiv.subgroupCongr hrange_top)).trans Subgroup.topEquiv⟩
