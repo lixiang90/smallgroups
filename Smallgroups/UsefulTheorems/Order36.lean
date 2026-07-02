@@ -4968,6 +4968,26 @@ theorem order36_order_nine_cube_generates_card_three_subgroup
   change Subgroup.zpowers x = ⊤
   exact Subgroup.eq_top_of_card_eq _ (by rw [Nat.card_zpowers, hxord, hKcard])
 
+theorem order36_card_three_subgroup_le_zpowers_of_order_nine_cube_mem
+    (K : Subgroup G) (hKcard : Nat.card K = 3) {g : G}
+    (hg3K : g ^ 3 ∈ K) (hg9 : orderOf g = 9) :
+    K ≤ Subgroup.zpowers g := by
+  have hgen := order36_order_nine_cube_generates_card_three_subgroup K hKcard hg3K hg9
+  intro k hk
+  have hkzp : (⟨k, hk⟩ : K) ∈ Subgroup.zpowers (⟨g ^ 3, hg3K⟩ : K) := by
+    rw [hgen]
+    exact Subgroup.mem_top _
+  obtain ⟨n, hn⟩ := Subgroup.mem_zpowers_iff.mp hkzp
+  rw [Subgroup.mem_zpowers_iff]
+  refine ⟨3 * n, ?_⟩
+  have hnG := congrArg (fun x : K => (x : G)) hn
+  change g ^ (3 * n) = k
+  rw [zpow_mul]
+  rw [show g ^ (3 : ℤ) = g ^ (3 : ℕ) by
+    change g ^ ((3 : ℕ) : ℤ) = g ^ (3 : ℕ)
+    rw [zpow_natCast]]
+  simpa using hnG
+
 theorem order36_A4_quotient_klein_preimage_order_nine_of_cube_ne_one
     [Finite G] (hG : Nat.card G = 36)
     (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
@@ -5447,6 +5467,7 @@ theorem order36_A4_quotient_C3_klein_order_nine_cube_generates
       Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
         ∃ hpow_out : (∀ {g : G}, g ∉ W → g ^ 3 ∈ K),
           ∃ (g : G) (hgW : g ∉ W), orderOf g = 9 ∧
+            K ≤ Subgroup.zpowers g ∧
             Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤ ∧
             Subgroup.zpowers (⟨g ^ 3, hpow_out hgW⟩ : K) = ⊤ := by
   obtain ⟨g, hg9⟩ := h9
@@ -5459,7 +5480,9 @@ theorem order36_A4_quotient_C3_klein_order_nine_cube_generates
     have himage : orderOf (e ⟨g, hgW⟩) = 9 := by
       rw [MulEquiv.orderOf_eq, Subgroup.orderOf_mk, hg9]
     exact order36_C3_klein_no_order_nine (e ⟨g, hgW⟩) himage
-  refine ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, ?_, ?_⟩
+  refine ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, ?_, ?_, ?_⟩
+  · exact order36_card_three_subgroup_le_zpowers_of_order_nine_cube_mem
+      K hK (hpow_out hgW) hg9
   · exact order36_quotient_zpowers_eq_top_of_not_mem_index_three
       (G := G) hG W hWcard hgW
   · exact order36_order_nine_cube_generates_card_three_subgroup K hK (hpow_out hgW) hg9
@@ -6003,17 +6026,19 @@ theorem order36_has_central_C3_klein_layer_with_order_nine_cube_generates_of_car
           Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
             ∃ hpow_out : (∀ {g : G}, g ∉ W → g ^ 3 ∈ K),
               ∃ (g : G) (hgW : g ∉ W), orderOf g = 9 ∧
+                K ≤ Subgroup.zpowers g ∧
                 Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤ ∧
                 Subgroup.zpowers (⟨g ^ 3, hpow_out hgW⟩ : K) = ⊤ := by
   obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
     order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
       (G := G) hG hSyl
   haveI : K.Normal := hKnormal
-  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hqgen, hgen⟩ :=
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9,
+    hKle, hqgen, hgen⟩ :=
     order36_A4_quotient_C3_klein_order_nine_cube_generates
       (G := G) hG K hKcenter hKcard hquot h9
   exact ⟨K, hKnormal, hKcenter, hKcard, hquot,
-    W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hqgen, hgen⟩
+    W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hKle, hqgen, hgen⟩
 
 theorem order36_has_klein_preimage_order_nine_of_cube_ne_one_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
