@@ -490,6 +490,9 @@ abbrev order24_RM : Type :=
 noncomputable abbrev order24_RN : Type :=
   SemidirectProduct order24_Q8 order24_C3 order24_c3ActionQ8
 
+/-- The symmetric group `S₄`, appearing when neither Sylow subgroup is normal. -/
+abbrev order24_RO : Type := Equiv.Perm (Fin 4)
+
 noncomputable instance instFintypeOrder24RM : Fintype order24_RM :=
   Fintype.ofEquiv (order24_C2C2C2 × order24_C3) SemidirectProduct.equivProd.symm
 
@@ -528,6 +531,24 @@ noncomputable abbrev order24_nonS4_reps : Fin 14 → Type
   | 12 => order24_RM
   | 13 => order24_RN
 
+/-- The fifteen expected representatives for groups of order `24`. -/
+noncomputable abbrev order24_reps : Fin 15 → Type
+  | 0 => order24_RA
+  | 1 => order24_RB
+  | 2 => order24_RC
+  | 3 => order24_RD
+  | 4 => order24_RE
+  | 5 => order24_RF
+  | 6 => order24_RG
+  | 7 => order24_RH
+  | 8 => order24_RI
+  | 9 => order24_RJ
+  | 10 => order24_RK
+  | 11 => order24_RL
+  | 12 => order24_RM
+  | 13 => order24_RN
+  | 14 => order24_RO
+
 noncomputable instance instGroupOrder24NormalC3Reps : ∀ i, Group (order24_normalC3_reps i)
   | 0 => inferInstanceAs (Group order24_RA)
   | 1 => inferInstanceAs (Group order24_RB)
@@ -557,6 +578,23 @@ noncomputable instance instGroupOrder24NonS4Reps : ∀ i, Group (order24_nonS4_r
   | 11 => inferInstanceAs (Group order24_RL)
   | 12 => inferInstanceAs (Group order24_RM)
   | 13 => inferInstanceAs (Group order24_RN)
+
+noncomputable instance instGroupOrder24Reps : ∀ i, Group (order24_reps i)
+  | 0 => inferInstanceAs (Group order24_RA)
+  | 1 => inferInstanceAs (Group order24_RB)
+  | 2 => inferInstanceAs (Group order24_RC)
+  | 3 => inferInstanceAs (Group order24_RD)
+  | 4 => inferInstanceAs (Group order24_RE)
+  | 5 => inferInstanceAs (Group order24_RF)
+  | 6 => inferInstanceAs (Group order24_RG)
+  | 7 => inferInstanceAs (Group order24_RH)
+  | 8 => inferInstanceAs (Group order24_RI)
+  | 9 => inferInstanceAs (Group order24_RJ)
+  | 10 => inferInstanceAs (Group order24_RK)
+  | 11 => inferInstanceAs (Group order24_RL)
+  | 12 => inferInstanceAs (Group order24_RM)
+  | 13 => inferInstanceAs (Group order24_RN)
+  | 14 => inferInstanceAs (Group order24_RO)
 
 /-! ### Cardinalities -/
 
@@ -599,6 +637,9 @@ theorem card_order24_RM : Nat.card order24_RM = 24 := by
   rw [order24_RM, SemidirectProduct.card, card_order24_C2C2C2, card_order24_C3]
 theorem card_order24_RN : Nat.card order24_RN = 24 := by
   rw [order24_RN, SemidirectProduct.card, card_order24_Q8, card_order24_C3]
+theorem card_order24_RO : Nat.card order24_RO = 24 := by
+  rw [order24_RO, Nat.card_perm, Nat.card_fin]
+  decide
 
 theorem card_order24_normalC3_reps (i : Fin 12) :
     Nat.card (order24_normalC3_reps i) = 24 := by
@@ -633,6 +674,25 @@ theorem card_order24_nonS4_reps (i : Fin 14) :
   · exact card_order24_RL
   · exact card_order24_RM
   · exact card_order24_RN
+
+theorem card_order24_reps (i : Fin 15) :
+    Nat.card (order24_reps i) = 24 := by
+  fin_cases i
+  · exact card_order24_RA
+  · exact card_order24_RB
+  · exact card_order24_RC
+  · exact card_order24_RD
+  · exact card_order24_RE
+  · exact card_order24_RF
+  · exact card_order24_RG
+  · exact card_order24_RH
+  · exact card_order24_RI
+  · exact card_order24_RJ
+  · exact card_order24_RK
+  · exact card_order24_RL
+  · exact card_order24_RM
+  · exact card_order24_RN
+  · exact card_order24_RO
 
 /-! ### Actions of `C₃` on groups of order `8` -/
 
@@ -1213,5 +1273,37 @@ theorem order24_classification_of_card_sylow_2_eq_one [Finite G] (hG : Nat.card 
     exact order24_classification_of_c3_action_on_d8 (e.trans (SemidirectProduct.congr' eN eH))
   · obtain ⟨eN⟩ := hN.2
     exact order24_classification_of_c3_action_on_q8 (e.trans (SemidirectProduct.congr' eN eH))
+
+/-! ### The faithful non-normal branch lands in `S₄` -/
+
+/-- If the conjugation action on the four Sylow `3`-subgroups is faithful, the group is `S₄`.
+
+The remaining work for the full order-`24` classification is to prove this faithfulness from
+`n₃ = 4` and `n₂ = 3`. -/
+theorem order24_classification_of_card_sylow_3_eq_four_of_injective [Finite G]
+    (hG : Nat.card G = 24) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hφ_inj : Function.Injective (MulAction.toPermHom G (Sylow 3 G))) :
+    Nonempty (G ≃* order24_RO) := by
+  haveI : Fintype (Sylow 3 G) := Fintype.ofFinite _
+  have hfincard : Fintype.card (Sylow 3 G) = 4 := by
+    rwa [← Nat.card_eq_fintype_card]
+  let ε : Sylow 3 G ≃ Fin 4 := by
+    rw [← hfincard]
+    exact Fintype.equivFin _
+  let φ := MulAction.toPermHom G (Sylow 3 G)
+  let ψ : G →* Equiv.Perm (Fin 4) :=
+    (Equiv.permCongrHom ε).toMonoidHom.comp φ
+  have hψ_inj : Function.Injective ψ :=
+    (Equiv.permCongrHom ε).injective.comp hφ_inj
+  have e_range : G ≃* ψ.range := MonoidHom.ofInjective hψ_inj
+  have h_range_card : Nat.card ψ.range = 24 := by
+    rw [← hG, Nat.card_congr e_range.toEquiv]
+  have h_perm_card : Nat.card (Equiv.Perm (Fin 4)) = 24 := by
+    rw [Nat.card_perm, Nat.card_fin]
+    decide
+  have h_range_top : ψ.range = ⊤ := by
+    apply Subgroup.eq_top_of_card_eq
+    rw [h_range_card, h_perm_card]
+  exact ⟨e_range.trans ((MulEquiv.subgroupCongr h_range_top).trans Subgroup.topEquiv)⟩
 
 end Smallgroups.UsefulTheorems
