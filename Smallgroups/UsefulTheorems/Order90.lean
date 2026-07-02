@@ -451,6 +451,26 @@ noncomputable instance instGroupOrder90Reps : ∀ i, Group (order90_reps i)
   | 8 => inferInstanceAs (Group order90_C3D15)
   | 9 => inferInstanceAs (Group order90_GenDihE33C5)
 
+noncomputable instance instFintypeOrder90GenDihE33 :
+    Fintype (SemidirectProduct order90_E33 order90_C2 (invActionHom order90_E33)) :=
+  Fintype.ofEquiv (order90_E33 × order90_C2) SemidirectProduct.equivProd.symm
+
+noncomputable instance instFintypeOrder90GenDihE33C5 :
+    Fintype order90_GenDihE33C5 :=
+  Fintype.ofEquiv (order90_E33C5 × order90_C2) SemidirectProduct.equivProd.symm
+
+noncomputable instance instFintypeOrder90Reps : ∀ i, Fintype (order90_reps i)
+  | 0 => inferInstanceAs (Fintype order90_C90)
+  | 1 => inferInstanceAs (Fintype order90_C9D5)
+  | 2 => inferInstanceAs (Fintype order90_C5D9)
+  | 3 => inferInstanceAs (Fintype order90_D45)
+  | 4 => inferInstanceAs (Fintype order90_E33C10)
+  | 5 => inferInstanceAs (Fintype order90_C15D3)
+  | 6 => inferInstanceAs (Fintype order90_E33D5)
+  | 7 => inferInstanceAs (Fintype order90_C5GenDihE33)
+  | 8 => inferInstanceAs (Fintype order90_C3D15)
+  | 9 => inferInstanceAs (Fintype order90_GenDihE33C5)
+
 theorem card_order90_reps (i : Fin 10) : Nat.card (order90_reps i) = 90 := by
   fin_cases i
   · exact card_order90_C90
@@ -889,5 +909,110 @@ theorem order90_complete (G : Type) [Group G] (hG : Nat.card G = 90) :
     · exact ⟨7, by simpa [order90_reps] using hC5GenDihE33⟩
     · exact ⟨8, by simpa [order90_reps] using hC3D15⟩
     · exact ⟨9, by simpa [order90_reps] using hGenDihE33C5⟩
+
+private theorem order90_nat_card_eq_of_fintype_card_eq {α : Type*} [Fintype α] {n : Nat}
+    (h : Fintype.card α = n) : Nat.card α = n :=
+  Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq h)
+
+def order90_center_card : Fin 10 → Nat
+  | 0 => 90
+  | 1 => 9
+  | 2 => 5
+  | 3 => 1
+  | 4 => 90
+  | 5 => 15
+  | 6 => 9
+  | 7 => 5
+  | 8 => 3
+  | 9 => 1
+
+theorem card_center_order90_reps (i : Fin 10) :
+    Nat.card (Subgroup.center (order90_reps i)) = order90_center_card i := by
+  fin_cases i <;> exact order90_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+noncomputable def order90_pow_eq_one_card (H : Type*) [Group H] (n : ℕ) : ℕ :=
+  Nat.card {x : H // x ^ n = 1}
+
+noncomputable def order90_powEqOneEquivOfMulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) : {x : H // x ^ n = 1} ≃ {x : K // x ^ n = 1} where
+  toFun x := ⟨e x.1, by rw [← map_pow, x.2, map_one]⟩
+  invFun x := ⟨e.symm x.1, by
+    rw [← map_pow]
+    exact e.injective (by simp [x.2])⟩
+  left_inv x := by ext; simp
+  right_inv x := by ext; simp
+
+theorem order90_pow_eq_one_card_eq_of_mulEquiv {H K : Type*} [Group H] [Group K]
+    (n : ℕ) (e : H ≃* K) :
+    order90_pow_eq_one_card H n = order90_pow_eq_one_card K n :=
+  Nat.card_congr (order90_powEqOneEquivOfMulEquiv n e)
+
+def order90_pow_two_eq_one_card : Fin 10 → Nat
+  | 0 => 2
+  | 1 => 6
+  | 2 => 10
+  | 3 => 46
+  | 4 => 2
+  | 5 => 4
+  | 6 => 6
+  | 7 => 10
+  | 8 => 16
+  | 9 => 46
+
+theorem card_pow_two_eq_one_order90_reps (i : Fin 10) :
+    order90_pow_eq_one_card (order90_reps i) 2 = order90_pow_two_eq_one_card i := by
+  fin_cases i <;> exact order90_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+def order90_pow_fifteen_eq_one_card : Fin 10 → Nat
+  | 0 => 15
+  | 1 => 15
+  | 2 => 15
+  | 3 => 15
+  | 4 => 45
+  | 5 => 45
+  | 6 => 45
+  | 7 => 45
+  | 8 => 45
+  | 9 => 45
+
+theorem card_pow_fifteen_eq_one_order90_reps (i : Fin 10) :
+    order90_pow_eq_one_card (order90_reps i) 15 =
+      order90_pow_fifteen_eq_one_card i := by
+  fin_cases i <;> exact order90_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+def order90_reps_invariant (i : Fin 10) : Nat × Nat × Nat :=
+  (order90_center_card i, order90_pow_two_eq_one_card i, order90_pow_fifteen_eq_one_card i)
+
+theorem order90_reps_invariant_injective : Function.Injective order90_reps_invariant := by
+  intro i j h
+  fin_cases i <;> fin_cases j <;>
+    simp [order90_reps_invariant, order90_center_card, order90_pow_two_eq_one_card,
+      order90_pow_fifteen_eq_one_card] at h ⊢
+
+theorem order90_reps_invariant_eq_of_mulEquiv {i j : Fin 10}
+    (hiso : Nonempty (order90_reps i ≃* order90_reps j)) :
+    order90_reps_invariant i = order90_reps_invariant j := by
+  rcases hiso with ⟨e⟩
+  apply Prod.ext
+  · change order90_center_card i = order90_center_card j
+    rw [← card_center_order90_reps i, ← card_center_order90_reps j]
+    exact card_center_eq_of_mulEquiv e
+  · apply Prod.ext
+    · change order90_pow_two_eq_one_card i = order90_pow_two_eq_one_card j
+      rw [← card_pow_two_eq_one_order90_reps i, ← card_pow_two_eq_one_order90_reps j]
+      exact order90_pow_eq_one_card_eq_of_mulEquiv 2 e
+    · change order90_pow_fifteen_eq_one_card i = order90_pow_fifteen_eq_one_card j
+      rw [← card_pow_fifteen_eq_one_order90_reps i,
+        ← card_pow_fifteen_eq_one_order90_reps j]
+      exact order90_pow_eq_one_card_eq_of_mulEquiv 15 e
+
+theorem order90_reps_pairwise : PairwiseNonMulEquiv order90_reps := by
+  intro i j hiso
+  exact order90_reps_invariant_injective (order90_reps_invariant_eq_of_mulEquiv hiso)
+
+theorem order90_isClassif : IsClassif 90 order90_reps where
+  card := card_order90_reps
+  complete := order90_complete
+  distinct := order90_reps_pairwise
 
 end Smallgroups.UsefulTheorems
