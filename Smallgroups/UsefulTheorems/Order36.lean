@@ -5082,6 +5082,19 @@ theorem order36_C3A4_no_order_nine (x : order36_C3A4) : orderOf x ≠ 9 := by
   rw [h] at hlcm_dvd
   norm_num at hlcm_dvd
 
+theorem order36_C3A4_has_C3_klein_cube_one :
+    ∃ (W : Subgroup order36_C3A4) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_C3A4}, g ∉ W → g ^ 3 = 1 := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_C3A4_has_central_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, _hKW, hWcard, hWiso, hcube⟩ :=
+    (order36_A4_quotient_no_order_nine_iff_C3_klein_cube_one
+      (G := order36_C3A4) card_order36_C3A4 K hKcenter hKcard hquot).mp
+        order36_C3A4_no_order_nine
+  exact ⟨W, hWnormal, hWcard, hWiso, hcube⟩
+
 theorem order36_A4C9_has_normal_order_three_and_A4_quotient :
     ∃ (K : Subgroup order36_A4C9) (_ : K.Normal), Nat.card K = 3 ∧
       Nonempty (order36_A4C9 ⧸ K ≃* order36_A4) := by
@@ -5183,6 +5196,13 @@ theorem order36_C3A4_not_mulEquiv_A4C9 :
     rw [MulEquiv.orderOf_eq, hx]
   exact order36_C3A4_no_order_nine (e.symm x) hpre
 
+theorem order36_C3A4_or_A4C9_branch_witnesses :
+    (∃ (W : Subgroup order36_C3A4) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_C3A4}, g ∉ W → g ^ 3 = 1) ∧
+      (∃ g : order36_A4C9, orderOf g = 9) := by
+  exact ⟨order36_C3A4_has_C3_klein_cube_one, order36_A4C9_has_order_nine⟩
+
 /-- The two representatives in the non-normal Sylow-`3` branch of order `36`. -/
 noncomputable def order36_nonnormal_reps : Fin 2 → Type
   | 0 => order36_C3A4
@@ -5204,6 +5224,21 @@ theorem card_sylow_3_order36_nonnormal_reps (i : Fin 2) :
   fin_cases i
   · exact card_sylow_3_order36_C3A4
   · exact card_sylow_3_order36_A4C9
+
+theorem order36_nonnormal_reps_order_nine_or_C3_klein_cube_one (i : Fin 2) :
+    (∃ g : order36_nonnormal_reps i, orderOf g = 9) ∨
+    ∃ (W : Subgroup (order36_nonnormal_reps i)) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_nonnormal_reps i}, g ∉ W → g ^ 3 = 1 := by
+  fin_cases i
+  · right
+    change ∃ (W : Subgroup order36_C3A4) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_C3A4}, g ∉ W → g ^ 3 = 1
+    exact order36_C3A4_has_C3_klein_cube_one
+  · left
+    change ∃ g : order36_A4C9, orderOf g = 9
+    exact order36_A4C9_has_order_nine
 
 /-- The two non-normal representatives of order `36` are non-isomorphic. -/
 theorem order36_nonnormal_reps_pairwise :
