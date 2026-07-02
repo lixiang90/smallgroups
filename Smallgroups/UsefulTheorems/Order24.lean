@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order56
+import Mathlib.GroupTheory.SpecificGroups.Alternating.KleinFour
 
 /-!
 # First structural reductions for groups of order 24
@@ -1276,10 +1277,207 @@ theorem order24_classification_of_card_sylow_2_eq_one [Finite G] (hG : Nat.card 
 
 /-! ### The faithful non-normal branch lands in `S₄` -/
 
-/-- If the conjugation action on the four Sylow `3`-subgroups is faithful, the group is `S₄`.
+/-- If `n₃ = 4`, the normalizer of a Sylow `3`-subgroup has order `6`. -/
+theorem card_normalizer_sylow_3_of_card_24_of_card_sylow_3_eq_four [Finite G]
+    (hG : Nat.card G = 24) (hSyl : Nat.card (Sylow 3 G) = 4) (P : Sylow 3 G) :
+    Nat.card (Subgroup.normalizer (P : Set G)) = 6 := by
+  have hidx : (Subgroup.normalizer (P : Set G)).index = 4 := by
+    rwa [← Sylow.card_eq_index_normalizer P]
+  have := (Subgroup.normalizer (P : Set G)).card_mul_index
+  rw [hidx, hG] at this
+  omega
 
-The remaining work for the full order-`24` classification is to prove this faithfulness from
-`n₃ = 4` and `n₂ = 3`. -/
+/-- The kernel of the conjugation action on Sylow `3`-subgroups is contained in every Sylow
+`3`-normalizer. -/
+theorem sylow_3_conj_action_kernel_le_normalizer (P : Sylow 3 G) :
+    (MulAction.toPermHom G (Sylow 3 G)).ker ≤ Subgroup.normalizer (P : Set G) := by
+  intro g hg
+  rw [← Sylow.stabilizer_eq_normalizer]
+  rw [MulAction.mem_stabilizer_iff]
+  exact Equiv.Perm.ext_iff.mp (MonoidHom.mem_ker.mp hg) P
+
+/-- When `n₃ = 4`, the kernel of the conjugation action has order dividing `6`. -/
+theorem card_sylow_3_conj_action_kernel_dvd_six [Finite G]
+    (hG : Nat.card G = 24) (hSyl : Nat.card (Sylow 3 G) = 4) (P : Sylow 3 G) :
+    Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker ∣ 6 := by
+  have hker_le := sylow_3_conj_action_kernel_le_normalizer (G := G) P
+  have hdvd : Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker ∣
+      Nat.card (Subgroup.normalizer (P : Set G)) :=
+    Subgroup.card_dvd_of_le hker_le
+  rwa [card_normalizer_sylow_3_of_card_24_of_card_sylow_3_eq_four hG hSyl P] at hdvd
+
+/-- When `n₃ = 4`, the kernel of the conjugation action has order `1`, `2`, `3`, or `6`. -/
+theorem card_sylow_3_conj_action_kernel_cases [Finite G]
+    (hG : Nat.card G = 24) (hSyl : Nat.card (Sylow 3 G) = 4) (P : Sylow 3 G) :
+    Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker = 1 ∨
+      Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker = 2 ∨
+      Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker = 3 ∨
+      Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker = 6 := by
+  have hdvd := card_sylow_3_conj_action_kernel_dvd_six hG hSyl P
+  have hle : Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker ≤ 6 :=
+    Nat.le_of_dvd (by norm_num) hdvd
+  have hpos : 0 < Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker := Nat.card_pos
+  interval_cases h : Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker
+  · exact Or.inl rfl
+  · exact Or.inr (Or.inl rfl)
+  · exact Or.inr (Or.inr (Or.inl rfl))
+  · norm_num at hdvd
+  · norm_num at hdvd
+  · exact Or.inr (Or.inr (Or.inr rfl))
+
+/-- In the `n₃ = 4` case, the conjugation kernel cannot have order `3`. -/
+theorem card_sylow_3_conj_action_kernel_ne_three [Finite G]
+    (hG : Nat.card G = 24) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker ≠ 3 := by
+  intro hker
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  let K : Subgroup G := (MulAction.toPermHom G (Sylow 3 G)).ker
+  have hfact : (Nat.card G).factorization 3 = 1 := by
+    rw [hG]
+    decide +kernel
+  have hKcard : Nat.card K = 3 ^ (Nat.card G).factorization 3 := by
+    rw [hfact]
+    exact hker
+  let PK : Sylow 3 G := Sylow.ofCard K hKcard
+  have hPKnorm : PK.Normal := by
+    dsimp [PK, K]
+    exact MonoidHom.normal_ker (MulAction.toPermHom G (Sylow 3 G))
+  haveI : Unique (Sylow 3 G) := Sylow.unique_of_normal PK hPKnorm
+  have : Nat.card (Sylow 3 G) = 1 := Nat.card_unique
+  omega
+
+/-- In the `n₃ = 4` case, the conjugation kernel cannot have order `6`. -/
+theorem card_sylow_3_conj_action_kernel_ne_six [Finite G]
+    (hG : Nat.card G = 24) (hSyl : Nat.card (Sylow 3 G) = 4) (P : Sylow 3 G) :
+    Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker ≠ 6 := by
+  intro hker
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  let φ := MulAction.toPermHom G (Sylow 3 G)
+  have hker_le : φ.ker ≤ Subgroup.normalizer (P : Set G) :=
+    sylow_3_conj_action_kernel_le_normalizer P
+  have hnorm_card : Nat.card (Subgroup.normalizer (P : Set G)) = 6 :=
+    card_normalizer_sylow_3_of_card_24_of_card_sylow_3_eq_four hG hSyl P
+  have hker_eq_norm : φ.ker = Subgroup.normalizer (P : Set G) :=
+    Subgroup.eq_of_le_of_card_ge hker_le (by rw [hnorm_card, hker])
+  have hnorm_normal : (Subgroup.normalizer (P : Set G)).Normal := by
+    rw [← hker_eq_norm]
+    exact MonoidHom.normal_ker φ
+  have hPnorm : P.Normal := Sylow.normal_of_normalizer_normal P hnorm_normal
+  haveI : Unique (Sylow 3 G) := Sylow.unique_of_normal P hPnorm
+  have : Nat.card (Sylow 3 G) = 1 := Nat.card_unique
+  omega
+
+/-- If neither Sylow branch is normal, the conjugation kernel on Sylow `3`-subgroups cannot
+have order `2`.
+
+The proof pulls the Klein four subgroup of `A₄` back through the order-`12` image.  Its preimage
+is then a normal subgroup of order `8`, contradicting `n₂ = 3`. -/
+theorem card_sylow_3_conj_action_kernel_ne_two_of_card_sylow_2_eq_three [Finite G]
+    (hG : Nat.card G = 24) (hSyl3 : Nat.card (Sylow 3 G) = 4)
+    (hSyl2 : Nat.card (Sylow 2 G) = 3) :
+    Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker ≠ 2 := by
+  intro hker
+  haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  haveI : Fintype (Sylow 3 G) := Fintype.ofFinite _
+  have hfincard : Fintype.card (Sylow 3 G) = 4 := by
+    rwa [← Nat.card_eq_fintype_card]
+  let ε : Sylow 3 G ≃ Fin 4 := by
+    rw [← hfincard]
+    exact Fintype.equivFin _
+  let φ := MulAction.toPermHom G (Sylow 3 G)
+  let ψ : G →* Equiv.Perm (Fin 4) :=
+    (Equiv.permCongrHom ε).toMonoidHom.comp φ
+  have hψker : ψ.ker = φ.ker := by
+    ext g
+    constructor
+    · intro hg
+      rw [MonoidHom.mem_ker] at hg ⊢
+      change (Equiv.permCongrHom ε).toMonoidHom (φ g) = 1 at hg
+      have hcongr :
+          (Equiv.permCongrHom ε) (φ g) = (Equiv.permCongrHom ε) 1 := by
+        rw [map_one]
+        exact hg
+      exact (Equiv.permCongrHom ε).injective hcongr
+    · intro hg
+      rw [MonoidHom.mem_ker] at hg ⊢
+      change (Equiv.permCongrHom ε).toMonoidHom (φ g) = 1
+      rw [hg]
+      exact map_one (Equiv.permCongrHom ε).toMonoidHom
+  have hψ_range_card : Nat.card ψ.range = 12 := by
+    have hmul := ψ.ker.card_mul_index
+    rw [Subgroup.index_ker ψ, hψker, hker, hG] at hmul
+    omega
+  have h_perm_card : Nat.card (Equiv.Perm (Fin 4)) = 24 := by
+    rw [Nat.card_perm, Nat.card_fin]
+    decide
+  have hψ_range_index : ψ.range.index = 2 := by
+    have hmul := ψ.range.card_mul_index
+    rw [hψ_range_card, h_perm_card] at hmul
+    omega
+  have hψ_range_alt : ψ.range = alternatingGroup (Fin 4) :=
+    Equiv.Perm.eq_alternatingGroup_of_index_eq_two hψ_range_index
+  let eAltRange : alternatingGroup (Fin 4) ≃* ψ.range :=
+    MulEquiv.subgroupCongr hψ_range_alt.symm
+  let V : Subgroup ψ.range :=
+    (alternatingGroup.kleinFour (Fin 4)).map (eAltRange : alternatingGroup (Fin 4) →* ψ.range)
+  have hV_normal : V.Normal := by
+    dsimp [V]
+    exact (alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)).map
+      (eAltRange : alternatingGroup (Fin 4) →* ψ.range) eAltRange.surjective
+  have hV_card : Nat.card (V : Type _) = 4 := by
+    let eV : alternatingGroup.kleinFour (Fin 4) ≃* V := by
+      dsimp [V]
+      exact eAltRange.subgroupMap (alternatingGroup.kleinFour (Fin 4))
+    rw [← Nat.card_congr eV.toEquiv]
+    simpa using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have hV_index : V.index = 3 := by
+    have hmul := V.index_mul_card
+    rw [hV_card, hψ_range_card] at hmul
+    omega
+  let W : Subgroup G := V.comap ψ.rangeRestrict
+  have hW_normal : W.Normal := by
+    dsimp [W]
+    exact hV_normal.comap ψ.rangeRestrict
+  have hW_index : W.index = 3 := by
+    dsimp [W]
+    rw [V.index_comap_of_surjective ψ.rangeRestrict_surjective, hV_index]
+  have hW_card : Nat.card W = 8 := by
+    have hmul := W.index_mul_card
+    rw [hW_index, hG] at hmul
+    omega
+  have hfact : (Nat.card G).factorization 2 = 3 := by
+    rw [hG]
+    decide +kernel
+  have hW_sylow_card : Nat.card W = 2 ^ (Nat.card G).factorization 2 := by
+    rw [hfact]
+    exact hW_card
+  let PW : Sylow 2 G := Sylow.ofCard W hW_sylow_card
+  have hPWnorm : PW.Normal := by
+    dsimp [PW, W]
+    exact hW_normal
+  haveI : Unique (Sylow 2 G) := Sylow.unique_of_normal PW hPWnorm
+  have : Nat.card (Sylow 2 G) = 1 := Nat.card_unique
+  omega
+
+/-- If neither Sylow branch is normal, the conjugation action on the four Sylow `3`-subgroups
+is faithful. -/
+theorem order24_sylow_3_conj_action_injective_of_card_sylow_2_eq_three [Finite G]
+    (hG : Nat.card G = 24) (hSyl3 : Nat.card (Sylow 3 G) = 4)
+    (hSyl2 : Nat.card (Sylow 2 G) = 3) :
+    Function.Injective (MulAction.toPermHom G (Sylow 3 G)) := by
+  rw [← MonoidHom.ker_eq_bot_iff]
+  obtain ⟨P⟩ := (Sylow.nonempty : Nonempty (Sylow 3 G))
+  have hcases := card_sylow_3_conj_action_kernel_cases hG hSyl3 P
+  have hker : Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker = 1 := by
+    rcases hcases with h | h | h | h
+    · exact h
+    · exact (card_sylow_3_conj_action_kernel_ne_two_of_card_sylow_2_eq_three hG hSyl3 hSyl2 h).elim
+    · exact (card_sylow_3_conj_action_kernel_ne_three hG hSyl3 h).elim
+    · exact (card_sylow_3_conj_action_kernel_ne_six hG hSyl3 P h).elim
+  exact Subgroup.eq_bot_of_card_eq _ hker
+
+/-- If the conjugation action on the four Sylow `3`-subgroups is faithful, the group is `S₄`. -/
 theorem order24_classification_of_card_sylow_3_eq_four_of_injective [Finite G]
     (hG : Nat.card G = 24) (hSyl : Nat.card (Sylow 3 G) = 4)
     (hφ_inj : Function.Injective (MulAction.toPermHom G (Sylow 3 G))) :
@@ -1305,5 +1503,38 @@ theorem order24_classification_of_card_sylow_3_eq_four_of_injective [Finite G]
     apply Subgroup.eq_top_of_card_eq
     rw [h_range_card, h_perm_card]
   exact ⟨e_range.trans ((MulEquiv.subgroupCongr h_range_top).trans Subgroup.topEquiv)⟩
+
+/-- Kernel-cardinality version of the faithful `S₄` branch. -/
+theorem order24_classification_of_card_sylow_3_eq_four_of_kernel_card_one [Finite G]
+    (hG : Nat.card G = 24) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hker : Nat.card (MulAction.toPermHom G (Sylow 3 G)).ker = 1) :
+    Nonempty (G ≃* order24_RO) := by
+  apply order24_classification_of_card_sylow_3_eq_four_of_injective hG hSyl
+  rw [← MonoidHom.ker_eq_bot_iff]
+  exact Subgroup.eq_bot_of_card_eq _ hker
+
+/-- If neither Sylow branch is normal, the group is `S₄`. -/
+theorem order24_classification_of_card_sylow_3_eq_four_of_card_sylow_2_eq_three [Finite G]
+    (hG : Nat.card G = 24) (hSyl3 : Nat.card (Sylow 3 G) = 4)
+    (hSyl2 : Nat.card (Sylow 2 G) = 3) :
+    Nonempty (G ≃* order24_RO) :=
+  order24_classification_of_card_sylow_3_eq_four_of_injective hG hSyl3
+    (order24_sylow_3_conj_action_injective_of_card_sylow_2_eq_three hG hSyl3 hSyl2)
+
+/-- Every group of order `24` is isomorphic to one of the fifteen displayed representatives. -/
+theorem order24_classification [Finite G] (hG : Nat.card G = 24) :
+    ∃ i, Nonempty (G ≃* order24_reps i) := by
+  rcases card_sylow_3_of_card_24_eq_one_or_four hG with hSyl3 | hSyl3
+  · rcases order24_classification_of_card_sylow_3_eq_one hG hSyl3 with ⟨i, hi⟩
+    refine ⟨⟨i, by omega⟩, ?_⟩
+    fin_cases i <;> simpa [order24_reps, order24_normalC3_reps] using hi
+  · rcases card_sylow_2_of_card_24_eq_one_or_three hG with hSyl2 | hSyl2
+    · rcases order24_classification_of_card_sylow_2_eq_one hG hSyl2 with ⟨i, hi⟩
+      refine ⟨⟨i, by omega⟩, ?_⟩
+      fin_cases i <;> simpa [order24_reps, order24_nonS4_reps] using hi
+    · exact ⟨14, by
+        simpa [order24_reps] using
+          order24_classification_of_card_sylow_3_eq_four_of_card_sylow_2_eq_three
+            hG hSyl3 hSyl2⟩
 
 end Smallgroups.UsefulTheorems
