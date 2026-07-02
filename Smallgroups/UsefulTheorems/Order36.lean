@@ -2658,6 +2658,49 @@ theorem order36_A4_hom_to_order_two_trivial {H : Type*} [Group H]
     rfl
   simpa [φQ] using hq
 
+theorem order36_A4_hom_to_order_four_trivial {H : Type*} [Group H]
+    (hH : Nat.card H = 4) (φ : order36_A4 →* H) : φ = 1 := by
+  let K : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  have hHcomm : ∀ x y : H, x * y = y * x := by
+    haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+    intro x y
+    exact prime_sq_mul_comm (p := 2)
+      (by rw [hH]; norm_num) x y
+  have hK_comm : K = commutator order36_A4 := by
+    simpa [K, order36_A4] using
+      alternatingGroup.kleinFour_eq_commutator (α := Fin 4) (by simp)
+  have hKker : K ≤ φ.ker := by
+    rw [hK_comm]
+    rw [commutator_def]
+    exact Subgroup.commutator_le.mpr fun a _ b _ => by
+      rw [MonoidHom.mem_ker, map_commutatorElement, commutatorElement_eq_one_iff_mul_comm]
+      exact hHcomm (φ a) (φ b)
+  let φQ : order36_A4Quot →* H := QuotientGroup.lift K φ hKker
+  have hQrange_dvd3 : Nat.card φQ.range ∣ 3 := by
+    simpa [φQ, card_order36_A4Quot] using Subgroup.card_range_dvd φQ
+  have hQrange_dvd4 : Nat.card φQ.range ∣ 4 := by
+    simpa [hH] using Subgroup.card_subgroup_dvd_card φQ.range
+  have hQrange_card : Nat.card φQ.range = 1 := by
+    have hle4 : Nat.card φQ.range ≤ 4 := Nat.le_of_dvd (by norm_num) hQrange_dvd4
+    have hpos : 0 < Nat.card φQ.range :=
+      Nat.pos_of_ne_zero (ne_zero_of_dvd_ne_zero (by norm_num : 4 ≠ 0) hQrange_dvd4)
+    interval_cases h : Nat.card φQ.range
+    · rfl
+    · exfalso
+      norm_num [h] at hQrange_dvd3
+    · exfalso
+      norm_num [h] at hQrange_dvd4
+    · exfalso
+      norm_num [h] at hQrange_dvd3
+  have hQrange_bot : φQ.range = ⊥ := φQ.range.eq_bot_of_card_eq hQrange_card
+  have hφQ : φQ = 1 := MonoidHom.range_eq_bot_iff.mp hQrange_bot
+  apply MonoidHom.ext
+  intro a
+  have hq : φQ ((QuotientGroup.mk' K) a) = 1 := by
+    rw [hφQ]
+    rfl
+  simpa [φQ] using hq
+
 theorem order36_normal_order_three_A4_quotient_le_center {G : Type*} [Group G] [Finite G]
     (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
     (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
@@ -2708,6 +2751,66 @@ theorem order36_normal_order_three_A4_quotient_le_center {G : Type*} [Group G] [
   calc
     g * k = (g * k * g⁻¹) * g := by group
     _ = k * g := by rw [hconj]
+
+theorem order36_card_sylow_3_eq_four_of_normal_order_three_A4_quotient
+    {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    Nat.card (Sylow 3 G) = 4 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exfalso
+    obtain ⟨P0⟩ := (Sylow.nonempty : Nonempty (Sylow 3 G))
+    haveI hPnormal : (↑P0 : Subgroup G).Normal :=
+      sylow_3_normal_of_card_36_of_card_sylow_eq_one hSyl P0
+    have hPcard : Nat.card (↑P0 : Subgroup G) = 9 :=
+      card_sylow_3_subgroup_of_card_36 hG P0
+    have hKp : IsPGroup 3 K := IsPGroup.of_card (p := 3) (n := 1) (by rw [hK]; norm_num)
+    have hKleP : K ≤ (↑P0 : Subgroup G) := hKp.le_sylow_of_normal P0
+    let πP : G →* G ⧸ (↑P0 : Subgroup G) := QuotientGroup.mk' (↑P0 : Subgroup G)
+    have hKker : K ≤ πP.ker := by
+      intro k hk
+      rw [MonoidHom.mem_ker]
+      change (QuotientGroup.mk' (↑P0 : Subgroup G)) k = 1
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hKleP hk
+    let φQ : G ⧸ K →* G ⧸ (↑P0 : Subgroup G) := QuotientGroup.lift K πP hKker
+    have hφQ_surj : Function.Surjective φQ := by
+      intro q
+      obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective (↑P0 : Subgroup G) q
+      refine ⟨(QuotientGroup.mk' K) g, ?_⟩
+      change πP g = q
+      exact hg
+    have hquotPcard : Nat.card (G ⧸ (↑P0 : Subgroup G)) = 4 := by
+      have h := Subgroup.card_eq_card_quotient_mul_card_subgroup (↑P0 : Subgroup G)
+      change Nat.card G =
+        Nat.card (G ⧸ (↑P0 : Subgroup G)) * Nat.card (↑P0 : Subgroup G) at h
+      rw [hG, hPcard] at h
+      omega
+    obtain ⟨e⟩ := hquot
+    let ψ : order36_A4 →* G ⧸ (↑P0 : Subgroup G) := φQ.comp e.symm.toMonoidHom
+    have hψ_surj : Function.Surjective ψ := by
+      intro q
+      obtain ⟨x, hx⟩ := hφQ_surj q
+      refine ⟨e x, ?_⟩
+      change φQ (e.symm (e x)) = q
+      rw [MulEquiv.symm_apply_apply, hx]
+    have hψ : ψ = 1 := order36_A4_hom_to_order_four_trivial hquotPcard ψ
+    haveI : Subsingleton (G ⧸ (↑P0 : Subgroup G)) := by
+      refine ⟨fun x y => ?_⟩
+      obtain ⟨a, rfl⟩ := hψ_surj x
+      obtain ⟨b, rfl⟩ := hψ_surj y
+      rw [hψ]
+      simp
+    haveI : Unique (G ⧸ (↑P0 : Subgroup G)) :=
+    {
+      default := 1
+      uniq x := Subsingleton.elim x 1
+    }
+    have hcard1 : Nat.card (G ⧸ (↑P0 : Subgroup G)) = 1 := Nat.card_unique
+    rw [hquotPcard] at hcard1
+    norm_num at hcard1
+  · exact hSyl
 
 noncomputable def order36_A4QuotEquiv : order36_A4Quot ≃* order36_C3 :=
   (prime_classification (by norm_num : Nat.Prime 3) card_order36_A4Quot).some
@@ -3348,6 +3451,20 @@ theorem order36_A4C9_has_central_order_three_and_A4_quotient :
   exact ⟨K, hKnormal,
     order36_normal_order_three_A4_quotient_le_center K hKcard hquot, hKcard, hquot⟩
 
+theorem card_sylow_3_order36_C3A4 : Nat.card (Sylow 3 order36_C3A4) = 4 := by
+  obtain ⟨K, hKnormal, hKcard, hquot⟩ :=
+    order36_C3A4_has_normal_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  exact order36_card_sylow_3_eq_four_of_normal_order_three_A4_quotient
+    card_order36_C3A4 K hKcard hquot
+
+theorem card_sylow_3_order36_A4C9 : Nat.card (Sylow 3 order36_A4C9) = 4 := by
+  obtain ⟨K, hKnormal, hKcard, hquot⟩ :=
+    order36_A4C9_has_normal_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  exact order36_card_sylow_3_eq_four_of_normal_order_three_A4_quotient
+    card_order36_A4C9 K hKcard hquot
+
 theorem order36_A4C9_has_order_nine : ∃ x : order36_A4C9, orderOf x = 9 := by
   let z : order36_C9 := Multiplicative.ofAdd (1 : ZMod 9)
   have hzrange : order36_C9ToC3 z ∈ order36_A4ToC3.range := by
@@ -3414,6 +3531,12 @@ theorem card_order36_nonnormal_reps (i : Fin 2) :
   fin_cases i
   · simpa [order36_nonnormal_reps] using card_order36_C3A4
   · simpa [order36_nonnormal_reps] using card_order36_A4C9
+
+theorem card_sylow_3_order36_nonnormal_reps (i : Fin 2) :
+    Nat.card (Sylow 3 (order36_nonnormal_reps i)) = 4 := by
+  fin_cases i
+  · exact card_sylow_3_order36_C3A4
+  · exact card_sylow_3_order36_A4C9
 
 /-- The two non-normal representatives of order `36` are non-isomorphic. -/
 theorem order36_nonnormal_reps_pairwise :
