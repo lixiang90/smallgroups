@@ -1888,6 +1888,80 @@ theorem order36_e9_v4_diag_basis_equiv_rep11
   · simpa [order36_E9_V4_diagAction_g2] using h21
   · simpa [order36_E9_V4_diagAction_g2] using h22
 
+theorem order36_e9_v4_action_basis_precomp_cases_of_first_reflection
+    (φ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) =
+      θ (order36_E9_negFirstAut order36_E9_e1))
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) =
+      θ (order36_E9_negFirstAut order36_E9_e2)) :
+    (∃ θ : MulAut order36_E9, ∃ σ : order36_V4 ≃* order36_V4,
+      φ order36_V4_g1 (θ order36_E9_e1) =
+        θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g1) order36_E9_e1) ∧
+      φ order36_V4_g1 (θ order36_E9_e2) =
+        θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g1) order36_E9_e2) ∧
+      φ order36_V4_g2 (θ order36_E9_e1) =
+        θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g2) order36_E9_e1) ∧
+      φ order36_V4_g2 (θ order36_E9_e2) =
+        θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g2) order36_E9_e2)) ∨
+    (∃ θ : MulAut order36_E9, ∃ σ : order36_V4 ≃* order36_V4,
+      φ order36_V4_g1 (θ order36_E9_e1) =
+        θ (order36_E9_V4_diagAction (σ order36_V4_g1) order36_E9_e1) ∧
+      φ order36_V4_g1 (θ order36_E9_e2) =
+        θ (order36_E9_V4_diagAction (σ order36_V4_g1) order36_E9_e2) ∧
+      φ order36_V4_g2 (θ order36_E9_e1) =
+        θ (order36_E9_V4_diagAction (σ order36_V4_g2) order36_E9_e1) ∧
+      φ order36_V4_g2 (θ order36_E9_e2) =
+        θ (order36_E9_V4_diagAction (σ order36_V4_g2) order36_E9_e2)) := by
+  let α := φ order36_V4_g1
+  let β := φ order36_V4_g2
+  have hβpow : β ^ 2 = 1 := by
+    rw [← map_pow, show order36_V4_g2 ^ 2 = 1 by decide, map_one]
+  have hcomm : α * β = β * α := by
+    dsimp [α, β]
+    rw [← map_mul, ← map_mul]
+    congr 1
+  have hαconj : (MulAut.conj θ.symm) α = order36_E9_negFirstAut :=
+    order36_E9_conj_symm_eq_of_basis_action θ α order36_E9_negFirstAut h11 h12
+  have hβpow' : ((MulAut.conj θ.symm) β) ^ 2 = 1 :=
+    order36_E9_conj_symm_pow_two θ β hβpow
+  have hcomm' : order36_E9_negFirstAut * (MulAut.conj θ.symm) β =
+      (MulAut.conj θ.symm) β * order36_E9_negFirstAut :=
+    order36_E9_conj_symm_comm θ α β order36_E9_negFirstAut hαconj hcomm
+  rcases order36_E9_mulAut_pow_two_comm_negFirst_cases ((MulAut.conj θ.symm) β)
+      hβpow' hcomm' with hβ | hβ | hβ | hβ
+  · left
+    refine ⟨θ, MulEquiv.refl order36_V4, ?_, ?_, ?_, ?_⟩
+    · simpa [order36_E9_V4_negFirstFstAction_g1] using h11
+    · simpa [order36_E9_V4_negFirstFstAction_g1] using h12
+    · simpa [order36_E9_V4_negFirstFstAction_g2] using
+        order36_E9_apply_eq_of_conj_symm_eq θ β 1 hβ order36_E9_e1
+    · simpa [order36_E9_V4_negFirstFstAction_g2] using
+        order36_E9_apply_eq_of_conj_symm_eq θ β 1 hβ order36_E9_e2
+  · right
+    refine ⟨θ, order36_V4_shearSecond, ?_, ?_, ?_, ?_⟩
+    · simpa [order36_E9_V4_diagAction_shearSecond_g1] using h11
+    · simpa [order36_E9_V4_diagAction_shearSecond_g1] using h12
+    · simpa [order36_E9_V4_diagAction_shearSecond_g2] using
+        order36_E9_apply_eq_of_conj_symm_eq θ β order36_E9_negBothAut hβ order36_E9_e1
+    · simpa [order36_E9_V4_diagAction_shearSecond_g2] using
+        order36_E9_apply_eq_of_conj_symm_eq θ β order36_E9_negBothAut hβ order36_E9_e2
+  · left
+    refine ⟨θ, order36_V4_toProd, ?_, ?_, ?_, ?_⟩
+    · simpa [order36_E9_V4_negFirstFstAction_toProd_g1] using h11
+    · simpa [order36_E9_V4_negFirstFstAction_toProd_g1] using h12
+    · simpa [order36_E9_V4_negFirstFstAction_toProd_g2] using
+        order36_E9_apply_eq_of_conj_symm_eq θ β order36_E9_negFirstAut hβ order36_E9_e1
+    · simpa [order36_E9_V4_negFirstFstAction_toProd_g2] using
+        order36_E9_apply_eq_of_conj_symm_eq θ β order36_E9_negFirstAut hβ order36_E9_e2
+  · right
+    refine ⟨θ, MulEquiv.refl order36_V4, ?_, ?_, ?_, ?_⟩
+    · simpa [order36_E9_V4_diagAction_g1] using h11
+    · simpa [order36_E9_V4_diagAction_g1] using h12
+    · simpa [order36_E9_V4_diagAction_g2] using
+        order36_E9_apply_eq_of_conj_symm_eq θ β order36_E9_negSecondAut hβ order36_E9_e1
+    · simpa [order36_E9_V4_diagAction_g2] using
+        order36_E9_apply_eq_of_conj_symm_eq θ β order36_E9_negSecondAut hβ order36_E9_e2
+
 theorem order36_e9_v4_action_rep_cases_of_generator_basis_precomp_cases
     (φ : order36_V4 →* MulAut order36_E9)
     (h :
