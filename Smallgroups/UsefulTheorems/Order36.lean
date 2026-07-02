@@ -36,6 +36,7 @@ These are the two structural branches used in the classification of groups of or
 namespace Smallgroups.UsefulTheorems
 
 open Sylow Equiv.Perm Subgroup
+open scoped Pointwise
 
 variable {G : Type*} [Group G]
 
@@ -4374,6 +4375,304 @@ theorem order36_exists_klein_complement_of_C3_layer
   have hLklein : Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) :=
     order36_mulEquiv_kleinFour_of_card_four_and_pow_two hLcard hLpow
   exact ⟨L, hLcomp, hLcard, hLklein⟩
+
+theorem order36_klein_complement_pow_two
+    {G : Type*} [Group G] (K W : Subgroup G) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    {l : W} (hl : l ∈ L) : l ^ 2 = 1 := by
+  have hl2K : (l ^ 2) ∈ K.subgroupOf W := by
+    rw [Subgroup.mem_subgroupOf]
+    change ((l : G) ^ 2) ∈ K
+    exact hpow_in l.property
+  have hl2L : (l ^ 2) ∈ L := L.pow_mem hl 2
+  have hl2inf : (l ^ 2) ∈ K.subgroupOf W ⊓ L := by
+    rw [Subgroup.mem_inf]
+    exact ⟨hl2K, hl2L⟩
+  exact Subgroup.mem_bot.mp ((disjoint_iff_inf_le.mp hLcomp.disjoint) hl2inf)
+
+theorem order36_mem_klein_complement_of_sq_one
+    {G : Type*} [Group G] (K W : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    {w : W} (hw2 : ((w : G) ^ 2) = 1) : w ∈ L := by
+  have hKsubcard : Nat.card (K.subgroupOf W) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hKW).toEquiv, hKcard]
+  obtain ⟨⟨k, l⟩, hkl⟩ := hLcomp.2 w
+  have hkK : (k : W) ∈ K.subgroupOf W := k.property
+  have hlL : (l : W) ∈ L := l.property
+  have hklW : (k : W) * (l : W) = w := by
+    simpa using hkl
+  have hl2K : ((l : W) ^ 2) ∈ K.subgroupOf W := by
+    rw [Subgroup.mem_subgroupOf]
+    change (((l : W) : G) ^ 2) ∈ K
+    exact hpow_in (l : W).property
+  have hl2L : ((l : W) ^ 2) ∈ L := L.pow_mem hlL 2
+  have hl2inf : ((l : W) ^ 2) ∈ K.subgroupOf W ⊓ L := by
+    rw [Subgroup.mem_inf]
+    exact ⟨hl2K, hl2L⟩
+  have hl2W : (l : W) ^ 2 = 1 := by
+    exact Subgroup.mem_bot.mp ((disjoint_iff_inf_le.mp hLcomp.disjoint) hl2inf)
+  have hkKG : ((k : W) : G) ∈ K := by
+    exact Subgroup.mem_subgroupOf.mp hkK
+  have hcommG : ((k : W) : G) * ((l : W) : G) = ((l : W) : G) * ((k : W) : G) :=
+    ((Subgroup.mem_center_iff.mp (hKcenter hkKG)) ((l : W) : G)).symm
+  have hcommW : (k : W) * (l : W) = (l : W) * (k : W) := by
+    apply Subtype.ext
+    simpa using hcommG
+  have hw2W : w ^ 2 = 1 := by
+    apply Subtype.ext
+    simpa using hw2
+  have hkl2 : ((k : W) * (l : W)) ^ 2 = 1 := by
+    rw [hklW, hw2W]
+  have hkl2_eq_k2 : ((k : W) * (l : W)) ^ 2 = (k : W) ^ 2 := by
+    calc
+      ((k : W) * (l : W)) ^ 2
+          = (k : W) * (l : W) * ((k : W) * (l : W)) := by rw [pow_two]
+      _ = (k : W) * ((l : W) * (k : W)) * (l : W) := by simp [mul_assoc]
+      _ = (k : W) * ((k : W) * (l : W)) * (l : W) := by rw [hcommW]
+      _ = (k : W) ^ 2 * ((l : W) ^ 2) := by simp [pow_two, mul_assoc]
+      _ = (k : W) ^ 2 := by rw [hl2W, mul_one]
+  have hk2W : (k : W) ^ 2 = 1 := by
+    rw [← hkl2_eq_k2]
+    exact hkl2
+  have hk2K : k ^ 2 = 1 := by
+    apply Subtype.ext
+    exact hk2W
+  have hkord_dvd3 : orderOf k ∣ 3 := by
+    have := orderOf_dvd_natCard k
+    simpa [hKsubcard] using this
+  have hkord_dvd2 : orderOf k ∣ 2 :=
+    orderOf_dvd_of_pow_eq_one hk2K
+  have hkord_one : orderOf k = 1 := by
+    have hdiv : orderOf k ∣ 1 := by
+      simpa using Nat.dvd_gcd hkord_dvd3 hkord_dvd2
+    exact Nat.dvd_one.mp hdiv
+  have hk_one : (k : W) = 1 :=
+    congrArg (fun x : K.subgroupOf W => (x : W)) (orderOf_eq_one_iff.mp hkord_one)
+  have hl_eq_w : (l : W) = w := by
+    simpa [hk_one] using hklW
+  rw [← hl_eq_w]
+  exact hlL
+
+theorem order36_klein_complement_map_normal
+    {G : Type*} [Group G] (K W : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K) :
+    (L.map W.subtype).Normal := by
+  refine ⟨fun x hx g => ?_⟩
+  obtain ⟨l, hlL, hlx⟩ := Subgroup.mem_map.mp hx
+  rw [← hlx]
+  have hconjW : g * (l : G) * g⁻¹ ∈ W :=
+    (inferInstance : W.Normal).conj_mem (l : G) l.property g
+  let y : W := ⟨g * (l : G) * g⁻¹, hconjW⟩
+  have hl2W : l ^ 2 = 1 :=
+    order36_klein_complement_pow_two K W hLcomp hpow_in hlL
+  have hl2G : ((l : G) ^ 2) = 1 := by
+    exact congrArg (fun z : W => (z : G)) hl2W
+  have hy2 : ((y : G) ^ 2) = 1 := by
+    change (g * (l : G) * g⁻¹) ^ 2 = 1
+    calc
+      (g * (l : G) * g⁻¹) ^ 2 = g * ((l : G) ^ 2) * g⁻¹ := by
+        simp [pow_two, mul_assoc]
+      _ = 1 := by rw [hl2G]; simp
+  have hyL : y ∈ L :=
+    order36_mem_klein_complement_of_sq_one K W hKcenter hKW hKcard hLcomp hpow_in hy2
+  exact Subgroup.mem_map.mpr ⟨y, hyL, rfl⟩
+
+theorem order36_order_three_complement_le_normalizer_klein_complement
+    {G : Type*} [Group G] (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K) :
+    H ≤ Subgroup.normalizer (L.map W.subtype : Subgroup G) := by
+  haveI : (L.map W.subtype : Subgroup G).Normal :=
+    order36_klein_complement_map_normal K W hKcenter hKW hKcard hLcomp hpow_in
+  exact Subgroup.le_normalizer_of_normal
+
+theorem order36_klein_complement_map_card
+    {G : Type*} [Group G] (W : Subgroup G) {L : Subgroup W}
+    (hLcard : Nat.card L = 4) :
+    Nat.card (L.map W.subtype : Subgroup G) = 4 := by
+  rw [Subgroup.card_subtype, hLcard]
+
+theorem order36_klein_complement_map_disjoint_order_three_complement
+    {G : Type*} [Group G] (W H : Subgroup G) {L : Subgroup W}
+    (hHcomp : W.IsComplement' H) :
+    Disjoint (L.map W.subtype : Subgroup G) H := by
+  rw [disjoint_iff_inf_le]
+  intro x hx
+  rw [Subgroup.mem_inf] at hx
+  have hxW : x ∈ W := Subgroup.map_subtype_le L hx.1
+  exact (disjoint_iff_inf_le.mp hHcomp.disjoint) ⟨hxW, hx.2⟩
+
+theorem order36_C3_layer_disjoint_klein_complement_map
+    {G : Type*} [Group G] (K W : Subgroup G) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L) :
+    Disjoint K (L.map W.subtype : Subgroup G) := by
+  rw [disjoint_iff_inf_le]
+  intro x hx
+  rw [Subgroup.mem_inf] at hx
+  obtain ⟨l, hlL, hlx⟩ := Subgroup.mem_map.mp hx.2
+  have hlK : l ∈ K.subgroupOf W := by
+    rw [Subgroup.mem_subgroupOf]
+    change W.subtype l ∈ K
+    rw [hlx]
+    exact hx.1
+  have hlinf : l ∈ K.subgroupOf W ⊓ L := by
+    rw [Subgroup.mem_inf]
+    exact ⟨hlK, hlL⟩
+  have hlone : l = 1 :=
+    Subgroup.mem_bot.mp ((disjoint_iff_inf_le.mp hLcomp.disjoint) hlinf)
+  have hxone : x = 1 := by
+    rw [← hlx]
+    exact congrArg (fun y : W => (y : G)) hlone
+  exact Subgroup.mem_bot.mpr hxone
+
+theorem order36_klein_order_three_sup_subgroup_isComplement'
+    {G : Type*} [Group G] (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    (hHcomp : W.IsComplement' H) :
+    ((L.map W.subtype : Subgroup G).subgroupOf ((L.map W.subtype : Subgroup G) ⊔ H)).IsComplement'
+      (H.subgroupOf ((L.map W.subtype : Subgroup G) ⊔ H)) := by
+  let A : Subgroup G := L.map W.subtype
+  let S : Subgroup G := A ⊔ H
+  have hnormalizer : H ≤ Subgroup.normalizer A := by
+    dsimp [A]
+    exact order36_order_three_complement_le_normalizer_klein_complement
+      K W H hKcenter hKW hKcard hLcomp hpow_in
+  have hdisj : Disjoint A H := by
+    dsimp [A]
+    exact order36_klein_complement_map_disjoint_order_three_complement W H hHcomp
+  have hdisjS : Disjoint (A.subgroupOf S) (H.subgroupOf S) := by
+    rw [disjoint_iff_inf_le]
+    intro x hx
+    rw [Subgroup.mem_inf] at hx
+    have hxA : (x : G) ∈ A := Subgroup.mem_subgroupOf.mp hx.1
+    have hxH : (x : G) ∈ H := Subgroup.mem_subgroupOf.mp hx.2
+    have hxbotG : (x : G) ∈ (⊥ : Subgroup G) :=
+      (disjoint_iff_inf_le.mp hdisj) ⟨hxA, hxH⟩
+    exact Subgroup.mem_bot.mpr (Subtype.ext (Subgroup.mem_bot.mp hxbotG))
+  have hmulS : (↑(A.subgroupOf S) * ↑(H.subgroupOf S) : Set S) = Set.univ := by
+    rw [Set.eq_univ_iff_forall]
+    intro x
+    have hxS : (x : G) ∈ (S : Set G) := x.property
+    have hSset : (↑S : Set G) = (A : Set G) * (H : Set G) := by
+      simpa [S] using Subgroup.coe_mul_of_right_le_normalizer_left A H hnormalizer
+    rw [hSset] at hxS
+    obtain ⟨a, ha, b, hb, hxab⟩ := hxS
+    refine ⟨⟨a, Subgroup.mem_sup_left ha⟩, ?_, ⟨b, Subgroup.mem_sup_right hb⟩, ?_, ?_⟩
+    · change a ∈ A
+      exact ha
+    · change b ∈ H
+      exact hb
+    · exact Subtype.ext hxab
+  simpa [A, S] using Subgroup.isComplement'_of_disjoint_and_mul_eq_univ hdisjS hmulS
+
+theorem order36_klein_order_three_sup_card
+    {G : Type*} [Group G] (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hLcard : Nat.card L = 4)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    (hHcomp : W.IsComplement' H) (hHcard : Nat.card H = 3) :
+    Nat.card (((L.map W.subtype : Subgroup G) ⊔ H : Subgroup G)) = 12 := by
+  let A : Subgroup G := L.map W.subtype
+  let S : Subgroup G := A ⊔ H
+  have hAS : A ≤ S := by
+    dsimp [S]
+    exact le_sup_left
+  have hHS : H ≤ S := by
+    dsimp [S]
+    exact le_sup_right
+  have hAcard : Nat.card A = 4 := by
+    dsimp [A]
+    exact order36_klein_complement_map_card W hLcard
+  have hAcardS : Nat.card (A.subgroupOf S) = 4 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hAS).toEquiv, hAcard]
+  have hHcardS : Nat.card (H.subgroupOf S) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hHS).toEquiv, hHcard]
+  have hcompS : (A.subgroupOf S).IsComplement' (H.subgroupOf S) := by
+    dsimp [A, S]
+    exact order36_klein_order_three_sup_subgroup_isComplement'
+      K W H hKcenter hKW hKcard hLcomp hpow_in hHcomp
+  have hmul := hcompS.card_mul
+  have hScard : Nat.card S = 12 := by
+    rw [← hmul, hAcardS, hHcardS]
+  simpa [A, S] using hScard
+
+theorem order36_C3_layer_disjoint_klein_order_three_sup
+    {G : Type*} [Group G] (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    (hHcomp : W.IsComplement' H) :
+    Disjoint K ((L.map W.subtype : Subgroup G) ⊔ H : Subgroup G) := by
+  let A : Subgroup G := L.map W.subtype
+  let S : Subgroup G := A ⊔ H
+  have hKA : Disjoint K A := by
+    dsimp [A]
+    exact order36_C3_layer_disjoint_klein_complement_map K W hLcomp
+  have hcompS : (A.subgroupOf S).IsComplement' (H.subgroupOf S) := by
+    dsimp [A, S]
+    exact order36_klein_order_three_sup_subgroup_isComplement'
+      K W H hKcenter hKW hKcard hLcomp hpow_in hHcomp
+  rw [disjoint_iff_inf_le]
+  intro x hx
+  rw [Subgroup.mem_inf] at hx
+  let xS : S := ⟨x, hx.2⟩
+  obtain ⟨⟨aS, hS⟩, hprod⟩ := hcompS.2 xS
+  have haA : ((aS : S) : G) ∈ A := Subgroup.mem_subgroupOf.mp aS.property
+  have hhH : ((hS : S) : G) ∈ H := Subgroup.mem_subgroupOf.mp hS.property
+  have hprodG : ((aS : S) : G) * ((hS : S) : G) = x := by
+    simpa [xS] using congrArg (fun y : S => (y : G)) hprod
+  have hxW : x ∈ W := hKW hx.1
+  have haW : ((aS : S) : G) ∈ W := by
+    dsimp [A] at haA
+    exact Subgroup.map_subtype_le L haA
+  have hh_eq : ((hS : S) : G) = ((aS : S) : G)⁻¹ * x := by
+    rw [← hprodG]
+    simp
+  have hhW : ((hS : S) : G) ∈ W := by
+    rw [hh_eq]
+    exact W.mul_mem (W.inv_mem haW) hxW
+  have hhbotG : ((hS : S) : G) ∈ (⊥ : Subgroup G) :=
+    (disjoint_iff_inf_le.mp hHcomp.disjoint) ⟨hhW, hhH⟩
+  have hh_one : ((hS : S) : G) = 1 := Subgroup.mem_bot.mp hhbotG
+  have hxA : x ∈ A := by
+    have hx_eq_a : x = ((aS : S) : G) := by
+      rw [← hprodG, hh_one, mul_one]
+    rw [hx_eq_a]
+    exact haA
+  exact (disjoint_iff_inf_le.mp hKA) ⟨hx.1, hxA⟩
+
+theorem order36_C3_layer_complement_klein_order_three_sup
+    {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 36)
+    (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hLcard : Nat.card L = 4)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    (hHcomp : W.IsComplement' H) (hHcard : Nat.card H = 3) :
+    K.IsComplement' (((L.map W.subtype : Subgroup G) ⊔ H : Subgroup G)) := by
+  apply Subgroup.isComplement'_of_card_mul_and_disjoint
+  · rw [hKcard,
+      order36_klein_order_three_sup_card K W H hKcenter hKW hKcard hLcomp hLcard
+        hpow_in hHcomp hHcard,
+      hG]
+  · exact order36_C3_layer_disjoint_klein_order_three_sup
+      K W H hKcenter hKW hKcard hLcomp hpow_in hHcomp
 
 theorem order36_A4_pow : ∀ a : order36_A4, a ^ 2 = 1 ∨ a ^ 3 = 1 := by
   decide
