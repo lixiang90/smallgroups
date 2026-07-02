@@ -2606,6 +2606,46 @@ noncomputable abbrev order36_A4ToC3 : order36_A4 →* order36_C3 :=
   order36_A4QuotEquiv.toMonoidHom.comp
     (QuotientGroup.mk' (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4))
 
+theorem order36_A4ToC3_range_top : order36_A4ToC3.range = ⊤ := by
+  rw [Subgroup.eq_top_iff']
+  intro x
+  let q : order36_A4Quot := order36_A4QuotEquiv.symm x
+  obtain ⟨a, ha⟩ := QuotientGroup.mk'_surjective
+    (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4) q
+  rw [MonoidHom.mem_range]
+  refine ⟨a, ?_⟩
+  change order36_A4QuotEquiv ((QuotientGroup.mk'
+    (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4)) a) = x
+  rw [ha]
+  simp [q]
+
+theorem order36_A4_pow : ∀ a : order36_A4, a ^ 2 = 1 ∨ a ^ 3 = 1 := by
+  decide
+
+theorem order36_A4_order_two_mem_kleinFour (g : order36_A4) (hg : g ^ 2 = 1) :
+    g ∈ alternatingGroup.kleinFour (Fin 4) := by
+  have hgperm2 : ((g : Equiv.Perm (Fin 4)) ^ 2 = 1) := by
+    simpa using congrArg (fun x : order36_A4 => (x : Equiv.Perm (Fin 4))) hg
+  have hdiv : orderOf (g : Equiv.Perm (Fin 4)) ∣ 2 ^ 1 := by
+    rw [pow_one]
+    exact orderOf_dvd_of_pow_eq_one hgperm2
+  have hcycle := alternatingGroup.mem_kleinFour_of_order_two_pow (α := Fin 4)
+    (by simp) g.property (n := 1) hdiv
+  rw [← SetLike.mem_coe, alternatingGroup.coe_kleinFour_of_card_eq_four (α := Fin 4) (by simp),
+    Set.mem_union, Set.mem_singleton_iff, Set.mem_setOf_eq]
+  rcases hcycle with hcycle | hcycle
+  · left
+    apply Subtype.ext
+    exact Equiv.Perm.cycleType_eq_zero.mp hcycle
+  · right
+    exact hcycle
+
+theorem order36_A4_not_mem_kleinFour_cube {a : order36_A4}
+    (ha : a ∉ alternatingGroup.kleinFour (Fin 4)) : a ^ 3 = 1 := by
+  rcases order36_A4_pow a with h2 | h3
+  · exact False.elim (ha (order36_A4_order_two_mem_kleinFour a h2))
+  · exact h3
+
 noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
   toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
   map_one' := by rfl
@@ -2729,6 +2769,49 @@ theorem order36_A4C9_has_normal_order_three_and_A4_quotient :
     omega
   · exact ⟨((QuotientGroup.quotientKerEquivRange π).trans
       (MulEquiv.subgroupCongr hrange_top)).trans Subgroup.topEquiv⟩
+
+theorem order36_A4C9_has_order_nine : ∃ x : order36_A4C9, orderOf x = 9 := by
+  let z : order36_C9 := Multiplicative.ofAdd (1 : ZMod 9)
+  have hzrange : order36_C9ToC3 z ∈ order36_A4ToC3.range := by
+    rw [order36_A4ToC3_range_top]
+    trivial
+  rw [MonoidHom.mem_range] at hzrange
+  obtain ⟨a, ha⟩ := hzrange
+  have hz_ne_one : order36_C9ToC3 z ≠ 1 := by
+    intro hz
+    change Multiplicative.ofAdd (((1 : ZMod 9).val : Nat) : ZMod 3) = 1 at hz
+    norm_num at hz
+  have ha_notK : a ∉ alternatingGroup.kleinFour (Fin 4) := by
+    intro hK
+    have hq : ((QuotientGroup.mk'
+        (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4)) a) = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hK
+    apply hz_ne_one
+    rw [← ha]
+    change order36_A4QuotEquiv ((QuotientGroup.mk'
+      (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4)) a) = 1
+    rw [hq]
+    simp
+  let x : order36_A4C9 := ⟨(a, z), by
+    change order36_A4ToC3 a * (order36_C9ToC3 z)⁻¹ = 1
+    rw [ha]
+    simp
+  ⟩
+  refine ⟨x, ?_⟩
+  rw [Subgroup.orderOf_mk]
+  change orderOf ((a, z) : order36_A4 × order36_C9) = 9
+  rw [Prod.orderOf_mk]
+  have hz9 : orderOf z = 9 := by
+    rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+  have ha_dvd3 : orderOf a ∣ 3 :=
+    orderOf_dvd_of_pow_eq_one (order36_A4_not_mem_kleinFour_cube ha_notK)
+  rw [hz9]
+  rcases Nat.prime_three.eq_one_or_self_of_dvd (orderOf a) ha_dvd3 with ha1 | ha3
+  · rw [ha1]
+    norm_num
+  · rw [ha3]
+    norm_num
 
 /-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
 theorem sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four [Finite G]
