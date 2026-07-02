@@ -682,6 +682,79 @@ theorem order36_semidirectProduct_of_card_sylow_3_eq_one [Finite G] (hG : Nat.ca
     exact Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 9) h1'
   exact ⟨↑P0, H, φ, hnorm, hcardN, hcardH, ⟨e⟩⟩
 
+/-- Standardise the two factors in the normal Sylow-`3` branch. -/
+theorem order36_normal_semidirectProduct_standard_cases [Finite G] (hG : Nat.card G = 36)
+    (hSyl : Nat.card (Sylow 3 G) = 1) :
+    (∃ φ : order36_C4 →* MulAut order36_C9,
+      Nonempty (G ≃* SemidirectProduct order36_C9 order36_C4 φ)) ∨
+    (∃ φ : order36_V4 →* MulAut order36_C9,
+      Nonempty (G ≃* SemidirectProduct order36_C9 order36_V4 φ)) ∨
+    (∃ φ : order36_C4 →* MulAut order36_E9,
+      Nonempty (G ≃* SemidirectProduct order36_E9 order36_C4 φ)) ∨
+    (∃ φ : order36_V4 →* MulAut order36_E9,
+      Nonempty (G ≃* SemidirectProduct order36_E9 order36_V4 φ)) := by
+  obtain ⟨P, H, φ, _, hcardP, hcardH, ⟨e⟩⟩ :=
+    order36_semidirectProduct_of_card_sylow_3_eq_one hG hSyl
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hP9 : Nat.card P = 3 ^ 2 := by simpa using hcardP
+  have hH4 : Nat.card H = 2 ^ 2 := by simpa using hcardH
+  rcases prime_sq_classification (p := 3) hP9 with hPcyc | hPelem
+  · have hPcyc' : Nonempty (P ≃* order36_C9) := by simpa [order36_C9] using hPcyc
+    obtain ⟨eP⟩ := hPcyc'
+    haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+    rcases prime_sq_classification (p := 2) hH4 with hHcyc | hHelem
+    · have hHcyc' : Nonempty (H ≃* order36_C4) := by simpa [order36_C4] using hHcyc
+      obtain ⟨eH⟩ := hHcyc'
+      exact Or.inl ⟨_, ⟨e.trans (SemidirectProduct.congr' eP eH)⟩⟩
+    · have hHelem' : Nonempty (H ≃* order36_V4) := by simpa [order36_V4] using hHelem
+      obtain ⟨eH⟩ := hHelem'
+      exact Or.inr <| Or.inl ⟨_, ⟨e.trans (SemidirectProduct.congr' eP eH)⟩⟩
+  · have hPelem' : Nonempty (P ≃* order36_E9) := by simpa [order36_E9] using hPelem
+    obtain ⟨eP⟩ := hPelem'
+    haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+    rcases prime_sq_classification (p := 2) hH4 with hHcyc | hHelem
+    · have hHcyc' : Nonempty (H ≃* order36_C4) := by simpa [order36_C4] using hHcyc
+      obtain ⟨eH⟩ := hHcyc'
+      exact Or.inr <| Or.inr <| Or.inl ⟨_, ⟨e.trans (SemidirectProduct.congr' eP eH)⟩⟩
+    · have hHelem' : Nonempty (H ≃* order36_V4) := by simpa [order36_V4] using hHelem
+      obtain ⟨eH⟩ := hHelem'
+      exact Or.inr <| Or.inr <| Or.inr ⟨_, ⟨e.trans (SemidirectProduct.congr' eP eH)⟩⟩
+
+/-- The normal Sylow-`3` branch after fully discharging the cyclic kernel case. -/
+theorem order36_normal_cyclic_kernel_rep_or_elem_cases [Finite G] (hG : Nat.card G = 36)
+    (hSyl : Nat.card (Sylow 3 G) = 1) :
+    (Nonempty (G ≃* order36_normal_reps (0 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (1 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (2 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (3 : Fin 12))) ∨
+    (∃ φ : order36_C4 →* MulAut order36_E9,
+      Nonempty (G ≃* SemidirectProduct order36_E9 order36_C4 φ)) ∨
+    (∃ φ : order36_V4 →* MulAut order36_E9,
+      Nonempty (G ≃* SemidirectProduct order36_E9 order36_V4 φ)) := by
+  rcases order36_normal_semidirectProduct_standard_cases (G := G) hG hSyl with h | h | h | h
+  · obtain ⟨φ, ⟨eG⟩⟩ := h
+    rcases order36_c9_c4_action_rep_cases φ with hrep | hrep
+    · obtain ⟨e⟩ := hrep
+      left
+      exact Or.inl ⟨eG.trans e⟩
+    · obtain ⟨e⟩ := hrep
+      left
+      exact Or.inr <| Or.inl ⟨eG.trans e⟩
+  · obtain ⟨φ, ⟨eG⟩⟩ := h
+    rcases order36_c9_v4_action_rep_cases φ with hrep | hrep
+    · obtain ⟨e⟩ := hrep
+      left
+      exact Or.inr <| Or.inr <| Or.inl ⟨eG.trans e⟩
+    · obtain ⟨e⟩ := hrep
+      left
+      exact Or.inr <| Or.inr <| Or.inr ⟨eG.trans e⟩
+  · right
+    left
+    exact h
+  · right
+    right
+    exact h
+
 /-! ### The non-normal Sylow branch -/
 
 /-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
