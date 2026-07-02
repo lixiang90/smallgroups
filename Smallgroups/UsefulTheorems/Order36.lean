@@ -2396,6 +2396,233 @@ theorem order36_E9_C4_rotAction_cube_apply (x y : ZMod 3) :
   rw [order36_E9_negBothAut_apply]
   simp
 
+theorem order36_E9_rot_orbit_prod (x y : ZMod 3) :
+    ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_rotAut ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_negBothAut
+          ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_C4_rotAction (Multiplicative.ofAdd (3 : ZMod 4))
+          ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+      1 := by
+  rw [order36_E9_rotAut_apply, order36_E9_negBothAut_apply,
+    order36_E9_C4_rotAction_cube_apply]
+  ext
+  · change Multiplicative.ofAdd (x + -y + -x + y) = Multiplicative.ofAdd 0
+    congr 1
+    abel
+  · change Multiplicative.ofAdd (y + x + -y + -x) = Multiplicative.ofAdd 0
+    congr 1
+    abel
+
+theorem order36_E9_rot_orbit_prod_rev (x y : ZMod 3) :
+    ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_C4_rotAction (Multiplicative.ofAdd (3 : ZMod 4))
+          ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_negBothAut
+          ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_rotAut ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+      1 := by
+  rw [order36_E9_C4_rotAction_cube_apply, order36_E9_negBothAut_apply,
+    order36_E9_rotAut_apply]
+  ext
+  · change Multiplicative.ofAdd (x + y + -x + -y) = Multiplicative.ofAdd 0
+    congr 1
+    abel
+  · change Multiplicative.ofAdd (y + -x + -y + x) = Multiplicative.ofAdd 0
+    congr 1
+    abel
+
+theorem order36_E9_C4_rotAction_pow_three_or_four
+    (g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction) :
+    g ^ 3 = 1 ∨ g ^ 4 = 1 := by
+  rcases multiplicative_zmod_four_cases g.right with hr | hr | hr | hr
+  · left
+    have hg : g = SemidirectProduct.inl g.left := SemidirectProduct.ext rfl (by rw [hr]; rfl)
+    rw [hg, ← map_pow]
+    have hleft3 : g.left ^ 3 = 1 := by
+      simpa [order36_E9] using (pow_p_elemAbelian (p := 3) g.left)
+    rw [hleft3, map_one]
+  · right
+    let m : order36_E9 := g.left * order36_E9_rotAut g.left
+    have hsq : g ^ 2 =
+        (⟨m, Multiplicative.ofAdd (2 : ZMod 4)⟩ :
+          SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction) := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, hr, order36_E9_C4_rotAction_gen_eq_rot]
+      · rw [SemidirectProduct.mul_right, hr]
+        change Multiplicative.ofAdd (1 : ZMod 4) * Multiplicative.ofAdd (1 : ZMod 4) =
+          Multiplicative.ofAdd (2 : ZMod 4)
+        decide
+    have hsq2 : (g ^ 2) ^ 2 = 1 := by
+      rw [hsq, sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, order36_E9_C4_rotAction_sq_eq_negBoth,
+          SemidirectProduct.one_left]
+        change m * order36_E9_negBothAut m = 1
+        rw [order36_E9_negBothAut_eq_invAut, invAut_apply, mul_inv_cancel]
+      · rw [SemidirectProduct.mul_right, SemidirectProduct.one_right]
+        change Multiplicative.ofAdd (2 : ZMod 4) * Multiplicative.ofAdd (2 : ZMod 4) = 1
+        decide
+    change g ^ (2 * 2) = 1
+    rw [pow_mul, hsq2]
+  · right
+    have hsq : g ^ 2 = 1 := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, hr, order36_E9_C4_rotAction_sq_eq_negBoth,
+          SemidirectProduct.one_left]
+        change g.left * order36_E9_negBothAut g.left = 1
+        rw [order36_E9_negBothAut_eq_invAut, invAut_apply, mul_inv_cancel]
+      · rw [SemidirectProduct.mul_right, hr, SemidirectProduct.one_right]
+        decide
+    change g ^ (2 * 2) = 1
+    rw [pow_mul, hsq, one_pow]
+  · right
+    let m : order36_E9 :=
+      g.left * order36_E9_C4_rotAction (Multiplicative.ofAdd (3 : ZMod 4)) g.left
+    have hsq : g ^ 2 =
+        (⟨m, Multiplicative.ofAdd (2 : ZMod 4)⟩ :
+          SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction) := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, hr]
+      · rw [SemidirectProduct.mul_right, hr]
+        change Multiplicative.ofAdd (3 : ZMod 4) * Multiplicative.ofAdd (3 : ZMod 4) =
+          Multiplicative.ofAdd (2 : ZMod 4)
+        decide
+    have hsq2 : (g ^ 2) ^ 2 = 1 := by
+      rw [hsq, sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, order36_E9_C4_rotAction_sq_eq_negBoth,
+          SemidirectProduct.one_left]
+        change m * order36_E9_negBothAut m = 1
+        rw [order36_E9_negBothAut_eq_invAut, invAut_apply, mul_inv_cancel]
+      · rw [SemidirectProduct.mul_right, SemidirectProduct.one_right]
+        change Multiplicative.ofAdd (2 : ZMod 4) * Multiplicative.ofAdd (2 : ZMod 4) = 1
+        decide
+    change g ^ (2 * 2) = 1
+    rw [pow_mul, hsq2]
+
+theorem order36_E9_C4_rotAction_no_order_six :
+    ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      orderOf g ≠ 6 := by
+  exact orderOf_ne_of_pow_or order36_E9_C4_rotAction_pow_three_or_four
+    (by norm_num : ¬ (6 : ℕ) ∣ 3) (by norm_num : ¬ (6 : ℕ) ∣ 4)
+
+theorem order36_E9_C4_rotAction_no_order_twelve :
+    ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      orderOf g ≠ 12 := by
+  exact orderOf_ne_of_pow_or order36_E9_C4_rotAction_pow_three_or_four
+    (by norm_num : ¬ (12 : ℕ) ∣ 3) (by norm_num : ¬ (12 : ℕ) ∣ 4)
+
+theorem order36_normal_nonabelian_c4_e9_rep2_no_order_six :
+    ∀ g : order36_normal_nonabelian_c4_e9_reps (2 : Fin 3), orderOf g ≠ 6 := by
+  change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+    orderOf g ≠ 6
+  exact order36_E9_C4_rotAction_no_order_six
+
+theorem order36_normal_nonabelian_c4_e9_rep2_no_order_twelve :
+    ∀ g : order36_normal_nonabelian_c4_e9_reps (2 : Fin 3), orderOf g ≠ 12 := by
+  change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+    orderOf g ≠ 12
+  exact order36_E9_C4_rotAction_no_order_twelve
+
+theorem order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint :
+    ¬ Nonempty (order36_normal_nonabelian_c4_e9_reps (1 : Fin 3) ≃*
+      order36_normal_nonabelian_c4_e9_reps (2 : Fin 3)) := by
+  exact not_mulEquiv_of_orderOf
+    order36_normal_nonabelian_c4_e9_rep1_has_order_twelve
+    order36_normal_nonabelian_c4_e9_rep2_no_order_twelve
+
+theorem order36_E9_C4_negBothAction_e1_sq_comm :
+    Commute
+      (SemidirectProduct.inl order36_E9_e1 :
+        SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction)
+      (SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4))) := by
+  apply SemidirectProduct.ext
+  · simp [SemidirectProduct.mul_left, order36_E9_C4_negBothAction_sq_trivial]
+  · simp [SemidirectProduct.mul_right]
+
+theorem order36_E9_C4_negBothAction_has_order_six :
+    ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+      orderOf g = 6 := by
+  let a : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction :=
+    SemidirectProduct.inl order36_E9_e1
+  let b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction :=
+    SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4))
+  refine ⟨a * b, ?_⟩
+  have hcomm : Commute a b := order36_E9_C4_negBothAction_e1_sq_comm
+  have ha : orderOf a = 3 := by
+    dsimp [a]
+    rw [orderOf_injective (SemidirectProduct.inl : order36_E9 →*
+      SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction)
+      SemidirectProduct.inl_injective]
+    change orderOf ((Multiplicative.ofAdd (1 : ZMod 3), 1) : order36_E9) = 3
+    rw [Prod.orderOf_mk, orderOf_one, orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+    norm_num
+  have hb : orderOf b = 2 := by
+    dsimp [b]
+    rw [orderOf_injective (SemidirectProduct.inr : order36_C4 →*
+      SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction)
+      SemidirectProduct.inr_injective]
+    rw [orderOf_ofAdd_eq_addOrderOf]
+    change addOrderOf ((2 : ℕ) : ZMod 4) = 2
+    rw [ZMod.addOrderOf_coe' 4 (by norm_num : (2 : ℕ) ≠ 0)]
+    norm_num
+  have hcop : (orderOf a).Coprime (orderOf b) := by
+    rw [ha, hb]
+    norm_num
+  rw [hcomm.orderOf_mul_eq_mul_orderOf_of_coprime hcop, ha, hb]
+
+theorem order36_normal_nonabelian_c4_e9_rep0_has_order_six :
+    ∃ g : order36_normal_nonabelian_c4_e9_reps (0 : Fin 3), orderOf g = 6 := by
+  change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+    orderOf g = 6
+  exact order36_E9_C4_negBothAction_has_order_six
+
+theorem order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint :
+    ¬ Nonempty (order36_normal_nonabelian_c4_e9_reps (0 : Fin 3) ≃*
+      order36_normal_nonabelian_c4_e9_reps (2 : Fin 3)) := by
+  exact not_mulEquiv_of_orderOf
+    order36_normal_nonabelian_c4_e9_rep0_has_order_six
+    order36_normal_nonabelian_c4_e9_rep2_no_order_six
+
+theorem order36_normal_nonabelian_c4_e9_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_nonabelian_c4_e9_reps := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep0_disjoint ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep0_disjoint hiso)
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint ⟨hiso.some.symm⟩)
+  · rfl
+
+theorem order36_normal_nonabelian_c4_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_nonabelian_c4_reps := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 0 hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 1 hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 2 hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 0 ⟨hiso.some.symm⟩)
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep0_disjoint ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 1 ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep0_disjoint hiso)
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 2 ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint ⟨hiso.some.symm⟩)
+  · rfl
+
 /-- The four non-abelian normal representatives whose complement is not `C₄`. -/
 noncomputable def order36_normal_nonabelian_non_c4_reps : Fin 4 → Type
   | 0 => order36_normal_nonabelian_reps (1 : Fin 8)
