@@ -469,6 +469,215 @@ noncomputable abbrev order36_C9_C4_invAction : order36_C4 →* MulAut order36_C9
 /-- The additive group underlying `C₃ × C₃`. -/
 abbrev order36_E9Add : Type := ZMod 3 × ZMod 3
 
+abbrev order36_E9_e1 : order36_E9 := (Multiplicative.ofAdd (1 : ZMod 3), 1)
+
+abbrev order36_E9_e2 : order36_E9 := (1, Multiplicative.ofAdd (1 : ZMod 3))
+
+private lemma order36_ofAdd_pow_nat (c : ZMod 3) (n : ℕ) :
+    (Multiplicative.ofAdd c : Multiplicative (ZMod 3)) ^ n =
+      Multiplicative.ofAdd (↑n * c) := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [pow_succ, ih, ← ofAdd_add, Nat.cast_succ, add_mul, one_mul]
+
+private lemma order36_ofAdd_one_pow (n : ℕ) :
+    (Multiplicative.ofAdd (1 : ZMod 3)) ^ n =
+      Multiplicative.ofAdd (↑n : ZMod 3) := by
+  rw [order36_ofAdd_pow_nat, mul_one]
+
+theorem order36_E9_fst_pow (s : Multiplicative (ZMod 3)) :
+    ((s, 1) : order36_E9) = order36_E9_e1 ^ (Multiplicative.toAdd s).val := by
+  ext
+  · simp only [order36_E9_e1, Prod.pow_fst, order36_ofAdd_one_pow,
+      ZMod.natCast_zmod_val, ofAdd_toAdd]
+  · simp only [order36_E9_e1, Prod.pow_snd, one_pow]
+
+theorem order36_E9_snd_pow (s : Multiplicative (ZMod 3)) :
+    ((1, s) : order36_E9) = order36_E9_e2 ^ (Multiplicative.toAdd s).val := by
+  ext
+  · simp only [order36_E9_e2, Prod.pow_fst, one_pow]
+  · simp only [order36_E9_e2, Prod.pow_snd, order36_ofAdd_one_pow,
+      ZMod.natCast_zmod_val, ofAdd_toAdd]
+
+theorem order36_E9_vec_decomp (x y : ZMod 3) :
+    ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+      order36_E9_e1 ^ x.val * order36_E9_e2 ^ y.val := by
+  rw [show ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+      ((Multiplicative.ofAdd x, 1) : order36_E9) * (1, Multiplicative.ofAdd y) by
+    ext <;> simp]
+  rw [order36_E9_fst_pow, order36_E9_snd_pow]
+  simp [toAdd_ofAdd]
+
+theorem order36_E9_vec_ne_one {x y : ZMod 3} (hxy : (x, y) ≠ (0, 0)) :
+    ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) ≠ 1 := by
+  intro h
+  apply hxy
+  apply Prod.ext
+  · have h1 := congrArg (fun z : order36_E9 => z.1.toAdd) h
+    simpa using h1
+  · have h2 := congrArg (fun z : order36_E9 => z.2.toAdd) h
+    simpa using h2
+
+theorem order36_E9_hom_ext {M : Type*} [Monoid M] {f g : order36_E9 →* M}
+    (h1 : f order36_E9_e1 = g order36_E9_e1)
+    (h2 : f order36_E9_e2 = g order36_E9_e2) : f = g := by
+  ext ⟨x1, x2⟩
+  have hdecomp : ((x1, x2) : order36_E9) = (x1, 1) * (1, x2) := by ext <;> simp
+  rw [hdecomp, map_mul, map_mul]
+  congr 1
+  · rw [order36_E9_fst_pow, map_pow, map_pow, h1]
+  · rw [order36_E9_snd_pow, map_pow, map_pow, h2]
+
+theorem order36_E9_mulAut_ext {α β : MulAut order36_E9}
+    (h1 : α order36_E9_e1 = β order36_E9_e1)
+    (h2 : α order36_E9_e2 = β order36_E9_e2) : α = β := by
+  apply MulEquiv.ext
+  intro x
+  exact congrFun (congrArg DFunLike.coe
+    (order36_E9_hom_ext (f := α.toMonoidHom) (g := β.toMonoidHom) h1 h2)) x
+
+instance order36_E9_mulAut_decidableEq : DecidableEq (MulAut order36_E9) := fun α β =>
+  decidable_of_iff (∀ x, α x = β x)
+    ⟨fun h => MulEquiv.ext h, fun h x => by rw [h]⟩
+
+noncomputable def order36_E9_matrixAut (a b c d : ZMod 3) (hdet : a * d - b * c ≠ 0) :
+    MulAut order36_E9 where
+  toFun x :=
+    (Multiplicative.ofAdd (a * x.1.toAdd + b * x.2.toAdd),
+      Multiplicative.ofAdd (c * x.1.toAdd + d * x.2.toAdd))
+  invFun x :=
+    let Δ := a * d - b * c
+    (Multiplicative.ofAdd (Δ⁻¹ * (d * x.1.toAdd - b * x.2.toAdd)),
+      Multiplicative.ofAdd (Δ⁻¹ * (-c * x.1.toAdd + a * x.2.toAdd)))
+  left_inv x := by
+    haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+    dsimp
+    ext <;> simp only [toAdd_ofAdd]
+    · calc
+        (a * d - b * c)⁻¹ * (d * (a * Multiplicative.toAdd x.1 + b * Multiplicative.toAdd x.2) -
+            b * (c * Multiplicative.toAdd x.1 + d * Multiplicative.toAdd x.2))
+            = ((a * d - b * c)⁻¹ * (a * d - b * c)) * Multiplicative.toAdd x.1 := by ring
+        _ = Multiplicative.toAdd x.1 := by
+          rw [show (a * d - b * c)⁻¹ * (a * d - b * c) = 1 by
+            exact inv_mul_cancel₀ (a := a * d - b * c) (by simpa using hdet)]
+          ring
+    · calc
+        (a * d - b * c)⁻¹ * (-c * (a * Multiplicative.toAdd x.1 + b * Multiplicative.toAdd x.2) +
+            a * (c * Multiplicative.toAdd x.1 + d * Multiplicative.toAdd x.2))
+            = ((a * d - b * c)⁻¹ * (a * d - b * c)) * Multiplicative.toAdd x.2 := by ring
+        _ = Multiplicative.toAdd x.2 := by
+          rw [show (a * d - b * c)⁻¹ * (a * d - b * c) = 1 by
+            exact inv_mul_cancel₀ (a := a * d - b * c) (by simpa using hdet)]
+          ring
+  right_inv x := by
+    haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+    dsimp
+    ext
+    · calc
+        a * ((a * d - b * c)⁻¹ * (d * Multiplicative.toAdd x.1 - b * Multiplicative.toAdd x.2)) +
+            b * ((a * d - b * c)⁻¹ * (-c * Multiplicative.toAdd x.1 + a * Multiplicative.toAdd x.2))
+            = ((a * d - b * c) * (a * d - b * c)⁻¹) * Multiplicative.toAdd x.1 := by ring
+        _ = Multiplicative.toAdd x.1 := by
+          rw [show (a * d - b * c) * (a * d - b * c)⁻¹ = 1 by
+            exact mul_inv_cancel₀ (a := a * d - b * c) (by simpa using hdet)]
+          ring
+    · calc
+        c * ((a * d - b * c)⁻¹ * (d * Multiplicative.toAdd x.1 - b * Multiplicative.toAdd x.2)) +
+            d * ((a * d - b * c)⁻¹ * (-c * Multiplicative.toAdd x.1 + a * Multiplicative.toAdd x.2))
+            = ((a * d - b * c) * (a * d - b * c)⁻¹) * Multiplicative.toAdd x.2 := by ring
+        _ = Multiplicative.toAdd x.2 := by
+          rw [show (a * d - b * c) * (a * d - b * c)⁻¹ = 1 by
+            exact mul_inv_cancel₀ (a := a * d - b * c) (by simpa using hdet)]
+          ring
+  map_mul' x y := by
+    ext <;> simp [toAdd_mul, ofAdd_add, mul_add, add_assoc, add_left_comm]
+
+@[simp]
+theorem order36_E9_matrixAut_e1 (a b c d : ZMod 3) (hdet : a * d - b * c ≠ 0) :
+    order36_E9_matrixAut a b c d hdet order36_E9_e1 =
+      (Multiplicative.ofAdd a, Multiplicative.ofAdd c) := by
+  ext <;> simp [order36_E9_matrixAut, order36_E9_e1]
+
+@[simp]
+theorem order36_E9_matrixAut_e2 (a b c d : ZMod 3) (hdet : a * d - b * c ≠ 0) :
+    order36_E9_matrixAut a b c d hdet order36_E9_e2 =
+      (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
+  ext <;> simp [order36_E9_matrixAut, order36_E9_e2]
+
+theorem order36_singular_matrix_has_nonzero_kernel
+    (a b c d : ZMod 3) (hdet : a * d - b * c = 0) :
+    ∃ x y : ZMod 3, (x, y) ≠ (0, 0) ∧
+      a * x + b * y = 0 ∧ c * x + d * y = 0 := by
+  decide +revert
+
+theorem order36_E9_mulAut_det_ne_zero (α : MulAut order36_E9) :
+    (α order36_E9_e1).1.toAdd * (α order36_E9_e2).2.toAdd -
+      (α order36_E9_e2).1.toAdd * (α order36_E9_e1).2.toAdd ≠ 0 := by
+  intro hdet
+  let a := (α order36_E9_e1).1.toAdd
+  let b := (α order36_E9_e2).1.toAdd
+  let c := (α order36_E9_e1).2.toAdd
+  let d := (α order36_E9_e2).2.toAdd
+  have hdet' : a * d - b * c = 0 := by simpa [a, b, c, d] using hdet
+  obtain ⟨x, y, hxy, hx, hy⟩ := order36_singular_matrix_has_nonzero_kernel a b c d hdet'
+  let z : order36_E9 := (Multiplicative.ofAdd x, Multiplicative.ofAdd y)
+  have hz_ne : z ≠ 1 := order36_E9_vec_ne_one hxy
+  have he1 : α order36_E9_e1 = (Multiplicative.ofAdd a, Multiplicative.ofAdd c) := by
+    ext <;> simp [a, c]
+  have he2 : α order36_E9_e2 = (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
+    ext <;> simp [b, d]
+  have hz_decomp : z = order36_E9_e1 ^ x.val * order36_E9_e2 ^ y.val :=
+    order36_E9_vec_decomp x y
+  have hαz : α z = 1 := by
+    rw [hz_decomp, map_mul, map_pow, map_pow, he1, he2]
+    apply Prod.ext
+    · change (Multiplicative.ofAdd a) ^ x.val * (Multiplicative.ofAdd b) ^ y.val = 1
+      rw [order36_ofAdd_pow_nat, order36_ofAdd_pow_nat, ← ofAdd_add]
+      change Multiplicative.ofAdd (↑x.val * a + ↑y.val * b) = Multiplicative.ofAdd 0
+      apply congrArg Multiplicative.ofAdd
+      simpa [ZMod.natCast_zmod_val, add_comm, mul_comm] using hx
+    · change (Multiplicative.ofAdd c) ^ x.val * (Multiplicative.ofAdd d) ^ y.val = 1
+      rw [order36_ofAdd_pow_nat, order36_ofAdd_pow_nat, ← ofAdd_add]
+      change Multiplicative.ofAdd (↑x.val * c + ↑y.val * d) = Multiplicative.ofAdd 0
+      apply congrArg Multiplicative.ofAdd
+      simpa [ZMod.natCast_zmod_val, add_comm, mul_comm] using hy
+  exact hz_ne (α.injective (by simpa using hαz))
+
+theorem order36_E9_mulAut_eq_matrixAut (α : MulAut order36_E9) :
+    α = order36_E9_matrixAut
+      (α order36_E9_e1).1.toAdd (α order36_E9_e2).1.toAdd
+      (α order36_E9_e1).2.toAdd (α order36_E9_e2).2.toAdd
+      (order36_E9_mulAut_det_ne_zero α) := by
+  apply order36_E9_mulAut_ext
+  · rw [order36_E9_matrixAut_e1]
+    ext <;> simp
+  · rw [order36_E9_matrixAut_e2]
+    ext <;> simp
+
+theorem order36_E9_mulAut_apply_matrix (α : MulAut order36_E9) (x y : ZMod 3) :
+    α ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+      (Multiplicative.ofAdd
+        ((α order36_E9_e1).1.toAdd * x + (α order36_E9_e2).1.toAdd * y),
+       Multiplicative.ofAdd
+        ((α order36_E9_e1).2.toAdd * x + (α order36_E9_e2).2.toAdd * y)) := by
+  rw [order36_E9_vec_decomp x y, map_mul, map_pow, map_pow]
+  apply Prod.ext
+  · change (α order36_E9_e1).1 ^ x.val * (α order36_E9_e2).1 ^ y.val =
+      Multiplicative.ofAdd
+        ((α order36_E9_e1).1.toAdd * x + (α order36_E9_e2).1.toAdd * y)
+    rw [← ofAdd_toAdd (α order36_E9_e1).1, ← ofAdd_toAdd (α order36_E9_e2).1]
+    rw [← ofAdd_nsmul, ← ofAdd_nsmul, ← ofAdd_add]
+    apply congrArg Multiplicative.ofAdd
+    simp [nsmul_eq_mul, mul_comm]
+  · change (α order36_E9_e1).2 ^ x.val * (α order36_E9_e2).2 ^ y.val =
+      Multiplicative.ofAdd
+        ((α order36_E9_e1).2.toAdd * x + (α order36_E9_e2).2.toAdd * y)
+    rw [← ofAdd_toAdd (α order36_E9_e1).2, ← ofAdd_toAdd (α order36_E9_e2).2]
+    rw [← ofAdd_nsmul, ← ofAdd_nsmul, ← ofAdd_add]
+    apply congrArg Multiplicative.ofAdd
+    simp [nsmul_eq_mul, mul_comm]
+
 /-- Negate both coordinates of `C₃ × C₃`. -/
 def order36_E9_negBothAddEquiv : order36_E9Add ≃+ order36_E9Add where
   toFun x := (-x.1, -x.2)
