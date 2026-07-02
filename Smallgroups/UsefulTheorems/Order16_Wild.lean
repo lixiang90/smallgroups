@@ -2220,17 +2220,766 @@ private lemma classify_of_order8 [Finite G] (hcard : Nat.card G = 16)
 
 end ClassifyC8
 
+/-! ### Exhaustiveness: the `K₈`-extension branch -/
+
+section ClassifyK8
+
+variable {G : Type*} [Group G]
+
+/-- ψ₃-shaped conjugation data (`t x t⁻¹ = x⁻¹`, `t w t⁻¹ = w`) yields `G₈`, `G₁₁` or `G₁₂`,
+according to the value of `t²`. -/
+private lemma classify_k8_psi3 [Finite G] (hcard : Nat.card G = 16)
+    (x w t : G) (Hs : Subgroup G) (hxH : x ∈ Hs) (hwH : w ∈ Hs) (htH : t ∉ Hs)
+    (hx4 : orderOf x = 4) (hw2 : w ^ 2 = 1)
+    (hcomm : Commute x w) (hw_notin : w ∉ Subgroup.zpowers x)
+    (hconjx : t * x * t⁻¹ = x⁻¹) (hconjw : t * w * t⁻¹ = w)
+    (ht2v : t ^ 2 = 1 ∨ t ^ 2 = x ^ 2 ∨ t ^ 2 = w ∨ t ^ 2 = x ^ 2 * w) :
+    ∃ i : Fin 14, Nonempty (G ≃* order16_wild_reps i) := by
+  have hx4' : x ^ 4 = 1 := by rw [← hx4]; exact pow_orderOf_eq_one x
+  have hxx3 : x * x ^ 3 = 1 := by
+    have h1 : x * x ^ 3 = x ^ 4 := by group
+    rw [h1, hx4']
+  have hxinv : x⁻¹ = x ^ 3 := inv_eq_of_mul_eq_one_right hxx3
+  rcases ht2v with ht2 | ht2 | ht2 | ht2
+  · -- t² = 1 : split extension, G₈ = K₈ ⋊_ψ₃ C₂
+    refine ⟨8, ?_⟩
+    have hφx : c2Action_psi3 (Multiplicative.ofAdd 1) xK8 =
+        (Multiplicative.ofAdd (3 : ZMod 4), (1 : Multiplicative (ZMod 2))) := by decide
+    have hφy : c2Action_psi3 (Multiplicative.ofAdd 1) yK8 =
+        ((1 : Multiplicative (ZMod 4)), Multiplicative.ofAdd (1 : ZMod 2)) := by decide
+    refine recog_k8_split hcard c2Action_psi3 hφx hφy x w t hx4 hw2 hcomm hw_notin
+      Hs hxH hwH htH ht2 ?_ ?_
+    · have h1 : (Multiplicative.toAdd (Multiplicative.ofAdd (3 : ZMod 4),
+          (1 : Multiplicative (ZMod 2))).1).val = 3 := by decide
+      have h2 : (Multiplicative.toAdd (Multiplicative.ofAdd (3 : ZMod 4),
+          (1 : Multiplicative (ZMod 2))).2).val = 0 := by decide
+      rw [h1, h2, pow_zero, mul_one, hconjx, hxinv]
+    · have h1 : (Multiplicative.toAdd ((1 : Multiplicative (ZMod 4)),
+          Multiplicative.ofAdd (1 : ZMod 2)).1).val = 0 := by decide
+      have h2 : (Multiplicative.toAdd ((1 : Multiplicative (ZMod 4)),
+          Multiplicative.ofAdd (1 : ZMod 2)).2).val = 1 := by decide
+      rw [h1, h2, pow_zero, one_mul, pow_one, hconjw]
+  · -- t² = x² : G₁₁ = Q₈ × C₂
+    have hcommtw : Commute t w := by
+      have h1 : t * w = w * t := by
+        calc t * w = t * w * t⁻¹ * t := by group
+          _ = w * t := by rw [hconjw]
+      exact h1
+    exact ⟨11, recog_G11 hcard x w t Hs hxH hwH htH hx4 hw2 hw_notin hcomm hconjx
+      hcommtw ht2⟩
+  · -- t² = w : G₁₂
+    exact ⟨12, recog_G12_of_psi3 hcard x w t Hs hxH hwH htH hx4 hw2 hw_notin hconjx ht2⟩
+  · -- t² = x²w : rebase the central involution to x²w and recognize G₁₂ again
+    have hw'H : x ^ 2 * w ∈ Hs := Hs.mul_mem (Hs.pow_mem hxH 2) hwH
+    have hw'2 : (x ^ 2 * w) ^ 2 = 1 := by
+      rw [(hcomm.pow_left 2).mul_pow, hw2, mul_one]
+      have h1 : ((x ^ 2) ^ 2 : G) = x ^ 4 := by group
+      rw [h1, hx4']
+    have hw'_notin : x ^ 2 * w ∉ Subgroup.zpowers x := by
+      intro hmem
+      apply hw_notin
+      have h1 : w = (x ^ 2)⁻¹ * (x ^ 2 * w) := by group
+      rw [h1]
+      exact Subgroup.mul_mem _ (Subgroup.inv_mem _
+        (Subgroup.pow_mem _ (Subgroup.mem_zpowers x) _)) hmem
+    exact ⟨12, recog_G12_of_psi3 hcard x (x ^ 2 * w) t Hs hxH hw'H htH hx4 hw'2
+      hw'_notin hconjx ht2⟩
+
+/-- ψ₅-shaped conjugation data (`t x t⁻¹ = x w`, `t w t⁻¹ = w`) yields `G₉` or `G₁₂`. -/
+private lemma classify_k8_psi5 [Finite G] (hcard : Nat.card G = 16)
+    (x w t : G) (Hs : Subgroup G) (hxH : x ∈ Hs) (hwH : w ∈ Hs) (htH : t ∉ Hs)
+    (hx4 : orderOf x = 4) (hw2 : w ^ 2 = 1)
+    (hcomm : Commute x w) (hw_notin : w ∉ Subgroup.zpowers x)
+    (hconjx : t * x * t⁻¹ = x * w) (hconjw : t * w * t⁻¹ = w)
+    (ht2v : t ^ 2 = 1 ∨ t ^ 2 = x ^ 2 ∨ t ^ 2 = w ∨ t ^ 2 = x ^ 2 * w) :
+    ∃ i : Fin 14, Nonempty (G ≃* order16_wild_reps i) := by
+  have hx4' : x ^ 4 = 1 := by rw [← hx4]; exact pow_orderOf_eq_one x
+  have hww : w * w = 1 := by rw [← pow_two]; exact hw2
+  -- helper: any complement element with the same conjugation data and trivial square
+  -- yields the split extension G₉
+  have hsplit : ∀ s : G, s ∉ Hs → s * x * s⁻¹ = x * w → s * w * s⁻¹ = w → s ^ 2 = 1 →
+      ∃ i : Fin 14, Nonempty (G ≃* order16_wild_reps i) := by
+    intro s hsH hcx hcw hs2
+    refine ⟨9, ?_⟩
+    have hφx : c2Action_psi5 (Multiplicative.ofAdd 1) xK8 =
+        (Multiplicative.ofAdd (1 : ZMod 4), Multiplicative.ofAdd (1 : ZMod 2)) := by decide
+    have hφy : c2Action_psi5 (Multiplicative.ofAdd 1) yK8 =
+        ((1 : Multiplicative (ZMod 4)), Multiplicative.ofAdd (1 : ZMod 2)) := by decide
+    refine recog_k8_split hcard c2Action_psi5 hφx hφy x w s hx4 hw2 hcomm hw_notin
+      Hs hxH hwH hsH hs2 ?_ ?_
+    · have h1 : (Multiplicative.toAdd (Multiplicative.ofAdd (1 : ZMod 4),
+          Multiplicative.ofAdd (1 : ZMod 2)).1).val = 1 := by decide
+      have h2 : (Multiplicative.toAdd (Multiplicative.ofAdd (1 : ZMod 4),
+          Multiplicative.ofAdd (1 : ZMod 2)).2).val = 1 := by decide
+      rw [h1, h2, pow_one, pow_one, hcx]
+    · have h1 : (Multiplicative.toAdd ((1 : Multiplicative (ZMod 4)),
+          Multiplicative.ofAdd (1 : ZMod 2)).1).val = 0 := by decide
+      have h2 : (Multiplicative.toAdd ((1 : Multiplicative (ZMod 4)),
+          Multiplicative.ofAdd (1 : ZMod 2)).2).val = 1 := by decide
+      rw [h1, h2, pow_zero, one_mul, pow_one, hcw]
+  -- the conjugation data is unchanged when t is replaced by x * t
+  have htH' : x * t ∉ Hs := fun h => htH (by simpa using Hs.mul_mem (Hs.inv_mem hxH) h)
+  have hconjx' : (x * t) * x * (x * t)⁻¹ = x * w := by
+    calc (x * t) * x * (x * t)⁻¹ = x * (t * x * t⁻¹) * x⁻¹ := by group
+      _ = x * (x * w) * x⁻¹ := by rw [hconjx]
+      _ = x * x * (w * x⁻¹) := by group
+      _ = x * x * (x⁻¹ * w) := by rw [hcomm.inv_left.eq]
+      _ = x * w := by group
+  have hconjw' : (x * t) * w * (x * t)⁻¹ = w := by
+    calc (x * t) * w * (x * t)⁻¹ = x * (t * w * t⁻¹) * x⁻¹ := by group
+      _ = x * w * x⁻¹ := by rw [hconjw]
+      _ = w * x * x⁻¹ := by rw [hcomm.eq]
+      _ = w := by group
+  rcases ht2v with ht2 | ht2 | ht2 | ht2
+  · exact hsplit t htH hconjx hconjw ht2
+  · exact ⟨12, recog_G12_of_psi5 hcard x w t Hs hxH hwH htH hx4 hw2 hcomm hw_notin
+      hconjx hconjw ht2⟩
+  · -- t² = w : x * t squares to x², giving G₁₂
+    have ht2' : (x * t) ^ 2 = x ^ 2 := by
+      calc (x * t) ^ 2 = x * (t * x * t⁻¹) * t ^ 2 := by rw [pow_two, pow_two]; group
+        _ = x * (x * w) * w := by rw [hconjx, ht2]
+        _ = x * x * (w * w) := by group
+        _ = x ^ 2 := by rw [hww, mul_one, ← pow_two]
+    exact ⟨12, recog_G12_of_psi5 hcard x w (x * t) Hs hxH hwH htH' hx4 hw2 hcomm hw_notin
+      hconjx' hconjw' ht2'⟩
+  · -- t² = x²w : x * t squares to 1, giving G₉
+    have ht2' : (x * t) ^ 2 = 1 := by
+      calc (x * t) ^ 2 = x * (t * x * t⁻¹) * t ^ 2 := by rw [pow_two, pow_two]; group
+        _ = x * (x * w) * (x ^ 2 * w) := by rw [hconjx, ht2]
+        _ = x * x * (w * x ^ 2) * w := by group
+        _ = x * x * (x ^ 2 * w) * w := by rw [(hcomm.symm.pow_right 2).eq]
+        _ = x * x * x ^ 2 * (w * w) := by group
+        _ = x * x * x ^ 2 * 1 := by rw [hww]
+        _ = x ^ 4 := by group
+        _ = 1 := hx4'
+    exact hsplit (x * t) htH' hconjx' hconjw' ht2'
+
+/-- ψ₆-shaped conjugation data (`t x t⁻¹ = x⁻¹`, `t w t⁻¹ = x² w`) yields `G₁₀`. -/
+private lemma classify_k8_psi6 [Finite G] (hcard : Nat.card G = 16)
+    (x w t : G) (Hs : Subgroup G) (hxH : x ∈ Hs) (hwH : w ∈ Hs) (htH : t ∉ Hs)
+    (hx4 : orderOf x = 4) (hw2 : w ^ 2 = 1)
+    (hcomm : Commute x w) (hw_notin : w ∉ Subgroup.zpowers x)
+    (hconjx : t * x * t⁻¹ = x⁻¹) (hconjw : t * w * t⁻¹ = x ^ 2 * w)
+    (ht2v : t ^ 2 = 1 ∨ t ^ 2 = x ^ 2 ∨ t ^ 2 = w ∨ t ^ 2 = x ^ 2 * w) :
+    ∃ i : Fin 14, Nonempty (G ≃* order16_wild_reps i) := by
+  have hx4' : x ^ 4 = 1 := by rw [← hx4]; exact pow_orderOf_eq_one x
+  have hww : w * w = 1 := by rw [← pow_two]; exact hw2
+  have hxx3 : x * x ^ 3 = 1 := by
+    have h1 : x * x ^ 3 = x ^ 4 := by group
+    rw [h1, hx4']
+  have hxinv : x⁻¹ = x ^ 3 := inv_eq_of_mul_eq_one_right hxx3
+  have hx2inv : (x ^ 2)⁻¹ = x ^ 2 := by
+    refine inv_eq_of_mul_eq_one_right ?_
+    have h1 : x ^ 2 * x ^ 2 = x ^ 4 := by group
+    rw [h1, hx4']
+  have hx2ne : x ^ 2 ≠ 1 := by
+    intro h
+    have hdvd : orderOf x ∣ 2 := orderOf_dvd_of_pow_eq_one h
+    rw [hx4] at hdvd
+    omega
+  -- helper: any complement element with this conjugation data and trivial square gives G₁₀
+  have hsplit : ∀ s : G, s ∉ Hs → s * x * s⁻¹ = x⁻¹ → s * w * s⁻¹ = x ^ 2 * w →
+      s ^ 2 = 1 → ∃ i : Fin 14, Nonempty (G ≃* order16_wild_reps i) := by
+    intro s hsH hcx hcw hs2
+    refine ⟨10, ?_⟩
+    have hφx : c2Action_psi6 (Multiplicative.ofAdd 1) xK8 =
+        (Multiplicative.ofAdd (3 : ZMod 4), (1 : Multiplicative (ZMod 2))) := by decide
+    have hφy : c2Action_psi6 (Multiplicative.ofAdd 1) yK8 =
+        (Multiplicative.ofAdd (2 : ZMod 4), Multiplicative.ofAdd (1 : ZMod 2)) := by decide
+    refine recog_k8_split hcard c2Action_psi6 hφx hφy x w s hx4 hw2 hcomm hw_notin
+      Hs hxH hwH hsH hs2 ?_ ?_
+    · have h1 : (Multiplicative.toAdd (Multiplicative.ofAdd (3 : ZMod 4),
+          (1 : Multiplicative (ZMod 2))).1).val = 3 := by decide
+      have h2 : (Multiplicative.toAdd (Multiplicative.ofAdd (3 : ZMod 4),
+          (1 : Multiplicative (ZMod 2))).2).val = 0 := by decide
+      rw [h1, h2, pow_zero, mul_one, hcx, hxinv]
+    · have h1 : (Multiplicative.toAdd (Multiplicative.ofAdd (2 : ZMod 4),
+          Multiplicative.ofAdd (1 : ZMod 2)).1).val = 2 := by decide
+      have h2 : (Multiplicative.toAdd (Multiplicative.ofAdd (2 : ZMod 4),
+          Multiplicative.ofAdd (1 : ZMod 2)).2).val = 1 := by decide
+      rw [h1, h2, pow_one, hcw]
+  rcases ht2v with ht2 | ht2 | ht2 | ht2
+  · exact hsplit t htH hconjx hconjw ht2
+  · -- t² = x² : replace t by x w t, which squares to 1
+    have hsH' : x * w * t ∉ Hs := by
+      intro h
+      apply htH
+      have h1 : t = (x * w)⁻¹ * (x * w * t) := by group
+      rw [h1]
+      exact Hs.mul_mem (Hs.inv_mem (Hs.mul_mem hxH hwH)) h
+    have hcx' : (x * w * t) * x * (x * w * t)⁻¹ = x⁻¹ := by
+      calc (x * w * t) * x * (x * w * t)⁻¹ = x * w * (t * x * t⁻¹) * w⁻¹ * x⁻¹ := by group
+        _ = x * w * x⁻¹ * w⁻¹ * x⁻¹ := by rw [hconjx]
+        _ = x * (w * x⁻¹) * w⁻¹ * x⁻¹ := by group
+        _ = x * (x⁻¹ * w) * w⁻¹ * x⁻¹ := by rw [hcomm.inv_left.eq]
+        _ = x⁻¹ := by group
+    have hcw' : (x * w * t) * w * (x * w * t)⁻¹ = x ^ 2 * w := by
+      calc (x * w * t) * w * (x * w * t)⁻¹ = x * w * (t * w * t⁻¹) * w⁻¹ * x⁻¹ := by group
+        _ = x * w * (x ^ 2 * w) * w⁻¹ * x⁻¹ := by rw [hconjw]
+        _ = x * (w * x ^ 2) * x⁻¹ := by group
+        _ = x * (x ^ 2 * w) * x⁻¹ := by rw [(hcomm.symm.pow_right 2).eq]
+        _ = x * x ^ 2 * (w * x⁻¹) := by group
+        _ = x * x ^ 2 * (x⁻¹ * w) := by rw [hcomm.inv_left.eq]
+        _ = x ^ 2 * w := by group
+    have hs2' : (x * w * t) ^ 2 = 1 := by
+      calc (x * w * t) ^ 2 = x * w * ((t * x * t⁻¹) * (t * w * t⁻¹)) * t ^ 2 := by
+            rw [pow_two, pow_two]; group
+        _ = x * w * (x⁻¹ * (x ^ 2 * w)) * x ^ 2 := by rw [hconjx, hconjw, ht2]
+        _ = x * (w * x) * (w * x ^ 2) := by group
+        _ = x * (x * w) * (w * x ^ 2) := by rw [← hcomm.eq]
+        _ = x * x * (w * w) * x ^ 2 := by group
+        _ = x * x * 1 * x ^ 2 := by rw [hww]
+        _ = x ^ 4 := by group
+        _ = 1 := hx4'
+    exact hsplit (x * w * t) hsH' hcx' hcw' hs2'
+  · -- t² = w : impossible, since conjugation by t fixes t²
+    exfalso
+    have h1 : t * t ^ 2 * t⁻¹ = t ^ 2 := by group
+    rw [ht2, hconjw] at h1
+    have h2 : x ^ 2 * w = 1 * w := by rw [one_mul]; exact h1
+    exact hx2ne (mul_right_cancel h2)
+  · -- t² = x²w : also impossible
+    exfalso
+    have h1 : t * t ^ 2 * t⁻¹ = t ^ 2 := by group
+    rw [ht2] at h1
+    have h2 : t * (x ^ 2 * w) * t⁻¹ = w := by
+      have h3 : t * (x ^ 2 * w) * t⁻¹ = (t * x ^ 2 * t⁻¹) * (t * w * t⁻¹) := by group
+      rw [h3, ← conj_pow, hconjx, hconjw, inv_pow, hx2inv]
+      calc x ^ 2 * (x ^ 2 * w) = x ^ 2 * x ^ 2 * w := by group
+        _ = w := by
+            have h4 : x ^ 2 * x ^ 2 = x ^ 4 := by group
+            rw [h4, hx4', one_mul]
+    rw [h2] at h1
+    have h3 : x ^ 2 * w = 1 * w := by rw [one_mul]; exact h1.symm
+    exact hx2ne (mul_right_cancel h3)
+
+/-- The `K₈`-branch of the classification: a nonabelian group of order 16 with no element
+of order 8 and a normal subgroup isomorphic to `K₈` is one of `G₈`–`G₁₂`. -/
+private lemma classify_of_k8 [Finite G] (hcard : Nat.card G = 16)
+    (hnab : ¬ ∀ a b : G, a * b = b * a) (hno8 : ∀ g : G, orderOf g ≠ 8)
+    (H : Subgroup G) (hHnorm : H.Normal) (hH8 : Nat.card H = 8) (eH : H ≃* K8g) :
+    ∃ i : Fin 14, Nonempty (G ≃* order16_wild_reps i) := by
+  classical
+  -- transfer the generators of K₈ into G
+  have horder : ∀ p : K8g, orderOf ((eH.symm p : H) : G) = orderOf p := by
+    intro p
+    have h1 : orderOf ((eH.symm p : H) : G) = orderOf (eH.symm p) :=
+      orderOf_injective H.subtype H.subtype_injective (eH.symm p)
+    have h2 : orderOf (eH.symm p) = orderOf p :=
+      orderOf_injective eH.symm.toMonoidHom eH.symm.injective p
+    rw [h1, h2]
+  obtain ⟨x, w, hxmem, hwmem, hx4, hw2, hcomm, hw_notin, hdecomp⟩ :
+      ∃ x w : G, x ∈ H ∧ w ∈ H ∧ orderOf x = 4 ∧ w ^ 2 = 1 ∧ Commute x w ∧
+        w ∉ Subgroup.zpowers x ∧
+        ∀ h : H, ∃ a b : ℕ, a < 4 ∧ b < 2 ∧ (h : G) = x ^ a * w ^ b := by
+    refine ⟨((eH.symm xK8 : H) : G), ((eH.symm yK8 : H) : G), (eH.symm xK8).2,
+      (eH.symm yK8).2, ?_, ?_, ?_, ?_, ?_⟩
+    · rw [horder, orderOf_xK8]
+    · have h1 : orderOf ((eH.symm yK8 : H) : G) = 2 := by rw [horder, orderOf_yK8]
+      calc ((eH.symm yK8 : H) : G) ^ 2
+          = ((eH.symm yK8 : H) : G) ^ orderOf ((eH.symm yK8 : H) : G) := by rw [h1]
+        _ = 1 := pow_orderOf_eq_one _
+    · have h1 : eH.symm xK8 * eH.symm yK8 = eH.symm yK8 * eH.symm xK8 := by
+        rw [← map_mul, ← map_mul, mul_comm]
+      exact congrArg Subtype.val h1
+    · intro hmem
+      obtain ⟨m, hm_lt, hm⟩ := exists_pow_eq_of_mem_zpowers
+        (x := ((eH.symm xK8 : H) : G)) (by rw [horder, orderOf_xK8]; norm_num) hmem
+      rw [horder, orderOf_xK8] at hm_lt
+      have hm2 : ((eH.symm xK8 ^ m : H) : G) = ((eH.symm yK8 : H) : G) := by
+        exact_mod_cast hm
+      have hm' : eH.symm xK8 ^ m = eH.symm yK8 := Subtype.coe_injective hm2
+      have hK8 : xK8 ^ m = yK8 := by
+        have h2 := congrArg eH hm'
+        rwa [map_pow, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply] at h2
+      interval_cases m <;> exact absurd hK8 (by decide)
+    · intro h
+      refine ⟨(Multiplicative.toAdd (eH h).1).val, (Multiplicative.toAdd (eH h).2).val,
+        ZMod.val_lt _, ZMod.val_lt _, ?_⟩
+      have h1 : h = eH.symm xK8 ^ (Multiplicative.toAdd (eH h).1).val *
+          eH.symm yK8 ^ (Multiplicative.toAdd (eH h).2).val := by
+        conv_lhs => rw [← eH.symm_apply_apply h]
+        conv_lhs => rw [k8g_decomp (eH h)]
+        rw [map_mul, map_pow, map_pow]
+      have h2 := congrArg Subtype.val h1
+      simpa using h2
+  -- basic power facts
+  have hx4' : x ^ 4 = 1 := by rw [← hx4]; exact pow_orderOf_eq_one x
+  have hx2ne : x ^ 2 ≠ 1 := by
+    intro h
+    have hdvd : orderOf x ∣ 2 := orderOf_dvd_of_pow_eq_one h
+    rw [hx4] at hdvd
+    omega
+  have hxx3 : x * x ^ 3 = 1 := by
+    have h1 : x * x ^ 3 = x ^ 4 := by group
+    rw [h1, hx4']
+  have hxinv : x⁻¹ = x ^ 3 := inv_eq_of_mul_eq_one_right hxx3
+  have hww : w * w = 1 := by rw [← pow_two]; exact hw2
+  have hwne1 : w ≠ 1 := by
+    intro h
+    exact hw_notin (by rw [h]; exact Subgroup.one_mem _)
+  -- H is commutative
+  have hcommH : ∀ g₁ g₂ : G, g₁ ∈ H → g₂ ∈ H → g₁ * g₂ = g₂ * g₁ := by
+    intro g₁ g₂ h₁ h₂
+    obtain ⟨a₁, b₁, _, _, he₁⟩ := hdecomp ⟨g₁, h₁⟩
+    obtain ⟨a₂, b₂, _, _, he₂⟩ := hdecomp ⟨g₂, h₂⟩
+    have he₁' : g₁ = x ^ a₁ * w ^ b₁ := he₁
+    have he₂' : g₂ = x ^ a₂ * w ^ b₂ := he₂
+    have c1 : Commute (x ^ a₁) (x ^ a₂) := (Commute.refl x).pow_pow _ _
+    have c2 : Commute (x ^ a₁) (w ^ b₂) := (hcomm.pow_left _).pow_right _
+    have c3 : Commute (w ^ b₁) (x ^ a₂) := (hcomm.symm.pow_left _).pow_right _
+    have c4 : Commute (w ^ b₁) (w ^ b₂) := (Commute.refl w).pow_pow _ _
+    rw [he₁', he₂']
+    exact ((c1.mul_right c2).mul_left (c3.mul_right c4)).eq
+  -- index-2 complement
+  have hHidx : H.index = 2 := by
+    have hmul := H.card_mul_index
+    rw [hH8, hcard] at hmul
+    omega
+  obtain ⟨t, ht⟩ : ∃ t : G, t ∉ H := by
+    by_contra hc
+    push Not at hc
+    have htop : H = ⊤ := by
+      rw [Subgroup.eq_top_iff']
+      exact hc
+    rw [htop, Subgroup.card_top, hcard] at hH8
+    omega
+  have ht2H : t ^ 2 ∈ H := by
+    haveI : Finite (G ⧸ H) := Quotient.finite _
+    rw [← QuotientGroup.eq_one_iff]
+    have hq2 : ((t ^ 2 : G) : G ⧸ H) = ((t : G ⧸ H)) ^ 2 := rfl
+    rw [hq2]
+    refine orderOf_dvd_iff_pow_eq_one.mp ?_
+    have hcardQ : Nat.card (G ⧸ H) = 2 := by
+      rw [← Subgroup.index_eq_card]
+      exact hHidx
+    rw [← hcardQ]
+    exact orderOf_dvd_natCard _
+  -- express the conjugates and t² in the generators
+  have hτx_mem : t * x * t⁻¹ ∈ H := hHnorm.conj_mem x hxmem t
+  have hτw_mem : t * w * t⁻¹ ∈ H := hHnorm.conj_mem w hwmem t
+  obtain ⟨a, b, ha4, hb2, hτx0⟩ := hdecomp ⟨_, hτx_mem⟩
+  obtain ⟨c, d, hc4, hd2, hτw0⟩ := hdecomp ⟨_, hτw_mem⟩
+  obtain ⟨k, l, hk4, hl2, ht20⟩ := hdecomp ⟨_, ht2H⟩
+  have hτx' : t * x * t⁻¹ = x ^ a * w ^ b := hτx0
+  have hτw' : t * w * t⁻¹ = x ^ c * w ^ d := hτw0
+  have ht2' : t ^ 2 = x ^ k * w ^ l := ht20
+  clear hτx0 hτw0 ht20
+  -- conjugation of squares; involutivity of conjugation by t on H
+  have hconj_sq : ∀ g : G, t * g ^ 2 * t⁻¹ = (t * g * t⁻¹) ^ 2 := by
+    intro g
+    rw [← conj_pow]
+  have htau2 : ∀ g : G, g ∈ H → t * (t * g * t⁻¹) * t⁻¹ = g := by
+    intro g hg
+    have h1 : t ^ 2 * g = g * t ^ 2 := hcommH _ _ ht2H hg
+    calc t * (t * g * t⁻¹) * t⁻¹ = t ^ 2 * g * (t ^ 2)⁻¹ := by rw [pow_two]; group
+      _ = g * t ^ 2 * (t ^ 2)⁻¹ := by rw [h1]
+      _ = g := by group
+  -- squares of the K₈ words
+  have hsq_ab : ∀ a' b' : ℕ, (x ^ a' * w ^ b') ^ 2 = x ^ (a' * 2) * w ^ (b' * 2) := by
+    intro a' b'
+    have hc : Commute (x ^ a') (w ^ b') := (hcomm.pow_left _).pow_right _
+    rw [hc.mul_pow, ← pow_mul, ← pow_mul]
+  have hwb : ∀ b' : ℕ, w ^ (b' * 2) = 1 := by
+    intro b'
+    rw [mul_comm, pow_mul, hw2, one_pow]
+  -- the exponent a is odd
+  have ha_odd : a = 1 ∨ a = 3 := by
+    by_contra hcon
+    push Not at hcon
+    have ha02 : a = 0 ∨ a = 2 := by omega
+    have h1 : t * x ^ 2 * t⁻¹ = x ^ (a * 2) := by
+      rw [hconj_sq, hτx', hsq_ab, hwb, mul_one]
+    have h2 : x ^ (a * 2) = 1 := by
+      rcases ha02 with rfl | rfl
+      · rw [zero_mul, pow_zero]
+      · rw [show (2 * 2 : ℕ) = 4 from rfl]
+        exact hx4'
+    rw [h2] at h1
+    have h3 : x ^ 2 = 1 := by
+      calc x ^ 2 = t⁻¹ * (t * x ^ 2 * t⁻¹) * t := by group
+        _ = t⁻¹ * 1 * t := by rw [h1]
+        _ = 1 := by group
+    exact hx2ne h3
+  -- the conjugate of w is w or x²w
+  have hτw_cases : t * w * t⁻¹ = w ∨ t * w * t⁻¹ = x ^ 2 * w := by
+    have h1 : t * w ^ 2 * t⁻¹ = x ^ (c * 2) * w ^ (d * 2) := by
+      rw [hconj_sq, hτw', hsq_ab]
+    have h2 : x ^ (c * 2) = 1 := by
+      calc x ^ (c * 2) = x ^ (c * 2) * w ^ (d * 2) := by rw [hwb, mul_one]
+        _ = t * w ^ 2 * t⁻¹ := h1.symm
+        _ = 1 := by rw [hw2]; group
+    have hdvd : (4 : ℕ) ∣ c * 2 := by
+      rw [← hx4]
+      exact orderOf_dvd_of_pow_eq_one h2
+    have hc02 : c = 0 ∨ c = 2 := by omega
+    have hd1 : d = 1 := by
+      by_contra hd
+      have hd0 : d = 0 := by omega
+      subst hd0
+      rw [pow_zero, mul_one] at hτw'
+      rcases hc02 with rfl | rfl
+      · rw [pow_zero] at hτw'
+        apply hwne1
+        calc w = t⁻¹ * (t * w * t⁻¹) * t := by group
+          _ = t⁻¹ * 1 * t := by rw [hτw']
+          _ = 1 := by group
+      · have h3 : w = x ^ (a * 2) := by
+          calc w = t * (t * w * t⁻¹) * t⁻¹ := (htau2 w hwmem).symm
+            _ = t * x ^ 2 * t⁻¹ := by rw [hτw']
+            _ = (t * x * t⁻¹) ^ 2 := hconj_sq x
+            _ = (x ^ a * w ^ b) ^ 2 := by rw [hτx']
+            _ = x ^ (a * 2) * w ^ (b * 2) := hsq_ab a b
+            _ = x ^ (a * 2) := by rw [hwb, mul_one]
+        exact hw_notin (by rw [h3]; exact Subgroup.pow_mem _ (Subgroup.mem_zpowers x) _)
+    subst hd1
+    rw [pow_one] at hτw'
+    rcases hc02 with rfl | rfl
+    · left
+      rw [pow_zero, one_mul] at hτw'
+      exact hτw'
+    · right
+      exact hτw'
+  -- t² lies in {1, x², w, x²w}
+  have ht2_cases : t ^ 2 = 1 ∨ t ^ 2 = x ^ 2 ∨ t ^ 2 = w ∨ t ^ 2 = x ^ 2 * w := by
+    have hk_even : k = 0 ∨ k = 2 := by
+      by_contra hcon
+      push Not at hcon
+      have hk13 : k = 1 ∨ k = 3 := by omega
+      apply hno8 t
+      have ht4 : t ^ 4 = x ^ (k * 2) := by
+        have h1 : t ^ 4 = (t ^ 2) ^ 2 := by group
+        rw [h1, ht2', hsq_ab, hwb, mul_one]
+      have ht4ne : t ^ 4 ≠ 1 := by
+        rw [ht4]
+        rcases hk13 with rfl | rfl
+        · rw [show (1 * 2 : ℕ) = 2 from rfl]
+          exact hx2ne
+        · rw [show (3 * 2 : ℕ) = 6 from rfl]
+          intro h
+          have hdvd : (4 : ℕ) ∣ 6 := by
+            rw [← hx4]
+            exact orderOf_dvd_of_pow_eq_one h
+          omega
+      have ht8 : t ^ 8 = 1 := by
+        have h1 : t ^ 8 = (t ^ 4) ^ 2 := by group
+        rw [h1, ht4, ← pow_mul]
+        rcases hk13 with rfl | rfl
+        · rw [show (1 * 2 * 2 : ℕ) = 4 from rfl]
+          exact hx4'
+        · rw [show (3 * 2 * 2 : ℕ) = 12 from rfl]
+          have h2 : (x ^ 12 : G) = (x ^ 4) ^ 3 := by group
+          rw [h2, hx4', one_pow]
+      have hdvd8 : orderOf t ∣ 8 := orderOf_dvd_of_pow_eq_one ht8
+      have hndvd4 : ¬ orderOf t ∣ 4 := fun hd => ht4ne (orderOf_dvd_iff_pow_eq_one.mp hd)
+      have hmem : orderOf t ∈ Nat.divisors 8 := Nat.mem_divisors.mpr ⟨hdvd8, by norm_num⟩
+      rw [show Nat.divisors 8 = {1, 2, 4, 8} by decide] at hmem
+      simp only [Finset.mem_insert, Finset.mem_singleton] at hmem
+      rcases hmem with h | h | h | h
+      · exact absurd (by rw [h]; norm_num : orderOf t ∣ 4) hndvd4
+      · exact absurd (by rw [h]; norm_num : orderOf t ∣ 4) hndvd4
+      · exact absurd (by rw [h] : orderOf t ∣ 4) hndvd4
+      · exact h
+    have hl01 : l = 0 ∨ l = 1 := by omega
+    rcases hk_even with rfl | rfl
+    · rcases hl01 with rfl | rfl
+      · left
+        rw [ht2', pow_zero, pow_zero, one_mul]
+      · right; right; left
+        rw [ht2', pow_zero, pow_one, one_mul]
+    · rcases hl01 with rfl | rfl
+      · right; left
+        rw [ht2', pow_zero, mul_one]
+      · right; right; right
+        rw [ht2', pow_one]
+  -- eight ψ-shapes
+  have hb01 : b = 0 ∨ b = 1 := by omega
+  rcases hτw_cases with hcw | hcw
+  · -- τ w = w
+    rcases ha_odd with rfl | rfl
+    · rcases hb01 with rfl | rfl
+      · -- ψ₁ : t centralizes H, so G is abelian — contradiction
+        exfalso
+        rw [pow_one, pow_zero, mul_one] at hτx'
+        apply hnab
+        have hcommt : ∀ g : G, g ∈ H → Commute t g := by
+          intro g hg
+          obtain ⟨a', b', _, _, he⟩ := hdecomp ⟨g, hg⟩
+          have he' : g = x ^ a' * w ^ b' := he
+          have h1 : Commute t x := by
+            have h2 : t * x = x * t := by
+              calc t * x = t * x * t⁻¹ * t := by group
+                _ = x * t := by rw [hτx']
+            exact h2
+          have h2 : Commute t w := by
+            have h3 : t * w = w * t := by
+              calc t * w = t * w * t⁻¹ * t := by group
+                _ = w * t := by rw [hcw]
+            exact h3
+          rw [he']
+          exact (h1.pow_right _).mul_right (h2.pow_right _)
+        intro g₁ g₂
+        rcases decomp_index_two hHidx ht g₁ with h₁ | ⟨p, hp, rfl⟩
+        · rcases decomp_index_two hHidx ht g₂ with h₂ | ⟨q, hq, rfl⟩
+          · exact hcommH _ _ h₁ h₂
+          · have c1 : Commute g₁ q := hcommH _ _ h₁ hq
+            have c2 : Commute g₁ t := (hcommt g₁ h₁).symm
+            exact (c1.mul_right c2).eq
+        · rcases decomp_index_two hHidx ht g₂ with h₂ | ⟨q, hq, rfl⟩
+          · have c1 : Commute p g₂ := hcommH _ _ hp h₂
+            have c2 : Commute t g₂ := hcommt g₂ h₂
+            exact (c1.mul_left c2).eq
+          · have cpq : Commute p q := hcommH _ _ hp hq
+            have cpt : Commute t p := hcommt p hp
+            have cqt : Commute t q := hcommt q hq
+            exact ((cpq.mul_right cpt.symm).mul_left
+              (cqt.mul_right (Commute.refl t))).eq
+      · -- ψ₅-form directly
+        rw [pow_one, pow_one] at hτx'
+        exact classify_k8_psi5 hcard x w t H hxmem hwmem ht hx4 hw2 hcomm hw_notin
+          hτx' hcw ht2_cases
+    · rcases hb01 with rfl | rfl
+      · -- ψ₃-form directly
+        rw [pow_zero, mul_one] at hτx'
+        have hτx'' : t * x * t⁻¹ = x⁻¹ := by rw [hτx', ← hxinv]
+        exact classify_k8_psi3 hcard x w t H hxmem hwmem ht hx4 hw2 hcomm hw_notin
+          hτx'' hcw ht2_cases
+      · -- ψ₇ : rebase the involution to x²w, giving a ψ₅-form
+        rw [pow_one] at hτx'
+        have hw'mem : x ^ 2 * w ∈ H := H.mul_mem (H.pow_mem hxmem 2) hwmem
+        have hw'2 : (x ^ 2 * w) ^ 2 = 1 := by
+          rw [(hcomm.pow_left 2).mul_pow, hw2, mul_one]
+          have h1 : ((x ^ 2) ^ 2 : G) = x ^ 4 := by group
+          rw [h1, hx4']
+        have hw'_notin : x ^ 2 * w ∉ Subgroup.zpowers x := by
+          intro hmem
+          apply hw_notin
+          have h1 : w = (x ^ 2)⁻¹ * (x ^ 2 * w) := by group
+          rw [h1]
+          exact Subgroup.mul_mem _ (Subgroup.inv_mem _
+            (Subgroup.pow_mem _ (Subgroup.mem_zpowers x) _)) hmem
+        have hcomm' : Commute x (x ^ 2 * w) := ((Commute.refl x).pow_right 2).mul_right hcomm
+        have hτx_new : t * x * t⁻¹ = x * (x ^ 2 * w) := by
+          rw [hτx']
+          group
+        have hsq31 : (x ^ 3 * w) ^ 2 = x ^ 2 := by
+          rw [(hcomm.pow_left 3).mul_pow, hw2, mul_one]
+          have h1 : ((x ^ 3) ^ 2 : G) = x ^ 4 * x ^ 2 := by group
+          rw [h1, hx4', one_mul]
+        have hτw_new : t * (x ^ 2 * w) * t⁻¹ = x ^ 2 * w := by
+          have h1 : t * (x ^ 2 * w) * t⁻¹ = (t * x ^ 2 * t⁻¹) * (t * w * t⁻¹) := by group
+          rw [h1, hconj_sq, hτx', hcw, hsq31]
+        have hx4w : x ^ 2 * (x ^ 2 * w) = w := by
+          calc x ^ 2 * (x ^ 2 * w) = x ^ 2 * x ^ 2 * w := by group
+            _ = w := by
+                have h1 : (x ^ 2 * x ^ 2 : G) = x ^ 4 := by group
+                rw [h1, hx4', one_mul]
+        have ht2v' : t ^ 2 = 1 ∨ t ^ 2 = x ^ 2 ∨ t ^ 2 = x ^ 2 * w ∨
+            t ^ 2 = x ^ 2 * (x ^ 2 * w) := by
+          rcases ht2_cases with h | h | h | h
+          · exact Or.inl h
+          · exact Or.inr (Or.inl h)
+          · refine Or.inr (Or.inr (Or.inr ?_))
+            rw [h, hx4w]
+          · exact Or.inr (Or.inr (Or.inl h))
+        exact classify_k8_psi5 hcard x (x ^ 2 * w) t H hxmem hw'mem ht hx4 hw'2 hcomm'
+          hw'_notin hτx_new hτw_new ht2v'
+  · -- τ w = x² w
+    rcases ha_odd with rfl | rfl
+    · rcases hb01 with rfl | rfl
+      · -- ψ₈ : rebase the order-4 generator to x w, giving a ψ₆-form
+        rw [pow_one, pow_zero, mul_one] at hτx'
+        have hwinv : w⁻¹ = w := inv_eq_of_mul_eq_one_right hww
+        have hx'2 : (x * w) ^ 2 = x ^ 2 := by
+          rw [hcomm.mul_pow, hw2, mul_one]
+        have hx'4 : (x * w) ^ 4 = 1 := by
+          rw [hcomm.mul_pow, hx4', one_mul]
+          have h1 : (w ^ 4 : G) = (w ^ 2) ^ 2 := by group
+          rw [h1, hw2, one_pow]
+        have hx'ord : orderOf (x * w) = 4 := by
+          have hdvd : orderOf (x * w) ∣ 4 := orderOf_dvd_of_pow_eq_one hx'4
+          have hne2 : ¬ orderOf (x * w) ∣ 2 := by
+            intro hd
+            have h2 : (x * w) ^ 2 = 1 := orderOf_dvd_iff_pow_eq_one.mp hd
+            rw [hx'2] at h2
+            exact hx2ne h2
+          have hmem4 : orderOf (x * w) ∈ Nat.divisors 4 :=
+            Nat.mem_divisors.mpr ⟨hdvd, by norm_num⟩
+          rw [show Nat.divisors 4 = {1, 2, 4} by decide] at hmem4
+          simp only [Finset.mem_insert, Finset.mem_singleton] at hmem4
+          rcases hmem4 with h | h | h
+          · exact absurd (by rw [h]; norm_num : orderOf (x * w) ∣ 2) hne2
+          · exact absurd (by rw [h] : orderOf (x * w) ∣ 2) hne2
+          · exact h
+        have hw_notin' : w ∉ Subgroup.zpowers (x * w) := by
+          intro hmem
+          obtain ⟨m, hm_lt, hm⟩ := exists_pow_eq_of_mem_zpowers
+            (by rw [hx'ord]; norm_num) hmem
+          rw [hx'ord] at hm_lt
+          rw [hcomm.mul_pow] at hm
+          interval_cases m
+          · rw [pow_zero, pow_zero, one_mul] at hm
+            exact hwne1 hm.symm
+          · rw [pow_one, pow_one] at hm
+            have hx1 : x = 1 := by
+              have h1 : x * w = 1 * w := by rw [one_mul]; exact hm
+              exact mul_right_cancel h1
+            apply hx2ne
+            rw [hx1, one_pow]
+          · rw [hw2, mul_one] at hm
+            apply hw_notin
+            rw [← hm]
+            exact Subgroup.pow_mem _ (Subgroup.mem_zpowers x) 2
+          · have hw3 : w ^ 3 = w := by
+              have h1 : (w ^ 3 : G) = w ^ 2 * w := by group
+              rw [h1, hw2, one_mul]
+            rw [hw3] at hm
+            have hx3 : x ^ 3 = 1 := by
+              have h1 : x ^ 3 * w = 1 * w := by rw [one_mul]; exact hm
+              exact mul_right_cancel h1
+            have hdvd : (4 : ℕ) ∣ 3 := by
+              rw [← hx4]
+              exact orderOf_dvd_of_pow_eq_one hx3
+            omega
+        have hx'inv : (x * w)⁻¹ = x ^ 3 * w := by
+          rw [mul_inv_rev, hwinv, hxinv]
+          exact (hcomm.symm.pow_right 3).eq
+        have hτx_new : t * (x * w) * t⁻¹ = (x * w)⁻¹ := by
+          have h1 : t * (x * w) * t⁻¹ = (t * x * t⁻¹) * (t * w * t⁻¹) := by group
+          rw [h1, hτx', hcw, hx'inv]
+          group
+        have hτw_new : t * w * t⁻¹ = (x * w) ^ 2 * w := by
+          rw [hcw, hx'2]
+        have ht2v' : t ^ 2 = 1 ∨ t ^ 2 = (x * w) ^ 2 ∨ t ^ 2 = w ∨
+            t ^ 2 = (x * w) ^ 2 * w := by
+          rcases ht2_cases with h | h | h | h
+          · exact Or.inl h
+          · refine Or.inr (Or.inl ?_)
+            rw [h, hx'2]
+          · exact Or.inr (Or.inr (Or.inl h))
+          · refine Or.inr (Or.inr (Or.inr ?_))
+            rw [h, hx'2]
+        exact classify_k8_psi6 hcard (x * w) w t H (H.mul_mem hxmem hwmem) hwmem ht
+          hx'ord hw2 (hcomm.mul_left (Commute.refl w)) hw_notin' hτx_new hτw_new ht2v'
+      · -- ψ₄ : impossible, conjugation by t would not be involutive
+        rw [pow_one, pow_one] at hτx'
+        exfalso
+        have h1 : x = (x * w) * (x ^ 2 * w) := by
+          calc x = t * (t * x * t⁻¹) * t⁻¹ := (htau2 x hxmem).symm
+            _ = t * (x * w) * t⁻¹ := by rw [hτx']
+            _ = (t * x * t⁻¹) * (t * w * t⁻¹) := by group
+            _ = (x * w) * (x ^ 2 * w) := by rw [hτx', hcw]
+        have h2 : (x * w) * (x ^ 2 * w) = x ^ 3 := by
+          calc (x * w) * (x ^ 2 * w) = x * (w * x ^ 2) * w := by group
+            _ = x * (x ^ 2 * w) * w := by rw [(hcomm.symm.pow_right 2).eq]
+            _ = x * x ^ 2 * (w * w) := by group
+            _ = x * x ^ 2 * 1 := by rw [hww]
+            _ = x ^ 3 := by group
+        rw [h2] at h1
+        have h3 : x ^ 2 = 1 := by
+          have h4 : x * x ^ 2 = x * 1 := by
+            rw [mul_one]
+            have h5 : x * x ^ 2 = x ^ 3 := by group
+            rw [h5, ← h1]
+          exact mul_left_cancel h4
+        exact hx2ne h3
+    · rcases hb01 with rfl | rfl
+      · -- ψ₆-form directly
+        rw [pow_zero, mul_one] at hτx'
+        have hτx'' : t * x * t⁻¹ = x⁻¹ := by rw [hτx', ← hxinv]
+        exact classify_k8_psi6 hcard x w t H hxmem hwmem ht hx4 hw2 hcomm hw_notin
+          hτx'' hcw ht2_cases
+      · -- ψ₂ : impossible, conjugation by t would not be involutive
+        rw [pow_one] at hτx'
+        exfalso
+        have h1 : x = (x ^ 3 * w) ^ 3 * (x ^ 2 * w) := by
+          calc x = t * (t * x * t⁻¹) * t⁻¹ := (htau2 x hxmem).symm
+            _ = t * (x ^ 3 * w) * t⁻¹ := by rw [hτx']
+            _ = (t * x ^ 3 * t⁻¹) * (t * w * t⁻¹) := by group
+            _ = (t * x * t⁻¹) ^ 3 * (t * w * t⁻¹) := by rw [← conj_pow]
+            _ = (x ^ 3 * w) ^ 3 * (x ^ 2 * w) := by rw [hτx', hcw]
+        have h2 : (x ^ 3 * w) ^ 3 * (x ^ 2 * w) = x ^ 3 := by
+          have h3 : (x ^ 3 * w) ^ 3 = x ^ 9 * w := by
+            rw [(hcomm.pow_left 3).mul_pow]
+            have h4 : ((x ^ 3) ^ 3 : G) = x ^ 9 := by group
+            have h5 : (w ^ 3 : G) = w := by
+              have h6 : (w ^ 3 : G) = w ^ 2 * w := by group
+              rw [h6, hw2, one_mul]
+            rw [h4, h5]
+          rw [h3]
+          calc x ^ 9 * w * (x ^ 2 * w) = x ^ 9 * (w * x ^ 2) * w := by group
+            _ = x ^ 9 * (x ^ 2 * w) * w := by rw [(hcomm.symm.pow_right 2).eq]
+            _ = x ^ 9 * x ^ 2 * (w * w) := by group
+            _ = x ^ 9 * x ^ 2 * 1 := by rw [hww]
+            _ = x ^ 11 := by group
+            _ = x ^ 3 := by
+                have h7 : (x ^ 11 : G) = (x ^ 4) ^ 2 * x ^ 3 := by group
+                rw [h7, hx4', one_pow, one_mul]
+        rw [h2] at h1
+        have h3 : x ^ 2 = 1 := by
+          have h4 : x * x ^ 2 = x * 1 := by
+            rw [mul_one]
+            have h5 : x * x ^ 2 = x ^ 3 := by group
+            rw [h5, ← h1]
+          exact mul_left_cancel h4
+        exact hx2ne h3
+
+end ClassifyK8
+
 /-! ### Main classification theorem
 
-We state that every group of order 16 is isomorphic to one of the 14 representatives,
-and that they are pairwise non-isomorphic.  Full proofs are deferred; the file provides
-the structural framework following Wild's approach.
+Every group of order 16 is isomorphic to exactly one of the 14 representatives:
+the abelian case is handled by the `p⁴` engine, and the nonabelian case splits into
+the `C₈`-extension branch and the `K₈`-extension branch, following Wild.
 -/
 
 /-- **Completeness.** Every group of order 16 is isomorphic to one of the 14 representatives. -/
 theorem order16_wild_classification {G : Type*} [Group G]
     (hcard : Nat.card G = 16) : ∃ i : Fin 14, Nonempty (G ≃* order16_wild_reps i) := by
-  sorry
+  classical
+  haveI : Finite G := by
+    by_contra hinf
+    haveI : Infinite G := ⟨hinf⟩
+    have h0 : Nat.card G = 0 := Nat.card_eq_zero_of_infinite
+    rw [hcard] at h0
+    omega
+  haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  by_cases hab : ∀ a b : G, a * b = b * a
+  · -- abelian: five classes via the p⁴ engine
+    letI : CommGroup G := { ‹Group G› with mul_comm := hab }
+    obtain ⟨i, ⟨e⟩⟩ := orderP4Abel_complete 2 G (by rw [hcard]; norm_num)
+    fin_cases i
+    · exact ⟨6, ⟨e⟩⟩
+    · obtain ⟨e2⟩ := order16_A2_iso_concrete
+      exact ⟨1, ⟨e.trans e2⟩⟩
+    · exact ⟨13, ⟨e⟩⟩
+    · obtain ⟨e4⟩ := order16_A4_iso_concrete
+      exact ⟨7, ⟨e.trans e4⟩⟩
+    · exact ⟨0, ⟨e⟩⟩
+  · by_cases h8 : ∃ g : G, orderOf g = 8
+    · -- C₈-extension branch
+      obtain ⟨g, hg⟩ := h8
+      exact classify_of_order8 hcard hab g hg
+    · -- K₈-extension branch
+      push Not at h8
+      have hnotG0 : ¬ Nonempty (G ≃* order16_wild_G0) := by
+        rintro ⟨e⟩
+        apply hab
+        intro a b
+        apply e.injective
+        rw [map_mul, map_mul, mul_comm]
+      rcases lemma_normal_c8_or_k8 hcard hnotG0 with
+        ⟨H, _, hcardH, ⟨eC⟩⟩ | ⟨H, hn, hcardH, ⟨eK⟩⟩
+      · -- a normal C₈ would give an element of order 8
+        exfalso
+        have h1 : orderOf ((eC.symm xC8 : H) : G) = 8 := by
+          have h2 : orderOf ((eC.symm xC8 : H) : G) = orderOf (eC.symm xC8) :=
+            orderOf_injective H.subtype H.subtype_injective (eC.symm xC8)
+          have h3 : orderOf (eC.symm xC8) = orderOf xC8 :=
+            orderOf_injective eC.symm.toMonoidHom eC.symm.injective xC8
+          rw [h2, h3, orderOf_xC8]
+        exact h8 _ h1
+      · exact classify_of_k8 hcard hab h8 H hn hcardH eK
 
 /-- **Distinctness.** The 14 representatives are pairwise non-isomorphic. -/
 theorem order16_wild_distinct {i j : Fin 14}
