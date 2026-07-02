@@ -2853,6 +2853,15 @@ theorem order36_C3A4_has_normal_order_three_and_A4_quotient :
   · exact ⟨((QuotientGroup.quotientKerEquivRange π).trans
       (MulEquiv.subgroupCongr hrange_top)).trans Subgroup.topEquiv⟩
 
+theorem order36_C3A4_has_central_order_three_and_A4_quotient :
+    ∃ (K : Subgroup order36_C3A4) (_ : K.Normal), K ≤ Subgroup.center order36_C3A4 ∧
+      Nat.card K = 3 ∧ Nonempty (order36_C3A4 ⧸ K ≃* order36_A4) := by
+  obtain ⟨K, hKnormal, hKcard, hquot⟩ :=
+    order36_C3A4_has_normal_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  exact ⟨K, hKnormal,
+    order36_normal_order_three_A4_quotient_le_center K hKcard hquot, hKcard, hquot⟩
+
 theorem order36_C3A4_no_order_nine (x : order36_C3A4) : orderOf x ≠ 9 := by
   rw [Prod.orderOf_mk]
   have hleft : orderOf x.1 ∣ 3 := by
@@ -2893,6 +2902,15 @@ theorem order36_A4C9_has_normal_order_three_and_A4_quotient :
     omega
   · exact ⟨((QuotientGroup.quotientKerEquivRange π).trans
       (MulEquiv.subgroupCongr hrange_top)).trans Subgroup.topEquiv⟩
+
+theorem order36_A4C9_has_central_order_three_and_A4_quotient :
+    ∃ (K : Subgroup order36_A4C9) (_ : K.Normal), K ≤ Subgroup.center order36_A4C9 ∧
+      Nat.card K = 3 ∧ Nonempty (order36_A4C9 ⧸ K ≃* order36_A4) := by
+  obtain ⟨K, hKnormal, hKcard, hquot⟩ :=
+    order36_A4C9_has_normal_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  exact ⟨K, hKnormal,
+    order36_normal_order_three_A4_quotient_le_center K hKcard hquot, hKcard, hquot⟩
 
 theorem order36_A4C9_has_order_nine : ∃ x : order36_A4C9, orderOf x = 9 := by
   let z : order36_C9 := Multiplicative.ofAdd (1 : ZMod 9)
@@ -2981,6 +2999,20 @@ theorem order36_nonnormal_reps_has_normal_order_three_and_A4_quotient (i : Fin 2
   · change ∃ (K : Subgroup order36_A4C9) (_ : K.Normal), Nat.card K = 3 ∧
         Nonempty (order36_A4C9 ⧸ K ≃* order36_A4)
     exact order36_A4C9_has_normal_order_three_and_A4_quotient
+
+theorem order36_nonnormal_reps_has_central_order_three_and_A4_quotient (i : Fin 2) :
+    ∃ (K : Subgroup (order36_nonnormal_reps i)) (_ : K.Normal),
+      K ≤ Subgroup.center (order36_nonnormal_reps i) ∧ Nat.card K = 3 ∧
+        Nonempty ((order36_nonnormal_reps i) ⧸ K ≃* order36_A4) := by
+  fin_cases i
+  · change ∃ (K : Subgroup order36_C3A4) (_ : K.Normal),
+        K ≤ Subgroup.center order36_C3A4 ∧ Nat.card K = 3 ∧
+          Nonempty (order36_C3A4 ⧸ K ≃* order36_A4)
+    exact order36_C3A4_has_central_order_three_and_A4_quotient
+  · change ∃ (K : Subgroup order36_A4C9) (_ : K.Normal),
+        K ≤ Subgroup.center order36_A4C9 ∧ Nat.card K = 3 ∧
+          Nonempty (order36_A4C9 ⧸ K ≃* order36_A4)
+    exact order36_A4C9_has_central_order_three_and_A4_quotient
 
 /-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
 theorem sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four [Finite G]
