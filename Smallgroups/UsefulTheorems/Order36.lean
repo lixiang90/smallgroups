@@ -2384,6 +2384,181 @@ theorem card_sylow_3_subgroup_of_card_36 [Finite G] (hG : Nat.card G = 36)
   rw [Sylow.card_eq_multiplicity, hG, hfact]
   norm_num
 
+/-- In a group of order `36`, a normal subgroup of order `9` is the unique Sylow
+`3`-subgroup. -/
+theorem card_sylow_3_eq_one_of_normal_order_nine [Finite G] (hG : Nat.card G = 36)
+    (N : Subgroup G) [N.Normal] (hN : Nat.card N = 9) :
+    Nat.card (Sylow 3 G) = 1 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hfact : (Nat.card G).factorization 3 = 2 := by
+    rw [hG]
+    rw [show 36 = 4 * 3 ^ 2 by norm_num,
+      Nat.factorization_mul (by norm_num) (by norm_num), Finsupp.add_apply,
+      Nat.factorization_eq_zero_of_not_dvd (by norm_num : ¬ (3 : ℕ) ∣ 4),
+      Nat.factorization_pow_self (by norm_num : Nat.Prime 3), zero_add]
+  let P : Sylow 3 G := Sylow.ofCard N (by
+    rw [hfact]
+    exact hN)
+  have hPnormal : (↑P : Subgroup G).Normal := by
+    dsimp [P]
+    infer_instance
+  haveI := Sylow.unique_of_normal P hPnormal
+  exact Nat.card_unique
+
+/-- A semidirect product with normal factor of order `9` and acting factor of order `4`
+has a unique Sylow `3`-subgroup. -/
+theorem card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+    {N H : Type*} [Group N] [Group H] [Finite N] [Finite H]
+    (φ : H →* MulAut N) (hN : Nat.card N = 9) (hH : Nat.card H = 4) :
+    Nat.card (Sylow 3 (SemidirectProduct N H φ)) = 1 := by
+  haveI : Finite (SemidirectProduct N H φ) := Finite.of_equiv _ SemidirectProduct.equivProd.symm
+  have hG : Nat.card (SemidirectProduct N H φ) = 36 := by
+    rw [SemidirectProduct.card, hN, hH]
+  let K : Subgroup (SemidirectProduct N H φ) :=
+    (SemidirectProduct.rightHom : SemidirectProduct N H φ →* H).ker
+  haveI : K.Normal := by
+    dsimp [K]
+    infer_instance
+  have hK : Nat.card K = 9 := by
+    have e : N ≃* (SemidirectProduct.inl : N →* SemidirectProduct N H φ).range :=
+      MonoidHom.ofInjective (SemidirectProduct.inl_injective (φ := φ))
+    rw [show K = (SemidirectProduct.inl : N →* SemidirectProduct N H φ).range by
+      dsimp [K]
+      rw [← SemidirectProduct.range_inl_eq_ker_rightHom (φ := φ)]]
+    rw [← hN, Nat.card_congr e.toEquiv]
+  exact card_sylow_3_eq_one_of_normal_order_nine hG K hK
+
+/-- A direct product with first factor of order `9` and second factor of order `4` has a
+unique Sylow `3`-subgroup. -/
+theorem card_sylow_3_prod_of_left_card_nine_right_card_four
+    {N H : Type*} [Group N] [Group H] [Finite N] [Finite H]
+    (hN : Nat.card N = 9) (hH : Nat.card H = 4) :
+    Nat.card (Sylow 3 (N × H)) = 1 := by
+  have hG : Nat.card (N × H) = 36 := by
+    rw [Nat.card_prod, hN, hH]
+  let K : Subgroup (N × H) := (MonoidHom.snd N H).ker
+  haveI : K.Normal := by
+    dsimp [K]
+    infer_instance
+  have hK : Nat.card K = 9 := by
+    rw [show K = (⊤ : Subgroup N).prod (⊥ : Subgroup H) by
+      dsimp [K]
+      rw [MonoidHom.ker_snd]]
+    rw [Nat.card_congr (Subgroup.prodEquiv (⊤ : Subgroup N) (⊥ : Subgroup H)).toEquiv,
+      Nat.card_prod, Subgroup.card_top, Subgroup.card_bot, hN]
+  exact card_sylow_3_eq_one_of_normal_order_nine hG K hK
+
+/-- The number of Sylow `3`-subgroups is preserved by group isomorphism. -/
+theorem card_sylow_3_eq_of_mulEquiv {G H : Type*} [Group G] [Group H]
+    [Finite G] [Finite H] (e : G ≃* H) :
+    Nat.card (Sylow 3 G) = Nat.card (Sylow 3 H) := by
+  haveI : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+  let f : G →* H := e.toMonoidHom
+  have hf : Function.Surjective f := e.surjective
+  have hsurj : Function.Surjective (Sylow.mapSurjective hf : Sylow 3 G → Sylow 3 H) :=
+    Sylow.mapSurjective_surjective hf 3
+  let g : H →* G := e.symm.toMonoidHom
+  have hg : Function.Surjective g := e.symm.surjective
+  have hsurj' : Function.Surjective (Sylow.mapSurjective hg : Sylow 3 H → Sylow 3 G) :=
+    Sylow.mapSurjective_surjective hg 3
+  exact Nat.le_antisymm
+    (Nat.card_le_card_of_surjective _ hsurj')
+    (Nat.card_le_card_of_surjective _ hsurj)
+
+/-- Every representative in the normal Sylow-`3` branch has a unique Sylow `3`-subgroup. -/
+theorem card_sylow_3_order36_normal_reps (i : Fin 12) :
+    Nat.card (Sylow 3 (order36_normal_reps i)) = 1 := by
+  have hC2 : Nat.card order36_C2 = 2 := by
+    simp [order36_C2]
+  have hC4 : Nat.card order36_C4 = 4 := by
+    simp [order36_C4]
+  have hV4 : Nat.card order36_V4 = 4 := by
+    rw [order36_V4, Nat.card_prod, hC2]
+  have hC9 : Nat.card order36_C9 = 9 := by
+    simp [order36_C9]
+  have hE9 : Nat.card order36_E9 = 9 := by
+    rw [order36_E9, ElemAbelianRep, Nat.card_prod]
+    simp
+  fin_cases i
+  · change Nat.card (Sylow 3 (order36_C9 × order36_C4)) = 1
+    exact card_sylow_3_prod_of_left_card_nine_right_card_four
+        (N := order36_C9) (H := order36_C4) hC9 hC4
+  · change Nat.card (Sylow 3 (SemidirectProduct order36_C9 order36_C4
+      order36_C9_C4_invAction)) = 1
+    exact card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_C9_C4_invAction hC9 hC4
+  · change Nat.card (Sylow 3 (order36_C9 × order36_V4)) = 1
+    exact card_sylow_3_prod_of_left_card_nine_right_card_four
+        (N := order36_C9) (H := order36_V4) hC9 hV4
+  · haveI : Finite (SemidirectProduct order36_C9 order36_V4
+        (order36_c9Action order36_chiV4_fst)) :=
+      Finite.of_equiv _ SemidirectProduct.equivProd.symm
+    have hs :
+        Nat.card (Sylow 3 (SemidirectProduct order36_C9 order36_V4
+          (order36_c9Action order36_chiV4_fst))) = 1 :=
+      card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        (order36_c9Action order36_chiV4_fst) hC9 hV4
+    have heq := card_sylow_3_eq_of_mulEquiv order36_c9V4_fst_equiv_dihedral_prod
+    change Nat.card (Sylow 3 (DihedralGroup 9 × order36_C2)) = 1
+    exact heq.symm.trans hs
+  · change Nat.card (Sylow 3 (order36_E9 × order36_C4)) = 1
+    exact card_sylow_3_prod_of_left_card_nine_right_card_four
+        (N := order36_E9) (H := order36_C4) hE9 hC4
+  · change Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_C4
+      order36_E9_C4_negBothAction)) = 1
+    exact card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_C4_negBothAction hE9 hC4
+  · change Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_C4
+      order36_E9_C4_negFirstAction)) = 1
+    exact card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_C4_negFirstAction hE9 hC4
+  · change Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_C4
+      order36_E9_C4_rotAction)) = 1
+    exact card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_C4_rotAction hE9 hC4
+  · change Nat.card (Sylow 3 (order36_E9 × order36_V4)) = 1
+    exact card_sylow_3_prod_of_left_card_nine_right_card_four
+        (N := order36_E9) (H := order36_V4) hE9 hV4
+  · haveI : Finite (SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_negBothFstAction) :=
+      Finite.of_equiv _ SemidirectProduct.equivProd.symm
+    have hs :
+        Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_V4
+          order36_E9_V4_negBothFstAction)) = 1 :=
+      card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_V4_negBothFstAction hE9 hV4
+    obtain ⟨e⟩ := order36_e9_v4_negBothFst_equiv_rep9
+    haveI : Finite (order36_normal_reps (9 : Fin 12)) := Finite.of_equiv _ e.toEquiv
+    have heq := card_sylow_3_eq_of_mulEquiv e
+    change Nat.card (Sylow 3 (order36_normal_reps (9 : Fin 12))) = 1
+    exact heq.symm.trans hs
+  · haveI : Finite (SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_negFirstFstAction) :=
+      Finite.of_equiv _ SemidirectProduct.equivProd.symm
+    have hs :
+        Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_V4
+          order36_E9_V4_negFirstFstAction)) = 1 :=
+      card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_V4_negFirstFstAction hE9 hV4
+    obtain ⟨e⟩ := order36_e9_v4_negFirstFst_equiv_rep10
+    haveI : Finite (order36_normal_reps (10 : Fin 12)) := Finite.of_equiv _ e.toEquiv
+    have heq := card_sylow_3_eq_of_mulEquiv e
+    change Nat.card (Sylow 3 (order36_normal_reps (10 : Fin 12))) = 1
+    exact heq.symm.trans hs
+  · haveI : Finite (SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_diagAction) :=
+      Finite.of_equiv _ SemidirectProduct.equivProd.symm
+    have hs :
+        Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_V4
+          order36_E9_V4_diagAction)) = 1 :=
+      card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_V4_diagAction hE9 hV4
+    obtain ⟨e⟩ := order36_e9_v4_diag_equiv_rep11
+    haveI : Finite (order36_normal_reps (11 : Fin 12)) := Finite.of_equiv _ e.toEquiv
+    have heq := card_sylow_3_eq_of_mulEquiv e
+    change Nat.card (Sylow 3 (order36_normal_reps (11 : Fin 12))) = 1
+    exact heq.symm.trans hs
+
 /-- If there is a unique Sylow `3`-subgroup in a group of order `36`, it is normal. -/
 theorem sylow_3_normal_of_card_36_of_card_sylow_eq_one [Finite G]
     (hSyl : Nat.card (Sylow 3 G) = 1) (P : Sylow 3 G) :
@@ -3547,6 +3722,27 @@ theorem order36_nonnormal_reps_pairwise :
   · exact absurd hiso order36_C3A4_not_mulEquiv_A4C9
   · exact absurd ⟨hiso.some.symm⟩ order36_C3A4_not_mulEquiv_A4C9
   · rfl
+
+/-- The normal and non-normal Sylow-`3` branch representatives are disjoint. -/
+theorem order36_normal_nonnormal_reps_disjoint :
+    ∀ i j, ¬ Nonempty (order36_normal_reps i ≃* order36_nonnormal_reps j) := by
+  intro i j hiso
+  obtain ⟨e⟩ := hiso
+  haveI : Finite (order36_normal_reps i) :=
+    Nat.finite_of_card_ne_zero (by rw [card_order36_normal_reps i]; norm_num)
+  haveI : Finite (order36_nonnormal_reps j) :=
+    Nat.finite_of_card_ne_zero (by rw [card_order36_nonnormal_reps j]; norm_num)
+  have heq := card_sylow_3_eq_of_mulEquiv e
+  rw [card_sylow_3_order36_normal_reps i,
+    card_sylow_3_order36_nonnormal_reps j] at heq
+  norm_num at heq
+
+/-- Once the normal branch representatives are internally separated, the normal and non-normal
+branches combine into a pairwise non-isomorphic family. -/
+theorem order36_sum_reps_pairwise_of_normal_reps_pairwise
+    (hnormal : PairwiseNonMulEquiv order36_normal_reps) :
+    PairwiseNonMulEquiv (Sum.elim order36_normal_reps order36_nonnormal_reps) := by
+  exact hnormal.sum order36_nonnormal_reps_pairwise order36_normal_nonnormal_reps_disjoint
 
 theorem order36_nonnormal_reps_has_normal_order_three_and_A4_quotient (i : Fin 2) :
     ∃ (K : Subgroup (order36_nonnormal_reps i)) (_ : K.Normal), Nat.card K = 3 ∧
