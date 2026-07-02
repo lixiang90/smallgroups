@@ -750,6 +750,72 @@ theorem order36_E9_mulAut_apply_matrix (α : MulAut order36_E9) (x y : ZMod 3) :
     apply congrArg Multiplicative.ofAdd
     simp [nsmul_eq_mul, mul_comm]
 
+theorem order36_E9_mulAut_pow_four_entries (α : MulAut order36_E9) (hα : α ^ 4 = 1) :
+    let a := (α order36_E9_e1).1.toAdd
+    let b := (α order36_E9_e2).1.toAdd
+    let c := (α order36_E9_e1).2.toAdd
+    let d := (α order36_E9_e2).2.toAdd
+    let a2 := a * a + b * c
+    let b2 := a * b + b * d
+    let c2 := c * a + d * c
+    let d2 := c * b + d * d
+    a2 * a2 + b2 * c2 = 1 ∧ a2 * b2 + b2 * d2 = 0 ∧
+      c2 * a2 + d2 * c2 = 0 ∧ c2 * b2 + d2 * d2 = 1 := by
+  let a := (α order36_E9_e1).1.toAdd
+  let b := (α order36_E9_e2).1.toAdd
+  let c := (α order36_E9_e1).2.toAdd
+  let d := (α order36_E9_e2).2.toAdd
+  let a2 := a * a + b * c
+  let b2 := a * b + b * d
+  let c2 := c * a + d * c
+  let d2 := c * b + d * d
+  have he1 : α order36_E9_e1 = (Multiplicative.ofAdd a, Multiplicative.ofAdd c) := by
+    ext <;> simp [a, c]
+  have he2 : α order36_E9_e2 = (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
+    ext <;> simp [b, d]
+  let β : MulAut order36_E9 := α ^ 2
+  have hβe1 : β order36_E9_e1 = (Multiplicative.ofAdd a2, Multiplicative.ofAdd c2) := by
+    change α (α order36_E9_e1) = _
+    rw [he1, order36_E9_mulAut_apply_matrix α a c]
+  have hβe2 : β order36_E9_e2 = (Multiplicative.ofAdd b2, Multiplicative.ofAdd d2) := by
+    change α (α order36_E9_e2) = _
+    rw [he2, order36_E9_mulAut_apply_matrix α b d]
+  have hβ2 : β ^ 2 = 1 := by
+    dsimp [β]
+    rw [show (α ^ 2) ^ 2 = α ^ 4 by group]
+    exact hα
+  have heq1 : (β ^ 2) order36_E9_e1 = order36_E9_e1 := by
+    exact congrArg (fun γ : MulAut order36_E9 => γ order36_E9_e1) hβ2
+  have heq2 : (β ^ 2) order36_E9_e2 = order36_E9_e2 := by
+    exact congrArg (fun γ : MulAut order36_E9 => γ order36_E9_e2) hβ2
+  have hββe1 : (β ^ 2) order36_E9_e1 =
+      (Multiplicative.ofAdd (a2 * a2 + b2 * c2),
+        Multiplicative.ofAdd (c2 * a2 + d2 * c2)) := by
+    change β (β order36_E9_e1) = _
+    rw [hβe1, order36_E9_mulAut_apply_matrix β a2 c2]
+    rw [hβe1, hβe2]
+    ext <;> simp
+  have hββe2 : (β ^ 2) order36_E9_e2 =
+      (Multiplicative.ofAdd (a2 * b2 + b2 * d2),
+        Multiplicative.ofAdd (c2 * b2 + d2 * d2)) := by
+    change β (β order36_E9_e2) = _
+    rw [hβe2, order36_E9_mulAut_apply_matrix β b2 d2]
+    rw [hβe1, hβe2]
+    ext <;> simp
+  rw [hββe1] at heq1
+  rw [hββe2] at heq2
+  constructor
+  · have h := congrArg (fun z : order36_E9 => z.1.toAdd) heq1
+    simpa [order36_E9_e1] using h
+  constructor
+  · have h := congrArg (fun z : order36_E9 => z.1.toAdd) heq2
+    simpa [order36_E9_e2] using h
+  constructor
+  · have h := congrArg (fun z : order36_E9 => z.2.toAdd) heq1
+    simpa [order36_E9_e1] using h
+  · have h := congrArg (fun z : order36_E9 => z.2.toAdd) heq2
+    simpa [order36_E9_e2] using h
+
 /-- Negate both coordinates of `C₃ × C₃`. -/
 def order36_E9_negBothAddEquiv : order36_E9Add ≃+ order36_E9Add where
   toFun x := (-x.1, -x.2)
