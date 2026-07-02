@@ -2052,6 +2052,315 @@ theorem order36_normal_abelian_nonabelian_reps_disjoint :
     (order36_normal_abelian_reps_comm i)
     (order36_normal_nonabelian_reps_not_comm j)
 
+theorem semidirectProduct_has_order_four_of_right_c4 {N : Type*} [Group N]
+    (φ : order36_C4 →* MulAut N) :
+    ∃ g : SemidirectProduct N order36_C4 φ, orderOf g = 4 := by
+  refine ⟨SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4)), ?_⟩
+  rw [orderOf_injective (SemidirectProduct.inr : order36_C4 →*
+    SemidirectProduct N order36_C4 φ) SemidirectProduct.inr_injective]
+  rw [orderOf_ofAdd_eq_addOrderOf]
+  exact ZMod.addOrderOf_one 4
+
+theorem semidirectProduct_e9_c4_pow_twelve
+    (φ : order36_C4 →* MulAut order36_E9)
+    (g : SemidirectProduct order36_E9 order36_C4 φ) :
+    g ^ 12 = 1 := by
+  have hright :
+      (SemidirectProduct.rightHom :
+        SemidirectProduct order36_E9 order36_C4 φ →* order36_C4) (g ^ 4) = 1 := by
+    rw [map_pow]
+    change g.right ^ 4 = 1
+    rw [← orderOf_dvd_iff_pow_eq_one]
+    have hcard : Nat.card order36_C4 = 4 := by simp [order36_C4]
+    have hdvd := _root_.orderOf_dvd_natCard (x := g.right)
+    rw [hcard] at hdvd
+    exact hdvd
+  have hrange :
+      g ^ 4 ∈ (SemidirectProduct.inl :
+        order36_E9 →* SemidirectProduct order36_E9 order36_C4 φ).range := by
+    rw [SemidirectProduct.range_inl_eq_ker_rightHom]
+    exact hright
+  obtain ⟨n, hn⟩ := hrange
+  rw [show 12 = 4 * 3 by norm_num, pow_mul, ← hn, ← map_pow]
+  have hn3 : n ^ 3 = 1 := by
+    simpa [order36_E9] using (pow_p_elemAbelian (p := 3) n)
+  rw [hn3, map_one]
+
+theorem order36_chiC4_inv_sq :
+    order36_chiC4_inv (Multiplicative.ofAdd (2 : ZMod 4)) = 1 := by
+  change (-1 : (ZMod 9)ˣ) ^ (2 : ZMod 4).val = 1
+  rw [show (2 : ZMod 4).val = 2 by decide]
+  norm_num
+
+theorem order36_C9_C4_invAction_sq_trivial :
+    order36_C9_C4_invAction (Multiplicative.ofAdd (2 : ZMod 4)) = 1 := by
+  rw [order36_C9_C4_invAction, order36_c9Action]
+  change unitAutHom (order36_chiC4_inv (Multiplicative.ofAdd (2 : ZMod 4))) = 1
+  rw [order36_chiC4_inv_sq]
+  ext x
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+  simp
+
+theorem order36_C9_C4_invAction_gen_sq_comm :
+    Commute
+      (SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 9)) :
+        SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction)
+      (SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4))) := by
+  apply SemidirectProduct.ext
+  · simp [SemidirectProduct.mul_left, order36_C9_C4_invAction_sq_trivial]
+  · simp [SemidirectProduct.mul_right]
+
+theorem order36_C9_C4_invAction_has_order_eighteen :
+    ∃ g : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction,
+      orderOf g = 18 := by
+  let a : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction :=
+    SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 9))
+  let b : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction :=
+    SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4))
+  refine ⟨a * b, ?_⟩
+  have hcomm : Commute a b := order36_C9_C4_invAction_gen_sq_comm
+  have ha : orderOf a = 9 := by
+    dsimp [a]
+    rw [orderOf_injective (SemidirectProduct.inl : order36_C9 →*
+      SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction)
+      SemidirectProduct.inl_injective]
+    rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+  have hb : orderOf b = 2 := by
+    dsimp [b]
+    rw [orderOf_injective (SemidirectProduct.inr : order36_C4 →*
+      SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction)
+      SemidirectProduct.inr_injective]
+    rw [orderOf_ofAdd_eq_addOrderOf]
+    change addOrderOf ((2 : ℕ) : ZMod 4) = 2
+    rw [ZMod.addOrderOf_coe' 4 (by norm_num : (2 : ℕ) ≠ 0)]
+    norm_num
+  have hcop : (orderOf a).Coprime (orderOf b) := by
+    rw [ha, hb]
+    norm_num
+  rw [hcomm.orderOf_mul_eq_mul_orderOf_of_coprime hcop, ha, hb]
+
+/-- The four non-abelian normal representatives whose complement is `C₄`. -/
+noncomputable def order36_normal_nonabelian_c4_reps : Fin 4 → Type
+  | 0 => order36_normal_nonabelian_reps (0 : Fin 8)
+  | 1 => order36_normal_nonabelian_reps (2 : Fin 8)
+  | 2 => order36_normal_nonabelian_reps (3 : Fin 8)
+  | 3 => order36_normal_nonabelian_reps (4 : Fin 8)
+
+noncomputable instance order36_normal_nonabelian_c4_reps_group :
+    ∀ i, Group (order36_normal_nonabelian_c4_reps i)
+  | 0 => by dsimp [order36_normal_nonabelian_c4_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_nonabelian_c4_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_nonabelian_c4_reps]; infer_instance
+  | 3 => by dsimp [order36_normal_nonabelian_c4_reps]; infer_instance
+
+theorem order36_normal_nonabelian_c4_reps_has_order_four (i : Fin 4) :
+    ∃ g : order36_normal_nonabelian_c4_reps i, orderOf g = 4 := by
+  fin_cases i
+  · change ∃ g : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction,
+      orderOf g = 4
+    exact semidirectProduct_has_order_four_of_right_c4 order36_C9_C4_invAction
+  · change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+      orderOf g = 4
+    exact semidirectProduct_has_order_four_of_right_c4 order36_E9_C4_negBothAction
+  · change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+      orderOf g = 4
+    exact semidirectProduct_has_order_four_of_right_c4 order36_E9_C4_negFirstAction
+  · change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      orderOf g = 4
+    exact semidirectProduct_has_order_four_of_right_c4 order36_E9_C4_rotAction
+
+theorem order36_normal_nonabelian_c4_rep0_has_order_eighteen :
+    ∃ g : order36_normal_nonabelian_c4_reps (0 : Fin 4), orderOf g = 18 := by
+  change ∃ g : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction,
+    orderOf g = 18
+  exact order36_C9_C4_invAction_has_order_eighteen
+
+/-- The three `E₉ ⋊ C₄` non-abelian normal representatives. -/
+noncomputable def order36_normal_nonabelian_c4_e9_reps : Fin 3 → Type
+  | 0 => order36_normal_nonabelian_c4_reps (1 : Fin 4)
+  | 1 => order36_normal_nonabelian_c4_reps (2 : Fin 4)
+  | 2 => order36_normal_nonabelian_c4_reps (3 : Fin 4)
+
+noncomputable instance order36_normal_nonabelian_c4_e9_reps_group :
+    ∀ i, Group (order36_normal_nonabelian_c4_e9_reps i)
+  | 0 => by dsimp [order36_normal_nonabelian_c4_e9_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_nonabelian_c4_e9_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_nonabelian_c4_e9_reps]; infer_instance
+
+theorem order36_normal_nonabelian_c4_e9_reps_no_order_eighteen (i : Fin 3) :
+    ∀ g : order36_normal_nonabelian_c4_e9_reps i, orderOf g ≠ 18 := by
+  fin_cases i
+  · change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+      orderOf g ≠ 18
+    exact orderOf_ne_of_pow (semidirectProduct_e9_c4_pow_twelve order36_E9_C4_negBothAction)
+      (by norm_num : ¬ (18 : ℕ) ∣ 12)
+  · change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+      orderOf g ≠ 18
+    exact orderOf_ne_of_pow (semidirectProduct_e9_c4_pow_twelve order36_E9_C4_negFirstAction)
+      (by norm_num : ¬ (18 : ℕ) ∣ 12)
+  · change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      orderOf g ≠ 18
+    exact orderOf_ne_of_pow (semidirectProduct_e9_c4_pow_twelve order36_E9_C4_rotAction)
+      (by norm_num : ¬ (18 : ℕ) ∣ 12)
+
+theorem order36_normal_nonabelian_c4_c9_e9_reps_disjoint :
+    ∀ j, ¬ Nonempty (order36_normal_nonabelian_c4_reps (0 : Fin 4) ≃*
+      order36_normal_nonabelian_c4_e9_reps j) := by
+  intro j
+  exact not_mulEquiv_of_orderOf
+    order36_normal_nonabelian_c4_rep0_has_order_eighteen
+    (order36_normal_nonabelian_c4_e9_reps_no_order_eighteen j)
+
+theorem order36_E9_C4_negFirstAction_gen_e2 :
+    order36_E9_C4_negFirstAction (Multiplicative.ofAdd (1 : ZMod 4)) order36_E9_e2 =
+      order36_E9_e2 := by
+  rw [order36_E9_C4_negFirstAction, order36_c4ActionOfAut_gen,
+    order36_E9_negFirstAut_e2]
+
+theorem order36_E9_C4_negFirstAction_e2_gen_comm :
+    Commute
+      (SemidirectProduct.inl order36_E9_e2 :
+        SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction)
+      (SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4))) := by
+  apply SemidirectProduct.ext
+  · simp [SemidirectProduct.mul_left]
+  · simp [SemidirectProduct.mul_right]
+
+theorem order36_E9_C4_negFirstAction_has_order_twelve :
+    ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+      orderOf g = 12 := by
+  let a : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction :=
+    SemidirectProduct.inl order36_E9_e2
+  let b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction :=
+    SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4))
+  refine ⟨a * b, ?_⟩
+  have hcomm : Commute a b := order36_E9_C4_negFirstAction_e2_gen_comm
+  have ha : orderOf a = 3 := by
+    dsimp [a]
+    rw [orderOf_injective (SemidirectProduct.inl : order36_E9 →*
+      SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction)
+      SemidirectProduct.inl_injective]
+    change orderOf ((1, Multiplicative.ofAdd (1 : ZMod 3)) : order36_E9) = 3
+    rw [Prod.orderOf_mk, orderOf_one, orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+    norm_num
+  have hb : orderOf b = 4 := by
+    dsimp [b]
+    rw [orderOf_injective (SemidirectProduct.inr : order36_C4 →*
+      SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction)
+      SemidirectProduct.inr_injective]
+    rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+  have hcop : (orderOf a).Coprime (orderOf b) := by
+    rw [ha, hb]
+    norm_num
+  rw [hcomm.orderOf_mul_eq_mul_orderOf_of_coprime hcop, ha, hb]
+
+theorem order36_normal_nonabelian_c4_e9_rep1_has_order_twelve :
+    ∃ g : order36_normal_nonabelian_c4_e9_reps (1 : Fin 3), orderOf g = 12 := by
+  change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+    orderOf g = 12
+  exact order36_E9_C4_negFirstAction_has_order_twelve
+
+/-- The four non-abelian normal representatives whose complement is not `C₄`. -/
+noncomputable def order36_normal_nonabelian_non_c4_reps : Fin 4 → Type
+  | 0 => order36_normal_nonabelian_reps (1 : Fin 8)
+  | 1 => order36_normal_nonabelian_reps (5 : Fin 8)
+  | 2 => order36_normal_nonabelian_reps (6 : Fin 8)
+  | 3 => order36_normal_nonabelian_reps (7 : Fin 8)
+
+noncomputable instance order36_normal_nonabelian_non_c4_reps_group :
+    ∀ i, Group (order36_normal_nonabelian_non_c4_reps i)
+  | 0 => by dsimp [order36_normal_nonabelian_non_c4_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_nonabelian_non_c4_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_nonabelian_non_c4_reps]; infer_instance
+  | 3 => by dsimp [order36_normal_nonabelian_non_c4_reps]; infer_instance
+
+theorem order36_normal_nonabelian_non_c4_reps_no_order_four (i : Fin 4) :
+    ∀ g : order36_normal_nonabelian_non_c4_reps i, orderOf g ≠ 4 := by
+  fin_cases i
+  · change ∀ g : DihedralGroup 9 × order36_C2, orderOf g ≠ 4
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 18 = 1
+        rw [show 18 = Fintype.card (DihedralGroup 9) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · change g.2 ^ 18 = 1
+        rw [← orderOf_dvd_iff_pow_eq_one]
+        have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+        have hdvd := _root_.orderOf_dvd_natCard (x := g.2)
+        rw [hcard] at hdvd
+        exact hdvd.trans (by norm_num)) (by norm_num : ¬ (4 : ℕ) ∣ 18)
+  · change ∀ g : SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9) ×
+      order36_C2, orderOf g ≠ 4
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        have hcase :
+            g.1.right = 1 ∨ g.1.right = Multiplicative.ofAdd (1 : ZMod 2) := by
+          rcases multiplicative_zmod_two_cases g.1.right with h | h
+          · left; exact h
+          · right; exact h
+        rcases hcase with hr | hr
+        · have hg : g.1 = SemidirectProduct.inl g.1.left :=
+            SemidirectProduct.ext rfl (by rw [hr]; rfl)
+          rw [hg, ← map_pow]
+          have hleft3 : g.1.left ^ 3 = 1 := by
+            simpa [order36_E9] using (pow_p_elemAbelian (p := 3) g.1.left)
+          rw [show 6 = 3 * 2 by norm_num, pow_mul, hleft3, one_pow, map_one]
+        · have hsq : g.1 ^ 2 = 1 := by
+            rw [sq]
+            apply SemidirectProduct.ext
+            · simp [SemidirectProduct.mul_left, hr, invAut_apply]
+            · rw [SemidirectProduct.mul_right, hr, SemidirectProduct.one_right]
+              decide
+          rw [show 6 = 2 * 3 by norm_num, pow_mul, hsq, one_pow]
+      · change g.2 ^ 6 = 1
+        rw [← orderOf_dvd_iff_pow_eq_one]
+        have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+        have hdvd := _root_.orderOf_dvd_natCard (x := g.2)
+        rw [hcard] at hdvd
+        exact hdvd.trans (by norm_num)) (by norm_num : ¬ (4 : ℕ) ∣ 6)
+  · change ∀ g : DihedralGroup 3 × CyclicRep 3 × order36_C2, orderOf g ≠ 4
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · rw [Prod.pow_mk]
+        apply Prod.ext
+        · change g.2.1 ^ 6 = 1
+          rw [← orderOf_dvd_iff_pow_eq_one]
+          have hcard : Nat.card (CyclicRep 3) = 3 := by simp [CyclicRep]
+          have hdvd := _root_.orderOf_dvd_natCard (x := g.2.1)
+          rw [hcard] at hdvd
+          exact hdvd.trans (by norm_num)
+        · change g.2.2 ^ 6 = 1
+          rw [← orderOf_dvd_iff_pow_eq_one]
+          have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+          have hdvd := _root_.orderOf_dvd_natCard (x := g.2.2)
+          rw [hcard] at hdvd
+          exact hdvd.trans (by norm_num)) (by norm_num : ¬ (4 : ℕ) ∣ 6)
+  · change ∀ g : DihedralGroup 3 × DihedralGroup 3, orderOf g ≠ 4
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · change g.2 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one) (by norm_num : ¬ (4 : ℕ) ∣ 6)
+
+theorem order36_normal_nonabelian_c4_non_c4_reps_disjoint :
+    ∀ i j, ¬ Nonempty (order36_normal_nonabelian_c4_reps i ≃*
+      order36_normal_nonabelian_non_c4_reps j) := by
+  intro i j
+  exact not_mulEquiv_of_orderOf
+    (order36_normal_nonabelian_c4_reps_has_order_four i)
+    (order36_normal_nonabelian_non_c4_reps_no_order_four j)
+
 theorem order36_c9_c4_action_rep_cases (φ : order36_C4 →* MulAut order36_C9) :
     Nonempty (SemidirectProduct order36_C9 order36_C4 φ ≃*
       order36_normal_reps (0 : Fin 12)) ∨
