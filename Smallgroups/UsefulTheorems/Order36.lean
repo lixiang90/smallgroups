@@ -4690,6 +4690,31 @@ theorem order36_klein_order_three_sup_mulEquiv_A4
       (G := G) hG K W H hKcenter hKW hKcard hLcomp hLcard hpow_in hHcomp hHcard
   exact ⟨(hcomp.symm.QuotientMulEquiv).symm.trans e⟩
 
+theorem order36_mulEquiv_C3_A4_of_central_order_three_A4_complement
+    {G : Type*} [Group G] (K S : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKcard : Nat.card K = 3)
+    (hcomp : K.IsComplement' S) (hSiso : Nonempty (S ≃* order36_A4)) :
+    Nonempty (G ≃* order36_C3 × order36_A4) := by
+  obtain ⟨eK⟩ : Nonempty (K ≃* order36_C3) := by
+    simpa [order36_C3, CyclicRep] using
+      (prime_classification (G := K) (p := 3) (by norm_num) hKcard)
+  obtain ⟨eS⟩ := hSiso
+  let action : S →* MulAut K :=
+    K.normalizerMonoidHom.comp
+      (Subgroup.inclusion
+        (K.normalizer_eq_top ▸ le_top : S ≤ Subgroup.normalizer K))
+  have haction : action = 1 := by
+    ext s k
+    have hcomm := (Subgroup.mem_center_iff.mp (hKcenter k.property)) (s : G)
+    change ((s : G) * (k : G) * (s : G)⁻¹) = (k : G)
+    calc
+      (s : G) * (k : G) * (s : G)⁻¹
+          = (k : G) * (s : G) * (s : G)⁻¹ := by rw [hcomm]
+      _ = (k : G) := by simp [mul_assoc]
+  exact ⟨(SemidirectProduct.mulEquivSubgroup hcomp).symm.trans
+    ((semidirectProductCongr_eq haction).trans
+      (SemidirectProduct.mulEquivProd.trans (MulEquiv.prodCongr eK eS)))⟩
+
 theorem order36_A4_pow : ∀ a : order36_A4, a ^ 2 = 1 ∨ a ^ 3 = 1 := by
   decide
 
@@ -6111,6 +6136,19 @@ theorem order36_A4_quotient_C3_A4_split_of_no_order_nine
       (G := G) hG K W H hKcenter hKW hKcard hquot hLcomp hLcard hpow_in hHcomp hHcard
   exact ⟨S, hcomp, hScard, hSiso⟩
 
+theorem order36_A4_quotient_mulEquiv_C3A4_of_no_order_nine
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hKcenter : K ≤ Subgroup.center G)
+    (hKcard : Nat.card K = 3) (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    Nonempty (G ≃* order36_C3A4) := by
+  obtain ⟨S, hcomp, _hScard, hSiso⟩ :=
+    order36_A4_quotient_C3_A4_split_of_no_order_nine
+      (G := G) hG K hKcenter hKcard hquot hno9
+  simpa [order36_C3A4] using
+    order36_mulEquiv_C3_A4_of_central_order_three_A4_complement
+      K S hKcenter hKcard hcomp hSiso
+
 theorem order36_has_central_C3_and_A4_complement_of_no_order_nine_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
     (hno9 : ∀ g : G, orderOf g ≠ 9) :
@@ -6126,6 +6164,31 @@ theorem order36_has_central_C3_and_A4_complement_of_no_order_nine_of_card_sylow_
     order36_A4_quotient_C3_A4_split_of_no_order_nine
       (G := G) hG K hKcenter hKcard hquot hno9
   exact ⟨K, hKnormal, hKcenter, hKcard, hquot, S, hcomp, hScard, hSiso⟩
+
+theorem order36_mulEquiv_C3A4_of_no_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    Nonempty (G ≃* order36_C3A4) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  exact order36_A4_quotient_mulEquiv_C3A4_of_no_order_nine
+    (G := G) hG K hKcenter hKcard hquot hno9
+
+theorem order36_normal_rep_or_order_nine_or_C3A4_cases
+    [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    (∃ g : G, orderOf g = 9) ∨
+    Nonempty (G ≃* order36_C3A4) := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · by_cases h9 : ∃ g : G, orderOf g = 9
+    · exact Or.inr (Or.inl h9)
+    · push Not at h9
+      exact Or.inr <| Or.inr
+        (order36_mulEquiv_C3A4_of_no_order_nine_of_card_sylow_3_eq_four
+          (G := G) hG hSyl h9)
 
 theorem order36_has_central_C3_and_C3_klein_split_of_no_order_nine_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
