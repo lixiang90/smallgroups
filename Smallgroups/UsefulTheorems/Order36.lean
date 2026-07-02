@@ -15,6 +15,7 @@ import Mathlib.GroupTheory.SpecificGroups.Alternating
 import Mathlib.GroupTheory.SpecificGroups.Alternating.KleinFour
 import Mathlib.GroupTheory.SpecificGroups.Dihedral
 import Mathlib.GroupTheory.Sylow
+import Mathlib.Tactic.NormNum.GCD
 import Mathlib.Tactic.NormNum.Prime
 
 /-!
@@ -1814,6 +1815,63 @@ noncomputable instance order36_normal_reps_group : ∀ i, Group (order36_normal_
 theorem card_order36_normal_reps (i : Fin 12) : Nat.card (order36_normal_reps i) = 36 := by
   fin_cases i <;>
     simp [order36_normal_reps, SemidirectProduct.card, Nat.card_prod, DihedralGroup.card]
+
+/-- The four abelian direct-product representatives in the normal Sylow-`3` branch. -/
+noncomputable def order36_normal_abelian_reps : Fin 4 → Type
+  | 0 => order36_normal_reps (0 : Fin 12)
+  | 1 => order36_normal_reps (2 : Fin 12)
+  | 2 => order36_normal_reps (4 : Fin 12)
+  | 3 => order36_normal_reps (8 : Fin 12)
+
+noncomputable instance order36_normal_abelian_reps_group :
+    ∀ i, Group (order36_normal_abelian_reps i)
+  | 0 => by dsimp [order36_normal_abelian_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_abelian_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_abelian_reps]; infer_instance
+  | 3 => by dsimp [order36_normal_abelian_reps]; infer_instance
+
+def order36_normal_abelian_reps_exponent : Fin 4 → ℕ
+  | 0 => 36
+  | 1 => 18
+  | 2 => 12
+  | 3 => 6
+
+theorem exponent_order36_normal_abelian_reps (i : Fin 4) :
+    Monoid.exponent (order36_normal_abelian_reps i) =
+      order36_normal_abelian_reps_exponent i := by
+  fin_cases i
+  · change Monoid.exponent (order36_C9 × order36_C4) = 36
+    repeat rw [Monoid.exponent_prod]
+    simp [CyclicRep, order36_C9, order36_C4, Monoid.exponent_multiplicative,
+      ZMod.exponent, lcm_eq_nat_lcm]
+    norm_num
+  · change Monoid.exponent (order36_C9 × order36_V4) = 18
+    repeat rw [Monoid.exponent_prod]
+    simp [CyclicRep, order36_C9, order36_C2, Monoid.exponent_multiplicative,
+      ZMod.exponent, lcm_eq_nat_lcm]
+    norm_num
+  · change Monoid.exponent (order36_E9 × order36_C4) = 12
+    repeat rw [Monoid.exponent_prod]
+    simp [CyclicRep, order36_C4, Monoid.exponent_multiplicative,
+      ZMod.exponent, lcm_eq_nat_lcm]
+    norm_num
+  · change Monoid.exponent (order36_E9 × order36_V4) = 6
+    repeat rw [Monoid.exponent_prod]
+    simp [CyclicRep, order36_C2, Monoid.exponent_multiplicative, ZMod.exponent,
+      lcm_eq_nat_lcm]
+    norm_num
+
+theorem order36_normal_abelian_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_abelian_reps := by
+  refine PairwiseNonMulEquiv.of_invariant order36_normal_abelian_reps_exponent ?_ ?_
+  · intro i j h
+    have hExp := Monoid.exponent_eq_of_mulEquiv h.some
+    rw [exponent_order36_normal_abelian_reps i,
+      exponent_order36_normal_abelian_reps j] at hExp
+    exact hExp
+  · intro i j hExp _
+    fin_cases i <;> fin_cases j <;>
+      simp [order36_normal_abelian_reps_exponent] at hExp ⊢
 
 theorem order36_c9_c4_action_rep_cases (φ : order36_C4 →* MulAut order36_C9) :
     Nonempty (SemidirectProduct order36_C9 order36_C4 φ ≃*
