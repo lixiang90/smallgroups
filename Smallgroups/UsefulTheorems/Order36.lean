@@ -1543,6 +1543,32 @@ theorem order36_E9_V4_diagAction_shearSecond_g2 :
 theorem order36_E9_negBothAut_eq_invAut : order36_E9_negBothAut = invAut order36_E9 := by
   ext x <;> fin_cases x <;> decide
 
+theorem order36_E9_negBothAut_comm (θ : MulAut order36_E9) :
+    θ * order36_E9_negBothAut = order36_E9_negBothAut * θ := by
+  rw [order36_E9_negBothAut_eq_invAut]
+  ext x <;> simp [invAut_apply]
+
+theorem order36_E9_negBothAut_apply_mulAut (θ : MulAut order36_E9) (x : order36_E9) :
+    order36_E9_negBothAut (θ x) = θ (order36_E9_negBothAut x) := by
+  have h := congrArg (fun f : MulAut order36_E9 => f x) (order36_E9_negBothAut_comm θ)
+  exact h.symm
+
+theorem order36_E9_eq_negBothAut_of_conj_symm_eq_negBothAut
+    (θ α : MulAut order36_E9)
+    (h : (MulAut.conj θ.symm) α = order36_E9_negBothAut) :
+    α = order36_E9_negBothAut := by
+  have hθ : θ * θ.symm = 1 := by
+    ext x <;> simp
+  have hcomm := order36_E9_negBothAut_comm θ
+  have hright : θ * order36_E9_negBothAut * θ.symm = order36_E9_negBothAut := by
+    rw [hcomm, mul_assoc, hθ, mul_one]
+  calc
+    α = θ * ((MulAut.conj θ.symm) α) * θ.symm := by
+      simp only [MulAut.conj_apply, MulAut.symm_inv, mul_assoc]
+      rw [hθ, mul_one, ← mul_assoc, hθ, one_mul]
+    _ = θ * order36_E9_negBothAut * θ.symm := by rw [h]
+    _ = order36_E9_negBothAut := hright
+
 theorem order36_E9_C2_negBothAction_eq_invActionHom :
     order36_E9_C2_negBothAction = invActionHom order36_E9 := by
   apply MonoidHom.ext
@@ -1656,6 +1682,18 @@ theorem order36_E9_conj_symm_comm
     τ * (MulAut.conj θ.symm) β = (MulAut.conj θ.symm) β * τ := by
   rw [← hα]
   rw [← map_mul, ← map_mul, hcomm]
+
+theorem order36_E9_eq_one_of_conj_symm_eq_one
+    (θ α : MulAut order36_E9) (h : (MulAut.conj θ.symm) α = 1) :
+    α = 1 := by
+  have hθ : θ * θ.symm = 1 := by
+    ext x <;> simp
+  calc
+    α = θ * ((MulAut.conj θ.symm) α) * θ.symm := by
+      simp only [MulAut.conj_apply, MulAut.symm_inv, mul_assoc]
+      rw [hθ, mul_one, ← mul_assoc, hθ, one_mul]
+    _ = θ * 1 * θ.symm := by rw [h]
+    _ = 1 := by rw [mul_one, hθ]
 
 /-- A basis calculation for the generator of `C₄` conjugates the whole action. -/
 theorem order36_e9C4_action_conj_symm_eq_of_generator_basis
@@ -1887,6 +1925,124 @@ theorem order36_e9_v4_diag_basis_equiv_rep11
   · simpa [order36_E9_V4_diagAction_g1] using h12
   · simpa [order36_E9_V4_diagAction_g2] using h21
   · simpa [order36_E9_V4_diagAction_g2] using h22
+
+theorem order36_e9_v4_action_basis_precomp_cases_of_first_trivial
+    (φ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) = θ order36_E9_e1)
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) = θ order36_E9_e2) :
+    (∃ θ : MulAut order36_E9,
+      φ order36_V4_g1 (θ order36_E9_e1) = θ order36_E9_e1 ∧
+      φ order36_V4_g1 (θ order36_E9_e2) = θ order36_E9_e2 ∧
+      φ order36_V4_g2 (θ order36_E9_e1) = θ order36_E9_e1 ∧
+      φ order36_V4_g2 (θ order36_E9_e2) = θ order36_E9_e2) ∨
+    (∃ θ : MulAut order36_E9, ∃ σ : order36_V4 ≃* order36_V4,
+      φ order36_V4_g1 (θ order36_E9_e1) =
+        θ (order36_E9_V4_negBothFstAction (σ order36_V4_g1) order36_E9_e1) ∧
+      φ order36_V4_g1 (θ order36_E9_e2) =
+        θ (order36_E9_V4_negBothFstAction (σ order36_V4_g1) order36_E9_e2) ∧
+      φ order36_V4_g2 (θ order36_E9_e1) =
+        θ (order36_E9_V4_negBothFstAction (σ order36_V4_g2) order36_E9_e1) ∧
+      φ order36_V4_g2 (θ order36_E9_e2) =
+        θ (order36_E9_V4_negBothFstAction (σ order36_V4_g2) order36_E9_e2)) ∨
+    (∃ θ : MulAut order36_E9, ∃ σ : order36_V4 ≃* order36_V4,
+      φ order36_V4_g1 (θ order36_E9_e1) =
+        θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g1) order36_E9_e1) ∧
+      φ order36_V4_g1 (θ order36_E9_e2) =
+        θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g1) order36_E9_e2) ∧
+      φ order36_V4_g2 (θ order36_E9_e1) =
+        θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g2) order36_E9_e1) ∧
+      φ order36_V4_g2 (θ order36_E9_e2) =
+        θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g2) order36_E9_e2)) := by
+  let α := φ order36_V4_g1
+  let β := φ order36_V4_g2
+  have hαconj : (MulAut.conj θ.symm) α = 1 :=
+    order36_E9_conj_symm_eq_of_basis_action θ α 1 h11 h12
+  have hαone : α = 1 := order36_E9_eq_one_of_conj_symm_eq_one θ α hαconj
+  have hφg1 : φ order36_V4_g1 = 1 := by
+    simpa [α] using hαone
+  have hβpow : β ^ 2 = 1 := by
+    rw [← map_pow, show order36_V4_g2 ^ 2 = 1 by decide, map_one]
+  rcases order36_E9_mulAut_pow_two_generator_basis_cases β hβpow with hβ | hβ | hβ
+  · obtain ⟨η, hb1, hb2⟩ := hβ
+    left
+    refine ⟨η, ?_, ?_, hb1, hb2⟩ <;> simp [hφg1]
+  · obtain ⟨η, hb1, hb2⟩ := hβ
+    right
+    left
+    refine ⟨η, order36_V4_swap, ?_, ?_, ?_, ?_⟩
+    · simp [hφg1, order36_E9_V4_negBothFstAction_swap_g1]
+    · simp [hφg1, order36_E9_V4_negBothFstAction_swap_g1]
+    · simpa [β, order36_E9_V4_negBothFstAction_swap_g2] using hb1
+    · simpa [β, order36_E9_V4_negBothFstAction_swap_g2] using hb2
+  · obtain ⟨η, hb1, hb2⟩ := hβ
+    right
+    right
+    refine ⟨η, order36_V4_swap, ?_, ?_, ?_, ?_⟩
+    · simp [hφg1, order36_E9_V4_negFirstFstAction_swap_g1]
+    · simp [hφg1, order36_E9_V4_negFirstFstAction_swap_g1]
+    · simpa [β, order36_E9_V4_negFirstFstAction_swap_g2] using hb1
+    · simpa [β, order36_E9_V4_negFirstFstAction_swap_g2] using hb2
+
+theorem order36_e9_v4_action_basis_precomp_cases_of_first_negBoth
+    (φ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) =
+      θ (order36_E9_negBothAut order36_E9_e1))
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) =
+      θ (order36_E9_negBothAut order36_E9_e2)) :
+    (∃ θ : MulAut order36_E9, ∃ σ : order36_V4 ≃* order36_V4,
+      φ order36_V4_g1 (θ order36_E9_e1) =
+        θ (order36_E9_V4_negBothFstAction (σ order36_V4_g1) order36_E9_e1) ∧
+      φ order36_V4_g1 (θ order36_E9_e2) =
+        θ (order36_E9_V4_negBothFstAction (σ order36_V4_g1) order36_E9_e2) ∧
+      φ order36_V4_g2 (θ order36_E9_e1) =
+        θ (order36_E9_V4_negBothFstAction (σ order36_V4_g2) order36_E9_e1) ∧
+      φ order36_V4_g2 (θ order36_E9_e2) =
+        θ (order36_E9_V4_negBothFstAction (σ order36_V4_g2) order36_E9_e2)) ∨
+    (∃ θ : MulAut order36_E9, ∃ σ : order36_V4 ≃* order36_V4,
+      φ order36_V4_g1 (θ order36_E9_e1) =
+        θ (order36_E9_V4_diagAction (σ order36_V4_g1) order36_E9_e1) ∧
+      φ order36_V4_g1 (θ order36_E9_e2) =
+        θ (order36_E9_V4_diagAction (σ order36_V4_g1) order36_E9_e2) ∧
+      φ order36_V4_g2 (θ order36_E9_e1) =
+        θ (order36_E9_V4_diagAction (σ order36_V4_g2) order36_E9_e1) ∧
+      φ order36_V4_g2 (θ order36_E9_e2) =
+        θ (order36_E9_V4_diagAction (σ order36_V4_g2) order36_E9_e2)) := by
+  let α := φ order36_V4_g1
+  let β := φ order36_V4_g2
+  have hαconj : (MulAut.conj θ.symm) α = order36_E9_negBothAut :=
+    order36_E9_conj_symm_eq_of_basis_action θ α order36_E9_negBothAut h11 h12
+  have hαneg : α = order36_E9_negBothAut :=
+    order36_E9_eq_negBothAut_of_conj_symm_eq_negBothAut θ α hαconj
+  have hφg1 : φ order36_V4_g1 = order36_E9_negBothAut := by
+    simpa [α] using hαneg
+  have hβpow : β ^ 2 = 1 := by
+    rw [← map_pow, show order36_V4_g2 ^ 2 = 1 by decide, map_one]
+  rcases order36_E9_mulAut_pow_two_generator_basis_cases β hβpow with hβ | hβ | hβ
+  · obtain ⟨η, hb1, hb2⟩ := hβ
+    left
+    refine ⟨η, MulEquiv.refl order36_V4, ?_, ?_, hb1, hb2⟩
+    · simpa [hφg1, order36_E9_V4_negBothFstAction_g1] using
+        (order36_E9_negBothAut_apply_mulAut η order36_E9_e1)
+    · simpa [hφg1, order36_E9_V4_negBothFstAction_g1] using
+        (order36_E9_negBothAut_apply_mulAut η order36_E9_e2)
+  · obtain ⟨η, hb1, hb2⟩ := hβ
+    left
+    refine ⟨η, order36_V4_toProd, ?_, ?_, ?_, ?_⟩
+    · simpa [hφg1, order36_E9_V4_negBothFstAction_toProd_g1] using
+        (order36_E9_negBothAut_apply_mulAut η order36_E9_e1)
+    · simpa [hφg1, order36_E9_V4_negBothFstAction_toProd_g1] using
+        (order36_E9_negBothAut_apply_mulAut η order36_E9_e2)
+    · simpa [β, order36_E9_V4_negBothFstAction_toProd_g2] using hb1
+    · simpa [β, order36_E9_V4_negBothFstAction_toProd_g2] using hb2
+  · obtain ⟨η, hb1, hb2⟩ := hβ
+    right
+    refine ⟨η, order36_V4_toProd, ?_, ?_, ?_, ?_⟩
+    · simpa [hφg1, order36_E9_V4_diagAction_toProd_g1] using
+        (order36_E9_negBothAut_apply_mulAut η order36_E9_e1)
+    · simpa [hφg1, order36_E9_V4_diagAction_toProd_g1] using
+        (order36_E9_negBothAut_apply_mulAut η order36_E9_e2)
+    · simpa [β, order36_E9_V4_diagAction_toProd_g2] using hb1
+    · simpa [β, order36_E9_V4_diagAction_toProd_g2] using hb2
 
 theorem order36_e9_v4_action_basis_precomp_cases_of_first_reflection
     (φ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
