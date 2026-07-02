@@ -134,6 +134,72 @@ noncomputable def semidirectProductActingProdFst {N H K : Type*} [Group N] [Grou
   map_mul' x y := by
     rfl
 
+/-- An action on `A × B` that acts on the first factor and fixes the second. -/
+noncomputable def prodFstAction {A B H : Type*} [Group A] [Group B] [Group H]
+    (ψ : H →* MulAut A) : H →* MulAut (A × B) where
+  toFun h :=
+    { toFun := fun x => (ψ h x.1, x.2)
+      invFun := fun x => ((ψ h).symm x.1, x.2)
+      left_inv := by intro x; ext <;> simp
+      right_inv := by intro x; ext <;> simp
+      map_mul' := by intro x y; ext <;> simp }
+  map_one' := by
+    ext x <;> simp
+  map_mul' h k := by
+    ext x <;> simp
+
+/-- Split a semidirect product whose action fixes the second normal factor. -/
+noncomputable def semidirectProductNormalProdFst {A B H : Type*} [Group A] [Group B] [Group H]
+    (ψ : H →* MulAut A) :
+    SemidirectProduct (A × B) H (prodFstAction ψ) ≃*
+      SemidirectProduct A H ψ × B where
+  toFun x := (⟨x.left.1, x.right⟩, x.left.2)
+  invFun x := ⟨(x.1.left, x.2), x.1.right⟩
+  left_inv x := by
+    cases x
+    rfl
+  right_inv x := by
+    cases x with
+    | mk x1 x2 =>
+      cases x1
+      rfl
+  map_mul' x y := by
+    rfl
+
+/-- Product action of `H × K` on `A × B`, coordinatewise. -/
+noncomputable def prodProdAction {A B H K : Type*} [Group A] [Group B] [Group H] [Group K]
+    (ψ : H →* MulAut A) (ρ : K →* MulAut B) : H × K →* MulAut (A × B) where
+  toFun h :=
+    { toFun := fun x => (ψ h.1 x.1, ρ h.2 x.2)
+      invFun := fun x => ((ψ h.1).symm x.1, (ρ h.2).symm x.2)
+      left_inv := by intro x; ext <;> simp
+      right_inv := by intro x; ext <;> simp
+      map_mul' := by intro x y; ext <;> simp }
+  map_one' := by
+    ext x <;> simp
+  map_mul' h k := by
+    ext x <;> simp
+
+/-- Split a semidirect product whose normal and acting factors both split coordinatewise. -/
+noncomputable def semidirectProductProdProd {A B H K : Type*}
+    [Group A] [Group B] [Group H] [Group K]
+    (ψ : H →* MulAut A) (ρ : K →* MulAut B) :
+    SemidirectProduct (A × B) (H × K) (prodProdAction ψ ρ) ≃*
+      SemidirectProduct A H ψ × SemidirectProduct B K ρ where
+  toFun x := (⟨x.left.1, x.right.1⟩, ⟨x.left.2, x.right.2⟩)
+  invFun x := ⟨(x.1.left, x.2.left), (x.1.right, x.2.right)⟩
+  left_inv x := by
+    cases x
+    rfl
+  right_inv x := by
+    cases x with
+    | mk x1 x2 =>
+      cases x1
+      cases x2
+      rfl
+  map_mul' x y := by
+    rfl
+
 noncomputable def order36_c9Action_precomp_mulEquiv {H : Type*} [Group H]
     (χ : H →* (ZMod 9)ˣ) (σ : H ≃* H) :
     SemidirectProduct order36_C9 H (order36_c9Action (χ.comp σ.toMonoidHom)) ≃*
@@ -811,6 +877,75 @@ noncomputable def order36_E9_V4_diagAction : order36_V4 →* MulAut order36_E9 w
     ext z <;> fin_cases x1 <;> fin_cases x2 <;>
       fin_cases y1 <;> fin_cases y2 <;> fin_cases z <;> decide
 
+theorem order36_E9_negBothAut_eq_invAut : order36_E9_negBothAut = invAut order36_E9 := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_C2_negBothAction_eq_invActionHom :
+    order36_E9_C2_negBothAction = invActionHom order36_E9 := by
+  apply MonoidHom.ext
+  intro h
+  rcases multiplicative_zmod_two_cases h with rfl | rfl
+  · simp [order36_E9_C2_negBothAction, order36_c2ActionOfAut, invActionHom]
+  · change order36_E9_negBothAut = invActionHom order36_E9 (Multiplicative.ofAdd 1)
+    rw [invActionHom_ofAdd_one]
+    exact order36_E9_negBothAut_eq_invAut
+
+noncomputable def order36_e9V4_negBothFst_equiv_inv_prod :
+    SemidirectProduct order36_E9 order36_V4 order36_E9_V4_negBothFstAction ≃*
+      SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9) × order36_C2 := by
+  have haction : order36_E9_V4_negBothFstAction =
+      (invActionHom order36_E9).comp (MonoidHom.fst order36_C2 order36_C2) := by
+    rw [← order36_E9_C2_negBothAction_eq_invActionHom]
+  exact (semidirectProductCongr_eq haction).trans
+    (semidirectProductActingProdFst (N := order36_E9) (H := order36_C2) (K := order36_C2)
+      (invActionHom order36_E9))
+
+theorem order36_E9_C2_negFirstAction_eq_prodFstInv :
+    order36_E9_C2_negFirstAction = prodFstAction (invActionHom (CyclicRep 3)) := by
+  apply MonoidHom.ext
+  intro h
+  rcases multiplicative_zmod_two_cases h with rfl | rfl
+  · ext x <;> fin_cases x <;> decide
+  · ext x <;> fin_cases x <;> decide
+
+noncomputable def order36_e9C2_negFirst_equiv_d3_c3 :
+    SemidirectProduct order36_E9 order36_C2 order36_E9_C2_negFirstAction ≃*
+      DihedralGroup 3 × CyclicRep 3 := by
+  haveI : NeZero 3 := ⟨by norm_num⟩
+  exact (semidirectProductCongr_eq order36_E9_C2_negFirstAction_eq_prodFstInv).trans <|
+    (semidirectProductNormalProdFst (A := CyclicRep 3) (B := CyclicRep 3)
+      (H := order36_C2) (invActionHom (CyclicRep 3))).trans <|
+    MulEquiv.prodCongr (genDihedralCyclicIso 3) (MulEquiv.refl (CyclicRep 3))
+
+noncomputable def order36_e9V4_negFirstFst_equiv_d3_c3_c2 :
+    SemidirectProduct order36_E9 order36_V4 order36_E9_V4_negFirstFstAction ≃*
+      (DihedralGroup 3 × CyclicRep 3) × order36_C2 :=
+  (semidirectProductActingProdFst (N := order36_E9) (H := order36_C2) (K := order36_C2)
+    order36_E9_C2_negFirstAction).trans
+    (MulEquiv.prodCongr order36_e9C2_negFirst_equiv_d3_c3 (MulEquiv.refl order36_C2))
+
+theorem order36_E9_V4_diagAction_eq_prodProdInv :
+    order36_E9_V4_diagAction =
+      prodProdAction (invActionHom (CyclicRep 3)) (invActionHom (CyclicRep 3)) := by
+  apply MonoidHom.ext
+  rintro ⟨h, k⟩
+  rcases multiplicative_zmod_two_cases h with rfl | rfl <;>
+    rcases multiplicative_zmod_two_cases k with rfl | rfl
+  · ext x <;> fin_cases x <;> decide
+  · ext x <;> fin_cases x <;> decide
+  · ext x <;> fin_cases x <;> decide
+  · ext x <;> fin_cases x <;> decide
+
+noncomputable def order36_e9V4_diag_equiv_d3_d3 :
+    SemidirectProduct order36_E9 order36_V4 order36_E9_V4_diagAction ≃*
+      DihedralGroup 3 × DihedralGroup 3 := by
+  haveI : NeZero 3 := ⟨by norm_num⟩
+  exact (semidirectProductCongr_eq order36_E9_V4_diagAction_eq_prodProdInv).trans <|
+    (semidirectProductProdProd (A := CyclicRep 3) (B := CyclicRep 3)
+      (H := order36_C2) (K := order36_C2)
+      (invActionHom (CyclicRep 3)) (invActionHom (CyclicRep 3))).trans <|
+    MulEquiv.prodCongr (genDihedralCyclicIso 3) (genDihedralCyclicIso 3)
+
 /-- `C₃ × C₃` with a `C₄` action by `-I`. -/
 noncomputable abbrev order36_E9_C4_negBothAction : order36_C4 →* MulAut order36_E9 :=
   order36_c4ActionOfAut order36_E9_negBothAut order36_E9_negBothAut_pow_four
@@ -884,6 +1019,27 @@ theorem order36_c9_v4_action_rep_cases (φ : order36_V4 →* MulAut order36_C9) 
   · right
     exact ⟨(semidirectProductCongr_eq hφ).trans
       (order36_c9V4_prod_equiv_fst.trans order36_c9V4_fst_equiv_dihedral_prod)⟩
+
+theorem order36_e9_v4_trivial_equiv_rep8 :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 1 ≃*
+      order36_normal_reps (8 : Fin 12)) :=
+  ⟨SemidirectProduct.mulEquivProd⟩
+
+theorem order36_e9_v4_negBothFst_equiv_rep9 :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 order36_E9_V4_negBothFstAction ≃*
+      order36_normal_reps (9 : Fin 12)) :=
+  ⟨order36_e9V4_negBothFst_equiv_inv_prod⟩
+
+theorem order36_e9_v4_negFirstFst_equiv_rep10 :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 order36_E9_V4_negFirstFstAction ≃*
+      order36_normal_reps (10 : Fin 12)) :=
+  ⟨order36_e9V4_negFirstFst_equiv_d3_c3_c2.trans
+    (MulEquiv.prodAssoc (M := DihedralGroup 3) (N := CyclicRep 3) (P := order36_C2))⟩
+
+theorem order36_e9_v4_diag_equiv_rep11 :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 order36_E9_V4_diagAction ≃*
+      order36_normal_reps (11 : Fin 12)) :=
+  ⟨order36_e9V4_diag_equiv_d3_d3⟩
 
 /-! ### Sylow `3` counting and the normal Sylow branch -/
 
