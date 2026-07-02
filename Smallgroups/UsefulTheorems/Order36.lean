@@ -3430,6 +3430,19 @@ theorem order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four 
   exact ⟨K, hKnormal,
     order36_normal_order_three_A4_quotient_le_center K hKcard hquot, hKcard, hquot⟩
 
+theorem order36_has_C3_klein_preimage_of_card_sylow_3_eq_four [Finite G]
+    (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, _, hWcard, hWiso⟩ :=
+    order36_A4_quotient_klein_preimage_mulEquiv_C3_klein (G := G)
+      hG K hKcenter hKcard hquot
+  exact ⟨W, hWnormal, hWcard, hWiso⟩
+
 theorem order36_normal_rep_or_A4_quotient_cases [Finite G] (hG : Nat.card G = 36) :
     (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
     ∃ (K : Subgroup G) (_ : K.Normal), Nat.card K = 3 ∧
