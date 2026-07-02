@@ -11,3 +11,4 @@ import Smallgroups.Classifications.Classifications_81_to_90.Order86
 import Smallgroups.Classifications.Classifications_81_to_90.Order87
 import Smallgroups.Classifications.Classifications_81_to_90.Order88
 import Smallgroups.Classifications.Classifications_81_to_90.Order89
+import Smallgroups.Classifications.Classifications_81_to_90.Order90
