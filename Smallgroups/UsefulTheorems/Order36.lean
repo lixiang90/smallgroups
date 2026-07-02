@@ -2565,6 +2565,9 @@ theorem order36_normal_rep_cases [Finite G] (hG : Nat.card G = 36)
 /-- The alternating group `A₄`, realised as permutations of `Fin 4`. -/
 abbrev order36_A4 : Type := alternatingGroup (Fin 4)
 
+/-- The split central-extension candidate `C₃ × A₄`. -/
+abbrev order36_C3A4 : Type := order36_C3 × order36_A4
+
 local instance order36_a4KleinFourNormal :
     (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4).Normal := by
   exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
@@ -2576,6 +2579,12 @@ abbrev order36_A4Quot : Type :=
 theorem card_order36_A4 : Nat.card order36_A4 = 12 := by
   rw [nat_card_alternatingGroup, Nat.card_fin]
   norm_num [Nat.factorial]
+
+theorem card_order36_C3 : Nat.card order36_C3 = 3 := by
+  simp [order36_C3]
+
+theorem card_order36_C3A4 : Nat.card order36_C3A4 = 36 := by
+  rw [Nat.card_prod, card_order36_C3, card_order36_A4]
 
 theorem card_order36_C9 : Nat.card order36_C9 = 9 := by
   simp [order36_C9]
@@ -2653,6 +2662,25 @@ theorem card_order36_A4C9 : Nat.card order36_A4C9 = 36 := by
   have h := order36_A4C9Diff.ker.card_mul_index
   rw [hidx, hprod] at h
   omega
+
+theorem order36_C3A4_has_normal_order_three_and_A4_quotient :
+    ∃ (K : Subgroup order36_C3A4) (_ : K.Normal), Nat.card K = 3 ∧
+      Nonempty (order36_C3A4 ⧸ K ≃* order36_A4) := by
+  let π : order36_C3A4 →* order36_A4 := MonoidHom.snd order36_C3 order36_A4
+  have hrange_top : π.range = ⊤ := by
+    rw [Subgroup.eq_top_iff']
+    intro a
+    rw [MonoidHom.mem_range]
+    exact ⟨(1, a), rfl⟩
+  refine ⟨π.ker, MonoidHom.normal_ker π, ?_, ?_⟩
+  · have hidx : π.ker.index = 12 := by
+      rw [Subgroup.index_ker, hrange_top]
+      simpa using card_order36_A4
+    have h := π.ker.card_mul_index
+    rw [hidx, card_order36_C3A4] at h
+    omega
+  · exact ⟨((QuotientGroup.quotientKerEquivRange π).trans
+      (MulEquiv.subgroupCongr hrange_top)).trans Subgroup.topEquiv⟩
 
 /-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
 theorem sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four [Finite G]
