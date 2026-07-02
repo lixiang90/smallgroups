@@ -2835,6 +2835,32 @@ theorem order36_C3A4_not_mulEquiv_A4C9 :
     rw [MulEquiv.orderOf_eq, hx]
   exact order36_C3A4_no_order_nine (e.symm x) hpre
 
+/-- The two representatives in the non-normal Sylow-`3` branch of order `36`. -/
+noncomputable def order36_nonnormal_reps : Fin 2 → Type
+  | 0 => order36_C3A4
+  | 1 => order36_A4C9
+
+noncomputable instance order36_nonnormal_reps_group :
+    ∀ i, Group (order36_nonnormal_reps i)
+  | 0 => by dsimp [order36_nonnormal_reps]; infer_instance
+  | 1 => by dsimp [order36_nonnormal_reps]; infer_instance
+
+theorem card_order36_nonnormal_reps (i : Fin 2) :
+    Nat.card (order36_nonnormal_reps i) = 36 := by
+  fin_cases i
+  · simpa [order36_nonnormal_reps] using card_order36_C3A4
+  · simpa [order36_nonnormal_reps] using card_order36_A4C9
+
+/-- The two non-normal representatives of order `36` are non-isomorphic. -/
+theorem order36_nonnormal_reps_pairwise :
+    PairwiseNonMulEquiv order36_nonnormal_reps := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact absurd hiso order36_C3A4_not_mulEquiv_A4C9
+  · exact absurd ⟨hiso.some.symm⟩ order36_C3A4_not_mulEquiv_A4C9
+  · rfl
+
 /-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
 theorem sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four [Finite G]
     (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) (P : Sylow 3 G) :
