@@ -65,6 +65,14 @@ noncomputable def order36_c4ActionOfAut {N : Type*} [Group N]
   MonoidHom.mk' (fun x => α ^ (Multiplicative.toAdd x).val)
     (fun x y => pow_val_add hα (Multiplicative.toAdd x) (Multiplicative.toAdd y))
 
+@[simp]
+theorem order36_c4ActionOfAut_gen {N : Type*} [Group N]
+    (α : MulAut N) (hα : α ^ 4 = 1) :
+    order36_c4ActionOfAut α hα (Multiplicative.ofAdd (1 : ZMod 4)) = α := by
+  change α ^ (1 : ZMod 4).val = α
+  rw [show (1 : ZMod 4).val = 1 by decide]
+  simp
+
 private theorem order36_neg_one_pow_four_units :
     (-1 : (ZMod 9)ˣ) ^ 4 = 1 := by
   rw [show (4 : ℕ) = 2 * 2 by norm_num, pow_mul]
@@ -1023,6 +1031,48 @@ noncomputable abbrev order36_E9_C4_negFirstAction : order36_C4 →* MulAut order
 /-- `C₃ × C₃` with a faithful `C₄` action. -/
 noncomputable abbrev order36_E9_C4_rotAction : order36_C4 →* MulAut order36_E9 :=
   order36_c4ActionOfAut order36_E9_rotAut order36_E9_rotAut_pow_four
+
+/-- If two automorphisms have the same action on a transported basis, they are conjugate. -/
+theorem order36_E9_conj_symm_eq_of_basis_action
+    (θ α τ : MulAut order36_E9)
+    (h1 : α (θ order36_E9_e1) = θ (τ order36_E9_e1))
+    (h2 : α (θ order36_E9_e2) = θ (τ order36_E9_e2)) :
+    (MulAut.conj θ.symm) α = τ := by
+  apply order36_E9_mulAut_ext
+  · change θ.symm (α (θ order36_E9_e1)) = τ order36_E9_e1
+    rw [h1]
+    exact θ.left_inv _
+  · change θ.symm (α (θ order36_E9_e2)) = τ order36_E9_e2
+    rw [h2]
+    exact θ.left_inv _
+
+/-- A basis calculation for the generator of `C₄` conjugates the whole action. -/
+theorem order36_e9C4_action_conj_symm_eq_of_generator_basis
+    (φ : order36_C4 →* MulAut order36_E9) (θ τ : MulAut order36_E9) (hτ : τ ^ 4 = 1)
+    (h1 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) =
+      θ (τ order36_E9_e1))
+    (h2 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) =
+      θ (τ order36_E9_e2)) :
+    (MulAut.conj θ.symm).toMonoidHom.comp φ = order36_c4ActionOfAut τ hτ := by
+  apply order36_c4_hom_ext
+  change (MulAut.conj θ.symm) (φ (Multiplicative.ofAdd (1 : ZMod 4))) =
+    order36_c4ActionOfAut τ hτ (Multiplicative.ofAdd (1 : ZMod 4))
+  rw [order36_c4ActionOfAut_gen]
+  exact order36_E9_conj_symm_eq_of_basis_action θ
+    (φ (Multiplicative.ofAdd (1 : ZMod 4))) τ h1 h2
+
+/-- The semidirect-product form of the generator-basis conjugation criterion. -/
+noncomputable def order36_e9C4_action_basis_mulEquiv
+    (φ : order36_C4 →* MulAut order36_E9) (θ τ : MulAut order36_E9) (hτ : τ ^ 4 = 1)
+    (h1 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) =
+      θ (τ order36_E9_e1))
+    (h2 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) =
+      θ (τ order36_E9_e2)) :
+    SemidirectProduct order36_E9 order36_C4 φ ≃*
+      SemidirectProduct order36_E9 order36_C4 (order36_c4ActionOfAut τ hτ) :=
+  (semidirectProductCongrConj (N := order36_E9) (H := order36_C4) (φ := φ) θ.symm).trans
+    (semidirectProductCongr_eq
+      (order36_e9C4_action_conj_symm_eq_of_generator_basis φ θ τ hτ h1 h2))
 
 /-- The twelve representatives arising from the normal Sylow-`3` branch of order `36`. -/
 noncomputable def order36_normal_reps : Fin 12 → Type
