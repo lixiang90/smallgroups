@@ -2180,6 +2180,36 @@ theorem order36_e9_v4_action_rep_cases_of_generator_basis_precomp_cases
       ⟨(order36_e9V4_action_basis_precomp_mulEquiv φ order36_E9_V4_diagAction
         σ θ h11 h12 h21 h22).trans e⟩
 
+theorem order36_e9_v4_action_rep_cases (φ : order36_V4 →* MulAut order36_E9) :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (8 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (9 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (10 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (11 : Fin 12)) := by
+  apply order36_e9_v4_action_rep_cases_of_generator_basis_precomp_cases
+  let α := φ order36_V4_g1
+  have hαpow : α ^ 2 = 1 := by
+    rw [← map_pow, show order36_V4_g1 ^ 2 = 1 by decide, map_one]
+  rcases order36_E9_mulAut_pow_two_generator_basis_cases α hαpow with hα | hα | hα
+  · obtain ⟨θ, h11, h12⟩ := hα
+    rcases order36_e9_v4_action_basis_precomp_cases_of_first_trivial φ θ h11 h12 with
+      h | h | h
+    · exact Or.inl h
+    · exact Or.inr <| Or.inl h
+    · exact Or.inr <| Or.inr <| Or.inl h
+  · obtain ⟨θ, h11, h12⟩ := hα
+    rcases order36_e9_v4_action_basis_precomp_cases_of_first_negBoth φ θ h11 h12 with h | h
+    · exact Or.inr <| Or.inl h
+    · exact Or.inr <| Or.inr <| Or.inr h
+  · obtain ⟨θ, h11, h12⟩ := hα
+    rcases order36_e9_v4_action_basis_precomp_cases_of_first_reflection φ θ h11 h12 with
+      h | h
+    · exact Or.inr <| Or.inr <| Or.inl h
+    · exact Or.inr <| Or.inr <| Or.inr h
+
 theorem order36_e9_c4_trivial_equiv_rep4 :
     Nonempty (SemidirectProduct order36_E9 order36_C4 1 ≃*
       order36_normal_reps (4 : Fin 12)) :=
@@ -2496,6 +2526,34 @@ theorem order36_normal_c4_kernel_rep_or_v4_elem_cases [Finite G] (hG : Nat.card 
         Or.inr ⟨eG.trans e⟩
   · right
     exact h
+
+/-- The normal Sylow-`3` branch, fully reduced to the twelve normal-branch representatives. -/
+theorem order36_normal_rep_cases [Finite G] (hG : Nat.card G = 36)
+    (hSyl : Nat.card (Sylow 3 G) = 1) :
+    (Nonempty (G ≃* order36_normal_reps (0 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (1 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (2 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (3 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (4 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (5 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (6 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (7 : Fin 12))) ∨
+    Nonempty (G ≃* order36_normal_reps (8 : Fin 12)) ∨
+    Nonempty (G ≃* order36_normal_reps (9 : Fin 12)) ∨
+    Nonempty (G ≃* order36_normal_reps (10 : Fin 12)) ∨
+    Nonempty (G ≃* order36_normal_reps (11 : Fin 12)) := by
+  rcases order36_normal_c4_kernel_rep_or_v4_elem_cases (G := G) hG hSyl with h | h
+  · exact Or.inl h
+  · obtain ⟨φ, ⟨eG⟩⟩ := h
+    rcases order36_e9_v4_action_rep_cases φ with hrep | hrep | hrep | hrep
+    · obtain ⟨e⟩ := hrep
+      exact Or.inr <| Or.inl ⟨eG.trans e⟩
+    · obtain ⟨e⟩ := hrep
+      exact Or.inr <| Or.inr <| Or.inl ⟨eG.trans e⟩
+    · obtain ⟨e⟩ := hrep
+      exact Or.inr <| Or.inr <| Or.inr <| Or.inl ⟨eG.trans e⟩
+    · obtain ⟨e⟩ := hrep
+      exact Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨eG.trans e⟩
 
 /-! ### The non-normal Sylow branch -/
 
