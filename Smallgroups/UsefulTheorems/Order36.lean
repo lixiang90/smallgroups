@@ -2756,6 +2756,26 @@ theorem order36_A4_not_mem_kleinFour_cube {a : order36_A4}
   · exact False.elim (ha (order36_A4_order_two_mem_kleinFour a h2))
   · exact h3
 
+theorem order36_A4_quotient_pow_two_or_three_mem {G : Type*} [Group G]
+    (K : Subgroup G) [K.Normal] (hquot : Nonempty (G ⧸ K ≃* order36_A4)) (g : G) :
+    g ^ 2 ∈ K ∨ g ^ 3 ∈ K := by
+  obtain ⟨e⟩ := hquot
+  rcases order36_A4_pow (e ((QuotientGroup.mk' K) g)) with h2 | h3
+  · left
+    have hq : ((QuotientGroup.mk' K) g) ^ 2 = 1 := by
+      apply e.injective
+      simpa using h2
+    change (g : G ⧸ K) ^ 2 = 1 at hq
+    rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
+    exact hq
+  · right
+    have hq : ((QuotientGroup.mk' K) g) ^ 3 = 1 := by
+      apply e.injective
+      simpa using h3
+    change (g : G ⧸ K) ^ 3 = 1 at hq
+    rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
+    exact hq
+
 noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
   toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
   map_one' := by rfl
