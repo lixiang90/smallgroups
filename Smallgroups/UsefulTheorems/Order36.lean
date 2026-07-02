@@ -1454,6 +1454,30 @@ noncomputable def order36_E9_V4_diagAction : order36_V4 →* MulAut order36_E9 w
     ext z <;> fin_cases x1 <;> fin_cases x2 <;>
       fin_cases y1 <;> fin_cases y2 <;> fin_cases z <;> decide
 
+theorem order36_E9_V4_negBothFstAction_g1 :
+    order36_E9_V4_negBothFstAction order36_V4_g1 = order36_E9_negBothAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_negBothFstAction_g2 :
+    order36_E9_V4_negBothFstAction order36_V4_g2 = 1 := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_negFirstFstAction_g1 :
+    order36_E9_V4_negFirstFstAction order36_V4_g1 = order36_E9_negFirstAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_negFirstFstAction_g2 :
+    order36_E9_V4_negFirstFstAction order36_V4_g2 = 1 := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_diagAction_g1 :
+    order36_E9_V4_diagAction order36_V4_g1 = order36_E9_negFirstAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_diagAction_g2 :
+    order36_E9_V4_diagAction order36_V4_g2 = order36_E9_negSecondAut := by
+  ext x <;> fin_cases x <;> decide
+
 theorem order36_E9_negBothAut_eq_invAut : order36_E9_negBothAut = invAut order36_E9 := by
   ext x <;> fin_cases x <;> decide
 
@@ -1694,6 +1718,73 @@ theorem order36_e9_v4_diag_equiv_rep11 :
     Nonempty (SemidirectProduct order36_E9 order36_V4 order36_E9_V4_diagAction ≃*
       order36_normal_reps (11 : Fin 12)) :=
   ⟨order36_e9V4_diag_equiv_d3_d3⟩
+
+theorem order36_e9_v4_trivial_basis_equiv_rep8
+    (φ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) = θ order36_E9_e1)
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) = θ order36_E9_e2)
+    (h21 : φ order36_V4_g2 (θ order36_E9_e1) = θ order36_E9_e1)
+    (h22 : φ order36_V4_g2 (θ order36_E9_e2) = θ order36_E9_e2) :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (8 : Fin 12)) := by
+  obtain ⟨e⟩ := order36_e9_v4_trivial_equiv_rep8
+  exact ⟨(order36_e9V4_action_basis_mulEquiv φ 1 θ h11 h12 h21 h22).trans e⟩
+
+theorem order36_e9_v4_negBothFst_basis_equiv_rep9
+    (φ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) =
+      θ (order36_E9_negBothAut order36_E9_e1))
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) =
+      θ (order36_E9_negBothAut order36_E9_e2))
+    (h21 : φ order36_V4_g2 (θ order36_E9_e1) = θ order36_E9_e1)
+    (h22 : φ order36_V4_g2 (θ order36_E9_e2) = θ order36_E9_e2) :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (9 : Fin 12)) := by
+  obtain ⟨e⟩ := order36_e9_v4_negBothFst_equiv_rep9
+  refine ⟨(order36_e9V4_action_basis_mulEquiv φ order36_E9_V4_negBothFstAction θ
+    ?_ ?_ ?_ ?_).trans e⟩
+  · simpa [order36_E9_V4_negBothFstAction_g1] using h11
+  · simpa [order36_E9_V4_negBothFstAction_g1] using h12
+  · simpa [order36_E9_V4_negBothFstAction_g2] using h21
+  · simpa [order36_E9_V4_negBothFstAction_g2] using h22
+
+theorem order36_e9_v4_negFirstFst_basis_equiv_rep10
+    (φ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) =
+      θ (order36_E9_negFirstAut order36_E9_e1))
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) =
+      θ (order36_E9_negFirstAut order36_E9_e2))
+    (h21 : φ order36_V4_g2 (θ order36_E9_e1) = θ order36_E9_e1)
+    (h22 : φ order36_V4_g2 (θ order36_E9_e2) = θ order36_E9_e2) :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (10 : Fin 12)) := by
+  obtain ⟨e⟩ := order36_e9_v4_negFirstFst_equiv_rep10
+  refine ⟨(order36_e9V4_action_basis_mulEquiv φ order36_E9_V4_negFirstFstAction θ
+    ?_ ?_ ?_ ?_).trans e⟩
+  · simpa [order36_E9_V4_negFirstFstAction_g1] using h11
+  · simpa [order36_E9_V4_negFirstFstAction_g1] using h12
+  · simpa [order36_E9_V4_negFirstFstAction_g2] using h21
+  · simpa [order36_E9_V4_negFirstFstAction_g2] using h22
+
+theorem order36_e9_v4_diag_basis_equiv_rep11
+    (φ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) =
+      θ (order36_E9_negFirstAut order36_E9_e1))
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) =
+      θ (order36_E9_negFirstAut order36_E9_e2))
+    (h21 : φ order36_V4_g2 (θ order36_E9_e1) =
+      θ (order36_E9_negSecondAut order36_E9_e1))
+    (h22 : φ order36_V4_g2 (θ order36_E9_e2) =
+      θ (order36_E9_negSecondAut order36_E9_e2)) :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (11 : Fin 12)) := by
+  obtain ⟨e⟩ := order36_e9_v4_diag_equiv_rep11
+  refine ⟨(order36_e9V4_action_basis_mulEquiv φ order36_E9_V4_diagAction θ
+    ?_ ?_ ?_ ?_).trans e⟩
+  · simpa [order36_E9_V4_diagAction_g1] using h11
+  · simpa [order36_E9_V4_diagAction_g1] using h12
+  · simpa [order36_E9_V4_diagAction_g2] using h21
+  · simpa [order36_E9_V4_diagAction_g2] using h22
 
 theorem order36_e9_c4_trivial_equiv_rep4 :
     Nonempty (SemidirectProduct order36_E9 order36_C4 1 ≃*
