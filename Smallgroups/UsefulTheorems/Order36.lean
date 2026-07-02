@@ -2827,6 +2827,14 @@ theorem order36_A4C9_has_order_nine : ∃ x : order36_A4C9, orderOf x = 9 := by
   · rw [ha3]
     norm_num
 
+theorem order36_C3A4_not_mulEquiv_A4C9 :
+    ¬ Nonempty (order36_C3A4 ≃* order36_A4C9) := by
+  rintro ⟨e⟩
+  obtain ⟨x, hx⟩ := order36_A4C9_has_order_nine
+  have hpre : orderOf (e.symm x) = 9 := by
+    rw [MulEquiv.orderOf_eq, hx]
+  exact order36_C3A4_no_order_nine (e.symm x) hpre
+
 /-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
 theorem sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four [Finite G]
     (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) (P : Sylow 3 G) :
