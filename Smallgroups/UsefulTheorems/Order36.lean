@@ -5286,6 +5286,12 @@ theorem order36_quotient_zpowers_eq_top_of_not_mem_index_three
   change Subgroup.zpowers q = ⊤
   exact Subgroup.eq_top_of_card_eq _ (by rw [Nat.card_zpowers, hqord, hquotcard])
 
+theorem order36_zpowers_map_quotient_top_of_quotient_zpowers_top
+    (W : Subgroup G) [W.Normal] {g : G}
+    (hqgen : Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤) :
+    (Subgroup.zpowers g).map (QuotientGroup.mk' W) = ⊤ := by
+  rw [MonoidHom.map_zpowers, hqgen]
+
 theorem order36_A4_quotient_klein_preimage_C3_klein_pow_cases [Finite G]
     (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
     (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
