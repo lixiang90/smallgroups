@@ -4911,21 +4911,14 @@ theorem order36_A4_quotient_klein_preimage_pow_cases [Finite G] (hG : Nat.card G
     rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
     exact hq
 
-theorem order36_A4_quotient_klein_preimage_order_nine_of_cube_ne_one
-    [Finite G] (hG : Nat.card G = 36)
-    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
-    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
-    ∃ W : Subgroup G, W.Normal ∧ K ≤ W ∧ Nat.card W = 12 ∧
-      ∀ {g : G}, g ∉ W → g ^ 3 ≠ 1 → orderOf g = 9 := by
-  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hK]; norm_num)
-  obtain ⟨W, hWnormal, hKW, hWcard, _hpow_in, hpow_out⟩ :=
-    order36_A4_quotient_klein_preimage_pow_cases (G := G) hG K hquot
-  refine ⟨W, hWnormal, hKW, hWcard, ?_⟩
-  intro g hgW hg3ne
-  have hg3K : g ^ 3 ∈ K := hpow_out hgW
+theorem order36_orderOf_eq_nine_of_cube_mem_card_three
+    (K : Subgroup G) (hKcard : Nat.card K = 3) {g : G}
+    (hg3K : g ^ 3 ∈ K) (hg3ne : g ^ 3 ≠ 1) :
+    orderOf g = 9 := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hKcard]; norm_num)
   have hk_dvd : orderOf (⟨g ^ 3, hg3K⟩ : K) ∣ 3 := by
     have := orderOf_dvd_natCard (⟨g ^ 3, hg3K⟩ : K)
-    rwa [hK] at this
+    rwa [hKcard] at this
   have hk : (⟨g ^ 3, hg3K⟩ : K) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hk_dvd
   have hkG := congrArg (fun x : K => (x : G)) hk
   have hg9 : g ^ 9 = 1 := by
@@ -4935,7 +4928,8 @@ theorem order36_A4_quotient_klein_preimage_order_nine_of_cube_ne_one
       _ = 1 := by simpa using hkG
   have hdvd : orderOf g ∣ 9 := orderOf_dvd_of_pow_eq_one hg9
   have hle : orderOf g ≤ 9 := Nat.le_of_dvd (by norm_num) hdvd
-  have hpos : 0 < orderOf g := orderOf_pos g
+  have hpos : 0 < orderOf g := by
+    exact Nat.pos_of_ne_zero (fun hzero => by rw [hzero] at hdvd; norm_num at hdvd)
   have hcases : orderOf g = 1 ∨ orderOf g = 3 ∨ orderOf g = 9 := by
     interval_cases h : orderOf g <;> try norm_num [h] at hdvd <;> simp
   rcases hcases with h1 | h3 | h9
@@ -4944,6 +4938,48 @@ theorem order36_A4_quotient_klein_preimage_order_nine_of_cube_ne_one
   · have hg3 : g ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp (by rw [h3])
     exact False.elim (hg3ne hg3)
   · exact h9
+
+theorem order36_cube_ne_one_of_orderOf_eq_nine {g : G} (hg9 : orderOf g = 9) :
+    g ^ 3 ≠ 1 := by
+  intro hg3
+  have hdvd : orderOf g ∣ 3 := orderOf_dvd_of_pow_eq_one hg3
+  rw [hg9] at hdvd
+  norm_num at hdvd
+
+theorem order36_order_nine_cube_generates_card_three_subgroup
+    (K : Subgroup G) (hKcard : Nat.card K = 3) {g : G}
+    (hg3K : g ^ 3 ∈ K) (hg9 : orderOf g = 9) :
+    Subgroup.zpowers (⟨g ^ 3, hg3K⟩ : K) = ⊤ := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hKcard]; norm_num)
+  let x : K := ⟨g ^ 3, hg3K⟩
+  have hg9pow : g ^ 9 = 1 := orderOf_dvd_iff_pow_eq_one.mp (by rw [hg9])
+  have hx3 : x ^ 3 = 1 := by
+    ext
+    change (g ^ 3) ^ 3 = 1
+    rw [← pow_mul]
+    simpa using hg9pow
+  have hx_ne : x ≠ 1 := by
+    intro hx
+    exact order36_cube_ne_one_of_orderOf_eq_nine hg9 (by
+      have hxG := congrArg (fun y : K => (y : G)) hx
+      simpa [x] using hxG)
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hxord : orderOf x = 3 := orderOf_eq_prime hx3 hx_ne
+  change Subgroup.zpowers x = ⊤
+  exact Subgroup.eq_top_of_card_eq _ (by rw [Nat.card_zpowers, hxord, hKcard])
+
+theorem order36_A4_quotient_klein_preimage_order_nine_of_cube_ne_one
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ W : Subgroup G, W.Normal ∧ K ≤ W ∧ Nat.card W = 12 ∧
+      ∀ {g : G}, g ∉ W → g ^ 3 ≠ 1 → orderOf g = 9 := by
+  obtain ⟨W, hWnormal, hKW, hWcard, _hpow_in, hpow_out⟩ :=
+    order36_A4_quotient_klein_preimage_pow_cases (G := G) hG K hquot
+  refine ⟨W, hWnormal, hKW, hWcard, ?_⟩
+  intro g hgW hg3ne
+  exact order36_orderOf_eq_nine_of_cube_mem_card_three
+    K hK (hpow_out hgW) hg3ne
 
 theorem order36_A4_quotient_klein_preimage_cube_one_of_no_order_nine
     [Finite G] (hG : Nat.card G = 36)
@@ -5368,34 +5404,36 @@ theorem order36_A4_quotient_no_order_nine_iff_C3_klein_cube_one
     obtain ⟨W, hWnormal, hKW, hWcard, hWiso, _hpow_in, hpow_out⟩ :=
       order36_A4_quotient_klein_preimage_C3_klein_pow_cases
         (G := G) hG K hKcenter hK hquot
-    haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hK]; norm_num)
     refine ⟨W, hWnormal, hKW, hWcard, hWiso, ?_⟩
     intro g hgW
     by_contra hg3ne
-    have hg3K : g ^ 3 ∈ K := hpow_out hgW
-    have hk_dvd : orderOf (⟨g ^ 3, hg3K⟩ : K) ∣ 3 := by
-      have := orderOf_dvd_natCard (⟨g ^ 3, hg3K⟩ : K)
-      rwa [hK] at this
-    have hk : (⟨g ^ 3, hg3K⟩ : K) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hk_dvd
-    have hkG := congrArg (fun x : K => (x : G)) hk
-    have hg9pow : g ^ 9 = 1 := by
-      calc
-        g ^ 9 = g ^ (3 * 3) := by norm_num
-        _ = (g ^ 3) ^ 3 := by rw [pow_mul]
-        _ = 1 := by simpa using hkG
-    have hdvd : orderOf g ∣ 9 := orderOf_dvd_of_pow_eq_one hg9pow
-    have hle : orderOf g ≤ 9 := Nat.le_of_dvd (by norm_num) hdvd
-    have hpos : 0 < orderOf g := orderOf_pos g
-    have hcases : orderOf g = 1 ∨ orderOf g = 3 ∨ orderOf g = 9 := by
-      interval_cases h : orderOf g <;> try norm_num [h] at hdvd <;> simp
-    rcases hcases with h1 | h3 | h9
-    · have hg1 : g = 1 := orderOf_eq_one_iff.mp h1
-      exact False.elim (hg3ne (by rw [hg1]; simp))
-    · have hg3 : g ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp (by rw [h3])
-      exact False.elim (hg3ne hg3)
-    · exact hno9 g h9
+    exact hno9 g (order36_orderOf_eq_nine_of_cube_mem_card_three
+      K hK (hpow_out hgW) hg3ne)
   · rintro ⟨W, _hWnormal, _hKW, _hWcard, hWiso, hcube⟩
     exact order36_no_order_nine_of_C3_klein_layer_cube_one W hWiso hcube
+
+theorem order36_A4_quotient_C3_klein_order_nine_cube_generates
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hKcenter : K ≤ Subgroup.center G)
+    (hK : Nat.card K = 3) (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∃ hpow_out : (∀ {g : G}, g ∉ W → g ^ 3 ∈ K),
+          ∃ (g : G) (hgW : g ∉ W), orderOf g = 9 ∧
+            Subgroup.zpowers (⟨g ^ 3, hpow_out hgW⟩ : K) = ⊤ := by
+  obtain ⟨g, hg9⟩ := h9
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, _hpow_in, hpow_out⟩ :=
+    order36_A4_quotient_klein_preimage_C3_klein_pow_cases
+      (G := G) hG K hKcenter hK hquot
+  have hgW : g ∉ W := by
+    intro hgW
+    obtain ⟨e⟩ := hWiso
+    have himage : orderOf (e ⟨g, hgW⟩) = 9 := by
+      rw [MulEquiv.orderOf_eq, Subgroup.orderOf_mk, hg9]
+    exact order36_C3_klein_no_order_nine (e ⟨g, hgW⟩) himage
+  refine ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, ?_⟩
+  exact order36_order_nine_cube_generates_card_three_subgroup K hK (hpow_out hgW) hg9
 
 noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
   toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
@@ -5927,6 +5965,26 @@ theorem order36_has_C3_klein_layer_with_order_nine_outside_of_card_sylow_3_eq_fo
     exact order36_C3_klein_no_order_nine (e ⟨g, hgW⟩) himage
   exact ⟨W, hWnormal, hWcard, hWiso, hWquot, g, hgW, hg9⟩
 
+theorem order36_has_central_C3_klein_layer_with_order_nine_cube_generates_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) ∧
+        ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+          Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+            ∃ hpow_out : (∀ {g : G}, g ∉ W → g ^ 3 ∈ K),
+              ∃ (g : G) (hgW : g ∉ W), orderOf g = 9 ∧
+                Subgroup.zpowers (⟨g ^ 3, hpow_out hgW⟩ : K) = ⊤ := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hgen⟩ :=
+    order36_A4_quotient_C3_klein_order_nine_cube_generates
+      (G := G) hG K hKcenter hKcard hquot h9
+  exact ⟨K, hKnormal, hKcenter, hKcard, hquot,
+    W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hgen⟩
+
 theorem order36_has_klein_preimage_order_nine_of_cube_ne_one_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
     ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
@@ -6051,7 +6109,6 @@ theorem order36_A4_quotient_C3_klein_split_of_no_order_nine
           (∀ {g : G}, g ∉ W → g ^ 3 = 1) ∧
             ∃ H : Subgroup G, W.IsComplement' H ∧ Nat.card H = 3 ∧
               Nonempty (H ≃* order36_C3) := by
-  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hK]; norm_num)
   obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hpow_out⟩ :=
     order36_A4_quotient_klein_preimage_C3_klein_pow_cases
       (G := G) hG K hKcenter hK hquot
@@ -6059,28 +6116,8 @@ theorem order36_A4_quotient_C3_klein_split_of_no_order_nine
   have hcube : ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
     intro g hgW
     by_contra hg3ne
-    have hg3K : g ^ 3 ∈ K := hpow_out hgW
-    have hk_dvd : orderOf (⟨g ^ 3, hg3K⟩ : K) ∣ 3 := by
-      have := orderOf_dvd_natCard (⟨g ^ 3, hg3K⟩ : K)
-      rwa [hK] at this
-    have hk : (⟨g ^ 3, hg3K⟩ : K) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hk_dvd
-    have hkG := congrArg (fun x : K => (x : G)) hk
-    have hg9 : g ^ 9 = 1 := by
-      calc
-        g ^ 9 = g ^ (3 * 3) := by norm_num
-        _ = (g ^ 3) ^ 3 := by rw [pow_mul]
-        _ = 1 := by simpa using hkG
-    have hdvd : orderOf g ∣ 9 := orderOf_dvd_of_pow_eq_one hg9
-    have hle : orderOf g ≤ 9 := Nat.le_of_dvd (by norm_num) hdvd
-    have hpos : 0 < orderOf g := orderOf_pos g
-    have hcases : orderOf g = 1 ∨ orderOf g = 3 ∨ orderOf g = 9 := by
-      interval_cases h : orderOf g <;> try norm_num [h] at hdvd <;> simp
-    rcases hcases with h1 | h3 | h9
-    · have hg1 : g = 1 := orderOf_eq_one_iff.mp h1
-      exact hg3ne (by rw [hg1]; simp)
-    · have hg3 : g ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp (by rw [h3])
-      exact hg3ne hg3
-    · exact hno9 g h9
+    exact hno9 g (order36_orderOf_eq_nine_of_cube_mem_card_three
+      K hK (hpow_out hgW) hg3ne)
   obtain ⟨H, hHcomp, hHcard, hHiso⟩ :=
     order36_exists_order_three_complement_of_C3_klein_cube_one
       (G := G) hG W hWcard hcube
