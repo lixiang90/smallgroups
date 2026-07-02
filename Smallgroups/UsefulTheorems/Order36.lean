@@ -7,10 +7,12 @@ import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Smallgroups.UsefulTheorems.Order2PSq
 import Smallgroups.UsefulTheorems.Order2PSqElem
 import Smallgroups.UsefulTheorems.PrimePairNonabelian
+import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.PrimeSqClassification
 import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Mathlib.GroupTheory.QuotientGroup.Basic
 import Mathlib.GroupTheory.SpecificGroups.Alternating
+import Mathlib.GroupTheory.SpecificGroups.Alternating.KleinFour
 import Mathlib.GroupTheory.SpecificGroups.Dihedral
 import Mathlib.GroupTheory.Sylow
 import Mathlib.Tactic.NormNum.Prime
@@ -40,6 +42,9 @@ variable {G : Type*} [Group G]
 
 /-- The cyclic group `C₂`. -/
 abbrev order36_C2 : Type := CyclicRep 2
+
+/-- The cyclic group `C₃`. -/
+abbrev order36_C3 : Type := CyclicRep 3
 
 /-- The cyclic group `C₄`. -/
 abbrev order36_C4 : Type := CyclicRep 4
@@ -2556,6 +2561,98 @@ theorem order36_normal_rep_cases [Finite G] (hG : Nat.card G = 36)
       exact Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨eG.trans e⟩
 
 /-! ### The non-normal Sylow branch -/
+
+/-- The alternating group `A₄`, realised as permutations of `Fin 4`. -/
+abbrev order36_A4 : Type := alternatingGroup (Fin 4)
+
+local instance order36_a4KleinFourNormal :
+    (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4).Normal := by
+  exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+
+/-- The quotient `A₄ / V₄`, which is cyclic of order `3`. -/
+abbrev order36_A4Quot : Type :=
+  order36_A4 ⧸ (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4)
+
+theorem card_order36_A4 : Nat.card order36_A4 = 12 := by
+  rw [nat_card_alternatingGroup, Nat.card_fin]
+  norm_num [Nat.factorial]
+
+theorem card_order36_C9 : Nat.card order36_C9 = 9 := by
+  simp [order36_C9]
+
+theorem card_order36_A4Quot : Nat.card order36_A4Quot = 3 := by
+  let K : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  have hcardA : Nat.card order36_A4 = 12 := card_order36_A4
+  have hcardK : Nat.card K = 4 := by
+    simpa [K] using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have h := Subgroup.card_eq_card_quotient_mul_card_subgroup K
+  change Nat.card order36_A4 = Nat.card order36_A4Quot * Nat.card K at h
+  rw [hcardA, hcardK] at h
+  omega
+
+noncomputable def order36_A4QuotEquiv : order36_A4Quot ≃* order36_C3 :=
+  (prime_classification (by norm_num : Nat.Prime 3) card_order36_A4Quot).some
+
+noncomputable abbrev order36_A4ToC3 : order36_A4 →* order36_C3 :=
+  order36_A4QuotEquiv.toMonoidHom.comp
+    (QuotientGroup.mk' (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4))
+
+noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
+  toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
+  map_one' := by rfl
+  map_mul' x y := by
+    obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x
+    obtain ⟨b, rfl⟩ := Multiplicative.ofAdd.surjective y
+    ext
+    fin_cases a <;> fin_cases b <;> decide
+
+/-- The difference between the `A₄ → C₃` quotient map and the reduction `C₉ → C₃`. -/
+noncomputable abbrev order36_A4C9Diff : order36_A4 × order36_C9 →* order36_C3 :=
+  (order36_A4ToC3.comp (MonoidHom.fst order36_A4 order36_C9)) *
+    (order36_C9ToC3.comp (MonoidHom.snd order36_A4 order36_C9))⁻¹
+
+/-- A non-split central-extension candidate in the non-normal Sylow branch. -/
+abbrev order36_A4C9 : Type := order36_A4C9Diff.ker
+
+theorem order36_A4C9Diff_range_top : order36_A4C9Diff.range = ⊤ := by
+  rw [Subgroup.eq_top_iff']
+  intro x
+  obtain ⟨n, rfl⟩ := Multiplicative.ofAdd.surjective x
+  fin_cases n
+  · rw [MonoidHom.mem_range]
+    refine ⟨(1, 1), ?_⟩
+    ext
+    simp [order36_A4C9Diff, order36_C9ToC3]
+    rfl
+  · rw [MonoidHom.mem_range]
+    refine ⟨(1, Multiplicative.ofAdd (2 : ZMod 9)), ?_⟩
+    ext
+    simp only [MonoidHom.mul_apply, MonoidHom.coe_comp, MulEquiv.toMonoidHom_eq_coe,
+      MonoidHom.coe_coe, QuotientGroup.coe_mk', MonoidHom.coe_fst, Function.comp_apply,
+      QuotientGroup.mk_one, map_one, MonoidHom.inv_apply, MonoidHom.coe_snd, one_mul,
+      toAdd_inv, Nat.reduceAdd, Fin.mk_one, Fin.isValue, toAdd_ofAdd]
+    decide
+  · rw [MonoidHom.mem_range]
+    refine ⟨(1, Multiplicative.ofAdd (1 : ZMod 9)), ?_⟩
+    ext
+    simp only [MonoidHom.mul_apply, MonoidHom.coe_comp, MulEquiv.toMonoidHom_eq_coe,
+      MonoidHom.coe_coe, QuotientGroup.coe_mk', MonoidHom.coe_fst, Function.comp_apply,
+      QuotientGroup.mk_one, map_one, MonoidHom.inv_apply, MonoidHom.coe_snd, one_mul,
+      toAdd_inv, Nat.reduceAdd, Fin.reduceFinMk, Fin.isValue, toAdd_ofAdd]
+    decide
+
+theorem card_order36_A4C9 : Nat.card order36_A4C9 = 36 := by
+  change Nat.card order36_A4C9Diff.ker = 36
+  have hprod : Nat.card (order36_A4 × order36_C9) = 108 := by
+    rw [Nat.card_prod, card_order36_A4, card_order36_C9]
+  have hrange : Nat.card order36_A4C9Diff.range = 3 := by
+    rw [order36_A4C9Diff_range_top]
+    simp [order36_C3]
+  have hidx : order36_A4C9Diff.ker.index = 3 := by
+    rw [Subgroup.index_ker, hrange]
+  have h := order36_A4C9Diff.ker.card_mul_index
+  rw [hidx, hprod] at h
+  omega
 
 /-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
 theorem sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four [Finite G]
