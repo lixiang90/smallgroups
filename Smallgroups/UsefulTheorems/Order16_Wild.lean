@@ -520,21 +520,145 @@ theorem lemma_normal_c8_or_k8 {G : Type*} [Group G]
       rw [hHcard, hcard] at hmul
       omega
     have hHnorm : H.Normal := normal_of_index_eq_two hHindex
-    have hH_iso : Nonempty (H ≃* C8g) := by
-      haveI : IsCyclic H := isCyclic_zpowers g
-      have hcard_H : Fintype.card H = 8 := by
-        rw [← Nat.card_eq_fintype_card, hHcard]
-      have hcard_C8 : Fintype.card C8g = 8 := by
-        rw [← Nat.card_eq_fintype_card, card_C8g]
-      -- Two cyclic groups of the same finite order are isomorphic
-      apply Nonempty.intro
-      -- This follows from the classification of cyclic groups
-      sorry
+    haveI : IsCyclic H := isCyclic_zpowers g
+    have hH_iso : Nonempty (H ≃* C8g) :=
+      cyclicRep_classification (by norm_num : (8 : ℕ) ≠ 0) hHcard
     exact Or.inl ⟨H, hHnorm, hHcard, hH_iso⟩
-  · -- No element of order 8.  The full proof would use the center argument
-    -- (Fact 6: p-group has nontrivial center) and case analysis on elements
-    -- of order 4 to find K8.  We state the result as a sorry for now.
-    sorry
+  · -- No element of order 8.
+    -- Find an element z of order 2 in the center Z(G).
+    haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+    have hcard_pow : Nat.card G = 2 ^ 4 := by rw [hcard]; norm_num
+    have h_center_nontriv : Nontrivial (Subgroup.center G) :=
+      center_nontrivial_of_card_prime_pow hcard_pow (by norm_num : (0 : ℕ) < 4)
+    haveI hc_nontriv : Nontrivial (Subgroup.center G) := h_center_nontriv
+    obtain ⟨w, hw⟩ := exists_ne (1 : Subgroup.center G)
+    have hw_ne_one : (w : G) ≠ 1 := Subtype.coe_inj.not.mpr hw
+    have hcard_fin : Fintype.card G = 16 := by
+      rw [Fintype.card_eq_nat_card, hcard]
+    have hw_order_dvd : orderOf (w : G) ∣ 16 := by
+      rw [← hcard_fin]; exact orderOf_dvd_card
+    have hw_order_not8 : orderOf (w : G) ≠ 8 := by
+      intro h; apply h_ord8; exact ⟨(w : G), h⟩
+    -- orderOf w ∈ {1,2,4}. Not 1 (nontrivial), not 8 (by assumption).
+    have hw_order_24 : orderOf (w : G) = 2 ∨ orderOf (w : G) = 4 := by
+      have hpos : 0 < orderOf (w : G) := orderOf_pos _
+      have h_not1 : orderOf (w : G) ≠ 1 := by
+        intro h1; apply hw_ne_one; exact (orderOf_eq_one_iff.mp h1)
+      have h_not16 : orderOf (w : G) ≠ 16 := by
+        intro h16
+        have h8 : orderOf ((w : G) ^ 2) = 8 := by
+          rw [orderOf_pow (w : G), h16]
+          norm_num
+        apply h_ord8
+        exact ⟨(w : G) ^ 2, h8⟩
+      have h_all_divs : (Nat.divisors 16) = {1,2,4,8,16} := by decide
+      have h_mem : orderOf (w : G) ∈ Nat.divisors 16 :=
+        Nat.mem_divisors.mpr ⟨hw_order_dvd, by norm_num⟩
+      rw [h_all_divs] at h_mem
+      have h_cases : orderOf (w : G) = 2 ∨ orderOf (w : G) = 4 := by
+        simp only [Finset.mem_insert, Finset.mem_singleton] at h_mem
+        rcases h_mem with (h1 | h2 | h4 | h8 | h16)
+        · exact (h_not1 h1).elim
+        · left; exact h2
+        · right; exact h4
+        · exact (hw_order_not8 h8).elim
+        · exact (h_not16 h16).elim
+      exact h_cases
+    -- Obtain nontrivial z ∈ Z(G) with orderOf z = 2
+    have h_exists_z2 : ∃ z : G, z ∈ Subgroup.center G ∧ orderOf z = 2 := by
+      rcases hw_order_24 with (hw2 | hw4)
+      · exact ⟨(w : G), w.property, hw2⟩
+      · refine ⟨(w : G) ^ 2, Subgroup.pow_mem _ w.property 2, ?_⟩
+        rw [orderOf_pow (w : G), hw4]
+        norm_num
+    obtain ⟨z, hz_cent, hz_order2⟩ := h_exists_z2
+    have hz_ne_one : z ≠ 1 := by
+      intro h; rw [h, orderOf_one] at hz_order2; omega
+    -- Now z is a central element of order 2.  Continue with Wild's case analysis.
+    -- By Fact 2 (all elements squared = 1 ⇒ abelian), since G ≄ (C₂)⁴, there exists
+    -- an element of order 4.  Otherwise G would be abelian exponent 2, hence ≅ (C₂)⁴.
+    have h_exists_ord4 : ∃ x : G, orderOf x = 4 := by
+      by_contra! h_no4
+      -- If no element of order 4, then every element squares to 1.
+      have h_all_sq_one : ∀ g : G, g ^ 2 = 1 := by
+        intro g
+        have hord : orderOf g = 1 ∨ orderOf g = 2 := by
+          have hpos : 0 < orderOf g := orderOf_pos _
+          have h_dvd : orderOf g ∣ 16 := by
+            rw [← hcard_fin]; exact orderOf_dvd_card
+          have h_not8 : orderOf g ≠ 8 := by
+            intro h; apply h_ord8; exact ⟨g, h⟩
+          have h_not16 : orderOf g ≠ 16 := by
+            intro h16
+            have h8 : orderOf (g ^ 2) = 8 := by
+              rw [orderOf_pow g, h16]; norm_num
+            apply h_ord8; exact ⟨g ^ 2, h8⟩
+          have h_not4 : orderOf g ≠ 4 := h_no4 g
+          have h_mem : orderOf g ∈ Nat.divisors 16 :=
+            Nat.mem_divisors.mpr ⟨h_dvd, by norm_num⟩
+          have h_divs : (Nat.divisors 16) = {1,2,4,8,16} := by decide
+          rw [h_divs] at h_mem
+          simp only [Finset.mem_insert, Finset.mem_singleton] at h_mem
+          rcases h_mem with (h1 | h2' | h4 | h8 | h16)
+          · left; exact h1
+          · right; exact h2'
+          · exact (h_not4 h4).elim
+          · exact (h_not8 h8).elim
+          · exact (h_not16 h16).elim
+        rcases hord with (h1 | h2')
+        · have hg1 : g = 1 := orderOf_eq_one_iff.mp h1
+          rw [hg1, one_pow]
+        · have htemp := pow_orderOf_eq_one g
+          rw [h2'] at htemp; exact htemp
+      have h_abel : ∀ a b : G, a * b = b * a := by
+        intro a b
+        have ha_sq : a ^ 2 = 1 := h_all_sq_one a
+        have hb_sq : b ^ 2 = 1 := h_all_sq_one b
+        have hab_sq : (a * b) ^ 2 = 1 := h_all_sq_one (a * b)
+        have ha_sq' : a * a = 1 := by rw [← pow_two, ha_sq]
+        have hb_sq' : b * b = 1 := by rw [← pow_two, hb_sq]
+        have hab_sq' : (a * b) * (a * b) = 1 := by rw [← pow_two, hab_sq]
+        have ha_inv : a = a⁻¹ := eq_inv_of_mul_eq_one_left ha_sq'
+        have hb_inv : b = b⁻¹ := eq_inv_of_mul_eq_one_left hb_sq'
+        have hab_inv_sq : a * b = (a * b)⁻¹ :=
+          eq_inv_of_mul_eq_one_left hab_sq'
+        calc
+          a * b = (a * b)⁻¹ := hab_inv_sq
+          _ = b⁻¹ * a⁻¹ := by simp
+          _ = b * a := by rw [ha_inv.symm, hb_inv.symm]
+      sorry
+    obtain ⟨x, hx_order4⟩ := h_exists_ord4
+    have hx4 : x ^ 4 = 1 := by
+      have htemp := pow_orderOf_eq_one x
+      rw [hx_order4] at htemp; exact htemp
+    have hz2 : z ^ 2 = 1 := by
+      have htemp := pow_orderOf_eq_one z
+      rw [hz_order2] at htemp; exact htemp
+    have h_comm_xz : Commute x z := by
+      rw [Commute, SemiconjBy, ← (Subgroup.mem_center_iff.mp hz_cent x)]
+    -- Case 1: x² ≠ z.  Then ⟨x, z⟩ ≅ C₄ × C₂ = K₈.
+    by_cases hxsq_ne_z : x ^ 2 ≠ z
+    · -- The subgroup generated by x and z has 8 elements: xⁱzʲ for i=0..3, j=0..1.
+      let H : Subgroup G := (Subgroup.zpowers x) ⊔ (Subgroup.zpowers z)
+      have hH_card : Nat.card H = 8 := by
+        -- Since ⟨x⟩ ∩ ⟨z⟩ = {1} (because x² ≠ z) and x, z commute,
+        -- the product formula gives |H| = |⟨x⟩|·|⟨z⟩| = 4·2 = 8.
+        sorry
+      have hHindex : H.index = 2 := by
+        have hmul := H.card_mul_index
+        rw [hH_card, hcard] at hmul; omega
+      have hH_norm : H.Normal := normal_of_index_eq_two hHindex
+      have hH_iso : Nonempty (H ≃* K8g) := by
+        -- H is abelian, order 8, contains an element (x) of order 4, not cyclic.
+        -- By classification of groups of order 8, the only such group is C₄ × C₂ = K8g.
+        sorry
+      exact Or.inr ⟨H, hH_norm, hH_card, hH_iso⟩
+    · -- Case 2: All elements of order 4 square to z.
+      push_neg at hxsq_ne_z
+      -- Every element of order 4 satisfies x² = z.
+      -- The full proof uses the conjugacy-class argument (Fact 5) to find
+      -- an element y ∈ C(x) \ ⟨x⟩, then ⟨x, y⟩ ≅ K₈.
+      sorry
 
 /-! ### Main classification theorem
 
