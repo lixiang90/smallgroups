@@ -156,6 +156,20 @@ noncomputable def order36_normal_reps : Fin 12 → Type
   | 10 => DihedralGroup 3 × CyclicRep 3 × order36_C2
   | 11 => DihedralGroup 3 × DihedralGroup 3
 
+noncomputable instance order36_normal_reps_group : ∀ i, Group (order36_normal_reps i)
+  | 0 => by dsimp [order36_normal_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_reps]; infer_instance
+  | 3 => by dsimp [order36_normal_reps]; infer_instance
+  | 4 => by dsimp [order36_normal_reps]; infer_instance
+  | 5 => by dsimp [order36_normal_reps]; infer_instance
+  | 6 => by dsimp [order36_normal_reps]; infer_instance
+  | 7 => by dsimp [order36_normal_reps]; infer_instance
+  | 8 => by dsimp [order36_normal_reps]; infer_instance
+  | 9 => by dsimp [order36_normal_reps]; infer_instance
+  | 10 => by dsimp [order36_normal_reps]; infer_instance
+  | 11 => by dsimp [order36_normal_reps]; infer_instance
+
 /-- Every representative in the normal Sylow-`3` branch has order `36`. -/
 theorem card_order36_normal_reps (i : Fin 12) : Nat.card (order36_normal_reps i) = 36 := by
   fin_cases i <;>
