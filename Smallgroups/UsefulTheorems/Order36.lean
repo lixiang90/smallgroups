@@ -2724,6 +2724,370 @@ theorem order36_normal_nonabelian_c4_non_c4_reps_disjoint :
     (order36_normal_nonabelian_c4_reps_has_order_four i)
     (order36_normal_nonabelian_non_c4_reps_no_order_four j)
 
+theorem order36_normal_nonabelian_non_c4_rep0_has_order_nine :
+    ∃ g : order36_normal_nonabelian_non_c4_reps (0 : Fin 4), orderOf g = 9 := by
+  change ∃ g : DihedralGroup 9 × order36_C2, orderOf g = 9
+  refine ⟨(DihedralGroup.r 1, 1), ?_⟩
+  rw [Prod.orderOf_mk, DihedralGroup.orderOf_r_one, orderOf_one]
+  norm_num
+
+theorem order36_E9_inv_c2_pow_six
+    (g : SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9)) :
+    g ^ 6 = 1 := by
+  have hcase :
+      g.right = 1 ∨ g.right = Multiplicative.ofAdd (1 : ZMod 2) := by
+    rcases multiplicative_zmod_two_cases g.right with h | h
+    · left; exact h
+    · right; exact h
+  rcases hcase with hr | hr
+  · have hg : g = SemidirectProduct.inl g.left :=
+      SemidirectProduct.ext rfl (by rw [hr]; rfl)
+    rw [hg, ← map_pow]
+    have hleft3 : g.left ^ 3 = 1 := by
+      simpa [order36_E9] using (pow_p_elemAbelian (p := 3) g.left)
+    rw [show 6 = 3 * 2 by norm_num, pow_mul, hleft3, one_pow, map_one]
+  · have hsq : g ^ 2 = 1 := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · simp [SemidirectProduct.mul_left, hr, invAut_apply]
+      · rw [SemidirectProduct.mul_right, hr, SemidirectProduct.one_right]
+        decide
+    rw [show 6 = 2 * 3 by norm_num, pow_mul, hsq, one_pow]
+
+theorem order36_normal_nonabelian_non_c4_reps_no_order_nine (i : Fin 4)
+    (hi : i ≠ 0) :
+    ∀ g : order36_normal_nonabelian_non_c4_reps i, orderOf g ≠ 9 := by
+  fin_cases i
+  · exact False.elim (hi rfl)
+  · change ∀ g : SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9) ×
+      order36_C2, orderOf g ≠ 9
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · exact order36_E9_inv_c2_pow_six g.1
+      · change g.2 ^ 6 = 1
+        rw [← orderOf_dvd_iff_pow_eq_one]
+        have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+        have hdvd := _root_.orderOf_dvd_natCard (x := g.2)
+        rw [hcard] at hdvd
+        exact hdvd.trans (by norm_num)) (by norm_num : ¬ (9 : ℕ) ∣ 6)
+  · change ∀ g : DihedralGroup 3 × CyclicRep 3 × order36_C2, orderOf g ≠ 9
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · rw [Prod.pow_mk]
+        apply Prod.ext
+        · change g.2.1 ^ 6 = 1
+          rw [← orderOf_dvd_iff_pow_eq_one]
+          have hcard : Nat.card (CyclicRep 3) = 3 := by simp [CyclicRep]
+          have hdvd := _root_.orderOf_dvd_natCard (x := g.2.1)
+          rw [hcard] at hdvd
+          exact hdvd.trans (by norm_num)
+        · change g.2.2 ^ 6 = 1
+          rw [← orderOf_dvd_iff_pow_eq_one]
+          have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+          have hdvd := _root_.orderOf_dvd_natCard (x := g.2.2)
+          rw [hcard] at hdvd
+          exact hdvd.trans (by norm_num)) (by norm_num : ¬ (9 : ℕ) ∣ 6)
+  · change ∀ g : DihedralGroup 3 × DihedralGroup 3, orderOf g ≠ 9
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · change g.2 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one) (by norm_num : ¬ (9 : ℕ) ∣ 6)
+
+theorem order36_E9_inv_c2_center_eq_bot :
+    Subgroup.center (SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9)) =
+      ⊥ := by
+  rw [Subgroup.eq_bot_iff_forall]
+  intro z hz
+  have hleft_inv_fixed : z.left⁻¹ = z.left := by
+    have hcomm := (Subgroup.mem_center_iff.mp hz)
+      (SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 2)))
+    have hleft := congrArg SemidirectProduct.left hcomm
+    rw [SemidirectProduct.mul_left, SemidirectProduct.mul_left,
+      SemidirectProduct.left_inr, SemidirectProduct.right_inr] at hleft
+    simpa [invActionHom_ofAdd_one, invAut_apply] using hleft
+  have hleft_sq : z.left ^ 2 = 1 := by
+    rw [sq]
+    nth_rewrite 2 [← hleft_inv_fixed]
+    exact mul_inv_cancel z.left
+  have hleft_three : z.left ^ 3 = 1 := by
+    simpa [order36_E9] using (pow_p_elemAbelian (p := 3) z.left)
+  have hleft_one : z.left = 1 := by
+    have h2 : orderOf z.left ∣ 2 := orderOf_dvd_of_pow_eq_one hleft_sq
+    have h3 : orderOf z.left ∣ 3 := orderOf_dvd_of_pow_eq_one hleft_three
+    have h13 : orderOf z.left ∣ Nat.gcd 2 3 := Nat.dvd_gcd h2 h3
+    have h1 : orderOf z.left = 1 := Nat.eq_one_of_dvd_one (by simpa using h13)
+    exact orderOf_eq_one_iff.mp h1
+  have hfixed_e1 :
+      (invActionHom order36_E9 z.right) order36_E9_e1 = order36_E9_e1 := by
+    have hcomm := (Subgroup.mem_center_iff.mp hz) (SemidirectProduct.inl order36_E9_e1)
+    have hleft := congrArg SemidirectProduct.left hcomm
+    rw [SemidirectProduct.mul_left, SemidirectProduct.mul_left,
+      SemidirectProduct.left_inl, SemidirectProduct.right_inl, hleft_one] at hleft
+    simpa using hleft.symm
+  have hright_one : z.right = 1 := by
+    rcases multiplicative_zmod_two_cases z.right with hright | hright
+    · exact hright
+    · exfalso
+      rw [hright, invActionHom_ofAdd_one, invAut_apply] at hfixed_e1
+      exact (by decide : order36_E9_e1⁻¹ ≠ order36_E9_e1) hfixed_e1
+  exact SemidirectProduct.ext hleft_one hright_one
+
+theorem card_center_order36_E9_inv_c2 :
+    Nat.card (Subgroup.center
+      (SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9))) = 1 :=
+  card_center_of_eq_bot order36_E9_inv_c2_center_eq_bot
+
+def order36_normal_nonabelian_non_c4_center_card : Fin 4 → ℕ
+  | 0 => 2
+  | 1 => 2
+  | 2 => 6
+  | 3 => 1
+
+theorem card_center_order36_normal_nonabelian_non_c4_reps (i : Fin 4) :
+    Nat.card (Subgroup.center (order36_normal_nonabelian_non_c4_reps i)) =
+      order36_normal_nonabelian_non_c4_center_card i := by
+  fin_cases i
+  · change Nat.card (Subgroup.center (DihedralGroup 9 × order36_C2)) = 2
+    rw [card_center_prod,
+      card_center_of_eq_bot
+        (DihedralGroup.center_eq_bot_of_odd_ne_one (by exact ⟨4, by norm_num⟩ : Odd 9)
+          (by norm_num : (9 : ℕ) ≠ 1)),
+      card_center_eq_card_of_comm order36_C2 (fun a b => mul_comm a b)]
+    simp [order36_C2]
+  · change Nat.card (Subgroup.center
+      (SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9) ×
+        order36_C2)) = 2
+    rw [card_center_prod, card_center_order36_E9_inv_c2,
+      card_center_eq_card_of_comm order36_C2 (fun a b => mul_comm a b)]
+    simp [order36_C2]
+  · change Nat.card (Subgroup.center (DihedralGroup 3 × CyclicRep 3 × order36_C2)) = 6
+    rw [card_center_prod,
+      card_center_of_eq_bot
+        (DihedralGroup.center_eq_bot_of_odd_ne_one (by exact ⟨1, by norm_num⟩ : Odd 3)
+          (by norm_num : (3 : ℕ) ≠ 1)),
+      card_center_prod,
+      card_center_eq_card_of_comm (CyclicRep 3) (fun a b => mul_comm a b),
+      card_center_eq_card_of_comm order36_C2 (fun a b => mul_comm a b)]
+    simp [CyclicRep, order36_C2]
+  · change Nat.card (Subgroup.center (DihedralGroup 3 × DihedralGroup 3)) = 1
+    rw [card_center_prod,
+      card_center_of_eq_bot
+        (DihedralGroup.center_eq_bot_of_odd_ne_one (by exact ⟨1, by norm_num⟩ : Odd 3)
+          (by norm_num : (3 : ℕ) ≠ 1))]
+
+theorem order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+    {i j : Fin 4}
+    (h : order36_normal_nonabelian_non_c4_center_card i ≠
+      order36_normal_nonabelian_non_c4_center_card j) :
+    ¬ Nonempty (order36_normal_nonabelian_non_c4_reps i ≃*
+      order36_normal_nonabelian_non_c4_reps j) :=
+  not_nonempty_mulEquiv_of_card_center_ne (by
+    rw [card_center_order36_normal_nonabelian_non_c4_reps i,
+      card_center_order36_normal_nonabelian_non_c4_reps j]
+    exact h)
+
+theorem order36_normal_nonabelian_non_c4_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_nonabelian_non_c4_reps := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 1 (by decide)) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 2 (by decide)) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 3 (by decide)) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 1 (by decide))
+      ⟨hiso.some.symm⟩)
+  · rfl
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) hiso)
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 2 (by decide))
+      ⟨hiso.some.symm⟩)
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) ⟨hiso.some.symm⟩)
+  · rfl
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 3 (by decide))
+      ⟨hiso.some.symm⟩)
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) ⟨hiso.some.symm⟩)
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) ⟨hiso.some.symm⟩)
+  · rfl
+
+def order36_normal_nonabelian_splitEquiv : Fin 8 ≃ Fin 4 ⊕ Fin 4 where
+  toFun
+    | 0 => Sum.inl 0
+    | 1 => Sum.inr 0
+    | 2 => Sum.inl 1
+    | 3 => Sum.inl 2
+    | 4 => Sum.inl 3
+    | 5 => Sum.inr 1
+    | 6 => Sum.inr 2
+    | 7 => Sum.inr 3
+  invFun
+    | Sum.inl 0 => 0
+    | Sum.inl 1 => 2
+    | Sum.inl 2 => 3
+    | Sum.inl 3 => 4
+    | Sum.inr 0 => 1
+    | Sum.inr 1 => 5
+    | Sum.inr 2 => 6
+    | Sum.inr 3 => 7
+  left_inv i := by fin_cases i <;> rfl
+  right_inv s := by
+    rcases s with i | i <;> fin_cases i <;> rfl
+
+theorem order36_normal_nonabelian_split_reps_pairwise :
+    PairwiseNonMulEquiv
+      (Sum.elim order36_normal_nonabelian_c4_reps
+        order36_normal_nonabelian_non_c4_reps) := by
+  exact order36_normal_nonabelian_c4_reps_pairwise.sum
+    order36_normal_nonabelian_non_c4_reps_pairwise
+    order36_normal_nonabelian_c4_non_c4_reps_disjoint
+
+@[simp]
+theorem order36_normal_nonabelian_split_reps_apply (i : Fin 8) :
+    Sum.elim order36_normal_nonabelian_c4_reps
+      order36_normal_nonabelian_non_c4_reps
+      (order36_normal_nonabelian_splitEquiv i) =
+      order36_normal_nonabelian_reps i := by
+  fin_cases i <;> rfl
+
+noncomputable def order36_normal_nonabelian_splitMulEquiv :
+    (i : Fin 8) →
+      Sum.elim order36_normal_nonabelian_c4_reps
+        order36_normal_nonabelian_non_c4_reps
+        (order36_normal_nonabelian_splitEquiv i) ≃*
+        order36_normal_nonabelian_reps i
+  | 0 => MulEquiv.refl _
+  | 1 => MulEquiv.refl _
+  | 2 => MulEquiv.refl _
+  | 3 => MulEquiv.refl _
+  | 4 => MulEquiv.refl _
+  | 5 => MulEquiv.refl _
+  | 6 => MulEquiv.refl _
+  | 7 => MulEquiv.refl _
+
+theorem order36_normal_nonabelian_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_nonabelian_reps := by
+  intro i j hiso
+  apply order36_normal_nonabelian_splitEquiv.injective
+  let ei := order36_normal_nonabelian_splitMulEquiv i
+  let ej := order36_normal_nonabelian_splitMulEquiv j
+  have hsplit :
+      Nonempty
+        (Sum.elim order36_normal_nonabelian_c4_reps order36_normal_nonabelian_non_c4_reps
+            (order36_normal_nonabelian_splitEquiv i) ≃*
+          Sum.elim order36_normal_nonabelian_c4_reps order36_normal_nonabelian_non_c4_reps
+            (order36_normal_nonabelian_splitEquiv j)) :=
+    ⟨ei.trans (hiso.some.trans ej.symm)⟩
+  exact order36_normal_nonabelian_split_reps_pairwise
+    (order36_normal_nonabelian_splitEquiv i)
+    (order36_normal_nonabelian_splitEquiv j)
+    hsplit
+
+def order36_normal_splitEquiv : Fin 12 ≃ Fin 4 ⊕ Fin 8 where
+  toFun
+    | 0 => Sum.inl 0
+    | 1 => Sum.inr 0
+    | 2 => Sum.inl 1
+    | 3 => Sum.inr 1
+    | 4 => Sum.inl 2
+    | 5 => Sum.inr 2
+    | 6 => Sum.inr 3
+    | 7 => Sum.inr 4
+    | 8 => Sum.inl 3
+    | 9 => Sum.inr 5
+    | 10 => Sum.inr 6
+    | 11 => Sum.inr 7
+  invFun
+    | Sum.inl 0 => 0
+    | Sum.inl 1 => 2
+    | Sum.inl 2 => 4
+    | Sum.inl 3 => 8
+    | Sum.inr 0 => 1
+    | Sum.inr 1 => 3
+    | Sum.inr 2 => 5
+    | Sum.inr 3 => 6
+    | Sum.inr 4 => 7
+    | Sum.inr 5 => 9
+    | Sum.inr 6 => 10
+    | Sum.inr 7 => 11
+  left_inv i := by fin_cases i <;> rfl
+  right_inv s := by
+    rcases s with i | i <;> fin_cases i <;> rfl
+
+theorem order36_normal_split_reps_pairwise :
+    PairwiseNonMulEquiv
+      (Sum.elim order36_normal_abelian_reps order36_normal_nonabelian_reps) := by
+  exact order36_normal_abelian_reps_pairwise.sum
+    order36_normal_nonabelian_reps_pairwise
+    order36_normal_abelian_nonabelian_reps_disjoint
+
+noncomputable def order36_normal_splitMulEquiv :
+    (i : Fin 12) →
+      Sum.elim order36_normal_abelian_reps order36_normal_nonabelian_reps
+        (order36_normal_splitEquiv i) ≃*
+        order36_normal_reps i
+  | 0 => MulEquiv.refl _
+  | 1 => MulEquiv.refl _
+  | 2 => MulEquiv.refl _
+  | 3 => MulEquiv.refl _
+  | 4 => MulEquiv.refl _
+  | 5 => MulEquiv.refl _
+  | 6 => MulEquiv.refl _
+  | 7 => MulEquiv.refl _
+  | 8 => MulEquiv.refl _
+  | 9 => MulEquiv.refl _
+  | 10 => MulEquiv.refl _
+  | 11 => MulEquiv.refl _
+
+theorem order36_normal_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_reps := by
+  intro i j hiso
+  apply order36_normal_splitEquiv.injective
+  let ei := order36_normal_splitMulEquiv i
+  let ej := order36_normal_splitMulEquiv j
+  have hsplit :
+      Nonempty
+        (Sum.elim order36_normal_abelian_reps order36_normal_nonabelian_reps
+            (order36_normal_splitEquiv i) ≃*
+          Sum.elim order36_normal_abelian_reps order36_normal_nonabelian_reps
+            (order36_normal_splitEquiv j)) :=
+    ⟨ei.trans (hiso.some.trans ej.symm)⟩
+  exact order36_normal_split_reps_pairwise
+    (order36_normal_splitEquiv i) (order36_normal_splitEquiv j) hsplit
+
 theorem order36_c9_c4_action_rep_cases (φ : order36_C4 →* MulAut order36_C9) :
     Nonempty (SemidirectProduct order36_C9 order36_C4 φ ≃*
       order36_normal_reps (0 : Fin 12)) ∨
@@ -4652,6 +5016,10 @@ theorem order36_sum_reps_pairwise_of_normal_reps_pairwise
     (hnormal : PairwiseNonMulEquiv order36_normal_reps) :
     PairwiseNonMulEquiv (Sum.elim order36_normal_reps order36_nonnormal_reps) := by
   exact hnormal.sum order36_nonnormal_reps_pairwise order36_normal_nonnormal_reps_disjoint
+
+theorem order36_sum_reps_pairwise :
+    PairwiseNonMulEquiv (Sum.elim order36_normal_reps order36_nonnormal_reps) :=
+  order36_sum_reps_pairwise_of_normal_reps_pairwise order36_normal_reps_pairwise
 
 theorem order36_nonnormal_reps_has_normal_order_three_and_A4_quotient (i : Fin 2) :
     ∃ (K : Subgroup (order36_nonnormal_reps i)) (_ : K.Normal), Nat.card K = 3 ∧
