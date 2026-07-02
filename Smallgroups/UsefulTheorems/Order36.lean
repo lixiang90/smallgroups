@@ -824,6 +824,50 @@ theorem order36_E9_mulAut_pow_four_entries (α : MulAut order36_E9) (hα : α ^ 
   · have h := congrArg (fun z : order36_E9 => z.2.toAdd) heq2
     simpa [order36_E9_e2] using h
 
+private abbrev order36_matrix_negBoth_basis_case (a b c d : ZMod 3) : Prop :=
+  ∃ p q r s : ZMod 3, p * s - q * r ≠ 0 ∧
+    a * p + b * r = -p ∧ c * p + d * r = -r ∧
+    a * q + b * s = -q ∧ c * q + d * s = -s
+
+private abbrev order36_matrix_negFirst_basis_case (a b c d : ZMod 3) : Prop :=
+  ∃ p q r s : ZMod 3, p * s - q * r ≠ 0 ∧
+    a * p + b * r = -p ∧ c * p + d * r = -r ∧
+    a * q + b * s = q ∧ c * q + d * s = s
+
+private abbrev order36_matrix_rot_basis_case (a b c d : ZMod 3) : Prop :=
+  ∃ p q r s : ZMod 3, p * s - q * r ≠ 0 ∧
+    a * p + b * r = q ∧ c * p + d * r = s ∧
+    a * q + b * s = -p ∧ c * q + d * s = -r
+
+private abbrev order36_matrix_basis_cases (a b c d : ZMod 3) : Prop :=
+  (a = 1 ∧ b = 0 ∧ c = 0 ∧ d = 1) ∨
+    order36_matrix_negBoth_basis_case a b c d ∨
+    order36_matrix_negFirst_basis_case a b c d ∨
+    order36_matrix_rot_basis_case a b c d
+
+private abbrev order36_matrix_pow_four_entries (a b c d : ZMod 3) : Prop :=
+  let a2 := a * a + b * c
+  let b2 := a * b + b * d
+  let c2 := c * a + d * c
+  let d2 := c * b + d * d
+  a2 * a2 + b2 * c2 = 1 ∧ a2 * b2 + b2 * d2 = 0 ∧
+    c2 * a2 + d2 * c2 = 0 ∧ c2 * b2 + d2 * d2 = 1
+
+private theorem order36_matrix_pow_four_basis_cases (a b c d : ZMod 3)
+    (hpow : order36_matrix_pow_four_entries a b c d) :
+    order36_matrix_basis_cases a b c d := by
+  revert b c d
+  fin_cases a
+  · change ∀ b c d : ZMod 3, order36_matrix_pow_four_entries (0 : ZMod 3) b c d →
+      order36_matrix_basis_cases (0 : ZMod 3) b c d
+    decide
+  · change ∀ b c d : ZMod 3, order36_matrix_pow_four_entries (1 : ZMod 3) b c d →
+      order36_matrix_basis_cases (1 : ZMod 3) b c d
+    decide
+  · change ∀ b c d : ZMod 3, order36_matrix_pow_four_entries (2 : ZMod 3) b c d →
+      order36_matrix_basis_cases (2 : ZMod 3) b c d
+    decide
+
 /-- Negate both coordinates of `C₃ × C₃`. -/
 def order36_E9_negBothAddEquiv : order36_E9Add ≃+ order36_E9Add where
   toFun x := (-x.1, -x.2)
@@ -917,6 +961,158 @@ theorem order36_E9_negFirstAut_comm_negSecondAut :
     order36_E9_negFirstAut * order36_E9_negSecondAut =
       order36_E9_negSecondAut * order36_E9_negFirstAut := by
   ext x <;> fin_cases x <;> decide
+
+@[simp]
+theorem order36_E9_negBothAut_e1 :
+    order36_E9_negBothAut order36_E9_e1 =
+      (Multiplicative.ofAdd (-1 : ZMod 3), 1) := by
+  change Multiplicative.ofAdd ((-1 : ZMod 3), 0) =
+    Multiplicative.ofAdd ((-1 : ZMod 3), 0)
+  rfl
+
+@[simp]
+theorem order36_E9_negBothAut_e2 :
+    order36_E9_negBothAut order36_E9_e2 =
+      (1, Multiplicative.ofAdd (-1 : ZMod 3)) := by
+  change Multiplicative.ofAdd ((0 : ZMod 3), -1) =
+    Multiplicative.ofAdd ((0 : ZMod 3), -1)
+  rfl
+
+@[simp]
+theorem order36_E9_negFirstAut_e1 :
+    order36_E9_negFirstAut order36_E9_e1 =
+      (Multiplicative.ofAdd (-1 : ZMod 3), 1) := by
+  change Multiplicative.ofAdd ((-1 : ZMod 3), 0) =
+    Multiplicative.ofAdd ((-1 : ZMod 3), 0)
+  rfl
+
+@[simp]
+theorem order36_E9_negFirstAut_e2 :
+    order36_E9_negFirstAut order36_E9_e2 = order36_E9_e2 := by
+  change Multiplicative.ofAdd ((0 : ZMod 3), 1) =
+    Multiplicative.ofAdd ((0 : ZMod 3), 1)
+  rfl
+
+@[simp]
+theorem order36_E9_rotAut_e1 :
+    order36_E9_rotAut order36_E9_e1 = order36_E9_e2 := by
+  change Multiplicative.ofAdd ((0 : ZMod 3), 1) =
+    Multiplicative.ofAdd ((0 : ZMod 3), 1)
+  rfl
+
+@[simp]
+theorem order36_E9_rotAut_e2 :
+    order36_E9_rotAut order36_E9_e2 =
+      (Multiplicative.ofAdd (-1 : ZMod 3), 1) := by
+  change Multiplicative.ofAdd ((-1 : ZMod 3), 0) =
+    Multiplicative.ofAdd ((-1 : ZMod 3), 0)
+  rfl
+
+theorem order36_E9_mulAut_pow_four_generator_basis_cases
+    (α : MulAut order36_E9) (hα : α ^ 4 = 1) :
+    (∃ θ : MulAut order36_E9,
+      α (θ order36_E9_e1) = θ order36_E9_e1 ∧
+      α (θ order36_E9_e2) = θ order36_E9_e2) ∨
+    (∃ θ : MulAut order36_E9,
+      α (θ order36_E9_e1) = θ (order36_E9_negBothAut order36_E9_e1) ∧
+      α (θ order36_E9_e2) = θ (order36_E9_negBothAut order36_E9_e2)) ∨
+    (∃ θ : MulAut order36_E9,
+      α (θ order36_E9_e1) = θ (order36_E9_negFirstAut order36_E9_e1) ∧
+      α (θ order36_E9_e2) = θ (order36_E9_negFirstAut order36_E9_e2)) ∨
+    (∃ θ : MulAut order36_E9,
+      α (θ order36_E9_e1) = θ (order36_E9_rotAut order36_E9_e1) ∧
+      α (θ order36_E9_e2) = θ (order36_E9_rotAut order36_E9_e2)) := by
+  let a := (α order36_E9_e1).1.toAdd
+  let b := (α order36_E9_e2).1.toAdd
+  let c := (α order36_E9_e1).2.toAdd
+  let d := (α order36_E9_e2).2.toAdd
+  have hpow : order36_matrix_pow_four_entries a b c d := by
+    simpa [order36_matrix_pow_four_entries, a, b, c, d] using
+      order36_E9_mulAut_pow_four_entries α hα
+  rcases order36_matrix_pow_four_basis_cases a b c d hpow with h | h | h | h
+  · rcases h with ⟨ha, hb, hc, hd⟩
+    left
+    refine ⟨1, ?_, ?_⟩
+    · change α order36_E9_e1 = order36_E9_e1
+      have he1 : α order36_E9_e1 = (Multiplicative.ofAdd a, Multiplicative.ofAdd c) := by
+        ext <;> simp [a, c]
+      rw [he1, ha, hc]
+      rfl
+    · change α order36_E9_e2 = order36_E9_e2
+      have he2 : α order36_E9_e2 = (Multiplicative.ofAdd b, Multiplicative.ofAdd d) := by
+        ext <;> simp [b, d]
+      rw [he2, hb, hd]
+      rfl
+  · rcases h with ⟨p, q, r, s, hdet, hp, hr, hq, hs⟩
+    right
+    left
+    refine ⟨order36_E9_matrixAut p q r s hdet, ?_, ?_⟩
+    · have hp' :
+          (α order36_E9_e1).1.toAdd * p + (α order36_E9_e2).1.toAdd * r = -p := by
+        simpa [a, b] using hp
+      have hr' :
+          (α order36_E9_e1).2.toAdd * p + (α order36_E9_e2).2.toAdd * r = -r := by
+        simpa [c, d] using hr
+      rw [order36_E9_matrixAut_e1]
+      rw [order36_E9_mulAut_apply_matrix]
+      simp [order36_E9_matrixAut, hp', hr']
+    · have hq' :
+          (α order36_E9_e1).1.toAdd * q + (α order36_E9_e2).1.toAdd * s = -q := by
+        simpa [a, b] using hq
+      have hs' :
+          (α order36_E9_e1).2.toAdd * q + (α order36_E9_e2).2.toAdd * s = -s := by
+        simpa [c, d] using hs
+      rw [order36_E9_matrixAut_e2]
+      rw [order36_E9_mulAut_apply_matrix]
+      simp [order36_E9_matrixAut, hq', hs']
+  · rcases h with ⟨p, q, r, s, hdet, hp, hr, hq, hs⟩
+    right
+    right
+    left
+    refine ⟨order36_E9_matrixAut p q r s hdet, ?_, ?_⟩
+    · have hp' :
+          (α order36_E9_e1).1.toAdd * p + (α order36_E9_e2).1.toAdd * r = -p := by
+        simpa [a, b] using hp
+      have hr' :
+          (α order36_E9_e1).2.toAdd * p + (α order36_E9_e2).2.toAdd * r = -r := by
+        simpa [c, d] using hr
+      rw [order36_E9_matrixAut_e1]
+      rw [order36_E9_mulAut_apply_matrix]
+      simp [order36_E9_matrixAut, hp', hr']
+    · have hq' :
+          (α order36_E9_e1).1.toAdd * q + (α order36_E9_e2).1.toAdd * s = q := by
+        simpa [a, b] using hq
+      have hs' :
+          (α order36_E9_e1).2.toAdd * q + (α order36_E9_e2).2.toAdd * s = s := by
+        simpa [c, d] using hs
+      rw [order36_E9_matrixAut_e2]
+      rw [order36_E9_mulAut_apply_matrix]
+      rw [order36_E9_negFirstAut_e2, order36_E9_matrixAut_e2]
+      ext <;> simp [hq', hs']
+  · rcases h with ⟨p, q, r, s, hdet, hp, hr, hq, hs⟩
+    right
+    right
+    right
+    refine ⟨order36_E9_matrixAut p q r s hdet, ?_, ?_⟩
+    · have hp' :
+          (α order36_E9_e1).1.toAdd * p + (α order36_E9_e2).1.toAdd * r = q := by
+        simpa [a, b] using hp
+      have hr' :
+          (α order36_E9_e1).2.toAdd * p + (α order36_E9_e2).2.toAdd * r = s := by
+        simpa [c, d] using hr
+      rw [order36_E9_matrixAut_e1]
+      rw [order36_E9_mulAut_apply_matrix]
+      rw [order36_E9_rotAut_e1, order36_E9_matrixAut_e2]
+      ext <;> simp [hp', hr']
+    · have hq' :
+          (α order36_E9_e1).1.toAdd * q + (α order36_E9_e2).1.toAdd * s = -p := by
+        simpa [a, b] using hq
+      have hs' :
+          (α order36_E9_e1).2.toAdd * q + (α order36_E9_e2).2.toAdd * s = -r := by
+        simpa [c, d] using hs
+      rw [order36_E9_matrixAut_e2]
+      rw [order36_E9_mulAut_apply_matrix]
+      simp [order36_E9_matrixAut, hq', hs']
 
 /-- `C₃ × C₃` with a `C₂` action by `-I`. -/
 noncomputable abbrev order36_E9_C2_negBothAction : order36_C2 →* MulAut order36_E9 :=
@@ -1268,6 +1464,23 @@ theorem order36_e9_c4_action_rep_cases_of_generator_basis_cases
     exact Or.inr <| Or.inr <|
       Or.inr (order36_e9_c4_rot_basis_equiv_rep7 φ θ h1 h2)
 
+theorem order36_e9_c4_action_rep_cases (φ : order36_C4 →* MulAut order36_E9) :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (4 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (5 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (6 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (7 : Fin 12)) := by
+  let g : order36_C4 := Multiplicative.ofAdd (1 : ZMod 4)
+  have hα : (φ g) ^ 4 = 1 := by
+    rw [← map_pow]
+    rw [show g ^ 4 = 1 by decide]
+    simp
+  exact order36_e9_c4_action_rep_cases_of_generator_basis_cases φ
+    (order36_E9_mulAut_pow_four_generator_basis_cases (φ g) hα)
+
 /-! ### Sylow `3` counting and the normal Sylow branch -/
 
 /-- In a group of order `36`, the number of Sylow `3`-subgroups is `1` or `4`. -/
@@ -1418,6 +1631,43 @@ theorem order36_normal_cyclic_kernel_rep_or_elem_cases [Finite G] (hG : Nat.card
     exact h
   · right
     right
+    exact h
+
+/-- The normal Sylow-`3` branch after also discharging the `C₄` action on `C₃ × C₃`. -/
+theorem order36_normal_c4_kernel_rep_or_v4_elem_cases [Finite G] (hG : Nat.card G = 36)
+    (hSyl : Nat.card (Sylow 3 G) = 1) :
+    (Nonempty (G ≃* order36_normal_reps (0 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (1 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (2 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (3 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (4 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (5 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (6 : Fin 12)) ∨
+      Nonempty (G ≃* order36_normal_reps (7 : Fin 12))) ∨
+    (∃ φ : order36_V4 →* MulAut order36_E9,
+      Nonempty (G ≃* SemidirectProduct order36_E9 order36_V4 φ)) := by
+  rcases order36_normal_cyclic_kernel_rep_or_elem_cases (G := G) hG hSyl with h | h | h
+  · left
+    rcases h with h | h | h | h
+    · exact Or.inl h
+    · exact Or.inr <| Or.inl h
+    · exact Or.inr <| Or.inr <| Or.inl h
+    · exact Or.inr <| Or.inr <| Or.inr <| Or.inl h
+  · obtain ⟨φ, ⟨eG⟩⟩ := h
+    left
+    rcases order36_e9_c4_action_rep_cases φ with hrep | hrep | hrep | hrep
+    · obtain ⟨e⟩ := hrep
+      exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl ⟨eG.trans e⟩
+    · obtain ⟨e⟩ := hrep
+      exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl
+        ⟨eG.trans e⟩
+    · obtain ⟨e⟩ := hrep
+      exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl
+        ⟨eG.trans e⟩
+    · obtain ⟨e⟩ := hrep
+      exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <|
+        Or.inr ⟨eG.trans e⟩
+  · right
     exact h
 
 /-! ### The non-normal Sylow branch -/
