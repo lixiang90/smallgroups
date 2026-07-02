@@ -2803,6 +2803,74 @@ theorem order36_A4_quotient_pow_six_or_nine_eq_one {G : Type*} [Group G]
       _ = (g ^ 3) ^ 3 := by rw [pow_mul]
       _ = 1 := by simpa using hkG
 
+theorem order36_A4_quotient_klein_preimage [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ W : Subgroup G, W.Normal ∧ K ≤ W ∧ Nat.card W = 12 := by
+  obtain ⟨e⟩ := hquot
+  let φ : G →* order36_A4 := e.toMonoidHom.comp (QuotientGroup.mk' K)
+  let V : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  let W : Subgroup G := V.comap φ
+  refine ⟨W, ?_, ?_, ?_⟩
+  · have hVnormal : V.Normal := by
+      dsimp [V]
+      exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+    dsimp [W]
+    exact hVnormal.comap φ
+  · intro k hk
+    have hkq : (QuotientGroup.mk' K) k = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hk
+    have hφk : φ k = 1 := by
+      change e ((QuotientGroup.mk' K) k) = 1
+      rw [hkq]
+      simp
+    change φ k ∈ V
+    rw [hφk]
+    exact V.one_mem
+  · have hφ_surj : Function.Surjective φ := by
+      intro a
+      obtain ⟨q, hq⟩ := e.surjective a
+      obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective K q
+      refine ⟨g, ?_⟩
+      change e ((QuotientGroup.mk' K) g) = a
+      rw [hg, hq]
+    have hV_card : Nat.card V = 4 := by
+      simpa [V] using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+    have hV_index : V.index = 3 := by
+      have hmul := V.index_mul_card
+      rw [hV_card, card_order36_A4] at hmul
+      omega
+    have hW_index : W.index = 3 := by
+      dsimp [W]
+      rw [V.index_comap_of_surjective hφ_surj, hV_index]
+    have hmul := W.index_mul_card
+    rw [hW_index, hG] at hmul
+    omega
+
+theorem order36_A4_quotient_klein_preimage_complement [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      ∃ H : Subgroup W, (K.subgroupOf W).IsComplement' H ∧ Nat.card H = 4 := by
+  obtain ⟨W, hWnormal, hKW, hWcard⟩ :=
+    order36_A4_quotient_klein_preimage (G := G) hG K hquot
+  have hKWcard : Nat.card (K.subgroupOf W) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hKW).toEquiv, hK]
+  have hKWindex : (K.subgroupOf W).index = 4 := by
+    have hmul := (K.subgroupOf W).index_mul_card
+    rw [hKWcard, hWcard] at hmul
+    omega
+  have hcop : Nat.Coprime (Nat.card (K.subgroupOf W)) (K.subgroupOf W).index := by
+    rw [hKWcard, hKWindex]
+    norm_num
+  obtain ⟨H, hHcomp⟩ :=
+    Subgroup.exists_right_complement'_of_coprime (N := K.subgroupOf W) hcop
+  have hHcard : Nat.card H = 4 := by
+    have hindex := (IsComplement'.symm hHcomp).index_eq_card
+    rw [hKWindex] at hindex
+    exact hindex.symm
+  exact ⟨W, hWnormal, hKW, hWcard, H, hHcomp, hHcard⟩
+
 noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
   toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
   map_one' := by rfl
