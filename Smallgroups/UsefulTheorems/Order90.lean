@@ -28,6 +28,7 @@ abbrev order90_C2 : Type := CyclicRep 2
 abbrev order90_C3 : Type := CyclicRep 3
 abbrev order90_C5 : Type := CyclicRep 5
 abbrev order90_C9 : Type := CyclicRep 9
+abbrev order90_C15 : Type := CyclicRep 15
 abbrev order90_C45 : Type := CyclicRep 45
 abbrev order90_C90 : Type := CyclicRep 90
 abbrev order90_D45 : Type := DihedralGroup 45
@@ -35,6 +36,14 @@ abbrev order90_E33 : Type := ElemAbelianRep 3
 abbrev order90_E33C5 : Type := order90_E33 × order90_C5
 abbrev order90_C9D5 : Type := order90_C9 × DihedralGroup 5
 abbrev order90_C5D9 : Type := order90_C5 × DihedralGroup 9
+abbrev order90_E33C10 : Type := order90_E33C5 × order90_C2
+abbrev order90_C15D3 : Type := order90_C15 × DihedralGroup 3
+abbrev order90_E33D5 : Type := order90_E33 × DihedralGroup 5
+abbrev order90_C5GenDihE33 : Type :=
+  order90_C5 × SemidirectProduct order90_E33 order90_C2 (invActionHom order90_E33)
+abbrev order90_C3D15 : Type := order90_C3 × DihedralGroup 15
+abbrev order90_GenDihE33C5 : Type :=
+  SemidirectProduct order90_E33C5 order90_C2 (invActionHom order90_E33C5)
 
 noncomputable abbrev order90_u19 : (ZMod 45)ˣ :=
   ZMod.unitOfCoprime 19 (by norm_num : Nat.Coprime 19 45)
@@ -372,6 +381,89 @@ theorem card_order90_E33C5 : Nat.card order90_E33C5 = 45 := by
     rw [order90_C5, Nat.card_eq_fintype_card, Fintype.card_multiplicative, ZMod.card]
   rw [hC5]
 
+theorem card_order90_C2 : Nat.card order90_C2 = 2 := by
+  exact card_cyclicRep (by norm_num)
+
+theorem card_order90_C3 : Nat.card order90_C3 = 3 := by
+  exact card_cyclicRep (by norm_num)
+
+theorem card_order90_C5 : Nat.card order90_C5 = 5 := by
+  exact card_cyclicRep (by norm_num)
+
+theorem card_order90_C9 : Nat.card order90_C9 = 9 := by
+  exact card_cyclicRep (by norm_num)
+
+theorem card_order90_C15 : Nat.card order90_C15 = 15 := by
+  exact card_cyclicRep (by norm_num)
+
+theorem card_order90_C90 : Nat.card order90_C90 = 90 := by
+  exact card_cyclicRep (by norm_num)
+
+theorem card_order90_D45 : Nat.card order90_D45 = 90 := by
+  rw [order90_D45, DihedralGroup.nat_card]
+
+theorem card_order90_C9D5 : Nat.card order90_C9D5 = 90 := by
+  rw [order90_C9D5, Nat.card_prod, card_order90_C9, DihedralGroup.nat_card]
+
+theorem card_order90_C5D9 : Nat.card order90_C5D9 = 90 := by
+  rw [order90_C5D9, Nat.card_prod, card_order90_C5, DihedralGroup.nat_card]
+
+theorem card_order90_E33C10 : Nat.card order90_E33C10 = 90 := by
+  rw [order90_E33C10, Nat.card_prod, card_order90_E33C5, card_order90_C2]
+
+theorem card_order90_C15D3 : Nat.card order90_C15D3 = 90 := by
+  rw [order90_C15D3, Nat.card_prod, card_order90_C15, DihedralGroup.nat_card]
+
+theorem card_order90_E33D5 : Nat.card order90_E33D5 = 90 := by
+  rw [order90_E33D5, Nat.card_prod, card_order90_E33, DihedralGroup.nat_card]
+
+theorem card_order90_C5GenDihE33 : Nat.card order90_C5GenDihE33 = 90 := by
+  rw [order90_C5GenDihE33, Nat.card_prod, SemidirectProduct.card, card_order90_C5,
+    card_order90_E33, card_order90_C2]
+
+theorem card_order90_C3D15 : Nat.card order90_C3D15 = 90 := by
+  rw [order90_C3D15, Nat.card_prod, card_order90_C3, DihedralGroup.nat_card]
+
+theorem card_order90_GenDihE33C5 : Nat.card order90_GenDihE33C5 = 90 := by
+  rw [order90_GenDihE33C5, SemidirectProduct.card, card_order90_E33C5, card_order90_C2]
+
+noncomputable abbrev order90_reps : Fin 10 → Type
+  | 0 => order90_C90
+  | 1 => order90_C9D5
+  | 2 => order90_C5D9
+  | 3 => order90_D45
+  | 4 => order90_E33C10
+  | 5 => order90_C15D3
+  | 6 => order90_E33D5
+  | 7 => order90_C5GenDihE33
+  | 8 => order90_C3D15
+  | 9 => order90_GenDihE33C5
+
+noncomputable instance instGroupOrder90Reps : ∀ i, Group (order90_reps i)
+  | 0 => inferInstanceAs (Group order90_C90)
+  | 1 => inferInstanceAs (Group order90_C9D5)
+  | 2 => inferInstanceAs (Group order90_C5D9)
+  | 3 => inferInstanceAs (Group order90_D45)
+  | 4 => inferInstanceAs (Group order90_E33C10)
+  | 5 => inferInstanceAs (Group order90_C15D3)
+  | 6 => inferInstanceAs (Group order90_E33D5)
+  | 7 => inferInstanceAs (Group order90_C5GenDihE33)
+  | 8 => inferInstanceAs (Group order90_C3D15)
+  | 9 => inferInstanceAs (Group order90_GenDihE33C5)
+
+theorem card_order90_reps (i : Fin 10) : Nat.card (order90_reps i) = 90 := by
+  fin_cases i
+  · exact card_order90_C90
+  · exact card_order90_C9D5
+  · exact card_order90_C5D9
+  · exact card_order90_D45
+  · exact card_order90_E33C10
+  · exact card_order90_C15D3
+  · exact card_order90_E33D5
+  · exact card_order90_C5GenDihE33
+  · exact card_order90_C3D15
+  · exact card_order90_GenDihE33C5
+
 theorem order90_e33c5_neg_card_cases (φ : order90_C2 →* MulAut order90_E33C5) :
     Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 1 ∨
       Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 3 ∨
@@ -397,6 +489,236 @@ theorem order90_e33c5_neg_card_cases (φ : order90_C2 →* MulAut order90_E33C5)
   have hle : Nat.card (negSubgroup τ) ≤ 45 := Nat.le_of_dvd (by norm_num) hdvd
   obtain ⟨k, hk⟩ := hdvd
   interval_cases hneg : Nat.card (negSubgroup τ) <;> omega
+
+theorem order90_e33c5_neg_one_semidirect_iso
+    (φ : order90_C2 →* MulAut order90_E33C5)
+    (hneg : Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 1) :
+    Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_E33C10) := by
+  let τ := φ (Multiplicative.ofAdd 1)
+  have h2 : τ * τ = 1 := by
+    rw [← sq, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order90_E33C5, x ^ 15 = 1 := order90_e33c5_pow_fifteen
+  have ht : 2 * 8 = 15 + 1 := by norm_num
+  have hsplit : Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 45 := by
+    rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+    exact card_order90_E33C5
+  have hFix45 : Nat.card (fixSubgroup τ) = 45 := by
+    have h := hsplit
+    rw [hneg, mul_one] at h
+    exact h
+  have hFixTop : fixSubgroup τ = ⊤ := by
+    exact Subgroup.eq_top_of_card_eq (fixSubgroup τ) (by rw [hFix45, card_order90_E33C5])
+  have hτ : τ = 1 := by
+    apply DFunLike.ext
+    intro x
+    have hx : x ∈ fixSubgroup τ := by
+      rw [hFixTop]
+      exact Subgroup.mem_top x
+    simpa using hx
+  have hφ : φ = (1 : order90_C2 →* MulAut order90_E33C5) := by
+    apply MonoidHom.ext
+    intro h
+    rcases order90_c2_cases h with rfl | rfl
+    · simp
+    · exact hτ
+  exact ⟨(semidirectProductCongr_eq hφ).trans SemidirectProduct.mulEquivProd⟩
+
+theorem order90_e33c5_neg_all_semidirect_iso
+    (φ : order90_C2 →* MulAut order90_E33C5)
+    (hneg : Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 45) :
+    Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_GenDihE33C5) := by
+  let τ := φ (Multiplicative.ofAdd 1)
+  have hNegTop : negSubgroup τ = ⊤ := by
+    exact Subgroup.eq_top_of_card_eq (negSubgroup τ) (by rw [hneg, card_order90_E33C5])
+  have hτ : τ = invAut order90_E33C5 := by
+    apply DFunLike.ext
+    intro x
+    have hx : x ∈ negSubgroup τ := by
+      rw [hNegTop]
+      exact Subgroup.mem_top x
+    simpa [invAut_apply] using hx
+  have hφ : φ = invActionHom order90_E33C5 := by
+    apply MonoidHom.ext
+    intro h
+    rcases order90_c2_cases h with rfl | rfl
+    · simp
+    · rw [invActionHom_ofAdd_one]
+      exact hτ
+  exact ⟨semidirectProductCongr_eq hφ⟩
+
+theorem order90_pow_three_of_card_nine {H : Type*} [Group H] [Finite H]
+    (hcard : Nat.card H = 9) (hexp15 : ∀ x : H, x ^ 15 = 1) :
+    ∀ x : H, x ^ 3 = 1 := by
+  intro x
+  rw [← orderOf_dvd_iff_pow_eq_one]
+  have h9 : orderOf x ∣ 9 := by
+    have h := _root_.orderOf_dvd_natCard (x := x)
+    rwa [hcard] at h
+  have h15 : orderOf x ∣ 15 := by
+    rw [orderOf_dvd_iff_pow_eq_one]
+    exact hexp15 x
+  have h : orderOf x ∣ Nat.gcd 9 15 := Nat.dvd_gcd h9 h15
+  norm_num at h
+  exact h
+
+theorem order90_cyclic_of_card_fifteen {H : Type*} [Group H] [Finite H]
+    (hcard : Nat.card H = 15) :
+    Nonempty (H ≃* order90_C15) := by
+  haveI : IsCyclic H :=
+    isCyclic_of_card_eq_prime_mul (p := 5) (q := 3) (by norm_num) (by norm_num)
+      (by norm_num) (by norm_num) hcard
+  exact cyclicRep_classification (by norm_num) hcard
+
+theorem order90_e33c5_neg_three_semidirect_iso
+    (φ : order90_C2 →* MulAut order90_E33C5)
+    (hneg : Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 3) :
+    Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_C15D3) := by
+  let τ := φ (Multiplicative.ofAdd 1)
+  have h2 : τ * τ = 1 := by
+    rw [← sq, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order90_E33C5, x ^ 15 = 1 := order90_e33c5_pow_fifteen
+  have ht : 2 * 8 = 15 + 1 := by norm_num
+  have hsplit : Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 45 := by
+    rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+    exact card_order90_E33C5
+  have hFix15 : Nat.card (fixSubgroup τ) = 15 := by
+    have h := hsplit
+    rw [hneg] at h
+    have h' : Nat.card (fixSubgroup τ) * 3 = 15 * 3 := by omega
+    exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 3) h'
+  obtain ⟨eFix⟩ := order90_cyclic_of_card_fifteen hFix15
+  obtain ⟨eNeg⟩ := prime_classification (by norm_num : Nat.Prime 3) hneg
+  let eMain :
+      SemidirectProduct order90_E33C5 order90_C2 φ ≃*
+        fixSubgroup τ × SemidirectProduct (negSubgroup τ) order90_C2
+          (invActionHom (negSubgroup τ)) :=
+    order90_e33c5_decomp_semidirect φ
+  exact ⟨eMain.trans <|
+    MulEquiv.prodCongr eFix ((genDihCongr eNeg).trans (genDihedralCyclicIso 3))⟩
+
+theorem order90_e33c5_neg_five_semidirect_iso
+    (φ : order90_C2 →* MulAut order90_E33C5)
+    (hneg : Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 5) :
+    Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_E33D5) := by
+  let τ := φ (Multiplicative.ofAdd 1)
+  have h2 : τ * τ = 1 := by
+    rw [← sq, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order90_E33C5, x ^ 15 = 1 := order90_e33c5_pow_fifteen
+  have ht : 2 * 8 = 15 + 1 := by norm_num
+  have expFix15 : ∀ x : fixSubgroup τ, x ^ 15 = 1 := fun x =>
+    Subtype.ext (by rw [SubmonoidClass.coe_pow, OneMemClass.coe_one]; exact hexp _)
+  have hsplit : Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 45 := by
+    rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+    exact card_order90_E33C5
+  have hFix9 : Nat.card (fixSubgroup τ) = 9 := by
+    have h := hsplit
+    rw [hneg] at h
+    have h' : Nat.card (fixSubgroup τ) * 5 = 9 * 5 := by omega
+    exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 5) h'
+  obtain ⟨eFix⟩ := mulEquiv_elemAbelian_of_exp (p := 3) hFix9
+    (order90_pow_three_of_card_nine hFix9 expFix15)
+  obtain ⟨eNeg⟩ := prime_classification (by norm_num : Nat.Prime 5) hneg
+  let eMain :
+      SemidirectProduct order90_E33C5 order90_C2 φ ≃*
+        fixSubgroup τ × SemidirectProduct (negSubgroup τ) order90_C2
+          (invActionHom (negSubgroup τ)) :=
+    order90_e33c5_decomp_semidirect φ
+  exact ⟨eMain.trans <|
+    MulEquiv.prodCongr eFix ((genDihCongr eNeg).trans (genDihedralCyclicIso 5))⟩
+
+theorem order90_e33c5_neg_nine_semidirect_iso
+    (φ : order90_C2 →* MulAut order90_E33C5)
+    (hneg : Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 9) :
+    Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_C5GenDihE33) := by
+  let τ := φ (Multiplicative.ofAdd 1)
+  have h2 : τ * τ = 1 := by
+    rw [← sq, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order90_E33C5, x ^ 15 = 1 := order90_e33c5_pow_fifteen
+  have ht : 2 * 8 = 15 + 1 := by norm_num
+  have expNeg15 : ∀ x : negSubgroup τ, x ^ 15 = 1 := fun x =>
+    Subtype.ext (by rw [SubmonoidClass.coe_pow, OneMemClass.coe_one]; exact hexp _)
+  have hsplit : Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 45 := by
+    rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+    exact card_order90_E33C5
+  have hFix5 : Nat.card (fixSubgroup τ) = 5 := by
+    have h := hsplit
+    rw [hneg] at h
+    have h' : Nat.card (fixSubgroup τ) * 9 = 5 * 9 := by omega
+    exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 9) h'
+  obtain ⟨eFix⟩ := prime_classification (by norm_num : Nat.Prime 5) hFix5
+  obtain ⟨eNeg⟩ := mulEquiv_elemAbelian_of_exp (p := 3) hneg
+    (order90_pow_three_of_card_nine hneg expNeg15)
+  let eMain :
+      SemidirectProduct order90_E33C5 order90_C2 φ ≃*
+        fixSubgroup τ × SemidirectProduct (negSubgroup τ) order90_C2
+          (invActionHom (negSubgroup τ)) :=
+    order90_e33c5_decomp_semidirect φ
+  exact ⟨eMain.trans <| MulEquiv.prodCongr eFix (genDihCongr eNeg)⟩
+
+theorem order90_e33c5_neg_fifteen_semidirect_iso
+    (φ : order90_C2 →* MulAut order90_E33C5)
+    (hneg : Nat.card (negSubgroup (φ (Multiplicative.ofAdd 1))) = 15) :
+    Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_C3D15) := by
+  let τ := φ (Multiplicative.ofAdd 1)
+  have h2 : τ * τ = 1 := by
+    rw [← sq, ← map_pow, show (Multiplicative.ofAdd (1 : ZMod 2)) ^ 2 = 1 from by decide,
+      map_one]
+  have hinv : ∀ x, τ (τ x) = x := fun x => by
+    have hx := DFunLike.congr_fun h2 x
+    rwa [MulAut.mul_apply, MulAut.one_apply] at hx
+  have hexp : ∀ x : order90_E33C5, x ^ 15 = 1 := order90_e33c5_pow_fifteen
+  have ht : 2 * 8 = 15 + 1 := by norm_num
+  have hsplit : Nat.card (fixSubgroup τ) * Nat.card (negSubgroup τ) = 45 := by
+    rw [← Nat.card_prod, ← Nat.card_congr (eigenEquiv hinv hexp ht).toEquiv]
+    exact card_order90_E33C5
+  have hFix3 : Nat.card (fixSubgroup τ) = 3 := by
+    have h := hsplit
+    rw [hneg] at h
+    have h' : Nat.card (fixSubgroup τ) * 15 = 3 * 15 := by omega
+    exact Nat.eq_of_mul_eq_mul_right (by norm_num : 0 < 15) h'
+  obtain ⟨eFix⟩ := prime_classification (by norm_num : Nat.Prime 3) hFix3
+  obtain ⟨eNeg⟩ := order90_cyclic_of_card_fifteen hneg
+  let eMain :
+      SemidirectProduct order90_E33C5 order90_C2 φ ≃*
+        fixSubgroup τ × SemidirectProduct (negSubgroup τ) order90_C2
+          (invActionHom (negSubgroup τ)) :=
+    order90_e33c5_decomp_semidirect φ
+  exact ⟨eMain.trans <|
+    MulEquiv.prodCongr eFix ((genDihCongr eNeg).trans (genDihedralCyclicIso 15))⟩
+
+theorem order90_e33c5_semidirect_cases
+    (φ : order90_C2 →* MulAut order90_E33C5) :
+    Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_E33C10) ∨
+      Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_C15D3) ∨
+      Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_E33D5) ∨
+      Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_C5GenDihE33) ∨
+      Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_C3D15) ∨
+      Nonempty (SemidirectProduct order90_E33C5 order90_C2 φ ≃* order90_GenDihE33C5) := by
+  rcases order90_e33c5_neg_card_cases φ with h1 | h3 | h5 | h9 | h15 | h45
+  · exact Or.inl (order90_e33c5_neg_one_semidirect_iso φ h1)
+  · exact Or.inr (Or.inl (order90_e33c5_neg_three_semidirect_iso φ h3))
+  · exact Or.inr (Or.inr (Or.inl (order90_e33c5_neg_five_semidirect_iso φ h5)))
+  · exact Or.inr (Or.inr (Or.inr (Or.inl (order90_e33c5_neg_nine_semidirect_iso φ h9))))
+  · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl
+      (order90_e33c5_neg_fifteen_semidirect_iso φ h15)))))
+  · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr
+      (order90_e33c5_neg_all_semidirect_iso φ h45)))))
 
 private lemma order90_sign_mulLeft_of_orderOf_two [Fintype G] [DecidableEq G]
     (a : G) (ha : orderOf a = 2) (hcard : Odd (Nat.card G / 2)) :
@@ -517,8 +839,12 @@ theorem order90_cases_after_cyclic_kernel [Finite G] (hG : Nat.card G = 90) :
       Nonempty (G ≃* order90_C9D5) ∨
       Nonempty (G ≃* order90_C5D9) ∨
       Nonempty (G ≃* order90_D45)) ∨
-    (∃ φ : order90_C2 →* MulAut order90_E33C5,
-      Nonempty (G ≃* SemidirectProduct order90_E33C5 order90_C2 φ)) := by
+    (Nonempty (G ≃* order90_E33C10) ∨
+      Nonempty (G ≃* order90_C15D3) ∨
+      Nonempty (G ≃* order90_E33D5) ∨
+      Nonempty (G ≃* order90_C5GenDihE33) ∨
+      Nonempty (G ≃* order90_C3D15) ∨
+      Nonempty (G ≃* order90_GenDihE33C5)) := by
   rcases order90_semidirect_standard_cases hG with hcyc | hnoncyc
   · rcases hcyc with ⟨φ, ⟨eG⟩⟩
     rcases order90_c45_semidirect_cases φ with hC90 | hC9D5 | hC5D9 | hD45
@@ -530,6 +856,38 @@ theorem order90_cases_after_cyclic_kernel [Finite G] (hG : Nat.card G = 90) :
       exact Or.inl (Or.inr (Or.inr (Or.inl ⟨eG.trans eC5D9⟩)))
     · rcases hD45 with ⟨eD45⟩
       exact Or.inl (Or.inr (Or.inr (Or.inr ⟨eG.trans eD45⟩)))
-  · exact Or.inr hnoncyc
+  · rcases hnoncyc with ⟨φ, ⟨eG⟩⟩
+    rcases order90_e33c5_semidirect_cases φ with hE33C10 | hC15D3 | hE33D5 |
+      hC5GenDihE33 | hC3D15 | hGenDihE33C5
+    · rcases hE33C10 with ⟨eE33C10⟩
+      exact Or.inr (Or.inl ⟨eG.trans eE33C10⟩)
+    · rcases hC15D3 with ⟨eC15D3⟩
+      exact Or.inr (Or.inr (Or.inl ⟨eG.trans eC15D3⟩))
+    · rcases hE33D5 with ⟨eE33D5⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inl ⟨eG.trans eE33D5⟩)))
+    · rcases hC5GenDihE33 with ⟨eC5GenDihE33⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨eG.trans eC5GenDihE33⟩))))
+    · rcases hC3D15 with ⟨eC3D15⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨eG.trans eC3D15⟩)))))
+    · rcases hGenDihE33C5 with ⟨eGenDihE33C5⟩
+      exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr ⟨eG.trans eGenDihE33C5⟩)))))
+
+theorem order90_complete (G : Type) [Group G] (hG : Nat.card G = 90) :
+    ∃ i : Fin 10, Nonempty (G ≃* order90_reps i) := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hG]; norm_num)
+  rcases order90_cases_after_cyclic_kernel (G := G) hG with hcyc | hnoncyc
+  · rcases hcyc with hC90 | hC9D5 | hC5D9 | hD45
+    · exact ⟨0, by simpa [order90_reps] using hC90⟩
+    · exact ⟨1, by simpa [order90_reps] using hC9D5⟩
+    · exact ⟨2, by simpa [order90_reps] using hC5D9⟩
+    · exact ⟨3, by simpa [order90_reps] using hD45⟩
+  · rcases hnoncyc with hE33C10 | hC15D3 | hE33D5 | hC5GenDihE33 | hC3D15 |
+      hGenDihE33C5
+    · exact ⟨4, by simpa [order90_reps] using hE33C10⟩
+    · exact ⟨5, by simpa [order90_reps] using hC15D3⟩
+    · exact ⟨6, by simpa [order90_reps] using hE33D5⟩
+    · exact ⟨7, by simpa [order90_reps] using hC5GenDihE33⟩
+    · exact ⟨8, by simpa [order90_reps] using hC3D15⟩
+    · exact ⟨9, by simpa [order90_reps] using hGenDihE33C5⟩
 
 end Smallgroups.UsefulTheorems
