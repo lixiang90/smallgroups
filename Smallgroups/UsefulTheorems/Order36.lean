@@ -1636,6 +1636,24 @@ noncomputable def order36_e9V4_action_basis_mulEquiv
     (semidirectProductCongr_eq
       (order36_e9V4_action_conj_symm_eq_of_generator_basis φ ψ θ h11 h12 h21 h22))
 
+/-- The basis criterion combined with an automorphism of the acting copy of `V₄`. -/
+noncomputable def order36_e9V4_action_basis_precomp_mulEquiv
+    (φ ψ : order36_V4 →* MulAut order36_E9) (σ : order36_V4 ≃* order36_V4)
+    (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) =
+      θ (ψ (σ order36_V4_g1) order36_E9_e1))
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) =
+      θ (ψ (σ order36_V4_g1) order36_E9_e2))
+    (h21 : φ order36_V4_g2 (θ order36_E9_e1) =
+      θ (ψ (σ order36_V4_g2) order36_E9_e1))
+    (h22 : φ order36_V4_g2 (θ order36_E9_e2) =
+      θ (ψ (σ order36_V4_g2) order36_E9_e2)) :
+    SemidirectProduct order36_E9 order36_V4 φ ≃*
+      SemidirectProduct order36_E9 order36_V4 ψ :=
+  (order36_e9V4_action_basis_mulEquiv φ (ψ.comp σ.toMonoidHom) θ
+    (by simpa using h11) (by simpa using h12) (by simpa using h21) (by simpa using h22)).trans
+    (semidirectProductCongrAut (N := order36_E9) (H := order36_V4) (φ := ψ) σ)
+
 /-- The twelve representatives arising from the normal Sylow-`3` branch of order `36`. -/
 noncomputable def order36_normal_reps : Fin 12 → Type
   | 0 => order36_C9 × order36_C4
@@ -1785,6 +1803,68 @@ theorem order36_e9_v4_diag_basis_equiv_rep11
   · simpa [order36_E9_V4_diagAction_g1] using h12
   · simpa [order36_E9_V4_diagAction_g2] using h21
   · simpa [order36_E9_V4_diagAction_g2] using h22
+
+theorem order36_e9_v4_action_rep_cases_of_generator_basis_precomp_cases
+    (φ : order36_V4 →* MulAut order36_E9)
+    (h :
+      (∃ θ : MulAut order36_E9,
+        φ order36_V4_g1 (θ order36_E9_e1) = θ order36_E9_e1 ∧
+        φ order36_V4_g1 (θ order36_E9_e2) = θ order36_E9_e2 ∧
+        φ order36_V4_g2 (θ order36_E9_e1) = θ order36_E9_e1 ∧
+        φ order36_V4_g2 (θ order36_E9_e2) = θ order36_E9_e2) ∨
+      (∃ θ : MulAut order36_E9, ∃ σ : order36_V4 ≃* order36_V4,
+        φ order36_V4_g1 (θ order36_E9_e1) =
+          θ (order36_E9_V4_negBothFstAction (σ order36_V4_g1) order36_E9_e1) ∧
+        φ order36_V4_g1 (θ order36_E9_e2) =
+          θ (order36_E9_V4_negBothFstAction (σ order36_V4_g1) order36_E9_e2) ∧
+        φ order36_V4_g2 (θ order36_E9_e1) =
+          θ (order36_E9_V4_negBothFstAction (σ order36_V4_g2) order36_E9_e1) ∧
+        φ order36_V4_g2 (θ order36_E9_e2) =
+          θ (order36_E9_V4_negBothFstAction (σ order36_V4_g2) order36_E9_e2)) ∨
+      (∃ θ : MulAut order36_E9, ∃ σ : order36_V4 ≃* order36_V4,
+        φ order36_V4_g1 (θ order36_E9_e1) =
+          θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g1) order36_E9_e1) ∧
+        φ order36_V4_g1 (θ order36_E9_e2) =
+          θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g1) order36_E9_e2) ∧
+        φ order36_V4_g2 (θ order36_E9_e1) =
+          θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g2) order36_E9_e1) ∧
+        φ order36_V4_g2 (θ order36_E9_e2) =
+          θ (order36_E9_V4_negFirstFstAction (σ order36_V4_g2) order36_E9_e2)) ∨
+      (∃ θ : MulAut order36_E9, ∃ σ : order36_V4 ≃* order36_V4,
+        φ order36_V4_g1 (θ order36_E9_e1) =
+          θ (order36_E9_V4_diagAction (σ order36_V4_g1) order36_E9_e1) ∧
+        φ order36_V4_g1 (θ order36_E9_e2) =
+          θ (order36_E9_V4_diagAction (σ order36_V4_g1) order36_E9_e2) ∧
+        φ order36_V4_g2 (θ order36_E9_e1) =
+          θ (order36_E9_V4_diagAction (σ order36_V4_g2) order36_E9_e1) ∧
+        φ order36_V4_g2 (θ order36_E9_e2) =
+          θ (order36_E9_V4_diagAction (σ order36_V4_g2) order36_E9_e2))) :
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (8 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (9 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (10 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_V4 φ ≃*
+      order36_normal_reps (11 : Fin 12)) := by
+  rcases h with h | h | h | h
+  · obtain ⟨θ, h11, h12, h21, h22⟩ := h
+    exact Or.inl (order36_e9_v4_trivial_basis_equiv_rep8 φ θ h11 h12 h21 h22)
+  · obtain ⟨θ, σ, h11, h12, h21, h22⟩ := h
+    obtain ⟨e⟩ := order36_e9_v4_negBothFst_equiv_rep9
+    exact Or.inr <| Or.inl <|
+      ⟨(order36_e9V4_action_basis_precomp_mulEquiv φ order36_E9_V4_negBothFstAction
+        σ θ h11 h12 h21 h22).trans e⟩
+  · obtain ⟨θ, σ, h11, h12, h21, h22⟩ := h
+    obtain ⟨e⟩ := order36_e9_v4_negFirstFst_equiv_rep10
+    exact Or.inr <| Or.inr <| Or.inl <|
+      ⟨(order36_e9V4_action_basis_precomp_mulEquiv φ order36_E9_V4_negFirstFstAction
+        σ θ h11 h12 h21 h22).trans e⟩
+  · obtain ⟨θ, σ, h11, h12, h21, h22⟩ := h
+    obtain ⟨e⟩ := order36_e9_v4_diag_equiv_rep11
+    exact Or.inr <| Or.inr <| Or.inr <|
+      ⟨(order36_e9V4_action_basis_precomp_mulEquiv φ order36_E9_V4_diagAction
+        σ θ h11 h12 h21 h22).trans e⟩
 
 theorem order36_e9_c4_trivial_equiv_rep4 :
     Nonempty (SemidirectProduct order36_E9 order36_C4 1 ≃*
