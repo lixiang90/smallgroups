@@ -1227,6 +1227,47 @@ theorem order36_e9_c4_rot_basis_equiv_rep7
   exact ⟨(order36_e9C4_action_basis_mulEquiv φ θ order36_E9_rotAut
     order36_E9_rotAut_pow_four h1 h2).trans e⟩
 
+theorem order36_e9_c4_action_rep_cases_of_generator_basis_cases
+    (φ : order36_C4 →* MulAut order36_E9)
+    (h :
+      (∃ θ : MulAut order36_E9,
+        φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) = θ order36_E9_e1 ∧
+        φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) = θ order36_E9_e2) ∨
+      (∃ θ : MulAut order36_E9,
+        φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) =
+          θ (order36_E9_negBothAut order36_E9_e1) ∧
+        φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) =
+          θ (order36_E9_negBothAut order36_E9_e2)) ∨
+      (∃ θ : MulAut order36_E9,
+        φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) =
+          θ (order36_E9_negFirstAut order36_E9_e1) ∧
+        φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) =
+          θ (order36_E9_negFirstAut order36_E9_e2)) ∨
+      (∃ θ : MulAut order36_E9,
+        φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) =
+          θ (order36_E9_rotAut order36_E9_e1) ∧
+        φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) =
+          θ (order36_E9_rotAut order36_E9_e2))) :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (4 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (5 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (6 : Fin 12)) ∨
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (7 : Fin 12)) := by
+  rcases h with h | h | h | h
+  · obtain ⟨θ, h1, h2⟩ := h
+    exact Or.inl (order36_e9_c4_trivial_basis_equiv_rep4 φ θ h1 h2)
+  · obtain ⟨θ, h1, h2⟩ := h
+    exact Or.inr <| Or.inl (order36_e9_c4_negBoth_basis_equiv_rep5 φ θ h1 h2)
+  · obtain ⟨θ, h1, h2⟩ := h
+    exact Or.inr <| Or.inr <|
+      Or.inl (order36_e9_c4_negFirst_basis_equiv_rep6 φ θ h1 h2)
+  · obtain ⟨θ, h1, h2⟩ := h
+    exact Or.inr <| Or.inr <|
+      Or.inr (order36_e9_c4_rot_basis_equiv_rep7 φ θ h1 h2)
+
 /-! ### Sylow `3` counting and the normal Sylow branch -/
 
 /-- In a group of order `36`, the number of Sylow `3`-subgroups is `1` or `4`. -/
