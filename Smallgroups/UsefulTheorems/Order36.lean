@@ -1177,6 +1177,56 @@ theorem order36_e9_c4_rot_equiv_rep7 :
       order36_normal_reps (7 : Fin 12)) :=
   ⟨MulEquiv.refl _⟩
 
+theorem order36_e9_c4_trivial_basis_equiv_rep4
+    (φ : order36_C4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h1 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) = θ order36_E9_e1)
+    (h2 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) = θ order36_E9_e2) :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (4 : Fin 12)) := by
+  have hpow : (1 : MulAut order36_E9) ^ 4 = 1 := by simp
+  have haction : order36_c4ActionOfAut (1 : MulAut order36_E9) hpow = 1 := by
+    apply order36_c4_hom_ext
+    simp
+  obtain ⟨e⟩ := order36_e9_c4_trivial_equiv_rep4
+  exact ⟨(order36_e9C4_action_basis_mulEquiv φ θ 1 hpow h1 h2).trans
+    ((semidirectProductCongr_eq haction).trans e)⟩
+
+theorem order36_e9_c4_negBoth_basis_equiv_rep5
+    (φ : order36_C4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h1 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) =
+      θ (order36_E9_negBothAut order36_E9_e1))
+    (h2 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) =
+      θ (order36_E9_negBothAut order36_E9_e2)) :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (5 : Fin 12)) := by
+  obtain ⟨e⟩ := order36_e9_c4_negBoth_equiv_rep5
+  exact ⟨(order36_e9C4_action_basis_mulEquiv φ θ order36_E9_negBothAut
+    order36_E9_negBothAut_pow_four h1 h2).trans e⟩
+
+theorem order36_e9_c4_negFirst_basis_equiv_rep6
+    (φ : order36_C4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h1 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) =
+      θ (order36_E9_negFirstAut order36_E9_e1))
+    (h2 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) =
+      θ (order36_E9_negFirstAut order36_E9_e2)) :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (6 : Fin 12)) := by
+  obtain ⟨e⟩ := order36_e9_c4_negFirst_equiv_rep6
+  exact ⟨(order36_e9C4_action_basis_mulEquiv φ θ order36_E9_negFirstAut
+    order36_E9_negFirstAut_pow_four h1 h2).trans e⟩
+
+theorem order36_e9_c4_rot_basis_equiv_rep7
+    (φ : order36_C4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h1 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e1) =
+      θ (order36_E9_rotAut order36_E9_e1))
+    (h2 : φ (Multiplicative.ofAdd (1 : ZMod 4)) (θ order36_E9_e2) =
+      θ (order36_E9_rotAut order36_E9_e2)) :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 φ ≃*
+      order36_normal_reps (7 : Fin 12)) := by
+  obtain ⟨e⟩ := order36_e9_c4_rot_equiv_rep7
+  exact ⟨(order36_e9C4_action_basis_mulEquiv φ θ order36_E9_rotAut
+    order36_E9_rotAut_pow_four h1 h2).trans e⟩
+
 /-! ### Sylow `3` counting and the normal Sylow branch -/
 
 /-- In a group of order `36`, the number of Sylow `3`-subgroups is `1` or `4`. -/
