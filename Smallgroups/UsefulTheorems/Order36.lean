@@ -510,6 +510,10 @@ noncomputable def order36_V4_shear : order36_V4 ≃* order36_V4 where
 noncomputable def order36_V4_toProd : order36_V4 ≃* order36_V4 :=
   order36_V4_shear.trans order36_V4_swap
 
+/-- The shear `(x, y) ↦ (xy, y)`, conjugate to `order36_V4_shear` by the swap. -/
+noncomputable def order36_V4_shearSecond : order36_V4 ≃* order36_V4 :=
+  (order36_V4_swap.trans order36_V4_shear).trans order36_V4_swap
+
 theorem order36_chiV4_fst_comp_swap :
     order36_chiV4_fst.comp order36_V4_swap.toMonoidHom = order36_chiV4_snd := by
   apply order36_v4_hom_ext <;> decide
@@ -1462,6 +1466,25 @@ theorem order36_E9_V4_negBothFstAction_g2 :
     order36_E9_V4_negBothFstAction order36_V4_g2 = 1 := by
   ext x <;> fin_cases x <;> decide
 
+theorem order36_E9_V4_negBothFstAction_swap_g1 :
+    order36_E9_V4_negBothFstAction (order36_V4_swap order36_V4_g1) = 1 := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_negBothFstAction_swap_g2 :
+    order36_E9_V4_negBothFstAction (order36_V4_swap order36_V4_g2) =
+      order36_E9_negBothAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_negBothFstAction_toProd_g1 :
+    order36_E9_V4_negBothFstAction (order36_V4_toProd order36_V4_g1) =
+      order36_E9_negBothAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_negBothFstAction_toProd_g2 :
+    order36_E9_V4_negBothFstAction (order36_V4_toProd order36_V4_g2) =
+      order36_E9_negBothAut := by
+  ext x <;> fin_cases x <;> decide
+
 theorem order36_E9_V4_negFirstFstAction_g1 :
     order36_E9_V4_negFirstFstAction order36_V4_g1 = order36_E9_negFirstAut := by
   ext x <;> fin_cases x <;> decide
@@ -1470,12 +1493,51 @@ theorem order36_E9_V4_negFirstFstAction_g2 :
     order36_E9_V4_negFirstFstAction order36_V4_g2 = 1 := by
   ext x <;> fin_cases x <;> decide
 
+theorem order36_E9_V4_negFirstFstAction_swap_g1 :
+    order36_E9_V4_negFirstFstAction (order36_V4_swap order36_V4_g1) = 1 := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_negFirstFstAction_swap_g2 :
+    order36_E9_V4_negFirstFstAction (order36_V4_swap order36_V4_g2) =
+      order36_E9_negFirstAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_negFirstFstAction_toProd_g1 :
+    order36_E9_V4_negFirstFstAction (order36_V4_toProd order36_V4_g1) =
+      order36_E9_negFirstAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_negFirstFstAction_toProd_g2 :
+    order36_E9_V4_negFirstFstAction (order36_V4_toProd order36_V4_g2) =
+      order36_E9_negFirstAut := by
+  ext x <;> fin_cases x <;> decide
+
 theorem order36_E9_V4_diagAction_g1 :
     order36_E9_V4_diagAction order36_V4_g1 = order36_E9_negFirstAut := by
   ext x <;> fin_cases x <;> decide
 
 theorem order36_E9_V4_diagAction_g2 :
     order36_E9_V4_diagAction order36_V4_g2 = order36_E9_negSecondAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_diagAction_toProd_g1 :
+    order36_E9_V4_diagAction (order36_V4_toProd order36_V4_g1) =
+      order36_E9_negBothAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_diagAction_toProd_g2 :
+    order36_E9_V4_diagAction (order36_V4_toProd order36_V4_g2) =
+      order36_E9_negFirstAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_diagAction_shearSecond_g1 :
+    order36_E9_V4_diagAction (order36_V4_shearSecond order36_V4_g1) =
+      order36_E9_negFirstAut := by
+  ext x <;> fin_cases x <;> decide
+
+theorem order36_E9_V4_diagAction_shearSecond_g2 :
+    order36_E9_V4_diagAction (order36_V4_shearSecond order36_V4_g2) =
+      order36_E9_negBothAut := by
   ext x <;> fin_cases x <;> decide
 
 theorem order36_E9_negBothAut_eq_invAut : order36_E9_negBothAut = invAut order36_E9 := by
@@ -1572,6 +1634,28 @@ theorem order36_E9_conj_symm_eq_of_basis_action
   · change θ.symm (α (θ order36_E9_e2)) = τ order36_E9_e2
     rw [h2]
     exact θ.left_inv _
+
+theorem order36_E9_apply_eq_of_conj_symm_eq
+    (θ α τ : MulAut order36_E9) (h : (MulAut.conj θ.symm) α = τ) (x : order36_E9) :
+    α (θ x) = θ (τ x) := by
+  have hx := congrArg (fun f : MulAut order36_E9 => f x) h
+  change θ.symm (α (θ x)) = τ x at hx
+  calc
+    α (θ x) = θ (θ.symm (α (θ x))) := (θ.right_inv _).symm
+    _ = θ (τ x) := by rw [hx]
+
+theorem order36_E9_conj_symm_pow_two
+    (θ β : MulAut order36_E9) (hβ : β ^ 2 = 1) :
+    ((MulAut.conj θ.symm) β) ^ 2 = 1 := by
+  change (((MulAut.conj θ.symm).toMonoidHom β) ^ 2 = 1)
+  rw [← map_pow, hβ, map_one]
+
+theorem order36_E9_conj_symm_comm
+    (θ α β τ : MulAut order36_E9)
+    (hα : (MulAut.conj θ.symm) α = τ) (hcomm : α * β = β * α) :
+    τ * (MulAut.conj θ.symm) β = (MulAut.conj θ.symm) β * τ := by
+  rw [← hα]
+  rw [← map_mul, ← map_mul, hcomm]
 
 /-- A basis calculation for the generator of `C₄` conjugates the whole action. -/
 theorem order36_e9C4_action_conj_symm_eq_of_generator_basis
