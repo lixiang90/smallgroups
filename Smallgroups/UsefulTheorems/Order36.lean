@@ -3671,4 +3671,36 @@ theorem order36_normal_rep_or_central_A4_quotient_cases [Finite G] (hG : Nat.car
       (order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
         (G := G) hG hSyl)
 
+theorem order36_normal_rep_or_C3_klein_layer_cases [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (G ⧸ W ≃* order36_C3) := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr (order36_has_C3_klein_layer_of_card_sylow_3_eq_four
+      (G := G) hG hSyl)
+
+theorem order36_normal_rep_or_klein_preimage_order_nine_test_cases
+    [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      ∀ {g : G}, g ∉ W → g ^ 3 ≠ 1 → orderOf g = 9 := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr
+      (order36_has_klein_preimage_order_nine_of_cube_ne_one_of_card_sylow_3_eq_four
+        (G := G) hG hSyl)
+
+theorem order36_normal_rep_or_klein_preimage_cube_one_cases
+    [Finite G] (hG : Nat.card G = 36) (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr
+      (order36_has_klein_preimage_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+        (G := G) hG hSyl hno9)
+
 end Smallgroups.UsefulTheorems
