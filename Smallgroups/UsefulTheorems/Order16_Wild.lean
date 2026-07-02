@@ -654,7 +654,7 @@ theorem lemma_normal_c8_or_k8 {G : Type*} [Group G]
         sorry
       exact Or.inr ⟨H, hH_norm, hH_card, hH_iso⟩
     · -- Case 2: All elements of order 4 square to z.
-      push_neg at hxsq_ne_z
+      push Not at hxsq_ne_z
       -- Every element of order 4 satisfies x² = z.
       -- The full proof uses the conjugacy-class argument (Fact 5) to find
       -- an element y ∈ C(x) \ ⟨x⟩, then ⟨x, y⟩ ≅ K₈.

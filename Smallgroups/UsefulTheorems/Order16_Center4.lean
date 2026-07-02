@@ -472,10 +472,10 @@ theorem order16_N1_classification {G : Type*} [Group G] [Finite G]
         _ = (g ^ ((2 : ℤ) * (k : ℤ))) * (g ^ ((5 : ℤ) * (k : ℤ))) * (g ^ (k : ℤ)) := by rw [hk]
          _ = (g ^ (((2 : ℤ) * (k : ℤ)) + ((5 : ℤ) * (k : ℤ)))) * (g ^ (k : ℤ)) := by
           rw [zpow_add g ((2 : ℤ) * (k : ℤ)) ((5 : ℤ) * (k : ℤ))]
-        _ = (g ^ ((7 : ℤ) * (k : ℤ))) * (g ^ (k : ℤ)) := by ring
+        _ = (g ^ ((7 : ℤ) * (k : ℤ))) * (g ^ (k : ℤ)) := by ring_nf
         _ = g ^ (((7 : ℤ) * (k : ℤ)) + (k : ℤ)) := by
           rw [zpow_add g ((7 : ℤ) * (k : ℤ)) (k : ℤ)]
-        _ = g ^ ((8 : ℤ) * (k : ℤ)) := by ring
+        _ = g ^ ((8 : ℤ) * (k : ℤ)) := by ring_nf
         _ = (g ^ (8 : ℤ)) ^ (k : ℤ) := by rw [zpow_mul g (8 : ℤ) (k : ℤ)]
         _ = 1 ^ (k : ℤ) := by rw [hg_zpow8]
         _ = 1 := by simp
