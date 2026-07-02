@@ -10,6 +10,7 @@ import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.PrimeSqClassification
 import Smallgroups.UsefulTheorems.Counting
 import Smallgroups.UsefulTheorems.Order16
+import Smallgroups.UsefulTheorems.Order88
 import Mathlib.GroupTheory.NoncommCoprod
 import Mathlib.GroupTheory.SemidirectProduct
 import Mathlib.GroupTheory.SpecificGroups.Dihedral
@@ -140,8 +141,8 @@ correspond to multiplication by the units 1, 3, 5, 7 of Z/8Z.
 We use `unitAut` and `zmod8_unit_*` from `Order16.lean`.
 -/
 
-noncomputable def zmod8_unit_7 : (ZMod 8)ˣ :=
-  IsUnit.unit (by decide : IsUnit (7 : ZMod 8))
+def zmod8_unit_7 : (ZMod 8)ˣ :=
+  ZMod.unitOfCoprime 7 (by norm_num)
 
 @[simp] theorem zmod8_unit_7_sq : zmod8_unit_7 ^ 2 = 1 := by
   unfold zmod8_unit_7; decide
@@ -173,9 +174,11 @@ the four involutive conjugacy classes are:
 * ψ₁ = id:        (x, y) ↦ (x, y)
 * ψ₃:             (x, y) ↦ (x⁻¹, y)
 * ψ₅:             (x, y) ↦ (x, π(x) * y)  where π : C₄ → C₂ is the natural projection
-* ψ₆:             (x, y) ↦ (x⁻¹, π(x) * y)
+* ψ₆:             (x, y) ↦ (x⁻¹ * ι(y), y)  where ι : C₂ → C₄ sends the generator to x²
 
-All four satisfy ψ² = id.
+All four satisfy ψ² = id.  The conjugacy classes of involutions in Aut(K₈) ≅ D₈ are
+{ψ₁}, {ψ₃}, {ψ₅, ψ₇} and {ψ₆, ψ₈} (Wild, Fact 4), so ψ₁, ψ₃, ψ₅, ψ₆ are
+representatives of the four classes.
 -/
 
 /-- The natural projection `Multiplicative (ZMod 4) → Multiplicative (ZMod 2)`
@@ -235,28 +238,23 @@ noncomputable def psi5 : MulAut K8g where
     · rfl
     · simp [k8Proj.map_mul, mul_assoc, mul_left_comm, mul_comm]
 
-/-- ψ₆: x ↦ x³, y ↦ x²y.  Additively: (a,b) ↦ (-a, c(a)+b). -/
-noncomputable def psi6 : MulAut K8g where
-  toFun p := (p.1⁻¹, k8Proj p.1 * p.2)
-  invFun p := (p.1⁻¹, (k8Proj p.1)⁻¹ * p.2)
-  left_inv p := by
-    rcases p with ⟨x, y⟩; dsimp
-    rw [k8Proj.map_inv x]
-    apply Prod.ext
-    · simp
-    · simp [← mul_assoc, k8Proj_self_mul x]
-  right_inv p := by
-    rcases p with ⟨x, y⟩; dsimp
-    apply Prod.ext
-    · simp
-    · dsimp
-      rw [k8Proj.map_inv]
-      simp [← mul_assoc, k8Proj_self_mul x]
-  map_mul' p q := by
-    rcases p with ⟨x₁, y₁⟩; rcases q with ⟨x₂, y₂⟩
-    apply Prod.ext
-    · simp [mul_inv_rev, mul_comm]
-    · simp [k8Proj.map_mul, mul_assoc, mul_left_comm, mul_comm]
+/-- The embedding `Multiplicative (ZMod 2) →* Multiplicative (ZMod 4)`
+sending `ofAdd b` to `ofAdd (2·b)`, i.e. the generator of C₂ to `x²`. -/
+def k8Emb : Multiplicative (ZMod 2) →* Multiplicative (ZMod 4) where
+  toFun y := Multiplicative.ofAdd (2 * (ZMod.cast (Multiplicative.toAdd y) : ZMod 4))
+  map_one' := by decide
+  map_mul' := by decide
+
+/-- ψ₆: x ↦ x³, y ↦ x²y.  Additively: (a,b) ↦ (-a + 2b, b).
+
+This is Wild's ψ₆ (Fact 4): a representative of the conjugacy class {ψ₆, ψ₈}
+of involutions in Aut(K₈), the class *not* containing ψ₅. -/
+def psi6 : MulAut K8g where
+  toFun p := (p.1⁻¹ * k8Emb p.2, p.2)
+  invFun p := (p.1⁻¹ * k8Emb p.2, p.2)
+  left_inv p := by revert p; decide
+  right_inv p := by revert p; decide
+  map_mul' p q := by revert p q; decide
 
 @[simp] theorem psi1_sq : psi1 ^ 2 = 1 := by
   unfold psi1; apply MulEquiv.ext; intro x; rfl
@@ -287,16 +285,8 @@ noncomputable def psi6 : MulAut K8g where
 @[simp] theorem psi6_sq : psi6 ^ 2 = 1 := by
   apply MulEquiv.ext
   intro p
-  rcases p with ⟨x, y⟩
-  calc
-    (psi6 ^ 2) (x, y) = psi6 (psi6 (x, y)) := rfl
-    _ = psi6 (x⁻¹, k8Proj x * y) := rfl
-    _ = ((x⁻¹)⁻¹, k8Proj (x⁻¹) * (k8Proj x * y)) := rfl
-    _ = (x, k8Proj (x⁻¹) * (k8Proj x * y)) := by simp
-    _ = (x, ((k8Proj x)⁻¹ * (k8Proj x * y))) := by rw [k8Proj.map_inv]
-    _ = (x, (((k8Proj x)⁻¹ * k8Proj x) * y)) := by group
-    _ = (x, 1 * y) := by simp
-    _ = (x, y) := by simp
+  change psi6 (psi6 p) = p
+  revert p; decide
 
 /-! ### C₂ → Aut(N) maps for building semidirect products -/
 
@@ -490,6 +480,177 @@ theorem card_order16_wild_reps (i : Fin 14) : Nat.card (order16_wild_reps i) = 1
     | exact card_order16_wild_G11
     | exact card_order16_wild_G12
     | exact card_order16_wild_G13
+
+/-! ### Concrete models of the abelian representatives
+
+`order16_wild_G0/G6/G13` are `partitionGroup`s — Pi types indexed by `Multiset.toList` of the
+partition, whose order is opaque.  Here we identify each of the five abelian representatives
+with an explicit product of cyclic groups, which is needed both for counting invariants and
+for the classification proof.
+-/
+
+section AbelianModels
+
+private lemma exists_pair_of_length_two {l : List ℕ} (h : l.length = 2) :
+    ∃ x y, l = [x, y] := by
+  match l, h with
+  | [x, y], _ => exact ⟨x, y, rfl⟩
+
+private lemma exists_triple_of_length_three {l : List ℕ} (h : l.length = 3) :
+    ∃ x y z, l = [x, y, z] := by
+  match l, h with
+  | [x, y, z], _ => exact ⟨x, y, z, rfl⟩
+
+private lemma perm_pair {a b : ℕ} {l : List ℕ} (h : l.Perm [a, b]) :
+    l = [a, b] ∨ l = [b, a] := by
+  obtain ⟨x, y, rfl⟩ := exists_pair_of_length_two (by simpa using h.length_eq)
+  have hx : x = a ∨ x = b := by
+    have hmem := h.subset (show x ∈ [x, y] by simp)
+    simpa using hmem
+  rcases hx with rfl | rfl
+  · have h' : [y].Perm [b] := h.cons_inv
+    left
+    rw [List.perm_singleton.mp h']
+  · have h2 : [x, y].Perm [x, a] := h.trans (List.Perm.swap x a [])
+    have h' : [y].Perm [a] := h2.cons_inv
+    right
+    rw [List.perm_singleton.mp h']
+
+private lemma perm_triple_211 {l : List ℕ} (h : l.Perm [2, 1, 1]) :
+    l = [2, 1, 1] ∨ l = [1, 2, 1] ∨ l = [1, 1, 2] := by
+  obtain ⟨x, y, z, rfl⟩ := exists_triple_of_length_three (by simpa using h.length_eq)
+  have hx : x = 2 ∨ x = 1 := by
+    have hmem := h.subset (show x ∈ [x, y, z] by simp)
+    simp at hmem
+    tauto
+  rcases hx with rfl | rfl
+  · have h' : [y, z].Perm [1, 1] := h.cons_inv
+    have h2 : [y, z] = [1, 1] := (perm_pair h').elim id id
+    obtain ⟨rfl, rfl⟩ : y = 1 ∧ z = 1 := by simpa using h2
+    left; rfl
+  · have h' : [y, z].Perm [2, 1] := by
+      have hh := (List.cons_perm_iff_perm_erase.mp h).2
+      simpa using hh
+    rcases perm_pair h' with h2 | h2
+    · obtain ⟨rfl, rfl⟩ : y = 2 ∧ z = 1 := by simpa using h2
+      right; left; rfl
+    · obtain ⟨rfl, rfl⟩ : y = 1 ∧ z = 2 := by simpa using h2
+      right; right; rfl
+
+private lemma perm_ones {l : List ℕ} (h : l.Perm [1, 1, 1, 1]) : l = [1, 1, 1, 1] := by
+  have hlen : l.length = 4 := by simpa using h.length_eq
+  have hmem : ∀ x ∈ l, x = 1 := fun x hx => by
+    have := h.subset hx
+    simpa using this
+  have hrep : l = List.replicate 4 1 := by
+    rw [List.eq_replicate_iff]
+    exact ⟨hlen, hmem⟩
+  simpa using hrep
+
+private lemma toList_perm (s : Multiset ℕ) (l : List ℕ) (h : s = ↑l) : s.toList.Perm l := by
+  rw [← Multiset.coe_eq_coe, Multiset.coe_toList, h]
+
+/-- A `MulEquiv` between Pi-type groups over equal lists. -/
+private def listGroupCongr (p : ℕ) {l l' : List ℕ} (h : l = l') :
+    ((i : Fin l.length) → Multiplicative (ZMod (p ^ l.get i))) ≃*
+      ((i : Fin l'.length) → Multiplicative (ZMod (p ^ l'.get i))) := by
+  cases h; exact MulEquiv.refl _
+
+/-- Pi over `Fin 1` as a single factor, multiplicatively. -/
+private def piFinOneMulEquiv (M : Fin 1 → Type*) [∀ i, Mul (M i)] :
+    ((i : Fin 1) → M i) ≃* M 0 where
+  toFun f := f 0
+  invFun x := Fin.cons x finZeroElim
+  left_inv f := by funext i; fin_cases i; rfl
+  right_inv x := rfl
+  map_mul' f g := rfl
+
+/-- Pi over `Fin 2` as a binary product, multiplicatively. -/
+private def piFinTwoMulEquiv (M : Fin 2 → Type*) [∀ i, Mul (M i)] :
+    ((i : Fin 2) → M i) ≃* M 0 × M 1 :=
+  { piFinTwoEquiv M with map_mul' := fun _ _ => rfl }
+
+/-- Pi over `Fin 3` as an iterated product, multiplicatively. -/
+private def piFinThreeMulEquiv (M : Fin 3 → Type*) [∀ i, Mul (M i)] :
+    ((i : Fin 3) → M i) ≃* M 0 × M 1 × M 2 where
+  toFun f := (f 0, f 1, f 2)
+  invFun x := Fin.cons x.1 (Fin.cons x.2.1 (Fin.cons x.2.2 finZeroElim))
+  left_inv f := by funext i; fin_cases i <;> rfl
+  right_inv x := rfl
+  map_mul' f g := rfl
+
+/-- Pi over `Fin 4` as an iterated product, multiplicatively. -/
+private def piFinFourMulEquiv (M : Fin 4 → Type*) [∀ i, Mul (M i)] :
+    ((i : Fin 4) → M i) ≃* M 0 × M 1 × M 2 × M 3 where
+  toFun f := (f 0, f 1, f 2, f 3)
+  invFun x := Fin.cons x.1 (Fin.cons x.2.1 (Fin.cons x.2.2.1 (Fin.cons x.2.2.2 finZeroElim)))
+  left_inv f := by funext i; fin_cases i <;> rfl
+  right_inv x := rfl
+  map_mul' f g := rfl
+
+/-- The elementary abelian model `(C₂)⁴` as an explicit product. -/
+abbrev order16_wild_C2pow4 : Type :=
+  Multiplicative (ZMod 2) × Multiplicative (ZMod 2) ×
+    Multiplicative (ZMod 2) × Multiplicative (ZMod 2)
+
+/-- `G₆ = order16_A1 ≅ C₁₆` concretely. -/
+theorem order16_A1_iso_concrete :
+    Nonempty (order16_A1 ≃* Multiplicative (ZMod 16)) := by
+  have h : part4.parts.toList = [4] := List.perm_singleton.mp (toList_perm _ _ rfl)
+  exact ⟨(listGroupCongr 2 h).trans <| (piFinOneMulEquiv _).trans
+    (multZmodCongr (by norm_num))⟩
+
+/-- `order16_A2 ≅ C₈ × C₂ = G₁` concretely. -/
+theorem order16_A2_iso_concrete :
+    Nonempty (order16_A2 ≃* C8g × Multiplicative (ZMod 2)) := by
+  rcases perm_pair (toList_perm part31.parts [3, 1] rfl) with h | h
+  · exact ⟨(listGroupCongr 2 h).trans <| (piFinTwoMulEquiv _).trans <|
+      MulEquiv.prodCongr (multZmodCongr (by norm_num)) (multZmodCongr (by norm_num))⟩
+  · exact ⟨(listGroupCongr 2 h).trans <| (piFinTwoMulEquiv _).trans <|
+      (MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 1 = 2))
+        (multZmodCongr (by norm_num : 2 ^ 3 = 8))).trans MulEquiv.prodComm⟩
+
+/-- `G₁₃ = order16_A3 ≅ C₄ × C₄` concretely. -/
+theorem order16_A3_iso_concrete :
+    Nonempty (order16_A3 ≃* Multiplicative (ZMod 4) × Multiplicative (ZMod 4)) := by
+  have h : part22.parts.toList = [2, 2] :=
+    (perm_pair (toList_perm part22.parts [2, 2] rfl)).elim id id
+  exact ⟨(listGroupCongr 2 h).trans <| (piFinTwoMulEquiv _).trans <|
+    MulEquiv.prodCongr (multZmodCongr (by norm_num)) (multZmodCongr (by norm_num))⟩
+
+/-- `order16_A4 ≅ K₈ × C₂ = G₇` concretely. -/
+theorem order16_A4_iso_concrete :
+    Nonempty (order16_A4 ≃* K8g × Multiplicative (ZMod 2)) := by
+  rcases perm_triple_211 (toList_perm part211.parts [2, 1, 1] rfl) with h | h | h
+  · -- [2,1,1] : C4 × (C2 × C2) → (C4 × C2) × C2
+    exact ⟨(listGroupCongr 2 h).trans <| (piFinThreeMulEquiv _).trans <|
+      (MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 2 = 4))
+        (MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 1 = 2))
+          (multZmodCongr (by norm_num : 2 ^ 1 = 2)))).trans MulEquiv.prodAssoc.symm⟩
+  · -- [1,2,1] : C2 × (C4 × C2) → (C4 × C2) × C2
+    exact ⟨(listGroupCongr 2 h).trans <| (piFinThreeMulEquiv _).trans <|
+      (MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 1 = 2))
+        (MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 2 = 4))
+          (multZmodCongr (by norm_num : 2 ^ 1 = 2)))).trans MulEquiv.prodComm⟩
+  · -- [1,1,2] : C2 × (C2 × C4) → C2 × (C4 × C2) → (C4 × C2) × C2
+    exact ⟨(listGroupCongr 2 h).trans <| (piFinThreeMulEquiv _).trans <|
+      ((MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 1 = 2))
+        ((MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 1 = 2))
+          (multZmodCongr (by norm_num : 2 ^ 2 = 4))).trans MulEquiv.prodComm)).trans
+            MulEquiv.prodComm)⟩
+
+/-- `G₀ = order16_A5 ≅ (C₂)⁴` concretely. -/
+theorem order16_A5_iso_concrete :
+    Nonempty (order16_A5 ≃* order16_wild_C2pow4) := by
+  have h : part1111.parts.toList = [1, 1, 1, 1] :=
+    perm_ones (toList_perm part1111.parts [1, 1, 1, 1] rfl)
+  exact ⟨(listGroupCongr 2 h).trans <| (piFinFourMulEquiv _).trans <|
+    MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 1 = 2)) <|
+      MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 1 = 2)) <|
+        MulEquiv.prodCongr (multZmodCongr (by norm_num : 2 ^ 1 = 2))
+          (multZmodCongr (by norm_num : 2 ^ 1 = 2))⟩
+
+end AbelianModels
 
 /-! ### Auxiliary lemmas for Lemma 2 -/
 
@@ -989,6 +1150,1076 @@ theorem lemma_normal_c8_or_k8 {G : Type*} [Group G]
         normal_k8_of_commuting hcard u z hu4 hz_order2 hu_comm hz_notin
       exact Or.inr ⟨H, hH1, hH2, hH3⟩
 
+/-! ### Isomorphism invariants of the 14 representatives
+
+For distinctness we use the invariant tuple
+`(|Z(G)|, #{x : x² = 1}, #{x : x⁴ = 1}, #{squares})`,
+whose values are pairwise distinct across the 14 representatives.  All counts on the
+concrete (computable) models are established by kernel reduction; the three
+`partitionGroup`-based representatives are transported through their concrete models.
+-/
+
+section Invariants
+
+private theorem nat_card_eq_of_fintype_card_eq {α : Type*} [Fintype α] {n : Nat}
+    (h : Fintype.card α = n) : Nat.card α = n :=
+  Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq h)
+
+/-- The number of squares in a group — an isomorphism invariant. -/
+noncomputable def sq_image_card (H : Type*) [Group H] : ℕ :=
+  Nat.card {y : H // ∃ x : H, x ^ 2 = y}
+
+theorem sq_image_card_eq_of_mulEquiv {H K : Type*} [Group H] [Group K] (e : H ≃* K) :
+    sq_image_card H = sq_image_card K := by
+  refine Nat.card_congr (Equiv.subtypeEquiv e.toEquiv fun y => ?_)
+  constructor
+  · rintro ⟨x, rfl⟩
+    exact ⟨e x, by rw [← map_pow]; rfl⟩
+  · rintro ⟨x, hx⟩
+    refine ⟨e.symm x, e.injective ?_⟩
+    rw [map_pow, MulEquiv.apply_symm_apply]
+    exact hx
+
+/-- A `Fintype` instance for semidirect products, needed for the kernel computations. -/
+noncomputable instance instFintypeOrder16SemidirectProduct {N H : Type*} [Group N] [Group H]
+    [Fintype N] [Fintype H] (φ : H →* MulAut N) :
+    Fintype (SemidirectProduct N H φ) :=
+  Fintype.ofEquiv (N × H) SemidirectProduct.equivProd.symm
+
+/-- The invariant tuple `(|Z(G)|, #{x²=1}, #{x⁴=1}, #squares)` of a group. -/
+private noncomputable def wildInvariantOf (H : Type*) [Group H] : ℕ × ℕ × ℕ × ℕ :=
+  (Nat.card (Subgroup.center H), pow_eq_one_card H 2, pow_eq_one_card H 4, sq_image_card H)
+
+private theorem wildInvariantOf_eq_of_mulEquiv {H K : Type*} [Group H] [Group K]
+    (e : H ≃* K) : wildInvariantOf H = wildInvariantOf K := by
+  refine Prod.ext (card_center_eq_of_mulEquiv e) (Prod.ext (pow_eq_one_card_eq_of_mulEquiv 2 e)
+    (Prod.ext (pow_eq_one_card_eq_of_mulEquiv 4 e) (sq_image_card_eq_of_mulEquiv e)))
+
+/-- The invariant tuples of the 14 representatives. -/
+private def order16_wild_invariant : Fin 14 → ℕ × ℕ × ℕ × ℕ
+  | 0 => (16, 16, 16, 1)
+  | 1 => (16, 4, 8, 4)
+  | 2 => (2, 6, 12, 4)
+  | 3 => (4, 4, 8, 4)
+  | 4 => (2, 10, 12, 4)
+  | 5 => (2, 2, 12, 4)
+  | 6 => (16, 2, 4, 8)
+  | 7 => (16, 8, 16, 2)
+  | 8 => (4, 12, 16, 2)
+  | 9 => (4, 8, 16, 3)
+  | 10 => (4, 8, 16, 2)
+  | 11 => (4, 4, 16, 2)
+  | 12 => (4, 4, 16, 3)
+  | 13 => (16, 4, 16, 4)
+
+set_option linter.unusedFintypeInType false in
+/-- Helper: establish the invariant tuple by four kernel computations. -/
+private theorem wildInvariantOf_eq_of_counts {H : Type*} [Group H] [Fintype H]
+    [Fintype (Subgroup.center H)] [Fintype {x : H // x ^ 2 = 1}]
+    [Fintype {x : H // x ^ 4 = 1}] [Fintype {y : H // ∃ x : H, x ^ 2 = y}]
+    {a b c d : ℕ}
+    (h1 : Fintype.card (Subgroup.center H) = a)
+    (h2 : Fintype.card {x : H // x ^ 2 = 1} = b)
+    (h3 : Fintype.card {x : H // x ^ 4 = 1} = c)
+    (h4 : Fintype.card {y : H // ∃ x : H, x ^ 2 = y} = d) :
+    wildInvariantOf H = (a, b, c, d) :=
+  Prod.ext (nat_card_eq_of_fintype_card_eq h1) (Prod.ext (nat_card_eq_of_fintype_card_eq h2)
+    (Prod.ext (nat_card_eq_of_fintype_card_eq h3) (nat_card_eq_of_fintype_card_eq h4)))
+
+private theorem invariant_G0 : wildInvariantOf order16_wild_G0 = (16, 16, 16, 1) := by
+  obtain ⟨e⟩ := order16_A5_iso_concrete
+  rw [wildInvariantOf_eq_of_mulEquiv e]
+  exact wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G1 : wildInvariantOf order16_wild_G1 = (16, 4, 8, 4) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G2 : wildInvariantOf order16_wild_G2 = (2, 6, 12, 4) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G3 : wildInvariantOf order16_wild_G3 = (4, 4, 8, 4) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G4 : wildInvariantOf order16_wild_G4 = (2, 10, 12, 4) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G5 : wildInvariantOf order16_wild_G5 = (2, 2, 12, 4) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G6 : wildInvariantOf order16_wild_G6 = (16, 2, 4, 8) := by
+  obtain ⟨e⟩ := order16_A1_iso_concrete
+  rw [wildInvariantOf_eq_of_mulEquiv e]
+  exact wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G7 : wildInvariantOf order16_wild_G7 = (16, 8, 16, 2) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G8 : wildInvariantOf order16_wild_G8 = (4, 12, 16, 2) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G9 : wildInvariantOf order16_wild_G9 = (4, 8, 16, 3) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G10 : wildInvariantOf order16_wild_G10 = (4, 8, 16, 2) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G11 : wildInvariantOf order16_wild_G11 = (4, 4, 16, 2) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G12 : wildInvariantOf order16_wild_G12 = (4, 4, 16, 3) :=
+  wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem invariant_G13 : wildInvariantOf order16_wild_G13 = (16, 4, 16, 4) := by
+  obtain ⟨e⟩ := order16_A3_iso_concrete
+  rw [wildInvariantOf_eq_of_mulEquiv e]
+  exact wildInvariantOf_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem order16_wild_invariant_spec (i : Fin 14) :
+    wildInvariantOf (order16_wild_reps i) = order16_wild_invariant i := by
+  fin_cases i
+  · exact invariant_G0
+  · exact invariant_G1
+  · exact invariant_G2
+  · exact invariant_G3
+  · exact invariant_G4
+  · exact invariant_G5
+  · exact invariant_G6
+  · exact invariant_G7
+  · exact invariant_G8
+  · exact invariant_G9
+  · exact invariant_G10
+  · exact invariant_G11
+  · exact invariant_G12
+  · exact invariant_G13
+
+end Invariants
+
+/-! ### Recognition lemmas
+
+For each case of Wild's extension analysis we build an explicit homomorphism from the
+model group to `G`, prove it injective by kernel analysis, and conclude that it is an
+isomorphism by cardinality.
+-/
+
+section Recognition
+
+variable {G : Type*} [Group G]
+
+/-- An injective hom between finite groups of equal cardinality is an isomorphism. -/
+private noncomputable def mulEquivOfInjectiveCard {M : Type*} [Group M] [Finite M] [Finite G]
+    (Φ : M →* G) (hi : Function.Injective Φ) (hcard : Nat.card M = Nat.card G) : M ≃* G := by
+  haveI : Fintype M := Fintype.ofFinite M
+  haveI : Fintype G := Fintype.ofFinite G
+  exact MulEquiv.ofBijective Φ ((Fintype.bijective_iff_injective_and_card Φ).mpr
+    ⟨hi, by rwa [← Nat.card_eq_fintype_card, ← Nat.card_eq_fintype_card]⟩)
+
+/-- Evaluation of `zmodPowHom` at an arbitrary element. -/
+private lemma zmodPowHom_eval {n : ℕ} [NeZero n] (g : G) (hg : g ^ n = 1)
+    (m : Multiplicative (ZMod n)) :
+    zmodPowHom n g hg m = g ^ (Multiplicative.toAdd m).val := by
+  have hm : m = Multiplicative.ofAdd (((Multiplicative.toAdd m).val : ZMod n)) := by
+    rw [ZMod.natCast_val, ZMod.cast_id, ofAdd_toAdd]
+  conv_lhs => rw [hm]
+  exact zmodPowHom_apply n g hg _
+
+/-- `zmodPowHom` at the generator. -/
+private lemma zmodPowHom_gen {n : ℕ} (hn : 2 ≤ n) (g : G) (hg : g ^ n = 1) :
+    zmodPowHom n g hg (Multiplicative.ofAdd (1 : ZMod n)) = g := by
+  haveI : NeZero n := ⟨by omega⟩
+  rw [zmodPowHom_eval, toAdd_ofAdd, ZMod.val_one_eq_one_mod, Nat.mod_eq_of_lt hn, pow_one]
+
+/-- `zmodPowHom` is injective when `g` has order exactly `n`. -/
+private lemma zmodPowHom_injective {n : ℕ} (hn : 0 < n) (g : G) (hg : g ^ n = 1)
+    (hord : orderOf g = n) : Function.Injective (zmodPowHom n g hg) := by
+  haveI : NeZero n := ⟨hn.ne'⟩
+  refine (injective_iff_map_eq_one _).mpr ?_
+  intro a ha
+  rw [zmodPowHom_eval] at ha
+  have hdvd : n ∣ (Multiplicative.toAdd a).val := by
+    have hdvd0 : orderOf g ∣ (Multiplicative.toAdd a).val := orderOf_dvd_of_pow_eq_one ha
+    rwa [hord] at hdvd0
+  have hlt : (Multiplicative.toAdd a).val < n := ZMod.val_lt _
+  have h0 : (Multiplicative.toAdd a).val = 0 := Nat.eq_zero_of_dvd_of_lt hdvd hlt
+  have h0' : Multiplicative.toAdd a = 0 := (ZMod.val_eq_zero _).mp h0
+  rw [← ofAdd_toAdd a, h0', ofAdd_zero]
+
+/-- Every element of `C8g` is a power of the generator. -/
+private lemma c8g_decomp (p : C8g) : p = xC8 ^ (Multiplicative.toAdd p).val := by
+  revert p; decide
+
+/-- Homs out of `C8g` agree if they agree on the generator. -/
+private lemma c8g_hom_ext {M : Type*} [Monoid M] {f g : C8g →* M}
+    (h : f xC8 = g xC8) : f = g := by
+  refine MonoidHom.ext fun p => ?_
+  conv_lhs => rw [c8g_decomp p]
+  conv_rhs => rw [c8g_decomp p]
+  rw [map_pow, map_pow, h]
+
+/-- Every element of `K8g` is `x^a * y^b`. -/
+private lemma k8g_decomp (p : K8g) :
+    p = xK8 ^ (Multiplicative.toAdd p.1).val * yK8 ^ (Multiplicative.toAdd p.2).val := by
+  revert p; decide
+
+/-- Homs out of `K8g` agree if they agree on the two generators. -/
+private lemma k8g_hom_ext {M : Type*} [Monoid M] {f g : K8g →* M}
+    (hx : f xK8 = g xK8) (hy : f yK8 = g yK8) : f = g := by
+  refine MonoidHom.ext fun p => ?_
+  conv_lhs => rw [k8g_decomp p]
+  conv_rhs => rw [k8g_decomp p]
+  rw [map_mul, map_mul, map_pow, map_pow, map_pow, map_pow, hx, hy]
+
+/-- Every element of `Multiplicative (ZMod 4)` is a power of `ofAdd 1`. -/
+private lemma c4g_decomp (p : Multiplicative (ZMod 4)) :
+    p = (Multiplicative.ofAdd (1 : ZMod 4)) ^ (Multiplicative.toAdd p).val := by
+  revert p; decide
+
+/-- Homs out of `Multiplicative (ZMod 4)` agree if they agree on the generator. -/
+private lemma c4g_hom_ext {M : Type*} [Monoid M] {f g : Multiplicative (ZMod 4) →* M}
+    (h : f (Multiplicative.ofAdd (1 : ZMod 4)) = g (Multiplicative.ofAdd (1 : ZMod 4))) :
+    f = g := by
+  refine MonoidHom.ext fun p => ?_
+  conv_lhs => rw [c4g_decomp p]
+  conv_rhs => rw [c4g_decomp p]
+  rw [map_pow, map_pow, h]
+
+/-- The hom `K8g →* G` sending the generators to commuting elements `x, w`. -/
+private noncomputable def k8gHom (x w : G) (hx : x ^ 4 = 1) (hw : w ^ 2 = 1)
+    (hcomm : Commute x w) : K8g →* G :=
+  (zmodPowHom 4 x hx).noncommCoprod (zmodPowHom 2 w hw) (by
+    intro a b
+    rw [zmodPowHom_eval, zmodPowHom_eval]
+    exact hcomm.pow_pow _ _)
+
+private lemma k8gHom_eval (x w : G) (hx : x ^ 4 = 1) (hw : w ^ 2 = 1) (hcomm : Commute x w)
+    (p : K8g) : k8gHom x w hx hw hcomm p =
+      x ^ (Multiplicative.toAdd p.1).val * w ^ (Multiplicative.toAdd p.2).val := by
+  rcases p with ⟨a, b⟩
+  simp only [k8gHom, MonoidHom.noncommCoprod_apply]
+  rw [zmodPowHom_eval, zmodPowHom_eval]
+
+private lemma k8gHom_x (x w : G) (hx : x ^ 4 = 1) (hw : w ^ 2 = 1) (hcomm : Commute x w) :
+    k8gHom x w hx hw hcomm xK8 = x := by
+  rw [k8gHom_eval]
+  have h1 : (Multiplicative.toAdd (xK8.1 : Multiplicative (ZMod 4))).val = 1 := by decide
+  have h2 : (Multiplicative.toAdd (xK8.2 : Multiplicative (ZMod 2))).val = 0 := by decide
+  rw [h1, h2, pow_one, pow_zero, mul_one]
+
+private lemma k8gHom_y (x w : G) (hx : x ^ 4 = 1) (hw : w ^ 2 = 1) (hcomm : Commute x w) :
+    k8gHom x w hx hw hcomm yK8 = w := by
+  rw [k8gHom_eval]
+  have h1 : (Multiplicative.toAdd (yK8.1 : Multiplicative (ZMod 4))).val = 0 := by decide
+  have h2 : (Multiplicative.toAdd (yK8.2 : Multiplicative (ZMod 2))).val = 1 := by decide
+  rw [h1, h2, pow_one, pow_zero, one_mul]
+
+/-- The K8-hom is injective when `x` has order 4 and `w ∉ ⟨x⟩`. -/
+private lemma k8gHom_injective (x w : G) (hx4 : orderOf x = 4)
+    (hcomm : Commute x w) (hw_notin : w ∉ Subgroup.zpowers x)
+    (hx : x ^ 4 = 1) (hw : w ^ 2 = 1) :
+    Function.Injective (k8gHom x w hx hw hcomm) := by
+  refine (injective_iff_map_eq_one _).mpr ?_
+  rintro ⟨a, b⟩ hab
+  rw [k8gHom_eval] at hab
+  have hbv_lt : (Multiplicative.toAdd b).val < 2 := ZMod.val_lt _
+  have hav_lt : (Multiplicative.toAdd a).val < 4 := ZMod.val_lt _
+  have hbv0 : (Multiplicative.toAdd b).val = 0 := by
+    by_contra hbv1
+    have hbv1' : (Multiplicative.toAdd b).val = 1 := by omega
+    rw [hbv1', pow_one] at hab
+    refine hw_notin ?_
+    have hw_eq : w = (x ^ (Multiplicative.toAdd a).val)⁻¹ :=
+      eq_inv_of_mul_eq_one_right hab
+    rw [hw_eq]
+    exact Subgroup.inv_mem _ (Subgroup.pow_mem _ (Subgroup.mem_zpowers x) _)
+  rw [hbv0, pow_zero, mul_one] at hab
+  have hav0 : (Multiplicative.toAdd a).val = 0 := by
+    have hdvd : orderOf x ∣ (Multiplicative.toAdd a).val := orderOf_dvd_of_pow_eq_one hab
+    rw [hx4] at hdvd
+    omega
+  have ha1 : a = 1 := by
+    have h0 : Multiplicative.toAdd a = 0 := (ZMod.val_eq_zero _).mp hav0
+    rw [← ofAdd_toAdd a, h0, ofAdd_zero]
+  have hb1 : b = 1 := by
+    have h0 : Multiplicative.toAdd b = 0 := (ZMod.val_eq_zero _).mp hbv0
+    rw [← ofAdd_toAdd b, h0, ofAdd_zero]
+  rw [ha1, hb1]
+  rfl
+
+/-- Recognition of split extensions by `C₂`: if `f : N →* G` is injective, `t ∉ f.range`
+has `t² = 1`, conjugation by `t` realizes `φ(gen)` on `f.range`, and `|G| = 2·|N|`,
+then `G ≅ N ⋊[φ] C₂`. -/
+private lemma recog_split_c2 {N : Type*} [Group N] [Finite N] [Finite G]
+    (φ : Multiplicative (ZMod 2) →* MulAut N)
+    (f : N →* G) (hf : Function.Injective f)
+    (t : G) (ht2 : t ^ 2 = 1) (htr : t ∉ f.range)
+    (hconj : ∀ n : N, t * f n * t⁻¹ = f (φ (Multiplicative.ofAdd 1) n))
+    (hcard : Nat.card G = 2 * Nat.card N) :
+    Nonempty (G ≃* SemidirectProduct N (Multiplicative (ZMod 2)) φ) := by
+  classical
+  haveI : Finite (SemidirectProduct N (Multiplicative (ZMod 2)) φ) :=
+    Finite.of_equiv _ SemidirectProduct.equivProd.symm
+  have hcompat : ∀ s : Multiplicative (ZMod 2),
+      f.comp (φ s).toMonoidHom =
+        (MulAut.conj (zmodPowHom 2 t ht2 s)).toMonoidHom.comp f := by
+    intro s
+    rcases c2_two_cases s with rfl | rfl
+    · refine MonoidHom.ext fun n => ?_
+      simp
+    · refine MonoidHom.ext fun n => ?_
+      change f ((φ (Multiplicative.ofAdd 1)) n) =
+        MulAut.conj (zmodPowHom 2 t ht2 (Multiplicative.ofAdd 1)) (f n)
+      rw [zmodPowHom_gen (by norm_num) t ht2, MulAut.conj_apply, ← hconj n]
+  set Φ := SemidirectProduct.lift f (zmodPowHom 2 t ht2) hcompat with hΦ
+  have hinj : Function.Injective Φ := by
+    refine (injective_iff_map_eq_one _).mpr ?_
+    rintro ⟨n, s⟩ hns
+    have hval : Φ ⟨n, s⟩ = f n * zmodPowHom 2 t ht2 s := rfl
+    rw [hval] at hns
+    rcases c2_two_cases s with rfl | rfl
+    · rw [map_one, mul_one] at hns
+      have hn : n = 1 := hf (by rw [hns, map_one])
+      rw [hn]
+      rfl
+    · exfalso
+      rw [zmodPowHom_gen (by norm_num) t ht2] at hns
+      have ht_eq : t = (f n)⁻¹ := eq_inv_of_mul_eq_one_right hns
+      exact htr ⟨n⁻¹, by rw [map_inv, ← ht_eq]⟩
+  have hcards : Nat.card (SemidirectProduct N (Multiplicative (ZMod 2)) φ) = Nat.card G := by
+    rw [SemidirectProduct.card, hcard]
+    have h2 : Nat.card (Multiplicative (ZMod 2)) = 2 := by
+      rw [Nat.card_eq_fintype_card, Fintype.card_multiplicative, ZMod.card]
+    rw [h2, mul_comm]
+  exact ⟨(mulEquivOfInjectiveCard Φ hinj hcards).symm⟩
+
+/-- `g^k` reduced mod the exponent. -/
+private lemma pow_mod_of_pow_eq_one {g : G} {m : ℕ} (hg : g ^ m = 1) (k : ℕ) :
+    g ^ (k % m) = g ^ k := by
+  conv_rhs => rw [← Nat.div_add_mod k m]
+  rw [pow_add, pow_mul, hg, one_pow, one_mul]
+
+private lemma pow_val_add' {g : G} {m : ℕ} [NeZero m] (hg : g ^ m = 1) (i j : ZMod m) :
+    g ^ (i + j).val = g ^ i.val * g ^ j.val := by
+  rw [ZMod.val_add, pow_mod_of_pow_eq_one hg, pow_add]
+
+/-- The hom `QuaternionGroup n →* G` sending `a 1 ↦ g` and `xa 0 ↦ t`, given the
+quaternion relations `g^(2n) = 1`, `t² = gⁿ`, `t g t⁻¹ = g⁻¹`. -/
+private def quaternionHom (n : ℕ) [NeZero n] (g t : G)
+    (hg : g ^ (2 * n) = 1) (ht2 : t ^ 2 = g ^ n) (hconj : t * g * t⁻¹ = g⁻¹) :
+    QuaternionGroup n →* G where
+  toFun q := match q with
+    | .a i => g ^ i.val
+    | .xa i => t * g ^ i.val
+  map_one' := by
+    change g ^ (0 : ZMod (2 * n)).val = 1
+    rw [ZMod.val_zero, pow_zero]
+  map_mul' := by
+    have hB : t * g⁻¹ * t⁻¹ = g := by
+      have h2 : (t * g * t⁻¹)⁻¹ = (g⁻¹)⁻¹ := by rw [hconj]
+      simpa [mul_inv_rev, mul_assoc] using h2
+    have hgt : g * t = t * g⁻¹ := by
+      conv_lhs => rw [← hB]
+      group
+    have key : ∀ k : ℕ, g ^ k * t = t * (g ^ k)⁻¹ := by
+      intro k
+      induction k with
+      | zero => simp
+      | succ m ih =>
+        calc g ^ (m + 1) * t = g ^ m * (g * t) := by rw [pow_succ]; group
+          _ = g ^ m * (t * g⁻¹) := by rw [hgt]
+          _ = (g ^ m * t) * g⁻¹ := by group
+          _ = t * (g ^ m)⁻¹ * g⁻¹ := by rw [ih]
+          _ = t * (g ^ (m + 1))⁻¹ := by rw [pow_succ]; group
+    have hsub : ∀ i j : ZMod (2 * n), g ^ (j - i).val = (g ^ i.val)⁻¹ * g ^ j.val := by
+      intro i j
+      have h1 : g ^ i.val * g ^ (j - i).val = g ^ j.val := by
+        rw [← pow_val_add' hg, show i + (j - i) = j by ring]
+      rw [← h1]
+      group
+    rintro (i | i) (j | j)
+    · change g ^ (i + j).val = g ^ i.val * g ^ j.val
+      exact pow_val_add' hg i j
+    · change t * g ^ (j - i).val = g ^ i.val * (t * g ^ j.val)
+      calc t * g ^ (j - i).val = (t * (g ^ i.val)⁻¹) * g ^ j.val := by rw [hsub i j]; group
+        _ = (g ^ i.val * t) * g ^ j.val := by rw [key i.val]
+        _ = g ^ i.val * (t * g ^ j.val) := by group
+    · change t * g ^ (i + j).val = t * g ^ i.val * g ^ j.val
+      rw [pow_val_add' hg, mul_assoc]
+    · change g ^ ((n : ZMod (2 * n)) + j - i).val = t * g ^ i.val * (t * g ^ j.val)
+      have hn_lt : n < 2 * n := by
+        have := NeZero.pos n
+        omega
+      have hval_n : ((n : ZMod (2 * n))).val = n := ZMod.val_natCast_of_lt hn_lt
+      have h1 : (n : ZMod (2 * n)) + j - i = (n : ZMod (2 * n)) + (j - i) := by ring
+      rw [h1, pow_val_add' hg, hval_n, hsub i j]
+      symm
+      calc t * g ^ i.val * (t * g ^ j.val)
+          = t * (g ^ i.val * t) * g ^ j.val := by group
+        _ = t * (t * (g ^ i.val)⁻¹) * g ^ j.val := by rw [key i.val]
+        _ = t ^ 2 * ((g ^ i.val)⁻¹ * g ^ j.val) := by rw [pow_two]; group
+        _ = g ^ n * ((g ^ i.val)⁻¹ * g ^ j.val) := by rw [ht2]
+
+/-- Recognition of `Q₁₆`. -/
+private lemma recog_G5 [Finite G] (hcard : Nat.card G = 16) (x t : G)
+    (hx8 : orderOf x = 8) (ht2 : t ^ 2 = x ^ 4) (hconj : t * x * t⁻¹ = x⁻¹)
+    (htx : t ∉ Subgroup.zpowers x) :
+    Nonempty (G ≃* order16_wild_G5) := by
+  have hx16 : x ^ (2 * 4) = 1 := by
+    rw [show 2 * 4 = 8 from rfl, ← hx8]
+    exact pow_orderOf_eq_one x
+  set ρ := quaternionHom 4 x t hx16 ht2 hconj with hρ
+  have hinj : Function.Injective ρ := by
+    refine (injective_iff_map_eq_one _).mpr ?_
+    rintro (i | i) h
+    · have hval : ρ (QuaternionGroup.a i) = x ^ i.val := rfl
+      rw [hval] at h
+      have hdvd : (8 : ℕ) ∣ i.val := by
+        have h0 : orderOf x ∣ i.val := orderOf_dvd_of_pow_eq_one h
+        rwa [hx8] at h0
+      have hlt : i.val < 8 := ZMod.val_lt i
+      have h0 : i.val = 0 := Nat.eq_zero_of_dvd_of_lt hdvd hlt
+      rw [QuaternionGroup.one_def]
+      congr 1
+      exact (ZMod.val_eq_zero i).mp h0
+    · exfalso
+      have hval : ρ (QuaternionGroup.xa i) = t * x ^ i.val := rfl
+      rw [hval] at h
+      have ht_eq : t = (x ^ i.val)⁻¹ := eq_inv_of_mul_eq_one_left h
+      exact htx (ht_eq ▸ Subgroup.inv_mem _ (Subgroup.pow_mem _ (Subgroup.mem_zpowers x) _))
+  have hcards : Nat.card (QuaternionGroup 4) = Nat.card G := by
+    rw [Nat.card_eq_fintype_card, QuaternionGroup.card, hcard]
+  exact ⟨(mulEquivOfInjectiveCard ρ hinj hcards).symm⟩
+
+/-- Recognition of the split `C₈ ⋊ C₂` extensions (`G₂`, `G₃`, `G₄`). -/
+private lemma recog_c8_split [Finite G] (hcard : Nat.card G = 16)
+    (φ : Multiplicative (ZMod 2) →* MulAut C8g) {k : ℕ}
+    (hφ : φ (Multiplicative.ofAdd 1) xC8 = xC8 ^ k)
+    (x t : G) (hx8 : orderOf x = 8) (ht2 : t ^ 2 = 1) (htx : t ∉ Subgroup.zpowers x)
+    (hconj : t * x * t⁻¹ = x ^ k) :
+    Nonempty (G ≃* SemidirectProduct C8g (Multiplicative (ZMod 2)) φ) := by
+  have hx8' : x ^ 8 = 1 := by rw [← hx8]; exact pow_orderOf_eq_one x
+  have hf : Function.Injective (zmodPowHom 8 x hx8') :=
+    zmodPowHom_injective (by norm_num) x hx8' hx8
+  have hfx : zmodPowHom 8 x hx8' xC8 = x := zmodPowHom_gen (by norm_num) x hx8'
+  have hfr : t ∉ (zmodPowHom 8 x hx8').range := by
+    rintro ⟨a, ha⟩
+    apply htx
+    rw [← ha, zmodPowHom_eval]
+    exact Subgroup.pow_mem _ (Subgroup.mem_zpowers x) _
+  have hhom : (MulAut.conj t).toMonoidHom.comp (zmodPowHom 8 x hx8') =
+      (zmodPowHom 8 x hx8').comp (φ (Multiplicative.ofAdd 1)).toMonoidHom := by
+    refine c8g_hom_ext ?_
+    change MulAut.conj t (zmodPowHom 8 x hx8' xC8) =
+      zmodPowHom 8 x hx8' (φ (Multiplicative.ofAdd 1) xC8)
+    rw [hfx, hφ, MulAut.conj_apply, hconj, map_pow, hfx]
+  have hpt : ∀ n : C8g, t * zmodPowHom 8 x hx8' n * t⁻¹ =
+      zmodPowHom 8 x hx8' (φ (Multiplicative.ofAdd 1) n) := by
+    intro n
+    have h := DFunLike.congr_fun hhom n
+    simpa [MulAut.conj_apply] using h
+  exact recog_split_c2 φ (zmodPowHom 8 x hx8') hf t ht2 hfr hpt
+    (by rw [hcard, card_C8g])
+
+/-- Recognition of the split `K₈ ⋊ C₂` extensions (`G₈`, `G₉`, `G₁₀`).
+The action values are supplied as elements `px py : K8g` together with the corresponding
+conjugation relations in `G`, expressed via the canonical decomposition `xᵃwᵇ`. -/
+private lemma recog_k8_split [Finite G] (hcard : Nat.card G = 16)
+    (φ : Multiplicative (ZMod 2) →* MulAut K8g) {px py : K8g}
+    (hφx : φ (Multiplicative.ofAdd 1) xK8 = px)
+    (hφy : φ (Multiplicative.ofAdd 1) yK8 = py)
+    (x w t : G) (hx4 : orderOf x = 4) (hw2 : w ^ 2 = 1) (hcomm : Commute x w)
+    (hw_notin : w ∉ Subgroup.zpowers x)
+    (Hs : Subgroup G) (hxH : x ∈ Hs) (hwH : w ∈ Hs) (htH : t ∉ Hs)
+    (ht2 : t ^ 2 = 1)
+    (hconjx : t * x * t⁻¹ =
+      x ^ (Multiplicative.toAdd px.1).val * w ^ (Multiplicative.toAdd px.2).val)
+    (hconjy : t * w * t⁻¹ =
+      x ^ (Multiplicative.toAdd py.1).val * w ^ (Multiplicative.toAdd py.2).val) :
+    Nonempty (G ≃* SemidirectProduct K8g (Multiplicative (ZMod 2)) φ) := by
+  have hx4' : x ^ 4 = 1 := by rw [← hx4]; exact pow_orderOf_eq_one x
+  have hf : Function.Injective (k8gHom x w hx4' hw2 hcomm) :=
+    k8gHom_injective x w hx4 hcomm hw_notin hx4' hw2
+  have hfr : t ∉ (k8gHom x w hx4' hw2 hcomm).range := by
+    rintro ⟨p, hp⟩
+    apply htH
+    rw [← hp, k8gHom_eval]
+    exact Hs.mul_mem (Hs.pow_mem hxH _) (Hs.pow_mem hwH _)
+  have hhom : (MulAut.conj t).toMonoidHom.comp (k8gHom x w hx4' hw2 hcomm) =
+      (k8gHom x w hx4' hw2 hcomm).comp (φ (Multiplicative.ofAdd 1)).toMonoidHom := by
+    refine k8g_hom_ext ?_ ?_
+    · change MulAut.conj t (k8gHom x w hx4' hw2 hcomm xK8) =
+        k8gHom x w hx4' hw2 hcomm (φ (Multiplicative.ofAdd 1) xK8)
+      rw [k8gHom_x, hφx, MulAut.conj_apply, hconjx, k8gHom_eval]
+    · change MulAut.conj t (k8gHom x w hx4' hw2 hcomm yK8) =
+        k8gHom x w hx4' hw2 hcomm (φ (Multiplicative.ofAdd 1) yK8)
+      rw [k8gHom_y, hφy, MulAut.conj_apply, hconjy, k8gHom_eval]
+  have hpt : ∀ n : K8g, t * k8gHom x w hx4' hw2 hcomm n * t⁻¹ =
+      k8gHom x w hx4' hw2 hcomm (φ (Multiplicative.ofAdd 1) n) := by
+    intro n
+    have h := DFunLike.congr_fun hhom n
+    simpa [MulAut.conj_apply] using h
+  exact recog_split_c2 φ (k8gHom x w hx4' hw2 hcomm) hf t ht2 hfr hpt
+    (by rw [hcard, card_K8g])
+
+/-- Recognition of `Q₈ × C₂` (`G₁₁`), from a `(K₈, ψ₃, x²)`-extension. -/
+private lemma recog_G11 [Finite G] (hcard : Nat.card G = 16) (x w t : G)
+    (Hs : Subgroup G) (hxH : x ∈ Hs) (hwH : w ∈ Hs) (htH : t ∉ Hs)
+    (hx4 : orderOf x = 4) (hw2 : w ^ 2 = 1)
+    (hw_notin : w ∉ Subgroup.zpowers x) (hcommxw : Commute x w)
+    (hconjx : t * x * t⁻¹ = x⁻¹) (hcommtw : Commute t w) (ht2 : t ^ 2 = x ^ 2) :
+    Nonempty (G ≃* order16_wild_G11) := by
+  have hx4' : x ^ (2 * 2) = 1 := by
+    rw [show 2 * 2 = 4 from rfl, ← hx4]
+    exact pow_orderOf_eq_one x
+  set ρ := quaternionHom 2 x t hx4' ht2 hconjx with hρ
+  have hρa : ∀ i : ZMod 4, ρ (QuaternionGroup.a i) = x ^ i.val := fun _ => rfl
+  have hρxa : ∀ i : ZMod 4, ρ (QuaternionGroup.xa i) = t * x ^ i.val := fun _ => rfl
+  have hcomm' : ∀ (q : QuaternionGroup 2) (c : Multiplicative (ZMod 2)),
+      Commute (ρ q) (zmodPowHom 2 w hw2 c) := by
+    intro q c
+    have h1 : Commute (ρ q) w := by
+      rcases q with i | i
+      · rw [hρa]
+        exact hcommxw.pow_left _
+      · rw [hρxa]
+        exact Commute.mul_left hcommtw (hcommxw.pow_left _)
+    rw [zmodPowHom_eval]
+    exact h1.pow_right _
+  set Φ := ρ.noncommCoprod (zmodPowHom 2 w hw2) hcomm' with hΦ
+  have hinj : Function.Injective Φ := by
+    refine (injective_iff_map_eq_one _).mpr ?_
+    rintro ⟨q, c⟩ h
+    have hval : Φ (q, c) = ρ q * zmodPowHom 2 w hw2 c := rfl
+    rw [hval, zmodPowHom_eval] at h
+    have hq1 : q = 1 := by
+      rcases c2_two_cases c with rfl | rfl
+      · -- c = 1 : ρ q = 1
+        have h1 : ρ q = 1 := by simpa using h
+        rcases q with i | i
+        · rw [hρa] at h1
+          have hdvd : (4 : ℕ) ∣ i.val := by
+            have h0 : orderOf x ∣ i.val := orderOf_dvd_of_pow_eq_one h1
+            rwa [hx4] at h0
+          have h0 : i.val = 0 := Nat.eq_zero_of_dvd_of_lt hdvd (ZMod.val_lt i)
+          rw [QuaternionGroup.one_def]
+          congr 1
+          exact (ZMod.val_eq_zero i).mp h0
+        · exfalso
+          rw [hρxa] at h1
+          have ht_eq : t = (x ^ i.val)⁻¹ := eq_inv_of_mul_eq_one_left h1
+          exact htH (ht_eq ▸ Hs.inv_mem (Hs.pow_mem hxH _))
+      · -- c = generator : ρ q * w = 1
+        exfalso
+        have hval1 : (Multiplicative.toAdd (Multiplicative.ofAdd (1 : ZMod 2))).val = 1 := by
+          decide
+        rw [hval1, pow_one] at h
+        have hw_eq : w = (ρ q)⁻¹ := eq_inv_of_mul_eq_one_right h
+        rcases q with i | i
+        · rw [hρa] at hw_eq
+          exact hw_notin (hw_eq ▸ Subgroup.inv_mem _
+            (Subgroup.pow_mem _ (Subgroup.mem_zpowers x) _))
+        · rw [hρxa] at hw_eq
+          have ht_eq : t = w⁻¹ * (x ^ i.val)⁻¹ := by
+            rw [hw_eq]
+            group
+          exact htH (ht_eq ▸ Hs.mul_mem (Hs.inv_mem hwH) (Hs.inv_mem (Hs.pow_mem hxH _)))
+    have hc1 : c = 1 := by
+      subst hq1
+      rcases c2_two_cases c with rfl | rfl
+      · rfl
+      · exfalso
+        have hval1 : (Multiplicative.toAdd (Multiplicative.ofAdd (1 : ZMod 2))).val = 1 := by
+          decide
+        rw [map_one, one_mul, hval1, pow_one] at h
+        apply hw_notin
+        rw [h]
+        exact Subgroup.one_mem _
+    rw [hq1, hc1]
+    rfl
+  have hcards : Nat.card (QuaternionGroup 2 × Multiplicative (ZMod 2)) = Nat.card G := by
+    rw [hcard, Nat.card_prod, Nat.card_eq_fintype_card, QuaternionGroup.card]
+    simp
+  exact ⟨(mulEquivOfInjectiveCard Φ hinj hcards).symm⟩
+
+/-- Enumeration of `Multiplicative (ZMod 4)`. -/
+private lemma c4_four_cases (h : Multiplicative (ZMod 4)) :
+    h = 1 ∨ h = Multiplicative.ofAdd 1 ∨ h = Multiplicative.ofAdd 2 ∨
+      h = Multiplicative.ofAdd 3 := by
+  revert h; decide
+
+/-- The `C₄ ⋊ C₄` model compatibility data, given `A, B` with `B A B⁻¹ = A⁻¹`. -/
+private lemma c4_semidirect_compat (A B : G) (hA4 : A ^ 4 = 1) (hB4 : B ^ 4 = 1)
+    (hconjBA : B * A * B⁻¹ = A⁻¹) :
+    ∀ h : Multiplicative (ZMod 4),
+      (zmodPowHom 4 A hA4).comp
+          ((c4ActionAut 4 zmod4_unit_3 zmod4_unit_3_pow4 h).toMonoidHom) =
+        (MulAut.conj (zmodPowHom 4 B hB4 h)).toMonoidHom.comp (zmodPowHom 4 A hA4) := by
+  have hA3 : A ^ (3 : ZMod 4).val = A⁻¹ := by
+    have h3 : (3 : ZMod 4).val = 3 := by decide
+    rw [h3]
+    refine eq_inv_of_mul_eq_one_left ?_
+    rw [← pow_succ]
+    exact hA4
+  have hA1 : A ^ (1 : ZMod 4).val = A := by
+    have h1 : (1 : ZMod 4).val = 1 := by decide
+    rw [h1, pow_one]
+  have hc2 : B ^ 2 * A * (B ^ 2)⁻¹ = A := by
+    calc B ^ 2 * A * (B ^ 2)⁻¹ = B * (B * A * B⁻¹) * B⁻¹ := by rw [pow_two]; group
+      _ = B * A⁻¹ * B⁻¹ := by rw [hconjBA]
+      _ = (B * A * B⁻¹)⁻¹ := by group
+      _ = A⁻¹⁻¹ := by rw [hconjBA]
+      _ = A := inv_inv A
+  have hc3 : B ^ 3 * A * (B ^ 3)⁻¹ = A⁻¹ := by
+    calc B ^ 3 * A * (B ^ 3)⁻¹ = B * (B ^ 2 * A * (B ^ 2)⁻¹) * B⁻¹ := by
+          rw [pow_succ']
+          group
+      _ = B * A * B⁻¹ := by rw [hc2]
+      _ = A⁻¹ := hconjBA
+  have hB0 : zmodPowHom 4 B hB4 (1 : Multiplicative (ZMod 4)) = 1 := map_one _
+  have hB1 : B ^ (1 : ZMod 4).val = B := by
+    rw [show (1 : ZMod 4).val = 1 by decide, pow_one]
+  have hB2 : B ^ (2 : ZMod 4).val = B ^ 2 := by
+    rw [show (2 : ZMod 4).val = 2 by decide]
+  have hB3 : B ^ (3 : ZMod 4).val = B ^ 3 := by
+    rw [show (3 : ZMod 4).val = 3 by decide]
+  intro h
+  rcases c4_four_cases h with rfl | rfl | rfl | rfl
+  all_goals refine c4g_hom_ext ?_
+  all_goals simp only [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, MulAut.conj_apply]
+  · rw [show (c4ActionAut 4 zmod4_unit_3 zmod4_unit_3_pow4 1)
+        (Multiplicative.ofAdd (1 : ZMod 4)) = Multiplicative.ofAdd (1 : ZMod 4) by decide,
+      hB0]
+    simp
+  · rw [show (c4ActionAut 4 zmod4_unit_3 zmod4_unit_3_pow4 (Multiplicative.ofAdd 1))
+        (Multiplicative.ofAdd (1 : ZMod 4)) = Multiplicative.ofAdd (3 : ZMod 4) by decide]
+    simp only [zmodPowHom_eval, toAdd_ofAdd]
+    rw [hA3, hA1, hB1]
+    exact hconjBA.symm
+  · rw [show (c4ActionAut 4 zmod4_unit_3 zmod4_unit_3_pow4 (Multiplicative.ofAdd 2))
+        (Multiplicative.ofAdd (1 : ZMod 4)) = Multiplicative.ofAdd (1 : ZMod 4) by decide]
+    simp only [zmodPowHom_eval, toAdd_ofAdd]
+    rw [hA1, hB2]
+    exact hc2.symm
+  · rw [show (c4ActionAut 4 zmod4_unit_3 zmod4_unit_3_pow4 (Multiplicative.ofAdd 3))
+        (Multiplicative.ofAdd (1 : ZMod 4)) = Multiplicative.ofAdd (3 : ZMod 4) by decide]
+    simp only [zmodPowHom_eval, toAdd_ofAdd]
+    rw [hA3, hA1, hB3]
+    exact hc3.symm
+
+/-- Cardinality bridge for the `C₄ ⋊ C₄` model. -/
+private lemma card_G12_model : Nat.card order16_wild_G12 = 16 := card_order16_wild_G12
+
+/-- Recognition of `C₄ ⋊ C₄` (`G₁₂`) from ψ₃-shaped data: `t x t⁻¹ = x⁻¹`, `t² = w`
+where `w` is a central involution outside `⟨x⟩`. -/
+private lemma recog_G12_of_psi3 [Finite G] (hcard : Nat.card G = 16) (x w t : G)
+    (Hs : Subgroup G) (hxH : x ∈ Hs) (hwH : w ∈ Hs) (htH : t ∉ Hs)
+    (hx4 : orderOf x = 4) (hw2 : w ^ 2 = 1)
+    (hw_notin : w ∉ Subgroup.zpowers x)
+    (hconjx : t * x * t⁻¹ = x⁻¹) (ht2 : t ^ 2 = w) :
+    Nonempty (G ≃* order16_wild_G12) := by
+  have hx4' : x ^ 4 = 1 := by rw [← hx4]; exact pow_orderOf_eq_one x
+  have ht4 : t ^ 4 = 1 := by
+    rw [show (4 : ℕ) = 2 * 2 from rfl, pow_mul, ht2]
+    exact hw2
+  have hcompat := c4_semidirect_compat x t hx4' ht4 hconjx
+  set Φ := SemidirectProduct.lift (zmodPowHom 4 x hx4') (zmodPowHom 4 t ht4) hcompat with hΦ
+  have hinj : Function.Injective Φ := by
+    refine (injective_iff_map_eq_one _).mpr ?_
+    rintro ⟨n, s⟩ hns
+    have hval : Φ ⟨n, s⟩ = zmodPowHom 4 x hx4' n * zmodPowHom 4 t ht4 s := rfl
+    rw [hval, zmodPowHom_eval, zmodPowHom_eval] at hns
+    set k := (Multiplicative.toAdd s).val with hk_def
+    have hk4 : k < 4 := ZMod.val_lt _
+    have hs0 : k = 0 := by
+      interval_cases k
+      · rfl
+      · exfalso
+        rw [pow_one] at hns
+        have ht_eq : t = (x ^ (Multiplicative.toAdd n).val)⁻¹ :=
+          eq_inv_of_mul_eq_one_right hns
+        exact htH (ht_eq ▸ Hs.inv_mem (Hs.pow_mem hxH _))
+      · exfalso
+        rw [ht2] at hns
+        have hw_eq : w = (x ^ (Multiplicative.toAdd n).val)⁻¹ :=
+          eq_inv_of_mul_eq_one_right hns
+        exact hw_notin (hw_eq ▸ Subgroup.inv_mem _
+          (Subgroup.pow_mem _ (Subgroup.mem_zpowers x) _))
+      · exfalso
+        have ht3 : t ^ 3 = w * t := by
+          rw [pow_succ, ht2]
+        rw [ht3, ← mul_assoc] at hns
+        have h2 : t = (x ^ (Multiplicative.toAdd n).val * w)⁻¹ :=
+          eq_inv_of_mul_eq_one_right hns
+        have ht_eq : t = w⁻¹ * (x ^ (Multiplicative.toAdd n).val)⁻¹ := by
+          rw [h2, mul_inv_rev]
+        exact htH (ht_eq ▸ Hs.mul_mem (Hs.inv_mem hwH) (Hs.inv_mem (Hs.pow_mem hxH _)))
+    have hs1 : s = 1 := by
+      have h0 : Multiplicative.toAdd s = 0 := (ZMod.val_eq_zero _).mp (hk_def ▸ hs0)
+      rw [← ofAdd_toAdd s, h0, ofAdd_zero]
+    rw [hs0, pow_zero, mul_one] at hns
+    have hn0 : (Multiplicative.toAdd n).val = 0 := by
+      have hdvd : orderOf x ∣ (Multiplicative.toAdd n).val := orderOf_dvd_of_pow_eq_one hns
+      rw [hx4] at hdvd
+      exact Nat.eq_zero_of_dvd_of_lt hdvd (ZMod.val_lt _)
+    have hn1 : n = 1 := by
+      have h0 : Multiplicative.toAdd n = 0 := (ZMod.val_eq_zero _).mp hn0
+      rw [← ofAdd_toAdd n, h0, ofAdd_zero]
+    rw [hs1, hn1]
+    rfl
+  have hcards : Nat.card order16_wild_G12 = Nat.card G := by
+    rw [card_G12_model, hcard]
+  exact ⟨(mulEquivOfInjectiveCard Φ hinj hcards).symm⟩
+
+/-- Recognition of `C₄ ⋊ C₄` (`G₁₂`) from ψ₅-shaped data: `t x t⁻¹ = x w`,
+`t w t⁻¹ = w`, `t² = x²`. -/
+private lemma recog_G12_of_psi5 [Finite G] (hcard : Nat.card G = 16) (x w t : G)
+    (Hs : Subgroup G) (hxH : x ∈ Hs) (hwH : w ∈ Hs) (htH : t ∉ Hs)
+    (hx4 : orderOf x = 4) (hw2 : w ^ 2 = 1) (hcommxw : Commute x w)
+    (hw_notin : w ∉ Subgroup.zpowers x)
+    (hconjx : t * x * t⁻¹ = x * w) (hconjw : t * w * t⁻¹ = w) (ht2 : t ^ 2 = x ^ 2) :
+    Nonempty (G ≃* order16_wild_G12) := by
+  have hx4' : x ^ 4 = 1 := by rw [← hx4]; exact pow_orderOf_eq_one x
+  have hx2_ne : x ^ 2 ≠ 1 := by
+    intro h
+    have hdvd : orderOf x ∣ 2 := orderOf_dvd_of_pow_eq_one h
+    rw [hx4] at hdvd
+    omega
+  have hwinv : w⁻¹ = w := by
+    refine inv_eq_of_mul_eq_one_left ?_
+    rw [← pow_two]
+    exact hw2
+  -- A := x * t
+  have hA2 : (x * t) ^ 2 = w := by
+    calc (x * t) ^ 2 = x * (t * x * t⁻¹) * t ^ 2 := by rw [pow_two, pow_two]; group
+      _ = x * (x * w) * x ^ 2 := by rw [hconjx, ht2]
+      _ = x ^ 2 * (w * x ^ 2) := by rw [pow_two]; group
+      _ = x ^ 2 * (x ^ 2 * w) := by rw [(hcommxw.symm.pow_right 2).eq]
+      _ = x ^ 4 * w := by group
+      _ = w := by rw [hx4', one_mul]
+  have hA4 : (x * t) ^ 4 = 1 := by
+    rw [show (4 : ℕ) = 2 * 2 from rfl, pow_mul, hA2]
+    exact hw2
+  have hAinv : (x * t)⁻¹ = x * w * t := by
+    refine (inv_eq_of_mul_eq_one_right ?_)
+    calc (x * t) * (x * w * t) = x * (t * x * t⁻¹) * ((t * w * t⁻¹) * t ^ 2) := by group
+      _ = x * (x * w) * (w * x ^ 2) := by rw [hconjx, hconjw, ht2]
+      _ = x ^ 2 * (w * w) * x ^ 2 := by rw [pow_two]; group
+      _ = x ^ 2 * 1 * x ^ 2 := by
+          rw [show w * w = 1 by rw [← pow_two]; exact hw2]
+      _ = x ^ 4 := by group
+      _ = 1 := hx4'
+  have hcx' : t * x⁻¹ * t⁻¹ = (x * w)⁻¹ := by
+    have h2 : (t * x * t⁻¹)⁻¹ = (x * w)⁻¹ := by rw [hconjx]
+    simpa [mul_inv_rev, mul_assoc] using h2
+  have hconjBA : x * (x * t) * x⁻¹ = (x * t)⁻¹ := by
+    calc x * (x * t) * x⁻¹ = x ^ 2 * (t * x⁻¹ * t⁻¹) * t := by rw [pow_two]; group
+      _ = x ^ 2 * (w⁻¹ * x⁻¹) * t := by rw [hcx', mul_inv_rev]
+      _ = x ^ 2 * (w * x⁻¹) * t := by rw [hwinv]
+      _ = x ^ 2 * (x⁻¹ * w) * t := by rw [(hcommxw.symm.inv_right).eq]
+      _ = x * w * t := by group
+      _ = (x * t)⁻¹ := hAinv.symm
+  have hcompat := c4_semidirect_compat (x * t) x hA4 hx4' hconjBA
+  set Φ := SemidirectProduct.lift (zmodPowHom 4 (x * t) hA4) (zmodPowHom 4 x hx4')
+    hcompat with hΦ
+  have hAnotH : x * t ∉ Hs := by
+    intro h
+    exact htH (by simpa using Hs.mul_mem (Hs.inv_mem hxH) h)
+  have hinj : Function.Injective Φ := by
+    refine (injective_iff_map_eq_one _).mpr ?_
+    rintro ⟨n, s⟩ hns
+    have hval : Φ ⟨n, s⟩ = zmodPowHom 4 (x * t) hA4 n * zmodPowHom 4 x hx4' s := rfl
+    rw [hval, zmodPowHom_eval, zmodPowHom_eval] at hns
+    set k := (Multiplicative.toAdd n).val with hk_def
+    have hk4 : k < 4 := ZMod.val_lt _
+    have hn0 : k = 0 := by
+      interval_cases k
+      · rfl
+      · exfalso
+        rw [pow_one] at hns
+        have hA_eq : x * t = (x ^ (Multiplicative.toAdd s).val)⁻¹ :=
+          eq_inv_of_mul_eq_one_left hns
+        exact hAnotH (hA_eq ▸ Hs.inv_mem (Hs.pow_mem hxH _))
+      · exfalso
+        rw [hA2] at hns
+        have hw_eq : w = (x ^ (Multiplicative.toAdd s).val)⁻¹ :=
+          eq_inv_of_mul_eq_one_left hns
+        exact hw_notin (hw_eq ▸ Subgroup.inv_mem _
+          (Subgroup.pow_mem _ (Subgroup.mem_zpowers x) _))
+      · exfalso
+        have hA3 : (x * t) ^ 3 = w * (x * t) := by
+          rw [pow_succ, hA2]
+        rw [hA3, mul_assoc] at hns
+        have h3 : (x * t) * x ^ (Multiplicative.toAdd s).val = w⁻¹ :=
+          eq_inv_of_mul_eq_one_right hns
+        have hA_eq : x * t = w⁻¹ * (x ^ (Multiplicative.toAdd s).val)⁻¹ := by
+          rw [← h3]
+          group
+        exact hAnotH (hA_eq ▸ Hs.mul_mem (Hs.inv_mem hwH) (Hs.inv_mem (Hs.pow_mem hxH _)))
+    have hn1 : n = 1 := by
+      have h0 : Multiplicative.toAdd n = 0 := (ZMod.val_eq_zero _).mp (hk_def ▸ hn0)
+      rw [← ofAdd_toAdd n, h0, ofAdd_zero]
+    rw [hn0, pow_zero, one_mul] at hns
+    have hs0 : (Multiplicative.toAdd s).val = 0 := by
+      have hdvd : orderOf x ∣ (Multiplicative.toAdd s).val := orderOf_dvd_of_pow_eq_one hns
+      rw [hx4] at hdvd
+      exact Nat.eq_zero_of_dvd_of_lt hdvd (ZMod.val_lt _)
+    have hs1 : s = 1 := by
+      have h0 : Multiplicative.toAdd s = 0 := (ZMod.val_eq_zero _).mp hs0
+      rw [← ofAdd_toAdd s, h0, ofAdd_zero]
+    rw [hn1, hs1]
+    rfl
+  have hcards : Nat.card order16_wild_G12 = Nat.card G := by
+    rw [card_G12_model, hcard]
+  exact ⟨(mulEquivOfInjectiveCard Φ hinj hcards).symm⟩
+
+/-- Coset decomposition along an index-2 subgroup. -/
+private lemma decomp_index_two [Finite G] {H : Subgroup G} [H.Normal] (hidx : H.index = 2)
+    {t : G} (ht : t ∉ H) (a : G) : a ∈ H ∨ ∃ h ∈ H, a = h * t := by
+  by_cases haH : a ∈ H
+  · exact Or.inl haH
+  right
+  haveI : Finite (G ⧸ H) := Quotient.finite _
+  have hcardQ : Nat.card (G ⧸ H) = 2 := by
+    rw [← Subgroup.index_eq_card]
+    exact hidx
+  have hqa : (a : G ⧸ H) ≠ 1 := by rwa [Ne, QuotientGroup.eq_one_iff]
+  have hqt : (t : G ⧸ H) ≠ 1 := by rwa [Ne, QuotientGroup.eq_one_iff]
+  have hordq : orderOf (a : G ⧸ H) = 2 := by
+    have hdvd : orderOf (a : G ⧸ H) ∣ 2 := by
+      rw [← hcardQ]
+      exact orderOf_dvd_natCard _
+    rcases (Nat.dvd_prime Nat.prime_two).mp hdvd with h1 | h2
+    · exact absurd (orderOf_eq_one_iff.mp h1) hqa
+    · exact h2
+  have hzp : Subgroup.zpowers (a : G ⧸ H) = ⊤ := by
+    apply Subgroup.eq_top_of_card_eq
+    rw [Nat.card_zpowers, hordq, hcardQ]
+  have hmem : (t : G ⧸ H) ∈ Subgroup.zpowers (a : G ⧸ H) := by
+    rw [hzp]
+    exact Subgroup.mem_top _
+  obtain ⟨m', hm'_lt, hm'⟩ :=
+    exists_pow_eq_of_mem_zpowers (by rw [hordq]; norm_num) hmem
+  rw [hordq] at hm'_lt
+  interval_cases m'
+  · have ht_one : (t : G ⧸ H) = 1 := by
+      simpa [pow_zero] using hm'.symm
+    exact False.elim (hqt ht_one)
+  · have heq : (t : G ⧸ H) = (a : G ⧸ H) := by rw [← hm', pow_one]
+    have hmem2 : t⁻¹ * a ∈ H := (QuotientGroup.eq).mp heq
+    refine ⟨t * (t⁻¹ * a) * t⁻¹, ‹H.Normal›.conj_mem _ hmem2 t, ?_⟩
+    group
+
+end Recognition
+
+/-! ### Exhaustiveness: the `C₈`-extension branch -/
+
+section ClassifyC8
+
+variable {G : Type*} [Group G]
+
+private lemma classify_of_order8 [Finite G] (hcard : Nat.card G = 16)
+    (hnab : ¬ ∀ a b : G, a * b = b * a) (x : G) (hx8 : orderOf x = 8) :
+    ∃ i : Fin 14, Nonempty (G ≃* order16_wild_reps i) := by
+  classical
+  have hx8' : x ^ 8 = 1 := by rw [← hx8]; exact pow_orderOf_eq_one x
+  have hHcard : Nat.card (Subgroup.zpowers x) = 8 := by rw [Nat.card_zpowers, hx8]
+  have hHidx : (Subgroup.zpowers x).index = 2 := by
+    have hmul := (Subgroup.zpowers x).card_mul_index
+    rw [hHcard, hcard] at hmul
+    omega
+  haveI hHnorm : (Subgroup.zpowers x).Normal := normal_of_index_eq_two hHidx
+  obtain ⟨t, ht⟩ : ∃ t : G, t ∉ Subgroup.zpowers x := by
+    by_contra hc
+    push Not at hc
+    have htop : Subgroup.zpowers x = ⊤ := by
+      rw [Subgroup.eq_top_iff']
+      exact hc
+    rw [htop, Subgroup.card_top, hcard] at hHcard
+    omega
+  have hconj_mem : t * x * t⁻¹ ∈ Subgroup.zpowers x :=
+    hHnorm.conj_mem x (Subgroup.mem_zpowers x) t
+  obtain ⟨m, hm_lt, hm⟩ :=
+    exists_pow_eq_of_mem_zpowers (by rw [hx8]; norm_num) hconj_mem
+  rw [hx8] at hm_lt
+  -- conjugation formula on powers
+  have hconjpow : ∀ j : ℕ, t * x ^ j * t⁻¹ = x ^ (m * j) := by
+    intro j
+    calc t * x ^ j * t⁻¹ = (t * x * t⁻¹) ^ j := by rw [← conj_pow]
+      _ = (x ^ m) ^ j := by rw [← hm]
+      _ = x ^ (m * j) := by rw [← pow_mul]
+  -- the exponent m is a unit mod 8
+  have hm_ord : orderOf (x ^ m) = 8 := by
+    rw [hm]
+    have h1 : t * x * t⁻¹ = (MulAut.conj t).toMonoidHom x := by
+      simp [MulAut.conj_apply]
+    rw [h1, orderOf_injective (MulAut.conj t).toMonoidHom (MulAut.conj t).injective, hx8]
+  have hm_unit : Nat.gcd 8 m = 1 := by
+    rw [orderOf_pow x, hx8] at hm_ord
+    have hmem : Nat.gcd 8 m ∈ Nat.divisors 8 :=
+      Nat.mem_divisors.mpr ⟨Nat.gcd_dvd_left 8 m, by norm_num⟩
+    rw [show Nat.divisors 8 = {1, 2, 4, 8} by decide] at hmem
+    simp only [Finset.mem_insert, Finset.mem_singleton] at hmem
+    rcases hmem with h | h | h | h <;> rw [h] at hm_ord <;> omega
+  -- v = t² lies in ⟨x⟩
+  have ht2H : t ^ 2 ∈ Subgroup.zpowers x := by
+    haveI : Finite (G ⧸ Subgroup.zpowers x) := Quotient.finite _
+    rw [← QuotientGroup.eq_one_iff]
+    have hq2 : ((t ^ 2 : G) : G ⧸ Subgroup.zpowers x) = ((t : G ⧸ Subgroup.zpowers x)) ^ 2 := by
+      rfl
+    rw [hq2]
+    refine orderOf_dvd_iff_pow_eq_one.mp ?_
+    have hcardQ : Nat.card (G ⧸ Subgroup.zpowers x) = 2 := by
+      rw [← Subgroup.index_eq_card]
+      exact hHidx
+    rw [← hcardQ]
+    exact orderOf_dvd_natCard _
+  obtain ⟨k, hk_lt, hk⟩ :=
+    exists_pow_eq_of_mem_zpowers (by rw [hx8]; norm_num) ht2H
+  rw [hx8] at hk_lt
+  -- hk : x ^ k = t ^ 2; the fixed-point constraint on k
+  have hfix : x ^ (m * k) = x ^ k := by
+    calc x ^ (m * k) = t * x ^ k * t⁻¹ := (hconjpow k).symm
+      _ = t * t ^ 2 * t⁻¹ := by rw [hk]
+      _ = t ^ 2 := by group
+      _ = x ^ k := hk.symm
+  have hdvd_mk : ∀ c : ℕ, m * k = k + c → x ^ c = 1 := by
+    intro c hc
+    have h1 : x ^ k * x ^ c = x ^ k * 1 := by
+      rw [mul_one, ← pow_add, ← hc]
+      exact hfix
+    exact mul_left_cancel h1
+  -- case analysis on m ∈ {1, 3, 5, 7}
+  interval_cases m
+  · -- m = 0 : not a unit
+    exact absurd hm_unit (by decide)
+  · -- m = 1 : t centralizes ⟨x⟩, so G is abelian — contradiction
+    exfalso
+    apply hnab
+    have hCt : Commute x t := by
+      have h1 : t * x * t⁻¹ = x := by rw [← hm, pow_one]
+      have h2 : t * x = x * t := by
+        calc t * x = (t * x * t⁻¹) * t := by group
+          _ = x * t := by rw [h1]
+      exact h2.symm
+    have hgen : ∀ c : G, ∃ (i : ℤ) (e : ℕ), c = x ^ i * t ^ e := by
+      intro c
+      rcases decomp_index_two hHidx ht c with hc | ⟨h, hh, rfl⟩
+      · obtain ⟨i, hi⟩ := Subgroup.mem_zpowers_iff.mp hc
+        exact ⟨i, 0, by rw [pow_zero, mul_one, hi]⟩
+      · obtain ⟨i, hi⟩ := Subgroup.mem_zpowers_iff.mp hh
+        exact ⟨i, 1, by rw [pow_one, hi]⟩
+    intro a b
+    obtain ⟨i, e, rfl⟩ := hgen a
+    obtain ⟨j, f, rfl⟩ := hgen b
+    have h1 : Commute (x ^ i) (x ^ j) := (Commute.refl x).zpow_zpow i j
+    have h2 : Commute (x ^ i) (t ^ f) := (hCt.zpow_left i).pow_right f
+    have h3 : Commute (t ^ e) (x ^ j) := (hCt.symm.pow_left e).zpow_right j
+    have h4 : Commute (t ^ e) (t ^ f) := (Commute.refl t).pow_pow e f
+    exact ((h1.mul_right h2).mul_left (h3.mul_right h4)).eq
+  · exact absurd hm_unit (by decide)
+  · -- m = 3 : semidihedral SD₁₆ = G₂
+    -- constraint: x^(2k) = 1, so k ∈ {0, 4}
+    have h2k : x ^ (2 * k) = 1 := hdvd_mk (2 * k) (by ring)
+    have h8dvd : 8 ∣ 2 * k := by
+      have := orderOf_dvd_of_pow_eq_one h2k
+      rwa [hx8] at this
+    have hk04 : k = 0 ∨ k = 4 := by omega
+    have hφ : c2Action_phi2 (Multiplicative.ofAdd 1) xC8 = xC8 ^ 3 := by decide
+    rcases hk04 with rfl | rfl
+    · -- split
+      have ht2 : t ^ 2 = 1 := by rw [← hk, pow_zero]
+      exact ⟨2, recog_c8_split hcard c2Action_phi2 hφ x t hx8 ht2 ht (by rw [← hm])⟩
+    · -- replace t by x·t
+      have ht'2 : (x * t) ^ 2 = 1 := by
+        calc (x * t) ^ 2 = x * (t * x * t⁻¹) * t ^ 2 := by rw [pow_two, pow_two]; group
+          _ = x * x ^ 3 * x ^ 4 := by rw [← hm, ← hk]
+          _ = x ^ 8 := by group
+          _ = 1 := hx8'
+      have ht' : x * t ∉ Subgroup.zpowers x := by
+        intro hmem
+        apply ht
+        have h1 : t = x⁻¹ * (x * t) := by group
+        rw [h1]
+        exact Subgroup.mul_mem _ (Subgroup.inv_mem _ (Subgroup.mem_zpowers x)) hmem
+      have hconj' : (x * t) * x * (x * t)⁻¹ = x ^ 3 := by
+        calc (x * t) * x * (x * t)⁻¹ = x * (t * x * t⁻¹) * x⁻¹ := by group
+          _ = x * x ^ 3 * x⁻¹ := by rw [← hm]
+          _ = x ^ 3 := by group
+      exact ⟨2, recog_c8_split hcard c2Action_phi2 hφ x (x * t) hx8 ht'2 ht' hconj'⟩
+  · exact absurd hm_unit (by decide)
+  · -- m = 5 : modular group G₃
+    have h4k : x ^ (4 * k) = 1 := hdvd_mk (4 * k) (by ring)
+    have h8dvd : 8 ∣ 4 * k := by
+      have := orderOf_dvd_of_pow_eq_one h4k
+      rwa [hx8] at this
+    have hkeven : k % 2 = 0 := by omega
+    have hφ : c2Action_phi3 (Multiplicative.ofAdd 1) xC8 = xC8 ^ 5 := by decide
+    -- replace t by x^(k/2) * t, whose square is trivial
+    have hj : 6 * (k / 2) + k = 4 * k ∨ 6 * (k / 2) + k = 4 * k - 8 + 8 := by omega
+    have ht'2 : (x ^ (k / 2) * t) ^ 2 = 1 := by
+      have hstep : (x ^ (k / 2) * t) ^ 2 = x ^ (6 * (k / 2) + k) := by
+        calc (x ^ (k / 2) * t) ^ 2
+            = x ^ (k / 2) * (t * x ^ (k / 2) * t⁻¹) * t ^ 2 := by
+              rw [pow_two, pow_two]; group
+          _ = x ^ (k / 2) * x ^ (5 * (k / 2)) * x ^ k := by rw [hconjpow, ← hk]
+          _ = x ^ (k / 2 + 5 * (k / 2) + k) := by rw [← pow_add, ← pow_add]
+          _ = x ^ (6 * (k / 2) + k) := by ring_nf
+      rw [hstep]
+      -- 6*(k/2) + k = 4k mod 8, and 8 ∣ 4k
+      obtain ⟨c, hc⟩ := h8dvd
+      have h6k : 6 * (k / 2) + k = 8 * c := by omega
+      rw [h6k, pow_mul, hx8', one_pow]
+    have ht' : x ^ (k / 2) * t ∉ Subgroup.zpowers x := by
+      intro hmem
+      apply ht
+      have h1 : t = (x ^ (k / 2))⁻¹ * (x ^ (k / 2) * t) := by group
+      rw [h1]
+      exact Subgroup.mul_mem _ (Subgroup.inv_mem _ (Subgroup.pow_mem _
+      (Subgroup.mem_zpowers x) _)) hmem
+    have hconj' : (x ^ (k / 2) * t) * x * (x ^ (k / 2) * t)⁻¹ = x ^ 5 := by
+      calc (x ^ (k / 2) * t) * x * (x ^ (k / 2) * t)⁻¹
+          = x ^ (k / 2) * (t * x * t⁻¹) * (x ^ (k / 2))⁻¹ := by group
+        _ = x ^ (k / 2) * x ^ 5 * (x ^ (k / 2))⁻¹ := by rw [← hm]
+        _ = x ^ 5 := by
+            have hcomm : Commute (x ^ (k / 2)) (x ^ 5) := (Commute.refl x).pow_pow _ _
+            rw [hcomm.eq]
+            group
+    exact ⟨3, recog_c8_split hcard c2Action_phi3 hφ x (x ^ (k / 2) * t) hx8 ht'2 ht' hconj'⟩
+  · exact absurd hm_unit (by decide)
+  · -- m = 7 : dihedral D₁₆ = G₄ or quaternion Q₁₆ = G₅
+    have h6k : x ^ (6 * k) = 1 := hdvd_mk (6 * k) (by ring)
+    have h8dvd : 8 ∣ 6 * k := by
+      have := orderOf_dvd_of_pow_eq_one h6k
+      rwa [hx8] at this
+    have hk04 : k = 0 ∨ k = 4 := by omega
+    have hxinv : x ^ 7 = x⁻¹ := by
+      refine eq_inv_of_mul_eq_one_left ?_
+      rw [← pow_succ]
+      exact hx8'
+    rcases hk04 with rfl | rfl
+    · -- split: D₁₆
+      have ht2 : t ^ 2 = 1 := by rw [← hk, pow_zero]
+      have hφ : c2Action_phi4 (Multiplicative.ofAdd 1) xC8 = xC8 ^ 7 := by decide
+      exact ⟨4, recog_c8_split hcard c2Action_phi4 hφ x t hx8 ht2 ht (by rw [← hm])⟩
+    · -- non-split: Q₁₆
+      have ht2 : t ^ 2 = x ^ 4 := hk.symm
+      have hconj' : t * x * t⁻¹ = x⁻¹ := by rw [← hm, hxinv]
+      exact ⟨5, recog_G5 hcard x t hx8 ht2 hconj' ht⟩
+
+end ClassifyC8
+
 /-! ### Main classification theorem
 
 We state that every group of order 16 is isomorphic to one of the 14 representatives,
@@ -1004,7 +2235,12 @@ theorem order16_wild_classification {G : Type*} [Group G]
 /-- **Distinctness.** The 14 representatives are pairwise non-isomorphic. -/
 theorem order16_wild_distinct {i j : Fin 14}
     (h : Nonempty (order16_wild_reps i ≃* order16_wild_reps j)) : i = j := by
-  sorry
+  obtain ⟨e⟩ := h
+  have hinv : order16_wild_invariant i = order16_wild_invariant j := by
+    rw [← order16_wild_invariant_spec i, ← order16_wild_invariant_spec j]
+    exact wildInvariantOf_eq_of_mulEquiv e
+  have hinj : Function.Injective order16_wild_invariant := by decide
+  exact hinj hinv
 
 /-- The 14 representatives are pairwise non-isomorphic (the `IsClassif` form). -/
 theorem order16_wild_pairwise_noniso : PairwiseNonMulEquiv order16_wild_reps := by

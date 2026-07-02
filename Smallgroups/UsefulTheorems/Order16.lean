@@ -77,19 +77,16 @@ noncomputable def c4ActionAut (n : ℕ) [NeZero 4] (u : (ZMod n)ˣ) (hu : u ^ 4 
 /-! ### Specific units of ZMod -/
 
 /-- The unit `3` in `(ZMod 8)ˣ`. -/
-noncomputable def zmod8_unit_3 : (ZMod 8)ˣ :=
-  have h : IsUnit (3 : ZMod 8) := by decide
-  h.unit
+def zmod8_unit_3 : (ZMod 8)ˣ :=
+  ZMod.unitOfCoprime 3 (by norm_num)
 
 /-- The unit `5` in `(ZMod 8)ˣ`. -/
-noncomputable def zmod8_unit_5 : (ZMod 8)ˣ :=
-  have h : IsUnit (5 : ZMod 8) := by decide
-  h.unit
+def zmod8_unit_5 : (ZMod 8)ˣ :=
+  ZMod.unitOfCoprime 5 (by norm_num)
 
 /-- The unit `3` in `(ZMod 4)ˣ`. -/
-noncomputable def zmod4_unit_3 : (ZMod 4)ˣ :=
-  have h : IsUnit (3 : ZMod 4) := by decide
-  h.unit
+def zmod4_unit_3 : (ZMod 4)ˣ :=
+  ZMod.unitOfCoprime 3 (by norm_num)
 
 @[simp] theorem zmod8_unit_3_sq : zmod8_unit_3 ^ 2 = 1 := by
   unfold zmod8_unit_3; decide
