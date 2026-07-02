@@ -2961,6 +2961,70 @@ theorem order36_A4_quotient_klein_preimage_quotient [Finite G] (hG : Nat.card G 
   exact ⟨(QuotientGroup.quotientMulEquivOfEq hψker.symm).trans
     ((QuotientGroup.quotientKerEquivRange ψ).trans (MulEquiv.subgroupCongr hψrange))⟩
 
+theorem order36_A4_quotient_klein_preimage_complement_klein [Finite G]
+    (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      ∃ H : Subgroup W, (K.subgroupOf W).IsComplement' H ∧ Nat.card H = 4 ∧
+        Nonempty (H ≃* alternatingGroup.kleinFour (Fin 4)) := by
+  obtain ⟨W, hWnormal, hKW, hWcard, hWquot⟩ :=
+    order36_A4_quotient_klein_preimage_quotient (G := G) hG K hquot
+  have hKWcard : Nat.card (K.subgroupOf W) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hKW).toEquiv, hK]
+  have hKWindex : (K.subgroupOf W).index = 4 := by
+    have hmul := (K.subgroupOf W).index_mul_card
+    rw [hKWcard, hWcard] at hmul
+    omega
+  have hcop : Nat.Coprime (Nat.card (K.subgroupOf W)) (K.subgroupOf W).index := by
+    rw [hKWcard, hKWindex]
+    norm_num
+  obtain ⟨H, hHcomp⟩ :=
+    Subgroup.exists_right_complement'_of_coprime (N := K.subgroupOf W) hcop
+  have hHcard : Nat.card H = 4 := by
+    have hindex := (IsComplement'.symm hHcomp).index_eq_card
+    rw [hKWindex] at hindex
+    exact hindex.symm
+  obtain ⟨eW⟩ := hWquot
+  have hHklein : Nonempty (H ≃* alternatingGroup.kleinFour (Fin 4)) := by
+    exact ⟨(hHcomp.symm.QuotientMulEquiv).symm.trans eW⟩
+  exact ⟨W, hWnormal, hKW, hWcard, H, hHcomp, hHcard, hHklein⟩
+
+theorem order36_A4_quotient_klein_preimage_mulEquiv_C3_klein [Finite G]
+    (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) := by
+  obtain ⟨W, hWnormal, hKW, hWcard, H, hHcomp, hHcard, hHklein⟩ :=
+    order36_A4_quotient_klein_preimage_complement_klein (G := G) hG K hK hquot
+  have hKsubcard : Nat.card (K.subgroupOf W) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hKW).toEquiv, hK]
+  obtain ⟨eK⟩ : Nonempty (K.subgroupOf W ≃* order36_C3) := by
+    simpa [order36_C3, CyclicRep] using
+      (prime_classification (G := K.subgroupOf W) (p := 3) (by norm_num) hKsubcard)
+  obtain ⟨eH⟩ := hHklein
+  let action : H →* MulAut (K.subgroupOf W) :=
+    (K.subgroupOf W).normalizerMonoidHom.comp
+      (Subgroup.inclusion
+        ((K.subgroupOf W).normalizer_eq_top ▸ le_top :
+          H ≤ Subgroup.normalizer (K.subgroupOf W)))
+  have haction : action = 1 := by
+    ext h k
+    have hkK : ((k : K.subgroupOf W) : W) ∈ K.subgroupOf W := k.property
+    rw [Subgroup.mem_subgroupOf] at hkK
+    have hcomm := (Subgroup.mem_center_iff.mp (hKcenter hkK)) ((h : W) : G)
+    change (((h : W) : G) * ((k : K.subgroupOf W) : W) *
+        ((h : W) : G)⁻¹) = ((k : K.subgroupOf W) : W)
+    calc
+      ((h : W) : G) * ((k : K.subgroupOf W) : W) * ((h : W) : G)⁻¹
+          = ((k : K.subgroupOf W) : W) * ((h : W) : G) * ((h : W) : G)⁻¹ := by
+            rw [hcomm]
+      _ = ((k : K.subgroupOf W) : W) := by simp [mul_assoc]
+  exact ⟨W, hWnormal, hKW, hWcard,
+    ⟨(SemidirectProduct.mulEquivSubgroup hHcomp).symm.trans
+      ((semidirectProductCongr_eq haction).trans
+        (SemidirectProduct.mulEquivProd.trans (MulEquiv.prodCongr eK eH)))⟩⟩
+
 noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
   toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
   map_one' := by rfl
