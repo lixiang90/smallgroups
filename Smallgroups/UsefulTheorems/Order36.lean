@@ -2743,6 +2743,20 @@ theorem order36_C3A4_has_normal_order_three_and_A4_quotient :
   · exact ⟨((QuotientGroup.quotientKerEquivRange π).trans
       (MulEquiv.subgroupCongr hrange_top)).trans Subgroup.topEquiv⟩
 
+theorem order36_C3A4_no_order_nine (x : order36_C3A4) : orderOf x ≠ 9 := by
+  rw [Prod.orderOf_mk]
+  have hleft : orderOf x.1 ∣ 3 := by
+    simpa [order36_C3] using orderOf_dvd_natCard x.1
+  have hright : orderOf x.2 ∣ 6 := by
+    rcases order36_A4_pow x.2 with h2 | h3
+    · exact (orderOf_dvd_of_pow_eq_one h2).trans (by norm_num : 2 ∣ 6)
+    · exact (orderOf_dvd_of_pow_eq_one h3).trans (by norm_num : 3 ∣ 6)
+  intro h
+  have hlcm_dvd : Nat.lcm (orderOf x.1) (orderOf x.2) ∣ 6 :=
+    Nat.lcm_dvd (hleft.trans (by norm_num : 3 ∣ 6)) hright
+  rw [h] at hlcm_dvd
+  norm_num at hlcm_dvd
+
 theorem order36_A4C9_has_normal_order_three_and_A4_quotient :
     ∃ (K : Subgroup order36_A4C9) (_ : K.Normal), Nat.card K = 3 ∧
       Nonempty (order36_A4C9 ⧸ K ≃* order36_A4) := by
