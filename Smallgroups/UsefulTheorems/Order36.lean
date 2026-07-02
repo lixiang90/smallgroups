@@ -1,0 +1,250 @@
+/-
+Copyright (c) 2026 Smallgroups contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Smallgroups contributors
+-/
+import Smallgroups.UsefulTheorems.SchurZassenhaus
+import Mathlib.GroupTheory.QuotientGroup.Basic
+import Mathlib.GroupTheory.SpecificGroups.Alternating
+import Mathlib.GroupTheory.Sylow
+import Mathlib.Tactic.NormNum.Prime
+
+/-!
+# First reductions for groups of order `36`
+
+For a group `G` of order `36 = 4 * 3^2`, the number of Sylow `3`-subgroups is
+`1` or `4`.
+
+* If it is `1`, the Sylow `3`-subgroup is normal of order `9`, and Schur--Zassenhaus
+  writes `G` as a semidirect product `N ⋊ H` with `|N| = 9` and `|H| = 4`.
+* If it is `4`, the conjugation action on the four Sylow `3`-subgroups has kernel
+  of order `3` and image the alternating group `A₄` after identifying the four
+  Sylow subgroups with `Fin 4`.
+
+These are the two structural branches used in the classification of groups of order `36`.
+-/
+
+namespace Smallgroups.UsefulTheorems
+
+open Sylow Equiv.Perm Subgroup
+
+variable {G : Type*} [Group G]
+
+/-! ### Sylow `3` counting and the normal Sylow branch -/
+
+/-- In a group of order `36`, the number of Sylow `3`-subgroups is `1` or `4`. -/
+theorem card_sylow_3_eq_one_or_four_of_card_36 [Finite G] (hG : Nat.card G = 36) :
+    Nat.card (Sylow 3 G) = 1 ∨ Nat.card (Sylow 3 G) = 4 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  obtain ⟨P0⟩ := (Sylow.nonempty : Nonempty (Sylow 3 G))
+  have hdvd36 : Nat.card (Sylow 3 G) ∣ 36 := by
+    rw [← hG]
+    exact P0.card_dvd_index.trans (Subgroup.index_dvd_card _)
+  have hndvd : ¬ 3 ∣ Nat.card (Sylow 3 G) := not_dvd_card_sylow 3 G
+  have hcop : Nat.Coprime (Nat.card (Sylow 3 G)) (3 ^ 2) :=
+    ((Nat.prime_three.coprime_iff_not_dvd.mpr hndvd).symm).pow_right 2
+  have hdvd4_mul : Nat.card (Sylow 3 G) ∣ 4 * 3 ^ 2 := by
+    simpa [show 36 = 4 * 3 ^ 2 by norm_num] using hdvd36
+  have hdvd4 : Nat.card (Sylow 3 G) ∣ 4 :=
+    hcop.dvd_of_dvd_mul_right hdvd4_mul
+  have hmod := card_sylow_modEq_one 3 G
+  have hle : Nat.card (Sylow 3 G) ≤ 4 := Nat.le_of_dvd (by norm_num) hdvd4
+  have hpos : 0 < Nat.card (Sylow 3 G) := Nat.card_pos
+  interval_cases h : Nat.card (Sylow 3 G)
+  · left
+    rfl
+  · unfold Nat.ModEq at hmod
+    omega
+  · norm_num at hdvd4
+  · right
+    rfl
+
+/-- A Sylow `3`-subgroup of a group of order `36` has order `9`. -/
+theorem card_sylow_3_subgroup_of_card_36 [Finite G] (hG : Nat.card G = 36)
+    (P : Sylow 3 G) : Nat.card (↑P : Subgroup G) = 9 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hfact : (36 : ℕ).factorization 3 = 2 := by
+    rw [show 36 = 4 * 3 ^ 2 by norm_num,
+      Nat.factorization_mul (by norm_num) (by norm_num), Finsupp.add_apply,
+      Nat.factorization_eq_zero_of_not_dvd (by norm_num : ¬ (3 : ℕ) ∣ 4),
+      Nat.factorization_pow_self (by norm_num : Nat.Prime 3), zero_add]
+  rw [Sylow.card_eq_multiplicity, hG, hfact]
+  norm_num
+
+/-- If there is a unique Sylow `3`-subgroup in a group of order `36`, it is normal. -/
+theorem sylow_3_normal_of_card_36_of_card_sylow_eq_one [Finite G]
+    (hSyl : Nat.card (Sylow 3 G) = 1) (P : Sylow 3 G) :
+    (↑P : Subgroup G).Normal := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  haveI : Subsingleton (Sylow 3 G) := (Nat.card_eq_one_iff_unique.mp hSyl).1
+  exact normal_of_subsingleton P
+
+/-- **Schur--Zassenhaus reduction for the normal Sylow-`3` branch of order `36`.** -/
+theorem order36_semidirectProduct_of_card_sylow_3_eq_one [Finite G] (hG : Nat.card G = 36)
+    (hSyl : Nat.card (Sylow 3 G) = 1) :
+    ∃ (N H : Subgroup G) (φ : H →* MulAut N),
+      N.Normal ∧ Nat.card N = 9 ∧ Nat.card H = 4 ∧
+        Nonempty (G ≃* SemidirectProduct N H φ) := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  obtain ⟨P0⟩ := (Sylow.nonempty : Nonempty (Sylow 3 G))
+  haveI hnorm : (↑P0 : Subgroup G).Normal :=
+    sylow_3_normal_of_card_36_of_card_sylow_eq_one hSyl P0
+  have hcardN : Nat.card (↑P0 : Subgroup G) = 9 :=
+    card_sylow_3_subgroup_of_card_36 hG P0
+  haveI : (↑P0 : Subgroup G).FiniteIndex := ⟨Subgroup.index_ne_zero_of_finite⟩
+  have hcop : Nat.Coprime (Nat.card (↑P0 : Subgroup G)) (↑P0 : Subgroup G).index := by
+    rw [hcardN]
+    have hidx : (↑P0 : Subgroup G).index = 4 := by
+      have := (↑P0 : Subgroup G).card_mul_index
+      rw [hcardN, hG] at this
+      omega
+    rw [hidx]
+    norm_num
+  obtain ⟨H, φ, ⟨e⟩⟩ := schurZassenhaus_semidirectProduct (↑P0 : Subgroup G) hcop
+  have hcardH : Nat.card H = 4 := by
+    have h1 : Nat.card G = Nat.card (↑P0 : Subgroup G) * Nat.card H := by
+      rw [Nat.card_congr e.toEquiv, Nat.card_congr SemidirectProduct.equivProd, Nat.card_prod]
+    rw [hG, hcardN] at h1
+    have h1' : 9 * Nat.card H = 9 * 4 := by omega
+    exact Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 9) h1'
+  exact ⟨↑P0, H, φ, hnorm, hcardN, hcardH, ⟨e⟩⟩
+
+/-! ### The non-normal Sylow branch -/
+
+/-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
+theorem sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four [Finite G]
+    (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) (P : Sylow 3 G) :
+    (↑P : Subgroup G) = Subgroup.normalizer (P : Set G) := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hcardP : Nat.card (↑P : Subgroup G) = 9 :=
+    card_sylow_3_subgroup_of_card_36 hG P
+  have hidx : (Subgroup.normalizer (P : Set G)).index = 4 := by
+    rwa [← Sylow.card_eq_index_normalizer P]
+  have hcardNorm : Nat.card (Subgroup.normalizer (P : Set G)) = 9 := by
+    have := (Subgroup.normalizer (P : Set G)).card_mul_index
+    rw [hidx, hG] at this
+    omega
+  exact Subgroup.eq_of_le_of_card_ge Subgroup.le_normalizer (by rw [hcardNorm, hcardP])
+
+/-- In the non-normal Sylow-`3` branch of order `36`, the conjugation action on the four
+Sylow `3`-subgroups has kernel of order `3` and image `A₄`, after the Sylow subgroups are
+identified with `Fin 4`. -/
+theorem order36_sylow_3_conj_action_A4_of_card_sylow_3_eq_four [Finite G]
+    (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    ∃ ψ : G →* Equiv.Perm (Fin 4),
+      Nat.card ψ.ker = 3 ∧ ψ.range = alternatingGroup (Fin 4) := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  haveI : Fintype (Sylow 3 G) := Fintype.ofFinite _
+  have hfincard : Fintype.card (Sylow 3 G) = 4 := by
+    rwa [← Nat.card_eq_fintype_card]
+  let ε : Sylow 3 G ≃ Fin 4 := by rw [← hfincard]; exact Fintype.equivFin _
+  let φ := MulAction.toPermHom G (Sylow 3 G)
+  let ψ : G →* Equiv.Perm (Fin 4) :=
+    (Equiv.permCongrHom ε).toMonoidHom.comp φ
+  obtain ⟨P0⟩ := (Sylow.nonempty : Nonempty (Sylow 3 G))
+  have hP_eq_norm :
+      (↑P0 : Subgroup G) = Subgroup.normalizer (P0 : Set G) :=
+    sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four hG hSyl P0
+  have hker_le : ψ.ker ≤ ↑P0 := by
+    intro g hg
+    rw [hP_eq_norm]
+    have hgψ := MonoidHom.mem_ker.mp hg
+    have hgφ : φ g = 1 := by
+      have hgφ' : ε.permCongr (φ g) = 1 := by
+        change ψ g = 1 at hgψ
+        exact hgψ
+      have hgφ'' : ε.permCongr (φ g) = ε.permCongr 1 := by
+        have h_one : ε.permCongr 1 = (1 : Equiv.Perm (Fin 4)) := by
+          ext x
+          simp [Equiv.permCongr_apply]
+        rw [h_one]
+        exact hgφ'
+      exact ε.permCongr.injective hgφ''
+    rw [← Sylow.stabilizer_eq_normalizer]
+    rw [MulAction.mem_stabilizer_iff]
+    exact Equiv.Perm.ext_iff.mp hgφ P0
+  have hcardP : Nat.card (↑P0 : Subgroup G) = 9 :=
+    card_sylow_3_subgroup_of_card_36 hG P0
+  have hker_card_dvd : Nat.card ψ.ker ∣ Nat.card (↑P0 : Subgroup G) :=
+    Subgroup.card_dvd_of_le hker_le
+  rw [hcardP] at hker_card_dvd
+  have hker_card_ne_nine : Nat.card ψ.ker ≠ 9 := by
+    intro hker_card
+    have hker_eq : ψ.ker = ↑P0 :=
+      Subgroup.eq_of_le_of_card_ge hker_le (by rw [hcardP, hker_card])
+    haveI : (↑P0 : Subgroup G).Normal := hker_eq ▸ MonoidHom.normal_ker ψ
+    haveI := Sylow.unique_of_normal P0 (by assumption)
+    have : Nat.card (Sylow 3 G) = 1 := Nat.card_unique
+    omega
+  have hker_card_ne_one : Nat.card ψ.ker ≠ 1 := by
+    intro hker_card
+    have hker_bot : ψ.ker = ⊥ := ψ.ker.eq_bot_of_card_eq hker_card
+    have hψ_inj : Function.Injective ψ := ψ.ker_eq_bot_iff.mp hker_bot
+    have e_range : G ≃* ψ.range := MonoidHom.ofInjective hψ_inj
+    have h_range_card : Nat.card ψ.range = 36 := by
+      rw [← hG, Nat.card_congr e_range.toEquiv]
+    have h_perm_card : Nat.card (Equiv.Perm (Fin 4)) = 24 := by
+      rw [Nat.card_perm, Nat.card_fin]
+      decide
+    have h_dvd : Nat.card ψ.range ∣ Nat.card (Equiv.Perm (Fin 4)) :=
+      Subgroup.card_subgroup_dvd_card ψ.range
+    rw [h_range_card, h_perm_card] at h_dvd
+    norm_num at h_dvd
+  have hker_card : Nat.card ψ.ker = 3 := by
+    have hcases : Nat.card ψ.ker = 1 ∨ Nat.card ψ.ker = 3 ∨ Nat.card ψ.ker = 9 := by
+      have hle : Nat.card ψ.ker ≤ 9 := Nat.le_of_dvd (by norm_num) hker_card_dvd
+      have hpos : 0 < Nat.card ψ.ker := Nat.card_pos
+      interval_cases h : Nat.card ψ.ker
+      · left
+        rfl
+      · exfalso
+        norm_num [h] at hker_card_dvd
+      · right
+        left
+        rfl
+      · exfalso
+        norm_num [h] at hker_card_dvd
+      · exfalso
+        norm_num [h] at hker_card_dvd
+      · exfalso
+        norm_num [h] at hker_card_dvd
+      · exfalso
+        norm_num [h] at hker_card_dvd
+      · exfalso
+        norm_num [h] at hker_card_dvd
+      · right
+        right
+        rfl
+    rcases hcases with h | h | h
+    · exact absurd h hker_card_ne_one
+    · exact h
+    · exact absurd h hker_card_ne_nine
+  have h_range_card : Nat.card ψ.range = 12 := by
+    have hidx : ψ.ker.index = 12 := by
+      have := ψ.ker.card_mul_index
+      rw [hker_card, hG] at this
+      omega
+    rwa [← Subgroup.index_ker ψ]
+  have h_perm_card : Nat.card (Equiv.Perm (Fin 4)) = 24 := by
+    rw [Nat.card_perm, Nat.card_fin]
+    decide
+  have h_range_idx : ψ.range.index = 2 := by
+    have := ψ.range.card_mul_index
+    rw [h_range_card, h_perm_card] at this
+    omega
+  have h_alt : ψ.range = alternatingGroup (Fin 4) :=
+    Equiv.Perm.eq_alternatingGroup_of_index_eq_two h_range_idx
+  exact ⟨ψ, hker_card, h_alt⟩
+
+/-- In the non-normal Sylow-`3` branch of order `36`, there is a normal subgroup of order `3`
+whose quotient is `A₄`. -/
+theorem order36_has_normal_order_three_and_A4_quotient_of_card_sylow_3_eq_four [Finite G]
+    (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    ∃ (K : Subgroup G) (_ : K.Normal), Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* alternatingGroup (Fin 4)) := by
+  obtain ⟨ψ, hker_card, h_alt⟩ :=
+    order36_sylow_3_conj_action_A4_of_card_sylow_3_eq_four (G := G) hG hSyl
+  exact ⟨ψ.ker, MonoidHom.normal_ker ψ, hker_card,
+    ⟨(QuotientGroup.quotientKerEquivRange ψ).trans (MulEquiv.subgroupCongr h_alt)⟩⟩
+
+end Smallgroups.UsefulTheorems
