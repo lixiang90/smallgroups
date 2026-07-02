@@ -35,6 +35,7 @@ import Smallgroups.UsefulTheorems.Order16
 import Smallgroups.UsefulTheorems.Order16_Center4
 import Smallgroups.UsefulTheorems.Order24
 import Smallgroups.UsefulTheorems.Order16_Wild
+import Smallgroups.UsefulTheorems.Order36
 import Smallgroups.UsefulTheorems.Order40
 import Smallgroups.UsefulTheorems.Order54
 import Smallgroups.UsefulTheorems.Order88
