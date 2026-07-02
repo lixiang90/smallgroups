@@ -5240,6 +5240,32 @@ theorem order36_A4_quotient_klein_preimage_layers [Finite G]
       (prime_classification (G := G ⧸ W) (p := 3) (by norm_num) hquotcard)
   exact ⟨W, hWnormal, hKW, hWcard, hWiso, hWquot⟩
 
+theorem order36_quotient_zpowers_eq_top_of_not_mem_index_three
+    [Finite G] (hG : Nat.card G = 36) (W : Subgroup G) [W.Normal]
+    (hWcard : Nat.card W = 12) {g : G} (hgW : g ∉ W) :
+    Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤ := by
+  let q : G ⧸ W := (QuotientGroup.mk' W) g
+  have hWindex : W.index = 3 := by
+    have hmul := W.index_mul_card
+    rw [hWcard, hG] at hmul
+    omega
+  have hquotcard : Nat.card (G ⧸ W) = 3 := by
+    rw [← W.index_eq_card, hWindex]
+  have hq_ne : q ≠ 1 := by
+    intro hq
+    have hq' : (QuotientGroup.mk' W) g = 1 := by
+      simpa [q] using hq
+    rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq'
+    exact hgW hq'
+  have hq_dvd : orderOf q ∣ 3 := by
+    have := orderOf_dvd_natCard q
+    rwa [hquotcard] at this
+  have hq3 : q ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hq_dvd
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hqord : orderOf q = 3 := orderOf_eq_prime hq3 hq_ne
+  change Subgroup.zpowers q = ⊤
+  exact Subgroup.eq_top_of_card_eq _ (by rw [Nat.card_zpowers, hqord, hquotcard])
+
 theorem order36_A4_quotient_klein_preimage_C3_klein_pow_cases [Finite G]
     (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
     (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
@@ -5421,6 +5447,7 @@ theorem order36_A4_quotient_C3_klein_order_nine_cube_generates
       Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
         ∃ hpow_out : (∀ {g : G}, g ∉ W → g ^ 3 ∈ K),
           ∃ (g : G) (hgW : g ∉ W), orderOf g = 9 ∧
+            Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤ ∧
             Subgroup.zpowers (⟨g ^ 3, hpow_out hgW⟩ : K) = ⊤ := by
   obtain ⟨g, hg9⟩ := h9
   obtain ⟨W, hWnormal, hKW, hWcard, hWiso, _hpow_in, hpow_out⟩ :=
@@ -5432,8 +5459,10 @@ theorem order36_A4_quotient_C3_klein_order_nine_cube_generates
     have himage : orderOf (e ⟨g, hgW⟩) = 9 := by
       rw [MulEquiv.orderOf_eq, Subgroup.orderOf_mk, hg9]
     exact order36_C3_klein_no_order_nine (e ⟨g, hgW⟩) himage
-  refine ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, ?_⟩
-  exact order36_order_nine_cube_generates_card_three_subgroup K hK (hpow_out hgW) hg9
+  refine ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, ?_, ?_⟩
+  · exact order36_quotient_zpowers_eq_top_of_not_mem_index_three
+      (G := G) hG W hWcard hgW
+  · exact order36_order_nine_cube_generates_card_three_subgroup K hK (hpow_out hgW) hg9
 
 noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
   toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
@@ -5974,16 +6003,17 @@ theorem order36_has_central_C3_klein_layer_with_order_nine_cube_generates_of_car
           Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
             ∃ hpow_out : (∀ {g : G}, g ∉ W → g ^ 3 ∈ K),
               ∃ (g : G) (hgW : g ∉ W), orderOf g = 9 ∧
+                Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤ ∧
                 Subgroup.zpowers (⟨g ^ 3, hpow_out hgW⟩ : K) = ⊤ := by
   obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
     order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
       (G := G) hG hSyl
   haveI : K.Normal := hKnormal
-  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hgen⟩ :=
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hqgen, hgen⟩ :=
     order36_A4_quotient_C3_klein_order_nine_cube_generates
       (G := G) hG K hKcenter hKcard hquot h9
   exact ⟨K, hKnormal, hKcenter, hKcard, hquot,
-    W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hgen⟩
+    W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hqgen, hgen⟩
 
 theorem order36_has_klein_preimage_order_nine_of_cube_ne_one_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
