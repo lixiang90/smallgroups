@@ -5534,6 +5534,126 @@ theorem order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
       (G := G) hG K hKcenter hKcard hquot).mp hno9
   exact ⟨W, hWnormal, hWcard, hWiso, hcube⟩
 
+theorem order36_exists_order_three_complement_of_C3_klein_cube_one
+    [Finite G] (hG : Nat.card G = 36) (W : Subgroup G) [W.Normal]
+    (hWcard : Nat.card W = 12)
+    (hcube : ∀ {g : G}, g ∉ W → g ^ 3 = 1) :
+    ∃ H : Subgroup G, W.IsComplement' H ∧ Nat.card H = 3 ∧
+      Nonempty (H ≃* order36_C3) := by
+  classical
+  have hWindex : W.index = 3 := by
+    have hmul := W.index_mul_card
+    rw [hWcard, hG] at hmul
+    omega
+  have hquotcard : Nat.card (G ⧸ W) = 3 := by
+    rw [← W.index_eq_card, hWindex]
+  haveI : Nontrivial (G ⧸ W) := by
+    exact Finite.one_lt_card_iff_nontrivial.mp (by rw [hquotcard]; norm_num)
+  obtain ⟨q, hq_ne⟩ : ∃ q : G ⧸ W, q ≠ 1 := exists_ne 1
+  obtain ⟨g, hgq⟩ := QuotientGroup.mk'_surjective W q
+  have hgW : g ∉ W := by
+    intro hgW
+    have hgq_one : (QuotientGroup.mk' W) g = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hgW
+    rw [hgq] at hgq_one
+    exact hq_ne hgq_one
+  have hg3 : g ^ 3 = 1 := hcube hgW
+  have hg_ne : g ≠ 1 := by
+    intro hg
+    exact hgW (by rw [hg]; exact W.one_mem)
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hgord : orderOf g = 3 := orderOf_eq_prime hg3 hg_ne
+  let H : Subgroup G := Subgroup.zpowers g
+  have hHcard : Nat.card H = 3 := by
+    dsimp [H]
+    rw [Nat.card_zpowers, hgord]
+  let f : H →* G ⧸ W := (QuotientGroup.mk' W).restrict H
+  have hmk_ne : (QuotientGroup.mk' W) g ≠ 1 := by
+    intro hgq_one
+    rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hgq_one
+    exact hgW hgq_one
+  have hker_bot : f.ker = ⊥ := by
+    haveI : Fact (Nat.card H).Prime := ⟨by rw [hHcard]; norm_num⟩
+    rcases f.ker.eq_bot_or_eq_top_of_prime_card with hbot | htop
+    · exact hbot
+    · exfalso
+      have hgker : (⟨g, Subgroup.mem_zpowers g⟩ : H) ∈ f.ker := by
+        rw [htop]
+        exact Subgroup.mem_top _
+      have hgimage : f ⟨g, Subgroup.mem_zpowers g⟩ = 1 := MonoidHom.mem_ker.mp hgker
+      exact hmk_ne (by simpa [f, H, MonoidHom.restrict_apply] using hgimage)
+  have hf_inj : Function.Injective f := f.ker_eq_bot_iff.mp hker_bot
+  have hdisj : Disjoint W H := by
+    rw [disjoint_iff_inf_le]
+    intro x hx
+    rw [Subgroup.mem_inf] at hx
+    have hximage : f ⟨x, hx.2⟩ = 1 := by
+      change (QuotientGroup.mk' W) x = 1
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hx.1
+    have hxone : (⟨x, hx.2⟩ : H) = 1 := by
+      apply hf_inj
+      simpa using hximage
+    exact Subgroup.mem_bot.mpr (by simpa using congrArg (fun y : H => (y : G)) hxone)
+  have hcomp : W.IsComplement' H := by
+    apply Subgroup.isComplement'_of_card_mul_and_disjoint
+    · rw [hWcard, hHcard, hG]
+    · exact hdisj
+  have hHiso : Nonempty (H ≃* order36_C3) := by
+    simpa [order36_C3, CyclicRep] using
+      (prime_classification (G := H) (p := 3) (by norm_num) hHcard)
+  exact ⟨H, hcomp, hHcard, hHiso⟩
+
+theorem order36_semidirectProduct_of_C3_klein_cube_one
+    [Finite G] (hG : Nat.card G = 36) (W : Subgroup G) [W.Normal]
+    (hWcard : Nat.card W = 12)
+    (_hWiso : Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)))
+    (hcube : ∀ {g : G}, g ∉ W → g ^ 3 = 1) :
+    ∃ (H : Subgroup G) (φ : H →* MulAut W), Nat.card H = 3 ∧
+      Nonempty (H ≃* order36_C3) ∧ Nonempty (G ≃* SemidirectProduct W H φ) := by
+  obtain ⟨H, hcomp, hHcard, hHiso⟩ :=
+    order36_exists_order_three_complement_of_C3_klein_cube_one
+      (G := G) hG W hWcard hcube
+  exact ⟨H, _, hHcard, hHiso, ⟨(SemidirectProduct.mulEquivSubgroup hcomp).symm⟩⟩
+
+theorem order36_has_C3_klein_semidirectProduct_of_no_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        (∀ {g : G}, g ∉ W → g ^ 3 = 1) ∧
+          ∃ (H : Subgroup G) (φ : H →* MulAut W), Nat.card H = 3 ∧
+            Nonempty (H ≃* order36_C3) ∧
+              Nonempty (G ≃* SemidirectProduct W H φ) := by
+  obtain ⟨W, hWnormal, hWcard, hWiso, hcube⟩ :=
+    order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+      (G := G) hG hSyl hno9
+  haveI : W.Normal := hWnormal
+  obtain ⟨H, φ, hHcard, hHiso, hsplit⟩ :=
+    order36_semidirectProduct_of_C3_klein_cube_one
+      (G := G) hG W hWcard hWiso hcube
+  exact ⟨W, hWnormal, hWcard, hWiso, hcube, H, φ, hHcard, hHiso, hsplit⟩
+
+theorem order36_normal_rep_or_order_nine_or_C3_klein_semidirectProduct_cases
+    [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    (∃ g : G, orderOf g = 9) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        (∀ {g : G}, g ∉ W → g ^ 3 = 1) ∧
+          ∃ (H : Subgroup G) (φ : H →* MulAut W), Nat.card H = 3 ∧
+            Nonempty (H ≃* order36_C3) ∧
+              Nonempty (G ≃* SemidirectProduct W H φ) := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · by_cases h9 : ∃ g : G, orderOf g = 9
+    · exact Or.inr (Or.inl h9)
+    · push Not at h9
+      exact Or.inr <| Or.inr
+        (order36_has_C3_klein_semidirectProduct_of_no_order_nine_of_card_sylow_3_eq_four
+          (G := G) hG hSyl h9)
+
 theorem order36_has_order_nine_or_C3_klein_cube_one_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
     (∃ g : G, orderOf g = 9) ∨
