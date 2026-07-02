@@ -1041,6 +1041,26 @@ theorem order36_e9_v4_diag_equiv_rep11 :
       order36_normal_reps (11 : Fin 12)) :=
   ⟨order36_e9V4_diag_equiv_d3_d3⟩
 
+theorem order36_e9_c4_trivial_equiv_rep4 :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 1 ≃*
+      order36_normal_reps (4 : Fin 12)) :=
+  ⟨SemidirectProduct.mulEquivProd⟩
+
+theorem order36_e9_c4_negBoth_equiv_rep5 :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction ≃*
+      order36_normal_reps (5 : Fin 12)) :=
+  ⟨MulEquiv.refl _⟩
+
+theorem order36_e9_c4_negFirst_equiv_rep6 :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction ≃*
+      order36_normal_reps (6 : Fin 12)) :=
+  ⟨MulEquiv.refl _⟩
+
+theorem order36_e9_c4_rot_equiv_rep7 :
+    Nonempty (SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction ≃*
+      order36_normal_reps (7 : Fin 12)) :=
+  ⟨MulEquiv.refl _⟩
+
 /-! ### Sylow `3` counting and the normal Sylow branch -/
 
 /-- In a group of order `36`, the number of Sylow `3`-subgroups is `1` or `4`. -/
