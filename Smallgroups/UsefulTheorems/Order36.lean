@@ -5646,4 +5646,34 @@ theorem order36_normal_rep_or_order_nine_C3_klein_layer_or_C3_klein_cube_one_cas
         (order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
           (G := G) hG hSyl h9)
 
+theorem order36_A4C9_has_C3_klein_layer_with_order_nine_outside :
+    ∃ (W : Subgroup order36_A4C9) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (order36_A4C9 ⧸ W ≃* order36_C3) ∧
+          ∃ g : order36_A4C9, g ∉ W ∧ orderOf g = 9 := by
+  exact order36_has_C3_klein_layer_with_order_nine_outside_of_card_sylow_3_eq_four
+    (G := order36_A4C9) card_order36_A4C9 card_sylow_3_order36_A4C9
+      order36_A4C9_has_order_nine
+
+theorem order36_nonnormal_reps_strong_branch_witnesses (i : Fin 2) :
+    (∃ (W : Subgroup (order36_nonnormal_reps i)) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty ((order36_nonnormal_reps i) ⧸ W ≃* order36_C3) ∧
+          ∃ g : order36_nonnormal_reps i, g ∉ W ∧ orderOf g = 9) ∨
+    ∃ (W : Subgroup (order36_nonnormal_reps i)) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_nonnormal_reps i}, g ∉ W → g ^ 3 = 1 := by
+  fin_cases i
+  · right
+    change ∃ (W : Subgroup order36_C3A4) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_C3A4}, g ∉ W → g ^ 3 = 1
+    exact order36_C3A4_has_C3_klein_cube_one
+  · left
+    change ∃ (W : Subgroup order36_A4C9) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (order36_A4C9 ⧸ W ≃* order36_C3) ∧
+          ∃ g : order36_A4C9, g ∉ W ∧ orderOf g = 9
+    exact order36_A4C9_has_C3_klein_layer_with_order_nine_outside
+
 end Smallgroups.UsefulTheorems
