@@ -47,6 +47,10 @@ abbrev order36_C4 : Type := CyclicRep 4
 /-- The Klein four group, written as `C₂ × C₂`. -/
 abbrev order36_V4 : Type := order36_C2 × order36_C2
 
+abbrev order36_V4_g1 : order36_V4 := (Multiplicative.ofAdd (1 : ZMod 2), 1)
+
+abbrev order36_V4_g2 : order36_V4 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+
 /-- The cyclic group `C₉`. -/
 abbrev order36_C9 : Type := CyclicRep 9
 
@@ -1572,6 +1576,41 @@ noncomputable def order36_e9C4_action_basis_mulEquiv
   (semidirectProductCongrConj (N := order36_E9) (H := order36_C4) (φ := φ) θ.symm).trans
     (semidirectProductCongr_eq
       (order36_e9C4_action_conj_symm_eq_of_generator_basis φ θ τ hτ h1 h2))
+
+/-- A basis calculation for the two generators of `V₄` conjugates the whole action. -/
+theorem order36_e9V4_action_conj_symm_eq_of_generator_basis
+    (φ ψ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) =
+      θ (ψ order36_V4_g1 order36_E9_e1))
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) =
+      θ (ψ order36_V4_g1 order36_E9_e2))
+    (h21 : φ order36_V4_g2 (θ order36_E9_e1) =
+      θ (ψ order36_V4_g2 order36_E9_e1))
+    (h22 : φ order36_V4_g2 (θ order36_E9_e2) =
+      θ (ψ order36_V4_g2 order36_E9_e2)) :
+    (MulAut.conj θ.symm).toMonoidHom.comp φ = ψ := by
+  apply order36_v4_hom_ext
+  · exact order36_E9_conj_symm_eq_of_basis_action θ
+      (φ order36_V4_g1) (ψ order36_V4_g1) h11 h12
+  · exact order36_E9_conj_symm_eq_of_basis_action θ
+      (φ order36_V4_g2) (ψ order36_V4_g2) h21 h22
+
+/-- The semidirect-product form of the two-generator basis conjugation criterion for `V₄`. -/
+noncomputable def order36_e9V4_action_basis_mulEquiv
+    (φ ψ : order36_V4 →* MulAut order36_E9) (θ : MulAut order36_E9)
+    (h11 : φ order36_V4_g1 (θ order36_E9_e1) =
+      θ (ψ order36_V4_g1 order36_E9_e1))
+    (h12 : φ order36_V4_g1 (θ order36_E9_e2) =
+      θ (ψ order36_V4_g1 order36_E9_e2))
+    (h21 : φ order36_V4_g2 (θ order36_E9_e1) =
+      θ (ψ order36_V4_g2 order36_E9_e1))
+    (h22 : φ order36_V4_g2 (θ order36_E9_e2) =
+      θ (ψ order36_V4_g2 order36_E9_e2)) :
+    SemidirectProduct order36_E9 order36_V4 φ ≃*
+      SemidirectProduct order36_E9 order36_V4 ψ :=
+  (semidirectProductCongrConj (N := order36_E9) (H := order36_V4) (φ := φ) θ.symm).trans
+    (semidirectProductCongr_eq
+      (order36_e9V4_action_conj_symm_eq_of_generator_basis φ ψ θ h11 h12 h21 h22))
 
 /-- The twelve representatives arising from the normal Sylow-`3` branch of order `36`. -/
 noncomputable def order36_normal_reps : Fin 12 → Type
