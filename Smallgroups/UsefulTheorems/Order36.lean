@@ -2560,6 +2560,27 @@ theorem order36_normal_rep_cases [Finite G] (hG : Nat.card G = 36)
     · obtain ⟨e⟩ := hrep
       exact Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨eG.trans e⟩
 
+theorem order36_normal_rep_cases_exists [Finite G] (hG : Nat.card G = 36)
+    (hSyl : Nat.card (Sylow 3 G) = 1) :
+    ∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i) := by
+  rcases order36_normal_rep_cases (G := G) hG hSyl with hnormal | hrest
+  · rcases hnormal with h | h | h | h | h | h | h | h
+    · exact ⟨0, h⟩
+    · exact ⟨1, h⟩
+    · exact ⟨2, h⟩
+    · exact ⟨3, h⟩
+    · exact ⟨4, h⟩
+    · exact ⟨5, h⟩
+    · exact ⟨6, h⟩
+    · exact ⟨7, h⟩
+  · rcases hrest with h | hrest
+    · exact ⟨8, h⟩
+    · rcases hrest with h | hrest
+      · exact ⟨9, h⟩
+      · rcases hrest with h | h
+        · exact ⟨10, h⟩
+        · exact ⟨11, h⟩
+
 /-! ### The non-normal Sylow branch -/
 
 /-- The alternating group `A₄`, realised as permutations of `Fin 4`. -/
@@ -2861,6 +2882,17 @@ theorem order36_nonnormal_reps_pairwise :
   · exact absurd ⟨hiso.some.symm⟩ order36_C3A4_not_mulEquiv_A4C9
   · rfl
 
+theorem order36_nonnormal_reps_has_normal_order_three_and_A4_quotient (i : Fin 2) :
+    ∃ (K : Subgroup (order36_nonnormal_reps i)) (_ : K.Normal), Nat.card K = 3 ∧
+      Nonempty ((order36_nonnormal_reps i) ⧸ K ≃* order36_A4) := by
+  fin_cases i
+  · change ∃ (K : Subgroup order36_C3A4) (_ : K.Normal), Nat.card K = 3 ∧
+        Nonempty (order36_C3A4 ⧸ K ≃* order36_A4)
+    exact order36_C3A4_has_normal_order_three_and_A4_quotient
+  · change ∃ (K : Subgroup order36_A4C9) (_ : K.Normal), Nat.card K = 3 ∧
+        Nonempty (order36_A4C9 ⧸ K ≃* order36_A4)
+    exact order36_A4C9_has_normal_order_three_and_A4_quotient
+
 /-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
 theorem sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four [Finite G]
     (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) (P : Sylow 3 G) :
@@ -2996,5 +3028,15 @@ theorem order36_has_normal_order_three_and_A4_quotient_of_card_sylow_3_eq_four [
     order36_sylow_3_conj_action_A4_of_card_sylow_3_eq_four (G := G) hG hSyl
   exact ⟨ψ.ker, MonoidHom.normal_ker ψ, hker_card,
     ⟨(QuotientGroup.quotientKerEquivRange ψ).trans (MulEquiv.subgroupCongr h_alt)⟩⟩
+
+theorem order36_normal_rep_or_A4_quotient_cases [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (K : Subgroup G) (_ : K.Normal), Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr
+      (order36_has_normal_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+        (G := G) hG hSyl)
 
 end Smallgroups.UsefulTheorems
