@@ -6601,6 +6601,35 @@ theorem order36_normal_rep_or_order_nine_C3_klein_layer_or_C3_klein_cube_one_cas
         (order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
           (G := G) hG hSyl h9)
 
+theorem order36_normal_rep_or_order_nine_strong_layer_or_C3_klein_cube_one_cases
+    [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    (∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) ∧
+        ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+          Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+            ∃ hpow_out : (∀ {g : G}, g ∉ W → g ^ 3 ∈ K),
+              ∃ (g : G) (hgW : g ∉ W), orderOf g = 9 ∧
+                Nonempty (Subgroup.zpowers g ≃* order36_C9) ∧
+                K ≤ Subgroup.zpowers g ∧
+                K = Subgroup.zpowers g ⊓ W ∧
+                W ⊔ Subgroup.zpowers g = ⊤ ∧
+                Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤ ∧
+                Subgroup.zpowers (⟨g ^ 3, hpow_out hgW⟩ : K) = ⊤) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · by_cases h9 : ∃ g : G, orderOf g = 9
+    · exact Or.inr <| Or.inl
+        (order36_has_central_C3_klein_layer_with_order_nine_cube_generates_of_card_sylow_3_eq_four
+          (G := G) hG hSyl h9)
+    · push Not at h9
+      exact Or.inr <| Or.inr
+        (order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+          (G := G) hG hSyl h9)
+
 theorem order36_A4C9_has_C3_klein_layer_with_order_nine_outside :
     ∃ (W : Subgroup order36_A4C9) (_ : W.Normal), Nat.card W = 12 ∧
       Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
