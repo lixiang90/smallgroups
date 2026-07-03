@@ -7405,9 +7405,10 @@ theorem order36_normal_rep_or_A4C9_or_C3A4_cases
         (order36_mulEquiv_C3A4_of_no_order_nine_of_card_sylow_3_eq_four
           (G := G) hG hSyl h9)
 
-theorem order36_complete [Finite G] (hG : Nat.card G = 36) :
+theorem order36_complete (G : Type*) [Group G] (hG : Nat.card G = 36) :
     ∃ i : Fin 12 ⊕ Fin 2,
       Nonempty (G ≃* Sum.elim order36_normal_reps order36_nonnormal_reps i) := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hG]; norm_num)
   rcases order36_normal_rep_or_A4C9_or_C3A4_cases (G := G) hG with hnormal | hnon
   · obtain ⟨i, hi⟩ := hnormal
     exact ⟨Sum.inl i, hi⟩
