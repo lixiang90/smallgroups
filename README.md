@@ -38,6 +38,7 @@ theorems:
 | `8·11` | 88 | 12 | `ℤ/11 ⋊ H` (`H` of order 8) — 12 actions | `Order88` |
 | `4·5²` | 100 | 16 | `P ⋊ H` with &#124;P&#124; = 25, &#124;H&#124; = 4 — 16 actions | `Order100` |
 | `2⁴` (Wild) | 16 | 14 | 5 abelian types + 9 `C₈`/`K₈`-extension types | `Order16_Wild` |
+| `3·8` | 24 | 15 | twelve `C₃ ⋊ H` cases, two normal Sylow-`2` cases, and `S₄` | `Order24` |
 | `12·7` | 84 | 15 | `C₇ ⋊ H` with &#124;H&#124; = 12 — 15 actions over the 5 order-12 types | `Order84` |
 | `2·3²·5` | 90 | 10 | `N ⋊ C₂` with &#124;N&#124; = 45 — 10 involutions over the 2 order-45 types | `Order90` |
 
@@ -239,6 +240,13 @@ theorems:
     extension cocycle `t²`). `order16_wild_classification` (exhaustiveness), `order16_wild_distinct`
     (via the invariant tuple `(|Z(G)|, #{x²=1}, #{x⁴=1}, #squares)`, checked by `decide`), and
     `order16_wild_isClassif`. Instantiated at **16** in `Classifications_11_to_20/Order16`.
+
+  * `Order24.lean` — the **complete classification** of groups of order `24 = 3 · 8` into
+    **fifteen** classes. Sylow counting splits the proof into the normal Sylow-`3` branch
+    (`C₃ ⋊ H`, with `|H| = 8`), the normal Sylow-`2` branch, and the faithful action on the four
+    Sylow-`3` subgroups, which gives `S₄`. The representatives `order24_reps` are separated by the
+    invariant tuple `(|Z(G)|, #{x²=1}, #{x³=1})`, giving `order24_reps_pairwise` and
+    `order24_isClassif`. Instantiated at **24** in `Classifications_21_to_30/Order24`.
 
   * `Order54.lean` — the **complete classification** of groups of order `54 = 2 · 3³` into
     **fifteen** classes. The Sylow-`3` subgroup (order `27`) is unique and normal, so
