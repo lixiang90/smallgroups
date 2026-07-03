@@ -5502,6 +5502,80 @@ theorem order36_A4_quotient_klein_preimage_C3_klein_pow_cases [Finite G]
       K W hKW hKcenter hK hWcard hWquot
   exact ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hpow_out⟩
 
+theorem order36_A4_quotient_C3_klein_normal_klein_complement [Finite G]
+    (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        (∀ {g : G}, g ∈ W → g ^ 2 ∈ K) ∧
+          (∀ {g : G}, g ∉ W → g ^ 3 ∈ K) ∧
+            ∃ L : Subgroup W, (K.subgroupOf W).IsComplement' L ∧ Nat.card L = 4 ∧
+              Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) ∧
+                (L.map W.subtype : Subgroup G).Normal := by
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hpow_out⟩ :=
+    order36_A4_quotient_klein_preimage_C3_klein_pow_cases
+      (G := G) hG K hKcenter hK hquot
+  haveI : W.Normal := hWnormal
+  obtain ⟨L, hLcomp, hLcard, hLiso⟩ :=
+    order36_exists_klein_complement_of_C3_layer K W hKW hK hWcard hpow_in
+  have hLnormal : (L.map W.subtype : Subgroup G).Normal :=
+    order36_klein_complement_map_normal K W hKcenter hKW hK hLcomp hpow_in
+  exact ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hpow_out,
+    L, hLcomp, hLcard, hLiso, hLnormal⟩
+
+theorem order36_quotient_klein_complement_mulEquiv_C9_of_order_nine
+    [Finite G] (hG : Nat.card G = 36)
+    (K W : Subgroup G) [K.Normal] (_hKW : K ≤ W)
+    (_hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L) (hLcard : Nat.card L = 4)
+    {g : G} (hg3K : g ^ 3 ∈ K) (hg9 : orderOf g = 9)
+    [(L.map W.subtype : Subgroup G).Normal] :
+    Nonempty (G ⧸ (L.map W.subtype : Subgroup G) ≃* order36_C9) := by
+  let A : Subgroup G := L.map W.subtype
+  have hAcard : Nat.card A = 4 := by
+    dsimp [A]
+    exact order36_klein_complement_map_card W hLcard
+  have hquotcard : Nat.card (G ⧸ A) = 9 := by
+    have h := Subgroup.card_eq_card_quotient_mul_card_subgroup A
+    change Nat.card G = Nat.card (G ⧸ A) * Nat.card A at h
+    rw [hG, hAcard] at h
+    omega
+  let q : G ⧸ A := (QuotientGroup.mk' A) g
+  have hKA : Disjoint K A := by
+    dsimp [A]
+    exact order36_C3_layer_disjoint_klein_complement_map K W hLcomp
+  have hq3ne : q ^ 3 ≠ 1 := by
+    intro hq3
+    have hg3A : g ^ 3 ∈ A := by
+      change ((QuotientGroup.mk' A) g) ^ 3 = 1 at hq3
+      rw [← map_pow, QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq3
+      exact hq3
+    have hg3bot : g ^ 3 ∈ (⊥ : Subgroup G) :=
+      (disjoint_iff_inf_le.mp hKA) ⟨hg3K, hg3A⟩
+    exact order36_cube_ne_one_of_orderOf_eq_nine hg9 (Subgroup.mem_bot.mp hg3bot)
+  have hq9pow : q ^ 9 = 1 := by
+    have hg9pow : g ^ 9 = 1 := orderOf_dvd_iff_pow_eq_one.mp (by rw [hg9])
+    change ((QuotientGroup.mk' A) g) ^ 9 = 1
+    rw [← map_pow, hg9pow]
+    simp
+  have hq_dvd : orderOf q ∣ 9 := orderOf_dvd_of_pow_eq_one hq9pow
+  have hq_le : orderOf q ≤ 9 := Nat.le_of_dvd (by norm_num) hq_dvd
+  have hq_pos : 0 < orderOf q := by
+    exact Nat.pos_of_ne_zero (fun hzero => by rw [hzero] at hq_dvd; norm_num at hq_dvd)
+  have hq_cases : orderOf q = 1 ∨ orderOf q = 3 ∨ orderOf q = 9 := by
+    interval_cases h : orderOf q <;> try norm_num [h] at hq_dvd <;> simp
+  have hq9 : orderOf q = 9 := by
+    rcases hq_cases with h1 | h3 | h9
+    · have hq1 : q = 1 := orderOf_eq_one_iff.mp h1
+      exact False.elim (hq3ne (by rw [hq1]; simp))
+    · have hq3 : q ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp (by rw [h3])
+      exact False.elim (hq3ne hq3)
+    · exact h9
+  haveI : IsCyclic (G ⧸ A) := isCyclic_of_orderOf_eq_card q (by rw [hq9, hquotcard])
+  simpa [order36_C9] using
+    (cyclicRep_classification (G := G ⧸ A) (by norm_num : (9 : ℕ) ≠ 0) hquotcard)
+
 theorem order36_C3_klein_no_order_nine
     (x : order36_C3 × alternatingGroup.kleinFour (Fin 4)) :
     orderOf x ≠ 9 := by
@@ -5519,6 +5593,39 @@ theorem order36_C3_klein_no_order_nine
       (hright.trans (by norm_num : 4 ∣ 12))
   rw [hx] at hlcm_dvd
   norm_num at hlcm_dvd
+
+theorem order36_A4_quotient_normal_klein_complement_C9_quotient_of_order_nine
+    [Finite G] (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∃ L : Subgroup W, (K.subgroupOf W).IsComplement' L ∧ Nat.card L = 4 ∧
+          Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) ∧
+            ∃ _ : (L.map W.subtype : Subgroup G).Normal,
+              Nonempty (G ⧸ (L.map W.subtype : Subgroup G) ≃* order36_C9) := by
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hpow_out⟩ :=
+    order36_A4_quotient_klein_preimage_C3_klein_pow_cases
+      (G := G) hG K hKcenter hK hquot
+  haveI : W.Normal := hWnormal
+  obtain ⟨g, hg9⟩ := h9
+  have hgW : g ∉ W := by
+    intro hgW
+    obtain ⟨e⟩ := hWiso
+    have himage : orderOf (e ⟨g, hgW⟩) = 9 := by
+      rw [MulEquiv.orderOf_eq, Subgroup.orderOf_mk, hg9]
+    exact order36_C3_klein_no_order_nine (e ⟨g, hgW⟩) himage
+  obtain ⟨L, hLcomp, hLcard, hLiso⟩ :=
+    order36_exists_klein_complement_of_C3_layer K W hKW hK hWcard hpow_in
+  have hLnormal : (L.map W.subtype : Subgroup G).Normal :=
+    order36_klein_complement_map_normal K W hKcenter hKW hK hLcomp hpow_in
+  haveI : (L.map W.subtype : Subgroup G).Normal := hLnormal
+  have hquotC9 : Nonempty (G ⧸ (L.map W.subtype : Subgroup G) ≃* order36_C9) :=
+    order36_quotient_klein_complement_mulEquiv_C9_of_order_nine
+      (G := G) hG K W hKW hK hLcomp hLcard (hpow_out hgW) hg9
+  exact ⟨W, hWnormal, hKW, hWcard, hWiso,
+    L, hLcomp, hLcard, hLiso, hLnormal, hquotC9⟩
 
 theorem order36_no_order_nine_of_C3_klein_layer_cube_one {G : Type*} [Group G]
     (W : Subgroup G)
@@ -6150,6 +6257,28 @@ theorem order36_has_central_C3_klein_layer_with_order_nine_cube_generates_of_car
   exact ⟨K, hKnormal, hKcenter, hKcard, hquot,
     W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9,
       hC9, hKle, hKinf, hsup, hqgen, hgen⟩
+
+theorem order36_has_normal_klein_complement_C9_quotient_of_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) ∧
+        ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+          Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+            ∃ L : Subgroup W, (K.subgroupOf W).IsComplement' L ∧ Nat.card L = 4 ∧
+              Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) ∧
+                ∃ _ : (L.map W.subtype : Subgroup G).Normal,
+                  Nonempty (G ⧸ (L.map W.subtype : Subgroup G) ≃* order36_C9) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, L, hLcomp, hLcard, hLiso,
+    hLnormal, hquotC9⟩ :=
+    order36_A4_quotient_normal_klein_complement_C9_quotient_of_order_nine
+      (G := G) hG K hKcenter hKcard hquot h9
+  exact ⟨K, hKnormal, hKcenter, hKcard, hquot, W, hWnormal, hKW, hWcard, hWiso,
+    L, hLcomp, hLcard, hLiso, hLnormal, hquotC9⟩
 
 theorem order36_has_klein_preimage_order_nine_of_cube_ne_one_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
