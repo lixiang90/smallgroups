@@ -11,6 +11,7 @@ import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.PrimeSqClassification
 import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Mathlib.GroupTheory.QuotientGroup.Basic
+import Mathlib.GroupTheory.Goursat
 import Mathlib.GroupTheory.SpecificGroups.Alternating
 import Mathlib.GroupTheory.SpecificGroups.Alternating.KleinFour
 import Mathlib.GroupTheory.SpecificGroups.Dihedral
@@ -5642,6 +5643,118 @@ theorem order36_A4_C9_product_range_proj_surjective
     change eC9 ((QuotientGroup.mk' A) g) = z
     rw [hg]
     exact eC9.apply_symm_apply z
+
+theorem order36_A4_C9_product_range_goursat
+    (K A : Subgroup G) [K.Normal] [A.Normal]
+    (eA4 : G ⧸ K ≃* order36_A4) (eC9 : G ⧸ A ≃* order36_C9) :
+    let φ : G →* order36_A4 × order36_C9 :=
+      (eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+        (eC9.toMonoidHom.comp (QuotientGroup.mk' A))
+    let I : Subgroup (order36_A4 × order36_C9) := φ.range
+    have hfst : Function.Surjective (Prod.fst ∘ I.subtype) :=
+      (order36_A4_C9_product_range_proj_surjective K A eA4 eC9).1
+    have hsnd : Function.Surjective (Prod.snd ∘ I.subtype) :=
+      (order36_A4_C9_product_range_proj_surjective K A eA4 eC9).2
+    have _ : I.goursatFst.Normal := Subgroup.normal_goursatFst hfst
+    have _ : I.goursatSnd.Normal := Subgroup.normal_goursatSnd hsnd
+    ∃ e : order36_A4 ⧸ I.goursatFst ≃* order36_C9 ⧸ I.goursatSnd,
+      (((QuotientGroup.mk' I.goursatFst).prodMap
+        (QuotientGroup.mk' I.goursatSnd)).comp I.subtype).range =
+          e.toMonoidHom.graph := by
+  intro φ I hfst hsnd _ _
+  exact Subgroup.goursat_surjective hfst hsnd
+
+theorem order36_A4_C9_product_range_goursatFst_eq_of_exact
+    (K A : Subgroup G) [K.Normal] [A.Normal]
+    (eA4 : G ⧸ K ≃* order36_A4) (eC9 : G ⧸ A ≃* order36_C9)
+    (V : Subgroup order36_A4)
+    (hA_le : ∀ {g : G}, g ∈ A → eA4 ((QuotientGroup.mk' K) g) ∈ V)
+    (hV_lift : ∀ {a : order36_A4}, a ∈ V →
+      ∃ g : G, g ∈ A ∧ eA4 ((QuotientGroup.mk' K) g) = a) :
+    let φ : G →* order36_A4 × order36_C9 :=
+      (eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+        (eC9.toMonoidHom.comp (QuotientGroup.mk' A))
+    φ.range.goursatFst = V := by
+  intro φ
+  ext a
+  constructor
+  · intro ha
+    rw [Subgroup.mem_goursatFst] at ha
+    rw [MonoidHom.mem_range] at ha
+    obtain ⟨g, hg⟩ := ha
+    have hgA : g ∈ A := by
+      have hsnd : eC9 ((QuotientGroup.mk' A) g) = 1 := by
+        have h := congrArg Prod.snd hg
+        simpa [φ] using h
+      have hq : (QuotientGroup.mk' A) g = 1 := by
+        apply eC9.injective
+        simpa using hsnd
+      rwa [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq
+    have hfst : eA4 ((QuotientGroup.mk' K) g) = a := by
+      have h := congrArg Prod.fst hg
+      simpa [φ] using h
+    rw [← hfst]
+    exact hA_le hgA
+  · intro ha
+    rw [Subgroup.mem_goursatFst]
+    rw [MonoidHom.mem_range]
+    obtain ⟨g, hgA, hga⟩ := hV_lift ha
+    refine ⟨g, ?_⟩
+    apply Prod.ext
+    · change eA4 ((QuotientGroup.mk' K) g) = a
+      exact hga
+    · have hq : (QuotientGroup.mk' A) g = 1 := by
+        rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+        exact hgA
+      change eC9 ((QuotientGroup.mk' A) g) = 1
+      rw [hq]
+      simp
+
+theorem order36_A4_C9_product_range_goursatSnd_eq_of_exact
+    (K A : Subgroup G) [K.Normal] [A.Normal]
+    (eA4 : G ⧸ K ≃* order36_A4) (eC9 : G ⧸ A ≃* order36_C9)
+    (U : Subgroup order36_C9)
+    (hK_le : ∀ {g : G}, g ∈ K → eC9 ((QuotientGroup.mk' A) g) ∈ U)
+    (hU_lift : ∀ {z : order36_C9}, z ∈ U →
+      ∃ g : G, g ∈ K ∧ eC9 ((QuotientGroup.mk' A) g) = z) :
+    let φ : G →* order36_A4 × order36_C9 :=
+      (eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+        (eC9.toMonoidHom.comp (QuotientGroup.mk' A))
+    φ.range.goursatSnd = U := by
+  intro φ
+  ext z
+  constructor
+  · intro hz
+    rw [Subgroup.mem_goursatSnd] at hz
+    rw [MonoidHom.mem_range] at hz
+    obtain ⟨g, hg⟩ := hz
+    have hgK : g ∈ K := by
+      have hfst : eA4 ((QuotientGroup.mk' K) g) = 1 := by
+        have h := congrArg Prod.fst hg
+        simpa [φ] using h
+      have hq : (QuotientGroup.mk' K) g = 1 := by
+        apply eA4.injective
+        simpa using hfst
+      rwa [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq
+    have hsnd : eC9 ((QuotientGroup.mk' A) g) = z := by
+      have h := congrArg Prod.snd hg
+      simpa [φ] using h
+    rw [← hsnd]
+    exact hK_le hgK
+  · intro hz
+    rw [Subgroup.mem_goursatSnd]
+    rw [MonoidHom.mem_range]
+    obtain ⟨g, hgK, hgz⟩ := hU_lift hz
+    refine ⟨g, ?_⟩
+    apply Prod.ext
+    · have hq : (QuotientGroup.mk' K) g = 1 := by
+        rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+        exact hgK
+      change eA4 ((QuotientGroup.mk' K) g) = 1
+      rw [hq]
+      simp
+    · change eC9 ((QuotientGroup.mk' A) g) = z
+      exact hgz
 
 theorem order36_C3_klein_no_order_nine
     (x : order36_C3 × alternatingGroup.kleinFour (Fin 4)) :
