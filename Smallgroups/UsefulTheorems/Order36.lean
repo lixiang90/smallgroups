@@ -5576,6 +5576,73 @@ theorem order36_quotient_klein_complement_mulEquiv_C9_of_order_nine
   simpa [order36_C9] using
     (cyclicRep_classification (G := G ⧸ A) (by norm_num : (9 : ℕ) ≠ 0) hquotcard)
 
+theorem order36_A4_C9_product_map_injective
+    (K A : Subgroup G) [K.Normal] [A.Normal] (hKA : Disjoint K A)
+    (eA4 : G ⧸ K ≃* order36_A4) (eC9 : G ⧸ A ≃* order36_C9) :
+    Function.Injective
+      ((eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+        (eC9.toMonoidHom.comp (QuotientGroup.mk' A))) := by
+  let φ : G →* order36_A4 × order36_C9 :=
+    (eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+      (eC9.toMonoidHom.comp (QuotientGroup.mk' A))
+  refine (injective_iff_map_eq_one φ).mpr ?_
+  intro x hx
+  have hxK : x ∈ K := by
+    have hfst : eA4 ((QuotientGroup.mk' K) x) = 1 := by
+      have h := congrArg Prod.fst hx
+      simpa [φ] using h
+    have hq : (QuotientGroup.mk' K) x = 1 := by
+      apply eA4.injective
+      simpa using hfst
+    rwa [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq
+  have hxA : x ∈ A := by
+    have hsnd : eC9 ((QuotientGroup.mk' A) x) = 1 := by
+      have h := congrArg Prod.snd hx
+      simpa [φ] using h
+    have hq : (QuotientGroup.mk' A) x = 1 := by
+      apply eC9.injective
+      simpa using hsnd
+    rwa [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq
+  have hxbot : x ∈ (⊥ : Subgroup G) :=
+    (disjoint_iff_inf_le.mp hKA) ⟨hxK, hxA⟩
+  exact Subgroup.mem_bot.mp hxbot
+
+theorem order36_A4_C9_product_range_mulEquiv
+    (K A : Subgroup G) [K.Normal] [A.Normal] (hKA : Disjoint K A)
+    (eA4 : G ⧸ K ≃* order36_A4) (eC9 : G ⧸ A ≃* order36_C9) :
+    Nonempty (G ≃*
+      ((eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+        (eC9.toMonoidHom.comp (QuotientGroup.mk' A))).range) := by
+  exact ⟨MonoidHom.ofInjective
+    (order36_A4_C9_product_map_injective K A hKA eA4 eC9)⟩
+
+theorem order36_A4_C9_product_range_proj_surjective
+    (K A : Subgroup G) [K.Normal] [A.Normal]
+    (eA4 : G ⧸ K ≃* order36_A4) (eC9 : G ⧸ A ≃* order36_C9) :
+    let φ : G →* order36_A4 × order36_C9 :=
+      (eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+        (eC9.toMonoidHom.comp (QuotientGroup.mk' A))
+    Function.Surjective (Prod.fst ∘ φ.range.subtype) ∧
+      Function.Surjective (Prod.snd ∘ φ.range.subtype) := by
+  intro φ
+  constructor
+  · intro a
+    let q : G ⧸ K := eA4.symm a
+    obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective K q
+    refine ⟨⟨φ g, ⟨g, rfl⟩⟩, ?_⟩
+    change (φ g).1 = a
+    change eA4 ((QuotientGroup.mk' K) g) = a
+    rw [hg]
+    exact eA4.apply_symm_apply a
+  · intro z
+    let q : G ⧸ A := eC9.symm z
+    obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective A q
+    refine ⟨⟨φ g, ⟨g, rfl⟩⟩, ?_⟩
+    change (φ g).2 = z
+    change eC9 ((QuotientGroup.mk' A) g) = z
+    rw [hg]
+    exact eC9.apply_symm_apply z
+
 theorem order36_C3_klein_no_order_nine
     (x : order36_C3 × alternatingGroup.kleinFour (Fin 4)) :
     orderOf x ≠ 9 := by
@@ -5626,6 +5693,41 @@ theorem order36_A4_quotient_normal_klein_complement_C9_quotient_of_order_nine
       (G := G) hG K W hKW hK hLcomp hLcard (hpow_out hgW) hg9
   exact ⟨W, hWnormal, hKW, hWcard, hWiso,
     L, hLcomp, hLcard, hLiso, hLnormal, hquotC9⟩
+
+theorem order36_A4_quotient_A4_C9_product_range_mulEquiv_of_order_nine
+    [Finite G] (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∃ L : Subgroup W, (K.subgroupOf W).IsComplement' L ∧ Nat.card L = 4 ∧
+          Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) ∧
+            ∃ _ : (L.map W.subtype : Subgroup G).Normal,
+              ∃ (eA4 : G ⧸ K ≃* order36_A4)
+                (eC9 : G ⧸ (L.map W.subtype : Subgroup G) ≃* order36_C9),
+                Nonempty (G ≃*
+                  ((eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+                    (eC9.toMonoidHom.comp
+                      (QuotientGroup.mk' (L.map W.subtype : Subgroup G)))).range) := by
+  have hquotNonempty := hquot
+  obtain ⟨eA4⟩ := hquot
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, L, hLcomp, hLcard, hLiso,
+    hLnormal, hquotC9⟩ :=
+    order36_A4_quotient_normal_klein_complement_C9_quotient_of_order_nine
+      (G := G) hG K hKcenter hK hquotNonempty h9
+  haveI : W.Normal := hWnormal
+  haveI : (L.map W.subtype : Subgroup G).Normal := hLnormal
+  obtain ⟨eC9⟩ := hquotC9
+  have hKA : Disjoint K (L.map W.subtype : Subgroup G) :=
+    order36_C3_layer_disjoint_klein_complement_map K W hLcomp
+  have hrange : Nonempty (G ≃*
+      ((eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+        (eC9.toMonoidHom.comp
+          (QuotientGroup.mk' (L.map W.subtype : Subgroup G)))).range) :=
+    order36_A4_C9_product_range_mulEquiv K (L.map W.subtype : Subgroup G) hKA eA4 eC9
+  exact ⟨W, hWnormal, hKW, hWcard, hWiso,
+    L, hLcomp, hLcard, hLiso, hLnormal, eA4, eC9, hrange⟩
 
 theorem order36_no_order_nine_of_C3_klein_layer_cube_one {G : Type*} [Group G]
     (W : Subgroup G)
@@ -6279,6 +6381,33 @@ theorem order36_has_normal_klein_complement_C9_quotient_of_order_nine_of_card_sy
       (G := G) hG K hKcenter hKcard hquot h9
   exact ⟨K, hKnormal, hKcenter, hKcard, hquot, W, hWnormal, hKW, hWcard, hWiso,
     L, hLcomp, hLcard, hLiso, hLnormal, hquotC9⟩
+
+theorem order36_has_A4_C9_product_range_of_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) ∧
+        ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+          Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+            ∃ L : Subgroup W, (K.subgroupOf W).IsComplement' L ∧ Nat.card L = 4 ∧
+              Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) ∧
+                ∃ _ : (L.map W.subtype : Subgroup G).Normal,
+                  ∃ (eA4 : G ⧸ K ≃* order36_A4)
+                    (eC9 : G ⧸ (L.map W.subtype : Subgroup G) ≃* order36_C9),
+                    Nonempty (G ≃*
+                      ((eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+                        (eC9.toMonoidHom.comp
+                          (QuotientGroup.mk' (L.map W.subtype : Subgroup G)))).range) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, L, hLcomp, hLcard, hLiso,
+    hLnormal, eA4, eC9, hrange⟩ :=
+    order36_A4_quotient_A4_C9_product_range_mulEquiv_of_order_nine
+      (G := G) hG K hKcenter hKcard hquot h9
+  exact ⟨K, hKnormal, hKcenter, hKcard, hquot, W, hWnormal, hKW, hWcard, hWiso,
+    L, hLcomp, hLcard, hLiso, hLnormal, eA4, eC9, hrange⟩
 
 theorem order36_has_klein_preimage_order_nine_of_cube_ne_one_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
