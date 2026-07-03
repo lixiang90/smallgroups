@@ -30,6 +30,7 @@ theorems:
 | `4·3` | 12 | 5 | `ℤ/12`, `ℤ/2×ℤ/6`, `Dic₃`, `ℤ/2×S₃`, `A₄` | `Order4P_12` |
 | `2pq` (`2<p<q`, `p∤q−1`) | 30,66,70 | 4 | `ℤ/2pq`, `D_pq`, `ℤ/q×D_p`, `ℤ/p×D_q` | `Order2PQ` |
 | `2pq` (`2<p<q`, `p∣q−1`) | 42,78 | 6 | + `(ℤ/q⋊ℤ/p)×ℤ/2`, `ℤ/q⋊ℤ/2p` | `Order2PQ` |
+| `4·3²` | 36 | 14 | normal Sylow-`3` branch plus `C₃×A₄`, `A₄×_{C₃}C₉` | `Order36` |
 | `2·3³` | 54 | 15 | Schur--Zassenhaus representatives over the order-27 kernels | `Order54` |
 | `7·3²` | 63 | 4 | `ℤ/63`, `ℤ/3×ℤ/21`, `(ℤ/7⋊ℤ/3)×ℤ/3`, `ℤ/7⋊ℤ/9` | `Order63` |
 | `8·5` | 40 | 14 | `ℤ/5 ⋊ H` (`H` of order 8) — 14 actions | `Order40` |
@@ -326,6 +327,14 @@ theorems:
     `order63_classification`: `ℤ/63`, `ℤ/3 × ℤ/21`, `(ℤ/7 ⋊ ℤ/3) × ℤ/3`, and `ℤ/7 ⋊ ℤ/9`. They are
     pairwise non-isomorphic (`order63_pairwise`, separated by commutativity and by order-`9` /
     order-`21` element witnesses). Instantiated at **63** in `Classifications_61_to_70/Order63`.
+
+  * `Order36.lean` — the **complete classification** of groups of order `36 = 4 · 3²` into
+    **fourteen** classes. The normal Sylow-`3` case reuses the order-`9` kernel and order-`4`
+    complement analysis (`order36_normal_reps`); the non-normal Sylow-`3` case is reduced through
+    the action on Sylow subgroups and contributes exactly `C₃ × A₄` and the fiber-product type
+    `A₄ ×_{C₃} C₉`. The combined representatives `order36_reps` are complete
+    (`order36_complete`), pairwise non-isomorphic (`order36_reps_pairwise`), and packaged as
+    `order36_isClassif`. Instantiated at **36** in `Classifications_31_to_40/Order36`.
 
   * `Order40.lean` — the **complete classification** of groups of order `40 = 8 · 5` into
     **fourteen** classes, reusing the order-`8`-complement machinery of `Order88`. The Sylow-`5`
