@@ -36,6 +36,9 @@ theorems:
 | `8·7` | 56 | 13 | two Sylow cases: `ℤ/7 ⋊ H` and one `(ℤ/2)³ ⋊ ℤ/7` case | `Order56` |
 | `8·11` | 88 | 12 | `ℤ/11 ⋊ H` (`H` of order 8) — 12 actions | `Order88` |
 | `4·5²` | 100 | 16 | `P ⋊ H` with &#124;P&#124; = 25, &#124;H&#124; = 4 — 16 actions | `Order100` |
+| `2⁴` (Wild) | 16 | 14 | 5 abelian types + 9 `C₈`/`K₈`-extension types | `Order16_Wild` |
+| `12·7` | 84 | 15 | `C₇ ⋊ H` with &#124;H&#124; = 12 — 15 actions over the 5 order-12 types | `Order84` |
+| `2·3²·5` | 90 | 10 | `N ⋊ C₂` with &#124;N&#124; = 45 — 10 involutions over the 2 order-45 types | `Order90` |
 
 ## Layout
 
@@ -221,6 +224,64 @@ theorems:
     non-isomorphic list of abelian groups of order `p^a` has length `Nat.card (Nat.Partition a)`, the
     number of partitions of `a`. (The cyclic-factor torsion count uses
     `IsCyclic.card_powMonoidHom_ker`.)
+
+  * `Order16_Wild.lean` — the **complete classification** of groups of order `16 = 2⁴` into
+    **fourteen** classes, following Marcel Wild's "The Groups of Order Sixteen Made Easy"
+    (AMM, 2005). The five abelian classes come straight from the `AbelianPa` partition engine
+    (`orderP4Abel_complete`). The nine non-abelian classes are built as extensions of a normal
+    `C₈` or `K₈ = C₄ × C₂` subgroup — Wild's Lemma 2 (`lemma_normal_c8_or_k8`) shows every
+    non-`(C₂)⁴` group of order `16` has such a normal subgroup — classified by the conjugation
+    action of a complement involution: an involution in `Aut(C₈) ≅ (ZMod 8)ˣ` gives six extension
+    types (`classify_of_order8`, casing on the conjugation exponent `m ∈ {1,3,5,7}`), and one of
+    the four conjugacy classes of involutions in `Aut(K₈) ≅ D₈` gives the remaining seven
+    (`classify_of_k8`, casing on Wild's `ψ₁`–`ψ₈` with generators rebased to normalise the
+    extension cocycle `t²`). `order16_wild_classification` (exhaustiveness), `order16_wild_distinct`
+    (via the invariant tuple `(|Z(G)|, #{x²=1}, #{x⁴=1}, #squares)`, checked by `decide`), and
+    `order16_wild_isClassif`. Instantiated at **16** in `Classifications_11_to_20/Order16`.
+
+  * `Order54.lean` — the **complete classification** of groups of order `54 = 2 · 3³` into
+    **fifteen** classes. The Sylow-`3` subgroup (order `27`) is unique and normal, so
+    Schur–Zassenhaus splits `G ≅ N ⋊ C₂` with `N` one of the five order-`27` groups from
+    `P3Group` (`C₂₇`, `C₉ × C₃`, `C₃³`, the Heisenberg group, and `SemidirectP2P`); the remaining
+    work is an orbit calculation on the involutions of `Aut(N)` for each kernel, the hardest case
+    being the Heisenberg group's non-abelian automorphism group (`order54_heisenberg_mulAut_
+    center_fixed_cases`, `..._center_reversal_conj_negB`, with dozens of explicit conjugating
+    automorphisms checked by `decide +kernel`). The fifteen representatives `order54_reps` split
+    into `C54`, `D27`, four `Mixed` types (`C₉×C₃` kernel), four `Elem` types (`C₃³` kernel),
+    three `Heis` types (Heisenberg kernel), and two `P2P` types (exponent-`9` non-abelian kernel).
+    `order54_complete`, `order54_reps_pairwise` (via a center-order / element-count invariant),
+    `order54_isClassif`. Instantiated at **54** in `Classifications_51_to_60/Order54`.
+
+  * `Order84.lean` — the **complete classification** of groups of order `84 = 2² · 3 · 7` into
+    **fifteen** classes. The Sylow-`7` subgroup is unique and normal, so Schur–Zassenhaus splits
+    `G ≅ C₇ ⋊[φ] H` with `H` one of the five order-`12` groups from `Order4P_12` (`C₁₂`,
+    `C₂ × C₆`, the dicyclic `C₃ ⋊ C₄`, `C₂ × D₆`, and `A₄`); the action
+    `φ : H → Aut(C₇) ≅ (ZMod 7)ˣ` is classified per complement type by explicit case analysis on
+    generator images (`order84_c12_action_cases`, `order84_c2c6_action_cases`), folding together
+    Galois-conjugate/automorphism-equivalent actions (`order84_C12_mulFive`, `order84_HB_mulFive`).
+    `order84_complete`, `order84_reps_pairwise` (center-order / element-count invariant),
+    `order84_isClassif`, with the reduction `order84_semidirectProduct`. Instantiated at **84**
+    in `Classifications_81_to_90/Order84`.
+
+  * `Order90.lean` — the **complete classification** of groups of order `90 = 2 · 3² · 5` into
+    **ten** classes. Since `90 = 2 · 45` with odd half-order, the sign of the left-regular action
+    gives a normal subgroup `N` of order `45` of index `2`; Schur–Zassenhaus splits
+    `G ≅ N ⋊ C₂` with `N` one of the two abelian order-`45` groups (`C45` or `C₃×C₃×C₅`, via the
+    `PrimeSqPrimeAbelian`/`Order2PSq` machinery), and the involutions on `N` are classified via
+    explicit unit-valued homomorphisms (`order90_c45UnitHom`). The ten representatives
+    `order90_reps` include `C90`, `D45`, `C9 × D5`, `C5 × D9`, and generalized-dihedral variants
+    over `C₃ × C₃ × C₅`. `order90_complete`, `order90_reps_pairwise`, `order90_isClassif`.
+    Instantiated at **90** in `Classifications_81_to_90/Order90`.
+
+  * `Order100.lean` — the **complete classification** of groups of order `100 = 2² · 5²` into
+    **sixteen** classes. The Sylow-`5` subgroup (order `25`) is unique and normal
+    (`card_sylow_5_eq_one_of_card_100`, `sylow_5_normal_of_card_100`), so `G ≅ P ⋊[φ] H` with
+    `P ∈ {C₂₅, C₅ × C₅}` (`PrimeSqClassification`) and `H ∈ {C₄, C₂ × C₂}`; the classification is
+    a `2 × 2` grid over the `(P, H)` combinations, enumerating the homomorphisms
+    `φ : H → Aut(P)` up to the natural orbit equivalence for each cell. The sixteen
+    representatives `order100_reps` (`order100_RA` … `order100_RP`) give `order100_complete`,
+    `order100_reps_pairwise`, `order100_isClassif`. Instantiated at **100** in
+    `Classifications_91_to_100/Order100`.
 
   * `Counting.lean` — turns exhaustiveness + distinctness into a *counting* statement. `IsClassif N
     rep` says `rep : Fin k → Type` is a complete, non-redundant list of representatives of the
