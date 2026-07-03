@@ -6747,6 +6747,12 @@ theorem order36_sum_reps_pairwise :
     PairwiseNonMulEquiv (Sum.elim order36_normal_reps order36_nonnormal_reps) :=
   order36_sum_reps_pairwise_of_normal_reps_pairwise order36_normal_reps_pairwise
 
+theorem card_order36_sum_reps (i : Fin 12 ⊕ Fin 2) :
+    Nat.card (Sum.elim order36_normal_reps order36_nonnormal_reps i) = 36 := by
+  rcases i with i | i
+  · exact card_order36_normal_reps i
+  · exact card_order36_nonnormal_reps i
+
 theorem order36_nonnormal_reps_has_normal_order_three_and_A4_quotient (i : Fin 2) :
     ∃ (K : Subgroup (order36_nonnormal_reps i)) (_ : K.Normal), Nat.card K = 3 ∧
       Nonempty ((order36_nonnormal_reps i) ⧸ K ≃* order36_A4) := by
@@ -7398,6 +7404,20 @@ theorem order36_normal_rep_or_A4C9_or_C3A4_cases
       exact Or.inr <| Or.inr
         (order36_mulEquiv_C3A4_of_no_order_nine_of_card_sylow_3_eq_four
           (G := G) hG hSyl h9)
+
+theorem order36_complete [Finite G] (hG : Nat.card G = 36) :
+    ∃ i : Fin 12 ⊕ Fin 2,
+      Nonempty (G ≃* Sum.elim order36_normal_reps order36_nonnormal_reps i) := by
+  rcases order36_normal_rep_or_A4C9_or_C3A4_cases (G := G) hG with hnormal | hnon
+  · obtain ⟨i, hi⟩ := hnormal
+    exact ⟨Sum.inl i, hi⟩
+  · rcases hnon with hA4C9 | hC3A4
+    · exact ⟨Sum.inr (1 : Fin 2), by
+        change Nonempty (G ≃* order36_A4C9)
+        exact hA4C9⟩
+    · exact ⟨Sum.inr (0 : Fin 2), by
+        change Nonempty (G ≃* order36_C3A4)
+        exact hC3A4⟩
 
 theorem order36_has_central_C3_and_C3_klein_split_of_no_order_nine_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
