@@ -7,12 +7,15 @@ import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Smallgroups.UsefulTheorems.Order2PSq
 import Smallgroups.UsefulTheorems.Order2PSqElem
 import Smallgroups.UsefulTheorems.PrimePairNonabelian
+import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.PrimeSqClassification
 import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Mathlib.GroupTheory.QuotientGroup.Basic
 import Mathlib.GroupTheory.SpecificGroups.Alternating
+import Mathlib.GroupTheory.SpecificGroups.Alternating.KleinFour
 import Mathlib.GroupTheory.SpecificGroups.Dihedral
 import Mathlib.GroupTheory.Sylow
+import Mathlib.Tactic.NormNum.GCD
 import Mathlib.Tactic.NormNum.Prime
 
 /-!
@@ -33,6 +36,7 @@ These are the two structural branches used in the classification of groups of or
 namespace Smallgroups.UsefulTheorems
 
 open Sylow Equiv.Perm Subgroup
+open scoped Pointwise
 
 variable {G : Type*} [Group G]
 
@@ -40,6 +44,9 @@ variable {G : Type*} [Group G]
 
 /-- The cyclic group `C₂`. -/
 abbrev order36_C2 : Type := CyclicRep 2
+
+/-- The cyclic group `C₃`. -/
+abbrev order36_C3 : Type := CyclicRep 3
 
 /-- The cyclic group `C₄`. -/
 abbrev order36_C4 : Type := CyclicRep 4
@@ -1145,6 +1152,13 @@ theorem order36_E9_negSecondAut_apply (x y : ZMod 3) :
   change Multiplicative.ofAdd ((x, y).1, -(x, y).2) = Multiplicative.ofAdd (x, -y)
   rfl
 
+@[simp]
+theorem order36_E9_rotAut_apply (x y : ZMod 3) :
+    order36_E9_rotAut ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+      (Multiplicative.ofAdd (-y), Multiplicative.ofAdd x) := by
+  change Multiplicative.ofAdd (-(x, y).2, (x, y).1) = Multiplicative.ofAdd (-y, x)
+  rfl
+
 theorem order36_E9_mulAut_pow_four_generator_basis_cases
     (α : MulAut order36_E9) (hα : α ^ 4 = 1) :
     (∃ θ : MulAut order36_E9,
@@ -1810,6 +1824,1271 @@ theorem card_order36_normal_reps (i : Fin 12) : Nat.card (order36_normal_reps i)
   fin_cases i <;>
     simp [order36_normal_reps, SemidirectProduct.card, Nat.card_prod, DihedralGroup.card]
 
+/-- The four abelian direct-product representatives in the normal Sylow-`3` branch. -/
+noncomputable def order36_normal_abelian_reps : Fin 4 → Type
+  | 0 => order36_normal_reps (0 : Fin 12)
+  | 1 => order36_normal_reps (2 : Fin 12)
+  | 2 => order36_normal_reps (4 : Fin 12)
+  | 3 => order36_normal_reps (8 : Fin 12)
+
+noncomputable instance order36_normal_abelian_reps_group :
+    ∀ i, Group (order36_normal_abelian_reps i)
+  | 0 => by dsimp [order36_normal_abelian_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_abelian_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_abelian_reps]; infer_instance
+  | 3 => by dsimp [order36_normal_abelian_reps]; infer_instance
+
+def order36_normal_abelian_reps_exponent : Fin 4 → ℕ
+  | 0 => 36
+  | 1 => 18
+  | 2 => 12
+  | 3 => 6
+
+theorem exponent_order36_normal_abelian_reps (i : Fin 4) :
+    Monoid.exponent (order36_normal_abelian_reps i) =
+      order36_normal_abelian_reps_exponent i := by
+  fin_cases i
+  · change Monoid.exponent (order36_C9 × order36_C4) = 36
+    repeat rw [Monoid.exponent_prod]
+    simp [CyclicRep, order36_C9, order36_C4, Monoid.exponent_multiplicative,
+      ZMod.exponent, lcm_eq_nat_lcm]
+    norm_num
+  · change Monoid.exponent (order36_C9 × order36_V4) = 18
+    repeat rw [Monoid.exponent_prod]
+    simp [CyclicRep, order36_C9, order36_C2, Monoid.exponent_multiplicative,
+      ZMod.exponent, lcm_eq_nat_lcm]
+    norm_num
+  · change Monoid.exponent (order36_E9 × order36_C4) = 12
+    repeat rw [Monoid.exponent_prod]
+    simp [CyclicRep, order36_C4, Monoid.exponent_multiplicative,
+      ZMod.exponent, lcm_eq_nat_lcm]
+    norm_num
+  · change Monoid.exponent (order36_E9 × order36_V4) = 6
+    repeat rw [Monoid.exponent_prod]
+    simp [CyclicRep, order36_C2, Monoid.exponent_multiplicative, ZMod.exponent,
+      lcm_eq_nat_lcm]
+    norm_num
+
+theorem order36_normal_abelian_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_abelian_reps := by
+  refine PairwiseNonMulEquiv.of_invariant order36_normal_abelian_reps_exponent ?_ ?_
+  · intro i j h
+    have hExp := Monoid.exponent_eq_of_mulEquiv h.some
+    rw [exponent_order36_normal_abelian_reps i,
+      exponent_order36_normal_abelian_reps j] at hExp
+    exact hExp
+  · intro i j hExp _
+    fin_cases i <;> fin_cases j <;>
+      simp [order36_normal_abelian_reps_exponent] at hExp ⊢
+
+theorem order36_normal_abelian_reps_comm (i : Fin 4) :
+    ∀ a b : order36_normal_abelian_reps i, a * b = b * a := by
+  fin_cases i
+  · change ∀ a b : order36_C9 × order36_C4, a * b = b * a
+    intro a b
+    exact mul_comm a b
+  · change ∀ a b : order36_C9 × order36_V4, a * b = b * a
+    intro a b
+    exact mul_comm a b
+  · change ∀ a b : order36_E9 × order36_C4, a * b = b * a
+    intro a b
+    exact mul_comm a b
+  · change ∀ a b : order36_E9 × order36_V4, a * b = b * a
+    intro a b
+    exact mul_comm a b
+
+theorem semidirectProduct_not_comm_of_moved
+    {N H : Type*} [Group N] [Group H] (φ : H →* MulAut N) {h : H} {n : N}
+    (hmoved : φ h n ≠ n) :
+    ¬ ∀ a b : SemidirectProduct N H φ, a * b = b * a := by
+  intro hcomm
+  have key := hcomm (SemidirectProduct.inr h) (SemidirectProduct.inl n)
+  have hleft := congrArg SemidirectProduct.left key
+  simp only [SemidirectProduct.mul_left, SemidirectProduct.left_inr,
+    SemidirectProduct.right_inr, SemidirectProduct.left_inl, SemidirectProduct.right_inl,
+    map_one, one_mul, mul_one] at hleft
+  exact hmoved hleft
+
+theorem not_comm_of_mulEquiv {G H : Type*} [Group G] [Group H]
+    (e : G ≃* H) (hG : ¬ ∀ a b : G, a * b = b * a) :
+    ¬ ∀ a b : H, a * b = b * a := by
+  intro hH
+  apply hG
+  intro a b
+  apply e.injective
+  simpa using hH (e a) (e b)
+
+/-- The eight non-abelian representatives in the normal Sylow-`3` branch. -/
+noncomputable def order36_normal_nonabelian_reps : Fin 8 → Type
+  | 0 => order36_normal_reps (1 : Fin 12)
+  | 1 => order36_normal_reps (3 : Fin 12)
+  | 2 => order36_normal_reps (5 : Fin 12)
+  | 3 => order36_normal_reps (6 : Fin 12)
+  | 4 => order36_normal_reps (7 : Fin 12)
+  | 5 => order36_normal_reps (9 : Fin 12)
+  | 6 => order36_normal_reps (10 : Fin 12)
+  | 7 => order36_normal_reps (11 : Fin 12)
+
+noncomputable instance order36_normal_nonabelian_reps_group :
+    ∀ i, Group (order36_normal_nonabelian_reps i)
+  | 0 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 3 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 4 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 5 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 6 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+  | 7 => by dsimp [order36_normal_nonabelian_reps]; infer_instance
+
+theorem order36_C9_C4_invAction_moves_gen :
+    order36_C9_C4_invAction (Multiplicative.ofAdd (1 : ZMod 4))
+      (Multiplicative.ofAdd (1 : ZMod 9)) ≠ Multiplicative.ofAdd (1 : ZMod 9) := by
+  intro h
+  have hto := congrArg Multiplicative.toAdd h
+  norm_num [order36_C9_C4_invAction, order36_c9Action, unitAutHom_apply] at hto
+  exact (by decide : (-1 : ZMod 9) ≠ 1) hto
+
+theorem order36_c9_v4_fstAction_moves_gen :
+    (order36_c9Action order36_chiV4_fst) order36_V4_g1
+      (Multiplicative.ofAdd (1 : ZMod 9)) ≠ Multiplicative.ofAdd (1 : ZMod 9) := by
+  intro h
+  have hto := congrArg Multiplicative.toAdd h
+  norm_num [order36_c9Action, order36_chiV4_fst, order36_c2UnitHom, unitAutHom_apply,
+    order36_V4_g1, order36_C2] at hto
+  exact (by decide : (-1 : ZMod 9) ≠ 1) hto
+
+theorem order36_E9_C4_negBothAction_moves_e1 :
+    order36_E9_C4_negBothAction (Multiplicative.ofAdd (1 : ZMod 4)) order36_E9_e1 ≠
+      order36_E9_e1 := by
+  rw [order36_c4ActionOfAut_gen, order36_E9_negBothAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_E9_C4_negFirstAction_moves_e1 :
+    order36_E9_C4_negFirstAction (Multiplicative.ofAdd (1 : ZMod 4)) order36_E9_e1 ≠
+      order36_E9_e1 := by
+  rw [order36_c4ActionOfAut_gen, order36_E9_negFirstAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_E9_C4_rotAction_moves_e1 :
+    order36_E9_C4_rotAction (Multiplicative.ofAdd (1 : ZMod 4)) order36_E9_e1 ≠
+      order36_E9_e1 := by
+  rw [order36_c4ActionOfAut_gen, order36_E9_rotAut_e1]
+  intro h
+  exact (by decide : order36_E9_e2 ≠ order36_E9_e1) h
+
+theorem order36_E9_V4_negBothFstAction_moves_e1 :
+    order36_E9_V4_negBothFstAction order36_V4_g1 order36_E9_e1 ≠ order36_E9_e1 := by
+  rw [order36_E9_V4_negBothFstAction_g1, order36_E9_negBothAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_E9_V4_negFirstFstAction_moves_e1 :
+    order36_E9_V4_negFirstFstAction order36_V4_g1 order36_E9_e1 ≠ order36_E9_e1 := by
+  rw [order36_E9_V4_negFirstFstAction_g1, order36_E9_negFirstAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_E9_V4_diagAction_moves_e1 :
+    order36_E9_V4_diagAction order36_V4_g1 order36_E9_e1 ≠ order36_E9_e1 := by
+  rw [order36_E9_V4_diagAction_g1, order36_E9_negFirstAut_e1]
+  intro h
+  exact (by decide : (Multiplicative.ofAdd (-1 : ZMod 3), 1) ≠ order36_E9_e1) h
+
+theorem order36_normal_nonabelian_reps_not_comm (i : Fin 8) :
+    ¬ ∀ a b : order36_normal_nonabelian_reps i, a * b = b * a := by
+  fin_cases i
+  · change ¬ ∀ a b : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction,
+      a * b = b * a
+    exact semidirectProduct_not_comm_of_moved order36_C9_C4_invAction
+      (h := Multiplicative.ofAdd (1 : ZMod 4)) (n := Multiplicative.ofAdd (1 : ZMod 9))
+      order36_C9_C4_invAction_moves_gen
+  · change ¬ ∀ a b : DihedralGroup 9 × order36_C2, a * b = b * a
+    have hmodel : ¬ ∀ a b : SemidirectProduct order36_C9 order36_V4
+        (order36_c9Action order36_chiV4_fst), a * b = b * a :=
+      semidirectProduct_not_comm_of_moved (order36_c9Action order36_chiV4_fst)
+        (h := order36_V4_g1) (n := Multiplicative.ofAdd (1 : ZMod 9))
+        order36_c9_v4_fstAction_moves_gen
+    exact not_comm_of_mulEquiv order36_c9V4_fst_equiv_dihedral_prod hmodel
+  · change ¬ ∀ a b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+      a * b = b * a
+    exact semidirectProduct_not_comm_of_moved order36_E9_C4_negBothAction
+      (h := Multiplicative.ofAdd (1 : ZMod 4)) (n := order36_E9_e1)
+      order36_E9_C4_negBothAction_moves_e1
+  · change ¬ ∀ a b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+      a * b = b * a
+    exact semidirectProduct_not_comm_of_moved order36_E9_C4_negFirstAction
+      (h := Multiplicative.ofAdd (1 : ZMod 4)) (n := order36_E9_e1)
+      order36_E9_C4_negFirstAction_moves_e1
+  · change ¬ ∀ a b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      a * b = b * a
+    exact semidirectProduct_not_comm_of_moved order36_E9_C4_rotAction
+      (h := Multiplicative.ofAdd (1 : ZMod 4)) (n := order36_E9_e1)
+      order36_E9_C4_rotAction_moves_e1
+  · change ¬ ∀ a b : SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9) ×
+      order36_C2, a * b = b * a
+    have hmodel : ¬ ∀ a b : SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_negBothFstAction, a * b = b * a :=
+      semidirectProduct_not_comm_of_moved order36_E9_V4_negBothFstAction
+        (h := order36_V4_g1) (n := order36_E9_e1)
+        order36_E9_V4_negBothFstAction_moves_e1
+    exact not_comm_of_mulEquiv order36_e9V4_negBothFst_equiv_inv_prod hmodel
+  · change ¬ ∀ a b : DihedralGroup 3 × CyclicRep 3 × order36_C2, a * b = b * a
+    have hmodel : ¬ ∀ a b : SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_negFirstFstAction, a * b = b * a :=
+      semidirectProduct_not_comm_of_moved order36_E9_V4_negFirstFstAction
+        (h := order36_V4_g1) (n := order36_E9_e1)
+        order36_E9_V4_negFirstFstAction_moves_e1
+    exact not_comm_of_mulEquiv
+      (order36_e9V4_negFirstFst_equiv_d3_c3_c2.trans
+        (MulEquiv.prodAssoc (M := DihedralGroup 3) (N := CyclicRep 3) (P := order36_C2)))
+      hmodel
+  · change ¬ ∀ a b : DihedralGroup 3 × DihedralGroup 3, a * b = b * a
+    have hmodel : ¬ ∀ a b : SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_diagAction, a * b = b * a :=
+      semidirectProduct_not_comm_of_moved order36_E9_V4_diagAction
+        (h := order36_V4_g1) (n := order36_E9_e1)
+        order36_E9_V4_diagAction_moves_e1
+    exact not_comm_of_mulEquiv order36_e9V4_diag_equiv_d3_d3 hmodel
+
+theorem order36_normal_abelian_nonabelian_reps_disjoint :
+    ∀ i j, ¬ Nonempty (order36_normal_abelian_reps i ≃*
+      order36_normal_nonabelian_reps j) := by
+  intro i j
+  exact isEmpty_mulEquiv_of_comm_noncomm
+    (order36_normal_abelian_reps_comm i)
+    (order36_normal_nonabelian_reps_not_comm j)
+
+theorem semidirectProduct_has_order_four_of_right_c4 {N : Type*} [Group N]
+    (φ : order36_C4 →* MulAut N) :
+    ∃ g : SemidirectProduct N order36_C4 φ, orderOf g = 4 := by
+  refine ⟨SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4)), ?_⟩
+  rw [orderOf_injective (SemidirectProduct.inr : order36_C4 →*
+    SemidirectProduct N order36_C4 φ) SemidirectProduct.inr_injective]
+  rw [orderOf_ofAdd_eq_addOrderOf]
+  exact ZMod.addOrderOf_one 4
+
+theorem semidirectProduct_e9_c4_pow_twelve
+    (φ : order36_C4 →* MulAut order36_E9)
+    (g : SemidirectProduct order36_E9 order36_C4 φ) :
+    g ^ 12 = 1 := by
+  have hright :
+      (SemidirectProduct.rightHom :
+        SemidirectProduct order36_E9 order36_C4 φ →* order36_C4) (g ^ 4) = 1 := by
+    rw [map_pow]
+    change g.right ^ 4 = 1
+    rw [← orderOf_dvd_iff_pow_eq_one]
+    have hcard : Nat.card order36_C4 = 4 := by simp [order36_C4]
+    have hdvd := _root_.orderOf_dvd_natCard (x := g.right)
+    rw [hcard] at hdvd
+    exact hdvd
+  have hrange :
+      g ^ 4 ∈ (SemidirectProduct.inl :
+        order36_E9 →* SemidirectProduct order36_E9 order36_C4 φ).range := by
+    rw [SemidirectProduct.range_inl_eq_ker_rightHom]
+    exact hright
+  obtain ⟨n, hn⟩ := hrange
+  rw [show 12 = 4 * 3 by norm_num, pow_mul, ← hn, ← map_pow]
+  have hn3 : n ^ 3 = 1 := by
+    simpa [order36_E9] using (pow_p_elemAbelian (p := 3) n)
+  rw [hn3, map_one]
+
+theorem multiplicative_zmod_four_cases (x : order36_C4) :
+    x = 1 ∨ x = Multiplicative.ofAdd (1 : ZMod 4) ∨
+      x = Multiplicative.ofAdd (2 : ZMod 4) ∨
+        x = Multiplicative.ofAdd (3 : ZMod 4) := by
+  fin_cases x <;> decide
+
+theorem order36_chiC4_inv_sq :
+    order36_chiC4_inv (Multiplicative.ofAdd (2 : ZMod 4)) = 1 := by
+  change (-1 : (ZMod 9)ˣ) ^ (2 : ZMod 4).val = 1
+  rw [show (2 : ZMod 4).val = 2 by decide]
+  norm_num
+
+theorem order36_C9_C4_invAction_sq_trivial :
+    order36_C9_C4_invAction (Multiplicative.ofAdd (2 : ZMod 4)) = 1 := by
+  rw [order36_C9_C4_invAction, order36_c9Action]
+  change unitAutHom (order36_chiC4_inv (Multiplicative.ofAdd (2 : ZMod 4))) = 1
+  rw [order36_chiC4_inv_sq]
+  ext x
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+  simp
+
+theorem order36_C9_C4_invAction_gen_sq_comm :
+    Commute
+      (SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 9)) :
+        SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction)
+      (SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4))) := by
+  apply SemidirectProduct.ext
+  · simp [SemidirectProduct.mul_left, order36_C9_C4_invAction_sq_trivial]
+  · simp [SemidirectProduct.mul_right]
+
+theorem order36_C9_C4_invAction_has_order_eighteen :
+    ∃ g : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction,
+      orderOf g = 18 := by
+  let a : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction :=
+    SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 9))
+  let b : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction :=
+    SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4))
+  refine ⟨a * b, ?_⟩
+  have hcomm : Commute a b := order36_C9_C4_invAction_gen_sq_comm
+  have ha : orderOf a = 9 := by
+    dsimp [a]
+    rw [orderOf_injective (SemidirectProduct.inl : order36_C9 →*
+      SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction)
+      SemidirectProduct.inl_injective]
+    rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+  have hb : orderOf b = 2 := by
+    dsimp [b]
+    rw [orderOf_injective (SemidirectProduct.inr : order36_C4 →*
+      SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction)
+      SemidirectProduct.inr_injective]
+    rw [orderOf_ofAdd_eq_addOrderOf]
+    change addOrderOf ((2 : ℕ) : ZMod 4) = 2
+    rw [ZMod.addOrderOf_coe' 4 (by norm_num : (2 : ℕ) ≠ 0)]
+    norm_num
+  have hcop : (orderOf a).Coprime (orderOf b) := by
+    rw [ha, hb]
+    norm_num
+  rw [hcomm.orderOf_mul_eq_mul_orderOf_of_coprime hcop, ha, hb]
+
+/-- The four non-abelian normal representatives whose complement is `C₄`. -/
+noncomputable def order36_normal_nonabelian_c4_reps : Fin 4 → Type
+  | 0 => order36_normal_nonabelian_reps (0 : Fin 8)
+  | 1 => order36_normal_nonabelian_reps (2 : Fin 8)
+  | 2 => order36_normal_nonabelian_reps (3 : Fin 8)
+  | 3 => order36_normal_nonabelian_reps (4 : Fin 8)
+
+noncomputable instance order36_normal_nonabelian_c4_reps_group :
+    ∀ i, Group (order36_normal_nonabelian_c4_reps i)
+  | 0 => by dsimp [order36_normal_nonabelian_c4_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_nonabelian_c4_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_nonabelian_c4_reps]; infer_instance
+  | 3 => by dsimp [order36_normal_nonabelian_c4_reps]; infer_instance
+
+theorem order36_normal_nonabelian_c4_reps_has_order_four (i : Fin 4) :
+    ∃ g : order36_normal_nonabelian_c4_reps i, orderOf g = 4 := by
+  fin_cases i
+  · change ∃ g : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction,
+      orderOf g = 4
+    exact semidirectProduct_has_order_four_of_right_c4 order36_C9_C4_invAction
+  · change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+      orderOf g = 4
+    exact semidirectProduct_has_order_four_of_right_c4 order36_E9_C4_negBothAction
+  · change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+      orderOf g = 4
+    exact semidirectProduct_has_order_four_of_right_c4 order36_E9_C4_negFirstAction
+  · change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      orderOf g = 4
+    exact semidirectProduct_has_order_four_of_right_c4 order36_E9_C4_rotAction
+
+theorem order36_normal_nonabelian_c4_rep0_has_order_eighteen :
+    ∃ g : order36_normal_nonabelian_c4_reps (0 : Fin 4), orderOf g = 18 := by
+  change ∃ g : SemidirectProduct order36_C9 order36_C4 order36_C9_C4_invAction,
+    orderOf g = 18
+  exact order36_C9_C4_invAction_has_order_eighteen
+
+/-- The three `E₉ ⋊ C₄` non-abelian normal representatives. -/
+noncomputable def order36_normal_nonabelian_c4_e9_reps : Fin 3 → Type
+  | 0 => order36_normal_nonabelian_c4_reps (1 : Fin 4)
+  | 1 => order36_normal_nonabelian_c4_reps (2 : Fin 4)
+  | 2 => order36_normal_nonabelian_c4_reps (3 : Fin 4)
+
+noncomputable instance order36_normal_nonabelian_c4_e9_reps_group :
+    ∀ i, Group (order36_normal_nonabelian_c4_e9_reps i)
+  | 0 => by dsimp [order36_normal_nonabelian_c4_e9_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_nonabelian_c4_e9_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_nonabelian_c4_e9_reps]; infer_instance
+
+theorem order36_normal_nonabelian_c4_e9_reps_no_order_eighteen (i : Fin 3) :
+    ∀ g : order36_normal_nonabelian_c4_e9_reps i, orderOf g ≠ 18 := by
+  fin_cases i
+  · change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+      orderOf g ≠ 18
+    exact orderOf_ne_of_pow (semidirectProduct_e9_c4_pow_twelve order36_E9_C4_negBothAction)
+      (by norm_num : ¬ (18 : ℕ) ∣ 12)
+  · change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+      orderOf g ≠ 18
+    exact orderOf_ne_of_pow (semidirectProduct_e9_c4_pow_twelve order36_E9_C4_negFirstAction)
+      (by norm_num : ¬ (18 : ℕ) ∣ 12)
+  · change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      orderOf g ≠ 18
+    exact orderOf_ne_of_pow (semidirectProduct_e9_c4_pow_twelve order36_E9_C4_rotAction)
+      (by norm_num : ¬ (18 : ℕ) ∣ 12)
+
+theorem order36_normal_nonabelian_c4_c9_e9_reps_disjoint :
+    ∀ j, ¬ Nonempty (order36_normal_nonabelian_c4_reps (0 : Fin 4) ≃*
+      order36_normal_nonabelian_c4_e9_reps j) := by
+  intro j
+  exact not_mulEquiv_of_orderOf
+    order36_normal_nonabelian_c4_rep0_has_order_eighteen
+    (order36_normal_nonabelian_c4_e9_reps_no_order_eighteen j)
+
+theorem order36_E9_C4_negFirstAction_gen_e2 :
+    order36_E9_C4_negFirstAction (Multiplicative.ofAdd (1 : ZMod 4)) order36_E9_e2 =
+      order36_E9_e2 := by
+  rw [order36_E9_C4_negFirstAction, order36_c4ActionOfAut_gen,
+    order36_E9_negFirstAut_e2]
+
+theorem order36_E9_C4_negFirstAction_e2_gen_comm :
+    Commute
+      (SemidirectProduct.inl order36_E9_e2 :
+        SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction)
+      (SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4))) := by
+  apply SemidirectProduct.ext
+  · simp [SemidirectProduct.mul_left]
+  · simp [SemidirectProduct.mul_right]
+
+theorem order36_E9_C4_negFirstAction_has_order_twelve :
+    ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+      orderOf g = 12 := by
+  let a : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction :=
+    SemidirectProduct.inl order36_E9_e2
+  let b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction :=
+    SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 4))
+  refine ⟨a * b, ?_⟩
+  have hcomm : Commute a b := order36_E9_C4_negFirstAction_e2_gen_comm
+  have ha : orderOf a = 3 := by
+    dsimp [a]
+    rw [orderOf_injective (SemidirectProduct.inl : order36_E9 →*
+      SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction)
+      SemidirectProduct.inl_injective]
+    change orderOf ((1, Multiplicative.ofAdd (1 : ZMod 3)) : order36_E9) = 3
+    rw [Prod.orderOf_mk, orderOf_one, orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+    norm_num
+  have hb : orderOf b = 4 := by
+    dsimp [b]
+    rw [orderOf_injective (SemidirectProduct.inr : order36_C4 →*
+      SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction)
+      SemidirectProduct.inr_injective]
+    rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+  have hcop : (orderOf a).Coprime (orderOf b) := by
+    rw [ha, hb]
+    norm_num
+  rw [hcomm.orderOf_mul_eq_mul_orderOf_of_coprime hcop, ha, hb]
+
+theorem order36_normal_nonabelian_c4_e9_rep1_has_order_twelve :
+    ∃ g : order36_normal_nonabelian_c4_e9_reps (1 : Fin 3), orderOf g = 12 := by
+  change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negFirstAction,
+    orderOf g = 12
+  exact order36_E9_C4_negFirstAction_has_order_twelve
+
+theorem order36_E9_C4_negBothAction_gen_eq_inv :
+    order36_E9_C4_negBothAction (Multiplicative.ofAdd (1 : ZMod 4)) =
+      invAut order36_E9 := by
+  rw [order36_E9_C4_negBothAction, order36_c4ActionOfAut_gen,
+    order36_E9_negBothAut_eq_invAut]
+
+theorem order36_E9_C4_negBothAction_sq_trivial :
+    order36_E9_C4_negBothAction (Multiplicative.ofAdd (2 : ZMod 4)) = 1 := by
+  change order36_E9_negBothAut ^ (2 : ZMod 4).val = 1
+  rw [show (2 : ZMod 4).val = 2 by decide, order36_E9_negBothAut_pow_two]
+
+theorem order36_E9_C4_negBothAction_cube_eq_inv :
+    order36_E9_C4_negBothAction (Multiplicative.ofAdd (3 : ZMod 4)) =
+      invAut order36_E9 := by
+  change order36_E9_negBothAut ^ (3 : ZMod 4).val = invAut order36_E9
+  rw [show (3 : ZMod 4).val = 3 by decide]
+  change order36_E9_negBothAut ^ (2 + 1) = invAut order36_E9
+  rw [pow_succ, order36_E9_negBothAut_pow_two, one_mul, order36_E9_negBothAut_eq_invAut]
+
+theorem order36_E9_C4_negBothAction_pow_six_or_four
+    (g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction) :
+    g ^ 6 = 1 ∨ g ^ 4 = 1 := by
+  rcases multiplicative_zmod_four_cases g.right with hr | hr | hr | hr
+  · left
+    have hg : g = SemidirectProduct.inl g.left := SemidirectProduct.ext rfl (by rw [hr]; rfl)
+    rw [hg, ← map_pow]
+    have hleft3 : g.left ^ 3 = 1 := by
+      simpa [order36_E9] using (pow_p_elemAbelian (p := 3) g.left)
+    rw [show 6 = 3 * 2 by norm_num, pow_mul, hleft3, one_pow, map_one]
+  · right
+    have hsq : g ^ 2 =
+        (SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4)) :
+          SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction) := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, hr, order36_E9_C4_negBothAction_gen_eq_inv,
+          SemidirectProduct.left_inr]
+        change g.left * g.left⁻¹ = 1
+        rw [mul_inv_cancel]
+      · rw [SemidirectProduct.mul_right, hr, SemidirectProduct.right_inr]
+        decide
+    change g ^ (2 * 2) = 1
+    rw [pow_mul, hsq, ← map_pow]
+    change SemidirectProduct.inr ((Multiplicative.ofAdd (2 : ZMod 4)) ^ 2) = 1
+    decide
+  · left
+    have hsq : g ^ 2 =
+        (SemidirectProduct.inl (g.left * g.left) :
+          SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction) := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · simp [SemidirectProduct.mul_left, hr, order36_E9_C4_negBothAction_sq_trivial]
+      · rw [SemidirectProduct.mul_right, hr, SemidirectProduct.right_inl]
+        decide
+    rw [show 6 = 2 * 3 by norm_num, pow_mul, hsq, ← map_pow]
+    have hleft3 : (g.left * g.left) ^ 3 = 1 := by
+      simpa [order36_E9] using (pow_p_elemAbelian (p := 3) (g.left * g.left))
+    rw [hleft3, map_one]
+  · right
+    have hsq : g ^ 2 =
+        (SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4)) :
+          SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction) := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, hr, order36_E9_C4_negBothAction_cube_eq_inv,
+          SemidirectProduct.left_inr]
+        change g.left * g.left⁻¹ = 1
+        rw [mul_inv_cancel]
+      · rw [SemidirectProduct.mul_right, hr, SemidirectProduct.right_inr]
+        decide
+    change g ^ (2 * 2) = 1
+    rw [pow_mul, hsq, ← map_pow]
+    change SemidirectProduct.inr ((Multiplicative.ofAdd (2 : ZMod 4)) ^ 2) = 1
+    decide
+
+theorem order36_E9_C4_negBothAction_no_order_twelve :
+    ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+      orderOf g ≠ 12 := by
+  exact orderOf_ne_of_pow_or order36_E9_C4_negBothAction_pow_six_or_four
+    (by norm_num : ¬ (12 : ℕ) ∣ 6) (by norm_num : ¬ (12 : ℕ) ∣ 4)
+
+theorem order36_normal_nonabelian_c4_e9_rep0_no_order_twelve :
+    ∀ g : order36_normal_nonabelian_c4_e9_reps (0 : Fin 3), orderOf g ≠ 12 := by
+  change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+    orderOf g ≠ 12
+  exact order36_E9_C4_negBothAction_no_order_twelve
+
+theorem order36_normal_nonabelian_c4_e9_rep1_rep0_disjoint :
+    ¬ Nonempty (order36_normal_nonabelian_c4_e9_reps (1 : Fin 3) ≃*
+      order36_normal_nonabelian_c4_e9_reps (0 : Fin 3)) := by
+  exact not_mulEquiv_of_orderOf
+    order36_normal_nonabelian_c4_e9_rep1_has_order_twelve
+    order36_normal_nonabelian_c4_e9_rep0_no_order_twelve
+
+theorem order36_E9_C4_rotAction_gen_eq_rot :
+    order36_E9_C4_rotAction (Multiplicative.ofAdd (1 : ZMod 4)) =
+      order36_E9_rotAut := by
+  rw [order36_E9_C4_rotAction, order36_c4ActionOfAut_gen]
+
+theorem order36_E9_C4_rotAction_sq_eq_negBoth :
+    order36_E9_C4_rotAction (Multiplicative.ofAdd (2 : ZMod 4)) =
+      order36_E9_negBothAut := by
+  change order36_E9_rotAut ^ (2 : ZMod 4).val = order36_E9_negBothAut
+  rw [show (2 : ZMod 4).val = 2 by decide, order36_E9_rotAut_sq]
+
+theorem order36_E9_C4_rotAction_cube_apply (x y : ZMod 3) :
+    order36_E9_C4_rotAction (Multiplicative.ofAdd (3 : ZMod 4))
+        ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+      (Multiplicative.ofAdd y, Multiplicative.ofAdd (-x)) := by
+  change (order36_E9_rotAut ^ (3 : ZMod 4).val)
+      ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+    (Multiplicative.ofAdd y, Multiplicative.ofAdd (-x))
+  rw [show (3 : ZMod 4).val = 3 by decide]
+  change (order36_E9_rotAut ^ (2 + 1))
+      ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+    (Multiplicative.ofAdd y, Multiplicative.ofAdd (-x))
+  rw [pow_succ, order36_E9_rotAut_sq]
+  change order36_E9_negBothAut
+      ((Multiplicative.ofAdd (-y), Multiplicative.ofAdd x) : order36_E9) =
+    (Multiplicative.ofAdd y, Multiplicative.ofAdd (-x))
+  rw [order36_E9_negBothAut_apply]
+  simp
+
+theorem order36_E9_rot_orbit_prod (x y : ZMod 3) :
+    ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_rotAut ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_negBothAut
+          ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_C4_rotAction (Multiplicative.ofAdd (3 : ZMod 4))
+          ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+      1 := by
+  rw [order36_E9_rotAut_apply, order36_E9_negBothAut_apply,
+    order36_E9_C4_rotAction_cube_apply]
+  ext
+  · change Multiplicative.ofAdd (x + -y + -x + y) = Multiplicative.ofAdd 0
+    congr 1
+    abel
+  · change Multiplicative.ofAdd (y + x + -y + -x) = Multiplicative.ofAdd 0
+    congr 1
+    abel
+
+theorem order36_E9_rot_orbit_prod_rev (x y : ZMod 3) :
+    ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_C4_rotAction (Multiplicative.ofAdd (3 : ZMod 4))
+          ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_negBothAut
+          ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) *
+        order36_E9_rotAut ((Multiplicative.ofAdd x, Multiplicative.ofAdd y) : order36_E9) =
+      1 := by
+  rw [order36_E9_C4_rotAction_cube_apply, order36_E9_negBothAut_apply,
+    order36_E9_rotAut_apply]
+  ext
+  · change Multiplicative.ofAdd (x + y + -x + -y) = Multiplicative.ofAdd 0
+    congr 1
+    abel
+  · change Multiplicative.ofAdd (y + -x + -y + x) = Multiplicative.ofAdd 0
+    congr 1
+    abel
+
+theorem order36_E9_C4_rotAction_pow_three_or_four
+    (g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction) :
+    g ^ 3 = 1 ∨ g ^ 4 = 1 := by
+  rcases multiplicative_zmod_four_cases g.right with hr | hr | hr | hr
+  · left
+    have hg : g = SemidirectProduct.inl g.left := SemidirectProduct.ext rfl (by rw [hr]; rfl)
+    rw [hg, ← map_pow]
+    have hleft3 : g.left ^ 3 = 1 := by
+      simpa [order36_E9] using (pow_p_elemAbelian (p := 3) g.left)
+    rw [hleft3, map_one]
+  · right
+    let m : order36_E9 := g.left * order36_E9_rotAut g.left
+    have hsq : g ^ 2 =
+        (⟨m, Multiplicative.ofAdd (2 : ZMod 4)⟩ :
+          SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction) := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, hr, order36_E9_C4_rotAction_gen_eq_rot]
+      · rw [SemidirectProduct.mul_right, hr]
+        change Multiplicative.ofAdd (1 : ZMod 4) * Multiplicative.ofAdd (1 : ZMod 4) =
+          Multiplicative.ofAdd (2 : ZMod 4)
+        decide
+    have hsq2 : (g ^ 2) ^ 2 = 1 := by
+      rw [hsq, sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, order36_E9_C4_rotAction_sq_eq_negBoth,
+          SemidirectProduct.one_left]
+        change m * order36_E9_negBothAut m = 1
+        rw [order36_E9_negBothAut_eq_invAut, invAut_apply, mul_inv_cancel]
+      · rw [SemidirectProduct.mul_right, SemidirectProduct.one_right]
+        change Multiplicative.ofAdd (2 : ZMod 4) * Multiplicative.ofAdd (2 : ZMod 4) = 1
+        decide
+    change g ^ (2 * 2) = 1
+    rw [pow_mul, hsq2]
+  · right
+    have hsq : g ^ 2 = 1 := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, hr, order36_E9_C4_rotAction_sq_eq_negBoth,
+          SemidirectProduct.one_left]
+        change g.left * order36_E9_negBothAut g.left = 1
+        rw [order36_E9_negBothAut_eq_invAut, invAut_apply, mul_inv_cancel]
+      · rw [SemidirectProduct.mul_right, hr, SemidirectProduct.one_right]
+        decide
+    change g ^ (2 * 2) = 1
+    rw [pow_mul, hsq, one_pow]
+  · right
+    let m : order36_E9 :=
+      g.left * order36_E9_C4_rotAction (Multiplicative.ofAdd (3 : ZMod 4)) g.left
+    have hsq : g ^ 2 =
+        (⟨m, Multiplicative.ofAdd (2 : ZMod 4)⟩ :
+          SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction) := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, hr]
+      · rw [SemidirectProduct.mul_right, hr]
+        change Multiplicative.ofAdd (3 : ZMod 4) * Multiplicative.ofAdd (3 : ZMod 4) =
+          Multiplicative.ofAdd (2 : ZMod 4)
+        decide
+    have hsq2 : (g ^ 2) ^ 2 = 1 := by
+      rw [hsq, sq]
+      apply SemidirectProduct.ext
+      · rw [SemidirectProduct.mul_left, order36_E9_C4_rotAction_sq_eq_negBoth,
+          SemidirectProduct.one_left]
+        change m * order36_E9_negBothAut m = 1
+        rw [order36_E9_negBothAut_eq_invAut, invAut_apply, mul_inv_cancel]
+      · rw [SemidirectProduct.mul_right, SemidirectProduct.one_right]
+        change Multiplicative.ofAdd (2 : ZMod 4) * Multiplicative.ofAdd (2 : ZMod 4) = 1
+        decide
+    change g ^ (2 * 2) = 1
+    rw [pow_mul, hsq2]
+
+theorem order36_E9_C4_rotAction_no_order_six :
+    ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      orderOf g ≠ 6 := by
+  exact orderOf_ne_of_pow_or order36_E9_C4_rotAction_pow_three_or_four
+    (by norm_num : ¬ (6 : ℕ) ∣ 3) (by norm_num : ¬ (6 : ℕ) ∣ 4)
+
+theorem order36_E9_C4_rotAction_no_order_twelve :
+    ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+      orderOf g ≠ 12 := by
+  exact orderOf_ne_of_pow_or order36_E9_C4_rotAction_pow_three_or_four
+    (by norm_num : ¬ (12 : ℕ) ∣ 3) (by norm_num : ¬ (12 : ℕ) ∣ 4)
+
+theorem order36_normal_nonabelian_c4_e9_rep2_no_order_six :
+    ∀ g : order36_normal_nonabelian_c4_e9_reps (2 : Fin 3), orderOf g ≠ 6 := by
+  change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+    orderOf g ≠ 6
+  exact order36_E9_C4_rotAction_no_order_six
+
+theorem order36_normal_nonabelian_c4_e9_rep2_no_order_twelve :
+    ∀ g : order36_normal_nonabelian_c4_e9_reps (2 : Fin 3), orderOf g ≠ 12 := by
+  change ∀ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_rotAction,
+    orderOf g ≠ 12
+  exact order36_E9_C4_rotAction_no_order_twelve
+
+theorem order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint :
+    ¬ Nonempty (order36_normal_nonabelian_c4_e9_reps (1 : Fin 3) ≃*
+      order36_normal_nonabelian_c4_e9_reps (2 : Fin 3)) := by
+  exact not_mulEquiv_of_orderOf
+    order36_normal_nonabelian_c4_e9_rep1_has_order_twelve
+    order36_normal_nonabelian_c4_e9_rep2_no_order_twelve
+
+theorem order36_E9_C4_negBothAction_e1_sq_comm :
+    Commute
+      (SemidirectProduct.inl order36_E9_e1 :
+        SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction)
+      (SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4))) := by
+  apply SemidirectProduct.ext
+  · simp [SemidirectProduct.mul_left, order36_E9_C4_negBothAction_sq_trivial]
+  · simp [SemidirectProduct.mul_right]
+
+theorem order36_E9_C4_negBothAction_has_order_six :
+    ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+      orderOf g = 6 := by
+  let a : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction :=
+    SemidirectProduct.inl order36_E9_e1
+  let b : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction :=
+    SemidirectProduct.inr (Multiplicative.ofAdd (2 : ZMod 4))
+  refine ⟨a * b, ?_⟩
+  have hcomm : Commute a b := order36_E9_C4_negBothAction_e1_sq_comm
+  have ha : orderOf a = 3 := by
+    dsimp [a]
+    rw [orderOf_injective (SemidirectProduct.inl : order36_E9 →*
+      SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction)
+      SemidirectProduct.inl_injective]
+    change orderOf ((Multiplicative.ofAdd (1 : ZMod 3), 1) : order36_E9) = 3
+    rw [Prod.orderOf_mk, orderOf_one, orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+    norm_num
+  have hb : orderOf b = 2 := by
+    dsimp [b]
+    rw [orderOf_injective (SemidirectProduct.inr : order36_C4 →*
+      SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction)
+      SemidirectProduct.inr_injective]
+    rw [orderOf_ofAdd_eq_addOrderOf]
+    change addOrderOf ((2 : ℕ) : ZMod 4) = 2
+    rw [ZMod.addOrderOf_coe' 4 (by norm_num : (2 : ℕ) ≠ 0)]
+    norm_num
+  have hcop : (orderOf a).Coprime (orderOf b) := by
+    rw [ha, hb]
+    norm_num
+  rw [hcomm.orderOf_mul_eq_mul_orderOf_of_coprime hcop, ha, hb]
+
+theorem order36_normal_nonabelian_c4_e9_rep0_has_order_six :
+    ∃ g : order36_normal_nonabelian_c4_e9_reps (0 : Fin 3), orderOf g = 6 := by
+  change ∃ g : SemidirectProduct order36_E9 order36_C4 order36_E9_C4_negBothAction,
+    orderOf g = 6
+  exact order36_E9_C4_negBothAction_has_order_six
+
+theorem order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint :
+    ¬ Nonempty (order36_normal_nonabelian_c4_e9_reps (0 : Fin 3) ≃*
+      order36_normal_nonabelian_c4_e9_reps (2 : Fin 3)) := by
+  exact not_mulEquiv_of_orderOf
+    order36_normal_nonabelian_c4_e9_rep0_has_order_six
+    order36_normal_nonabelian_c4_e9_rep2_no_order_six
+
+theorem order36_normal_nonabelian_c4_e9_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_nonabelian_c4_e9_reps := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep0_disjoint ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep0_disjoint hiso)
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint ⟨hiso.some.symm⟩)
+  · rfl
+
+theorem order36_normal_nonabelian_c4_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_nonabelian_c4_reps := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 0 hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 1 hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 2 hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 0 ⟨hiso.some.symm⟩)
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep0_disjoint ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 1 ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep0_disjoint hiso)
+  · rfl
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint hiso)
+  · exact False.elim (order36_normal_nonabelian_c4_c9_e9_reps_disjoint 2 ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep0_rep2_disjoint ⟨hiso.some.symm⟩)
+  · exact False.elim (order36_normal_nonabelian_c4_e9_rep1_rep2_disjoint ⟨hiso.some.symm⟩)
+  · rfl
+
+/-- The four non-abelian normal representatives whose complement is not `C₄`. -/
+noncomputable def order36_normal_nonabelian_non_c4_reps : Fin 4 → Type
+  | 0 => order36_normal_nonabelian_reps (1 : Fin 8)
+  | 1 => order36_normal_nonabelian_reps (5 : Fin 8)
+  | 2 => order36_normal_nonabelian_reps (6 : Fin 8)
+  | 3 => order36_normal_nonabelian_reps (7 : Fin 8)
+
+noncomputable instance order36_normal_nonabelian_non_c4_reps_group :
+    ∀ i, Group (order36_normal_nonabelian_non_c4_reps i)
+  | 0 => by dsimp [order36_normal_nonabelian_non_c4_reps]; infer_instance
+  | 1 => by dsimp [order36_normal_nonabelian_non_c4_reps]; infer_instance
+  | 2 => by dsimp [order36_normal_nonabelian_non_c4_reps]; infer_instance
+  | 3 => by dsimp [order36_normal_nonabelian_non_c4_reps]; infer_instance
+
+theorem order36_normal_nonabelian_non_c4_reps_no_order_four (i : Fin 4) :
+    ∀ g : order36_normal_nonabelian_non_c4_reps i, orderOf g ≠ 4 := by
+  fin_cases i
+  · change ∀ g : DihedralGroup 9 × order36_C2, orderOf g ≠ 4
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 18 = 1
+        rw [show 18 = Fintype.card (DihedralGroup 9) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · change g.2 ^ 18 = 1
+        rw [← orderOf_dvd_iff_pow_eq_one]
+        have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+        have hdvd := _root_.orderOf_dvd_natCard (x := g.2)
+        rw [hcard] at hdvd
+        exact hdvd.trans (by norm_num)) (by norm_num : ¬ (4 : ℕ) ∣ 18)
+  · change ∀ g : SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9) ×
+      order36_C2, orderOf g ≠ 4
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        have hcase :
+            g.1.right = 1 ∨ g.1.right = Multiplicative.ofAdd (1 : ZMod 2) := by
+          rcases multiplicative_zmod_two_cases g.1.right with h | h
+          · left; exact h
+          · right; exact h
+        rcases hcase with hr | hr
+        · have hg : g.1 = SemidirectProduct.inl g.1.left :=
+            SemidirectProduct.ext rfl (by rw [hr]; rfl)
+          rw [hg, ← map_pow]
+          have hleft3 : g.1.left ^ 3 = 1 := by
+            simpa [order36_E9] using (pow_p_elemAbelian (p := 3) g.1.left)
+          rw [show 6 = 3 * 2 by norm_num, pow_mul, hleft3, one_pow, map_one]
+        · have hsq : g.1 ^ 2 = 1 := by
+            rw [sq]
+            apply SemidirectProduct.ext
+            · simp [SemidirectProduct.mul_left, hr, invAut_apply]
+            · rw [SemidirectProduct.mul_right, hr, SemidirectProduct.one_right]
+              decide
+          rw [show 6 = 2 * 3 by norm_num, pow_mul, hsq, one_pow]
+      · change g.2 ^ 6 = 1
+        rw [← orderOf_dvd_iff_pow_eq_one]
+        have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+        have hdvd := _root_.orderOf_dvd_natCard (x := g.2)
+        rw [hcard] at hdvd
+        exact hdvd.trans (by norm_num)) (by norm_num : ¬ (4 : ℕ) ∣ 6)
+  · change ∀ g : DihedralGroup 3 × CyclicRep 3 × order36_C2, orderOf g ≠ 4
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · rw [Prod.pow_mk]
+        apply Prod.ext
+        · change g.2.1 ^ 6 = 1
+          rw [← orderOf_dvd_iff_pow_eq_one]
+          have hcard : Nat.card (CyclicRep 3) = 3 := by simp [CyclicRep]
+          have hdvd := _root_.orderOf_dvd_natCard (x := g.2.1)
+          rw [hcard] at hdvd
+          exact hdvd.trans (by norm_num)
+        · change g.2.2 ^ 6 = 1
+          rw [← orderOf_dvd_iff_pow_eq_one]
+          have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+          have hdvd := _root_.orderOf_dvd_natCard (x := g.2.2)
+          rw [hcard] at hdvd
+          exact hdvd.trans (by norm_num)) (by norm_num : ¬ (4 : ℕ) ∣ 6)
+  · change ∀ g : DihedralGroup 3 × DihedralGroup 3, orderOf g ≠ 4
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · change g.2 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one) (by norm_num : ¬ (4 : ℕ) ∣ 6)
+
+theorem order36_normal_nonabelian_c4_non_c4_reps_disjoint :
+    ∀ i j, ¬ Nonempty (order36_normal_nonabelian_c4_reps i ≃*
+      order36_normal_nonabelian_non_c4_reps j) := by
+  intro i j
+  exact not_mulEquiv_of_orderOf
+    (order36_normal_nonabelian_c4_reps_has_order_four i)
+    (order36_normal_nonabelian_non_c4_reps_no_order_four j)
+
+theorem order36_normal_nonabelian_non_c4_rep0_has_order_nine :
+    ∃ g : order36_normal_nonabelian_non_c4_reps (0 : Fin 4), orderOf g = 9 := by
+  change ∃ g : DihedralGroup 9 × order36_C2, orderOf g = 9
+  refine ⟨(DihedralGroup.r 1, 1), ?_⟩
+  rw [Prod.orderOf_mk, DihedralGroup.orderOf_r_one, orderOf_one]
+  norm_num
+
+theorem order36_E9_inv_c2_pow_six
+    (g : SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9)) :
+    g ^ 6 = 1 := by
+  have hcase :
+      g.right = 1 ∨ g.right = Multiplicative.ofAdd (1 : ZMod 2) := by
+    rcases multiplicative_zmod_two_cases g.right with h | h
+    · left; exact h
+    · right; exact h
+  rcases hcase with hr | hr
+  · have hg : g = SemidirectProduct.inl g.left :=
+      SemidirectProduct.ext rfl (by rw [hr]; rfl)
+    rw [hg, ← map_pow]
+    have hleft3 : g.left ^ 3 = 1 := by
+      simpa [order36_E9] using (pow_p_elemAbelian (p := 3) g.left)
+    rw [show 6 = 3 * 2 by norm_num, pow_mul, hleft3, one_pow, map_one]
+  · have hsq : g ^ 2 = 1 := by
+      rw [sq]
+      apply SemidirectProduct.ext
+      · simp [SemidirectProduct.mul_left, hr, invAut_apply]
+      · rw [SemidirectProduct.mul_right, hr, SemidirectProduct.one_right]
+        decide
+    rw [show 6 = 2 * 3 by norm_num, pow_mul, hsq, one_pow]
+
+theorem order36_normal_nonabelian_non_c4_reps_no_order_nine (i : Fin 4)
+    (hi : i ≠ 0) :
+    ∀ g : order36_normal_nonabelian_non_c4_reps i, orderOf g ≠ 9 := by
+  fin_cases i
+  · exact False.elim (hi rfl)
+  · change ∀ g : SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9) ×
+      order36_C2, orderOf g ≠ 9
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · exact order36_E9_inv_c2_pow_six g.1
+      · change g.2 ^ 6 = 1
+        rw [← orderOf_dvd_iff_pow_eq_one]
+        have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+        have hdvd := _root_.orderOf_dvd_natCard (x := g.2)
+        rw [hcard] at hdvd
+        exact hdvd.trans (by norm_num)) (by norm_num : ¬ (9 : ℕ) ∣ 6)
+  · change ∀ g : DihedralGroup 3 × CyclicRep 3 × order36_C2, orderOf g ≠ 9
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · rw [Prod.pow_mk]
+        apply Prod.ext
+        · change g.2.1 ^ 6 = 1
+          rw [← orderOf_dvd_iff_pow_eq_one]
+          have hcard : Nat.card (CyclicRep 3) = 3 := by simp [CyclicRep]
+          have hdvd := _root_.orderOf_dvd_natCard (x := g.2.1)
+          rw [hcard] at hdvd
+          exact hdvd.trans (by norm_num)
+        · change g.2.2 ^ 6 = 1
+          rw [← orderOf_dvd_iff_pow_eq_one]
+          have hcard : Nat.card order36_C2 = 2 := by simp [order36_C2]
+          have hdvd := _root_.orderOf_dvd_natCard (x := g.2.2)
+          rw [hcard] at hdvd
+          exact hdvd.trans (by norm_num)) (by norm_num : ¬ (9 : ℕ) ∣ 6)
+  · change ∀ g : DihedralGroup 3 × DihedralGroup 3, orderOf g ≠ 9
+    exact orderOf_ne_of_pow (fun g => by
+      rw [Prod.pow_mk]
+      apply Prod.ext
+      · change g.1 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one
+      · change g.2 ^ 6 = 1
+        rw [show 6 = Fintype.card (DihedralGroup 3) by simp [DihedralGroup.card]]
+        exact pow_card_eq_one) (by norm_num : ¬ (9 : ℕ) ∣ 6)
+
+theorem order36_E9_inv_c2_center_eq_bot :
+    Subgroup.center (SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9)) =
+      ⊥ := by
+  rw [Subgroup.eq_bot_iff_forall]
+  intro z hz
+  have hleft_inv_fixed : z.left⁻¹ = z.left := by
+    have hcomm := (Subgroup.mem_center_iff.mp hz)
+      (SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 2)))
+    have hleft := congrArg SemidirectProduct.left hcomm
+    rw [SemidirectProduct.mul_left, SemidirectProduct.mul_left,
+      SemidirectProduct.left_inr, SemidirectProduct.right_inr] at hleft
+    simpa [invActionHom_ofAdd_one, invAut_apply] using hleft
+  have hleft_sq : z.left ^ 2 = 1 := by
+    rw [sq]
+    nth_rewrite 2 [← hleft_inv_fixed]
+    exact mul_inv_cancel z.left
+  have hleft_three : z.left ^ 3 = 1 := by
+    simpa [order36_E9] using (pow_p_elemAbelian (p := 3) z.left)
+  have hleft_one : z.left = 1 := by
+    have h2 : orderOf z.left ∣ 2 := orderOf_dvd_of_pow_eq_one hleft_sq
+    have h3 : orderOf z.left ∣ 3 := orderOf_dvd_of_pow_eq_one hleft_three
+    have h13 : orderOf z.left ∣ Nat.gcd 2 3 := Nat.dvd_gcd h2 h3
+    have h1 : orderOf z.left = 1 := Nat.eq_one_of_dvd_one (by simpa using h13)
+    exact orderOf_eq_one_iff.mp h1
+  have hfixed_e1 :
+      (invActionHom order36_E9 z.right) order36_E9_e1 = order36_E9_e1 := by
+    have hcomm := (Subgroup.mem_center_iff.mp hz) (SemidirectProduct.inl order36_E9_e1)
+    have hleft := congrArg SemidirectProduct.left hcomm
+    rw [SemidirectProduct.mul_left, SemidirectProduct.mul_left,
+      SemidirectProduct.left_inl, SemidirectProduct.right_inl, hleft_one] at hleft
+    simpa using hleft.symm
+  have hright_one : z.right = 1 := by
+    rcases multiplicative_zmod_two_cases z.right with hright | hright
+    · exact hright
+    · exfalso
+      rw [hright, invActionHom_ofAdd_one, invAut_apply] at hfixed_e1
+      exact (by decide : order36_E9_e1⁻¹ ≠ order36_E9_e1) hfixed_e1
+  exact SemidirectProduct.ext hleft_one hright_one
+
+theorem card_center_order36_E9_inv_c2 :
+    Nat.card (Subgroup.center
+      (SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9))) = 1 :=
+  card_center_of_eq_bot order36_E9_inv_c2_center_eq_bot
+
+def order36_normal_nonabelian_non_c4_center_card : Fin 4 → ℕ
+  | 0 => 2
+  | 1 => 2
+  | 2 => 6
+  | 3 => 1
+
+theorem card_center_order36_normal_nonabelian_non_c4_reps (i : Fin 4) :
+    Nat.card (Subgroup.center (order36_normal_nonabelian_non_c4_reps i)) =
+      order36_normal_nonabelian_non_c4_center_card i := by
+  fin_cases i
+  · change Nat.card (Subgroup.center (DihedralGroup 9 × order36_C2)) = 2
+    rw [card_center_prod,
+      card_center_of_eq_bot
+        (DihedralGroup.center_eq_bot_of_odd_ne_one (by exact ⟨4, by norm_num⟩ : Odd 9)
+          (by norm_num : (9 : ℕ) ≠ 1)),
+      card_center_eq_card_of_comm order36_C2 (fun a b => mul_comm a b)]
+    simp [order36_C2]
+  · change Nat.card (Subgroup.center
+      (SemidirectProduct order36_E9 order36_C2 (invActionHom order36_E9) ×
+        order36_C2)) = 2
+    rw [card_center_prod, card_center_order36_E9_inv_c2,
+      card_center_eq_card_of_comm order36_C2 (fun a b => mul_comm a b)]
+    simp [order36_C2]
+  · change Nat.card (Subgroup.center (DihedralGroup 3 × CyclicRep 3 × order36_C2)) = 6
+    rw [card_center_prod,
+      card_center_of_eq_bot
+        (DihedralGroup.center_eq_bot_of_odd_ne_one (by exact ⟨1, by norm_num⟩ : Odd 3)
+          (by norm_num : (3 : ℕ) ≠ 1)),
+      card_center_prod,
+      card_center_eq_card_of_comm (CyclicRep 3) (fun a b => mul_comm a b),
+      card_center_eq_card_of_comm order36_C2 (fun a b => mul_comm a b)]
+    simp [CyclicRep, order36_C2]
+  · change Nat.card (Subgroup.center (DihedralGroup 3 × DihedralGroup 3)) = 1
+    rw [card_center_prod,
+      card_center_of_eq_bot
+        (DihedralGroup.center_eq_bot_of_odd_ne_one (by exact ⟨1, by norm_num⟩ : Odd 3)
+          (by norm_num : (3 : ℕ) ≠ 1))]
+
+theorem order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+    {i j : Fin 4}
+    (h : order36_normal_nonabelian_non_c4_center_card i ≠
+      order36_normal_nonabelian_non_c4_center_card j) :
+    ¬ Nonempty (order36_normal_nonabelian_non_c4_reps i ≃*
+      order36_normal_nonabelian_non_c4_reps j) :=
+  not_nonempty_mulEquiv_of_card_center_ne (by
+    rw [card_center_order36_normal_nonabelian_non_c4_reps i,
+      card_center_order36_normal_nonabelian_non_c4_reps j]
+    exact h)
+
+theorem order36_normal_nonabelian_non_c4_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_nonabelian_non_c4_reps := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 1 (by decide)) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 2 (by decide)) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 3 (by decide)) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 1 (by decide))
+      ⟨hiso.some.symm⟩)
+  · rfl
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) hiso)
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 2 (by decide))
+      ⟨hiso.some.symm⟩)
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) ⟨hiso.some.symm⟩)
+  · rfl
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) hiso)
+  · exact False.elim (not_mulEquiv_of_orderOf
+      order36_normal_nonabelian_non_c4_rep0_has_order_nine
+      (order36_normal_nonabelian_non_c4_reps_no_order_nine 3 (by decide))
+      ⟨hiso.some.symm⟩)
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) ⟨hiso.some.symm⟩)
+  · exact False.elim
+      (order36_normal_nonabelian_non_c4_reps_not_mulEquiv_of_center_card_ne
+        (by decide) ⟨hiso.some.symm⟩)
+  · rfl
+
+def order36_normal_nonabelian_splitEquiv : Fin 8 ≃ Fin 4 ⊕ Fin 4 where
+  toFun
+    | 0 => Sum.inl 0
+    | 1 => Sum.inr 0
+    | 2 => Sum.inl 1
+    | 3 => Sum.inl 2
+    | 4 => Sum.inl 3
+    | 5 => Sum.inr 1
+    | 6 => Sum.inr 2
+    | 7 => Sum.inr 3
+  invFun
+    | Sum.inl 0 => 0
+    | Sum.inl 1 => 2
+    | Sum.inl 2 => 3
+    | Sum.inl 3 => 4
+    | Sum.inr 0 => 1
+    | Sum.inr 1 => 5
+    | Sum.inr 2 => 6
+    | Sum.inr 3 => 7
+  left_inv i := by fin_cases i <;> rfl
+  right_inv s := by
+    rcases s with i | i <;> fin_cases i <;> rfl
+
+theorem order36_normal_nonabelian_split_reps_pairwise :
+    PairwiseNonMulEquiv
+      (Sum.elim order36_normal_nonabelian_c4_reps
+        order36_normal_nonabelian_non_c4_reps) := by
+  exact order36_normal_nonabelian_c4_reps_pairwise.sum
+    order36_normal_nonabelian_non_c4_reps_pairwise
+    order36_normal_nonabelian_c4_non_c4_reps_disjoint
+
+@[simp]
+theorem order36_normal_nonabelian_split_reps_apply (i : Fin 8) :
+    Sum.elim order36_normal_nonabelian_c4_reps
+      order36_normal_nonabelian_non_c4_reps
+      (order36_normal_nonabelian_splitEquiv i) =
+      order36_normal_nonabelian_reps i := by
+  fin_cases i <;> rfl
+
+noncomputable def order36_normal_nonabelian_splitMulEquiv :
+    (i : Fin 8) →
+      Sum.elim order36_normal_nonabelian_c4_reps
+        order36_normal_nonabelian_non_c4_reps
+        (order36_normal_nonabelian_splitEquiv i) ≃*
+        order36_normal_nonabelian_reps i
+  | 0 => MulEquiv.refl _
+  | 1 => MulEquiv.refl _
+  | 2 => MulEquiv.refl _
+  | 3 => MulEquiv.refl _
+  | 4 => MulEquiv.refl _
+  | 5 => MulEquiv.refl _
+  | 6 => MulEquiv.refl _
+  | 7 => MulEquiv.refl _
+
+theorem order36_normal_nonabelian_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_nonabelian_reps := by
+  intro i j hiso
+  apply order36_normal_nonabelian_splitEquiv.injective
+  let ei := order36_normal_nonabelian_splitMulEquiv i
+  let ej := order36_normal_nonabelian_splitMulEquiv j
+  have hsplit :
+      Nonempty
+        (Sum.elim order36_normal_nonabelian_c4_reps order36_normal_nonabelian_non_c4_reps
+            (order36_normal_nonabelian_splitEquiv i) ≃*
+          Sum.elim order36_normal_nonabelian_c4_reps order36_normal_nonabelian_non_c4_reps
+            (order36_normal_nonabelian_splitEquiv j)) :=
+    ⟨ei.trans (hiso.some.trans ej.symm)⟩
+  exact order36_normal_nonabelian_split_reps_pairwise
+    (order36_normal_nonabelian_splitEquiv i)
+    (order36_normal_nonabelian_splitEquiv j)
+    hsplit
+
+def order36_normal_splitEquiv : Fin 12 ≃ Fin 4 ⊕ Fin 8 where
+  toFun
+    | 0 => Sum.inl 0
+    | 1 => Sum.inr 0
+    | 2 => Sum.inl 1
+    | 3 => Sum.inr 1
+    | 4 => Sum.inl 2
+    | 5 => Sum.inr 2
+    | 6 => Sum.inr 3
+    | 7 => Sum.inr 4
+    | 8 => Sum.inl 3
+    | 9 => Sum.inr 5
+    | 10 => Sum.inr 6
+    | 11 => Sum.inr 7
+  invFun
+    | Sum.inl 0 => 0
+    | Sum.inl 1 => 2
+    | Sum.inl 2 => 4
+    | Sum.inl 3 => 8
+    | Sum.inr 0 => 1
+    | Sum.inr 1 => 3
+    | Sum.inr 2 => 5
+    | Sum.inr 3 => 6
+    | Sum.inr 4 => 7
+    | Sum.inr 5 => 9
+    | Sum.inr 6 => 10
+    | Sum.inr 7 => 11
+  left_inv i := by fin_cases i <;> rfl
+  right_inv s := by
+    rcases s with i | i <;> fin_cases i <;> rfl
+
+theorem order36_normal_split_reps_pairwise :
+    PairwiseNonMulEquiv
+      (Sum.elim order36_normal_abelian_reps order36_normal_nonabelian_reps) := by
+  exact order36_normal_abelian_reps_pairwise.sum
+    order36_normal_nonabelian_reps_pairwise
+    order36_normal_abelian_nonabelian_reps_disjoint
+
+noncomputable def order36_normal_splitMulEquiv :
+    (i : Fin 12) →
+      Sum.elim order36_normal_abelian_reps order36_normal_nonabelian_reps
+        (order36_normal_splitEquiv i) ≃*
+        order36_normal_reps i
+  | 0 => MulEquiv.refl _
+  | 1 => MulEquiv.refl _
+  | 2 => MulEquiv.refl _
+  | 3 => MulEquiv.refl _
+  | 4 => MulEquiv.refl _
+  | 5 => MulEquiv.refl _
+  | 6 => MulEquiv.refl _
+  | 7 => MulEquiv.refl _
+  | 8 => MulEquiv.refl _
+  | 9 => MulEquiv.refl _
+  | 10 => MulEquiv.refl _
+  | 11 => MulEquiv.refl _
+
+theorem order36_normal_reps_pairwise :
+    PairwiseNonMulEquiv order36_normal_reps := by
+  intro i j hiso
+  apply order36_normal_splitEquiv.injective
+  let ei := order36_normal_splitMulEquiv i
+  let ej := order36_normal_splitMulEquiv j
+  have hsplit :
+      Nonempty
+        (Sum.elim order36_normal_abelian_reps order36_normal_nonabelian_reps
+            (order36_normal_splitEquiv i) ≃*
+          Sum.elim order36_normal_abelian_reps order36_normal_nonabelian_reps
+            (order36_normal_splitEquiv j)) :=
+    ⟨ei.trans (hiso.some.trans ej.symm)⟩
+  exact order36_normal_split_reps_pairwise
+    (order36_normal_splitEquiv i) (order36_normal_splitEquiv j) hsplit
+
 theorem order36_c9_c4_action_rep_cases (φ : order36_C4 →* MulAut order36_C9) :
     Nonempty (SemidirectProduct order36_C9 order36_C4 φ ≃*
       order36_normal_reps (0 : Fin 12)) ∨
@@ -2379,6 +3658,181 @@ theorem card_sylow_3_subgroup_of_card_36 [Finite G] (hG : Nat.card G = 36)
   rw [Sylow.card_eq_multiplicity, hG, hfact]
   norm_num
 
+/-- In a group of order `36`, a normal subgroup of order `9` is the unique Sylow
+`3`-subgroup. -/
+theorem card_sylow_3_eq_one_of_normal_order_nine [Finite G] (hG : Nat.card G = 36)
+    (N : Subgroup G) [N.Normal] (hN : Nat.card N = 9) :
+    Nat.card (Sylow 3 G) = 1 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hfact : (Nat.card G).factorization 3 = 2 := by
+    rw [hG]
+    rw [show 36 = 4 * 3 ^ 2 by norm_num,
+      Nat.factorization_mul (by norm_num) (by norm_num), Finsupp.add_apply,
+      Nat.factorization_eq_zero_of_not_dvd (by norm_num : ¬ (3 : ℕ) ∣ 4),
+      Nat.factorization_pow_self (by norm_num : Nat.Prime 3), zero_add]
+  let P : Sylow 3 G := Sylow.ofCard N (by
+    rw [hfact]
+    exact hN)
+  have hPnormal : (↑P : Subgroup G).Normal := by
+    dsimp [P]
+    infer_instance
+  haveI := Sylow.unique_of_normal P hPnormal
+  exact Nat.card_unique
+
+/-- A semidirect product with normal factor of order `9` and acting factor of order `4`
+has a unique Sylow `3`-subgroup. -/
+theorem card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+    {N H : Type*} [Group N] [Group H] [Finite N] [Finite H]
+    (φ : H →* MulAut N) (hN : Nat.card N = 9) (hH : Nat.card H = 4) :
+    Nat.card (Sylow 3 (SemidirectProduct N H φ)) = 1 := by
+  haveI : Finite (SemidirectProduct N H φ) := Finite.of_equiv _ SemidirectProduct.equivProd.symm
+  have hG : Nat.card (SemidirectProduct N H φ) = 36 := by
+    rw [SemidirectProduct.card, hN, hH]
+  let K : Subgroup (SemidirectProduct N H φ) :=
+    (SemidirectProduct.rightHom : SemidirectProduct N H φ →* H).ker
+  haveI : K.Normal := by
+    dsimp [K]
+    infer_instance
+  have hK : Nat.card K = 9 := by
+    have e : N ≃* (SemidirectProduct.inl : N →* SemidirectProduct N H φ).range :=
+      MonoidHom.ofInjective (SemidirectProduct.inl_injective (φ := φ))
+    rw [show K = (SemidirectProduct.inl : N →* SemidirectProduct N H φ).range by
+      dsimp [K]
+      rw [← SemidirectProduct.range_inl_eq_ker_rightHom (φ := φ)]]
+    rw [← hN, Nat.card_congr e.toEquiv]
+  exact card_sylow_3_eq_one_of_normal_order_nine hG K hK
+
+/-- A direct product with first factor of order `9` and second factor of order `4` has a
+unique Sylow `3`-subgroup. -/
+theorem card_sylow_3_prod_of_left_card_nine_right_card_four
+    {N H : Type*} [Group N] [Group H] [Finite N] [Finite H]
+    (hN : Nat.card N = 9) (hH : Nat.card H = 4) :
+    Nat.card (Sylow 3 (N × H)) = 1 := by
+  have hG : Nat.card (N × H) = 36 := by
+    rw [Nat.card_prod, hN, hH]
+  let K : Subgroup (N × H) := (MonoidHom.snd N H).ker
+  haveI : K.Normal := by
+    dsimp [K]
+    infer_instance
+  have hK : Nat.card K = 9 := by
+    rw [show K = (⊤ : Subgroup N).prod (⊥ : Subgroup H) by
+      dsimp [K]
+      rw [MonoidHom.ker_snd]]
+    rw [Nat.card_congr (Subgroup.prodEquiv (⊤ : Subgroup N) (⊥ : Subgroup H)).toEquiv,
+      Nat.card_prod, Subgroup.card_top, Subgroup.card_bot, hN]
+  exact card_sylow_3_eq_one_of_normal_order_nine hG K hK
+
+/-- The number of Sylow `3`-subgroups is preserved by group isomorphism. -/
+theorem card_sylow_3_eq_of_mulEquiv {G H : Type*} [Group G] [Group H]
+    [Finite G] [Finite H] (e : G ≃* H) :
+    Nat.card (Sylow 3 G) = Nat.card (Sylow 3 H) := by
+  haveI : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+  let f : G →* H := e.toMonoidHom
+  have hf : Function.Surjective f := e.surjective
+  have hsurj : Function.Surjective (Sylow.mapSurjective hf : Sylow 3 G → Sylow 3 H) :=
+    Sylow.mapSurjective_surjective hf 3
+  let g : H →* G := e.symm.toMonoidHom
+  have hg : Function.Surjective g := e.symm.surjective
+  have hsurj' : Function.Surjective (Sylow.mapSurjective hg : Sylow 3 H → Sylow 3 G) :=
+    Sylow.mapSurjective_surjective hg 3
+  exact Nat.le_antisymm
+    (Nat.card_le_card_of_surjective _ hsurj')
+    (Nat.card_le_card_of_surjective _ hsurj)
+
+/-- Every representative in the normal Sylow-`3` branch has a unique Sylow `3`-subgroup. -/
+theorem card_sylow_3_order36_normal_reps (i : Fin 12) :
+    Nat.card (Sylow 3 (order36_normal_reps i)) = 1 := by
+  have hC2 : Nat.card order36_C2 = 2 := by
+    simp [order36_C2]
+  have hC4 : Nat.card order36_C4 = 4 := by
+    simp [order36_C4]
+  have hV4 : Nat.card order36_V4 = 4 := by
+    rw [order36_V4, Nat.card_prod, hC2]
+  have hC9 : Nat.card order36_C9 = 9 := by
+    simp [order36_C9]
+  have hE9 : Nat.card order36_E9 = 9 := by
+    rw [order36_E9, ElemAbelianRep, Nat.card_prod]
+    simp
+  fin_cases i
+  · change Nat.card (Sylow 3 (order36_C9 × order36_C4)) = 1
+    exact card_sylow_3_prod_of_left_card_nine_right_card_four
+        (N := order36_C9) (H := order36_C4) hC9 hC4
+  · change Nat.card (Sylow 3 (SemidirectProduct order36_C9 order36_C4
+      order36_C9_C4_invAction)) = 1
+    exact card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_C9_C4_invAction hC9 hC4
+  · change Nat.card (Sylow 3 (order36_C9 × order36_V4)) = 1
+    exact card_sylow_3_prod_of_left_card_nine_right_card_four
+        (N := order36_C9) (H := order36_V4) hC9 hV4
+  · haveI : Finite (SemidirectProduct order36_C9 order36_V4
+        (order36_c9Action order36_chiV4_fst)) :=
+      Finite.of_equiv _ SemidirectProduct.equivProd.symm
+    have hs :
+        Nat.card (Sylow 3 (SemidirectProduct order36_C9 order36_V4
+          (order36_c9Action order36_chiV4_fst))) = 1 :=
+      card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        (order36_c9Action order36_chiV4_fst) hC9 hV4
+    have heq := card_sylow_3_eq_of_mulEquiv order36_c9V4_fst_equiv_dihedral_prod
+    change Nat.card (Sylow 3 (DihedralGroup 9 × order36_C2)) = 1
+    exact heq.symm.trans hs
+  · change Nat.card (Sylow 3 (order36_E9 × order36_C4)) = 1
+    exact card_sylow_3_prod_of_left_card_nine_right_card_four
+        (N := order36_E9) (H := order36_C4) hE9 hC4
+  · change Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_C4
+      order36_E9_C4_negBothAction)) = 1
+    exact card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_C4_negBothAction hE9 hC4
+  · change Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_C4
+      order36_E9_C4_negFirstAction)) = 1
+    exact card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_C4_negFirstAction hE9 hC4
+  · change Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_C4
+      order36_E9_C4_rotAction)) = 1
+    exact card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_C4_rotAction hE9 hC4
+  · change Nat.card (Sylow 3 (order36_E9 × order36_V4)) = 1
+    exact card_sylow_3_prod_of_left_card_nine_right_card_four
+        (N := order36_E9) (H := order36_V4) hE9 hV4
+  · haveI : Finite (SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_negBothFstAction) :=
+      Finite.of_equiv _ SemidirectProduct.equivProd.symm
+    have hs :
+        Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_V4
+          order36_E9_V4_negBothFstAction)) = 1 :=
+      card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_V4_negBothFstAction hE9 hV4
+    obtain ⟨e⟩ := order36_e9_v4_negBothFst_equiv_rep9
+    haveI : Finite (order36_normal_reps (9 : Fin 12)) := Finite.of_equiv _ e.toEquiv
+    have heq := card_sylow_3_eq_of_mulEquiv e
+    change Nat.card (Sylow 3 (order36_normal_reps (9 : Fin 12))) = 1
+    exact heq.symm.trans hs
+  · haveI : Finite (SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_negFirstFstAction) :=
+      Finite.of_equiv _ SemidirectProduct.equivProd.symm
+    have hs :
+        Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_V4
+          order36_E9_V4_negFirstFstAction)) = 1 :=
+      card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_V4_negFirstFstAction hE9 hV4
+    obtain ⟨e⟩ := order36_e9_v4_negFirstFst_equiv_rep10
+    haveI : Finite (order36_normal_reps (10 : Fin 12)) := Finite.of_equiv _ e.toEquiv
+    have heq := card_sylow_3_eq_of_mulEquiv e
+    change Nat.card (Sylow 3 (order36_normal_reps (10 : Fin 12))) = 1
+    exact heq.symm.trans hs
+  · haveI : Finite (SemidirectProduct order36_E9 order36_V4
+        order36_E9_V4_diagAction) :=
+      Finite.of_equiv _ SemidirectProduct.equivProd.symm
+    have hs :
+        Nat.card (Sylow 3 (SemidirectProduct order36_E9 order36_V4
+          order36_E9_V4_diagAction)) = 1 :=
+      card_sylow_3_semidirectProduct_of_left_card_nine_right_card_four
+        order36_E9_V4_diagAction hE9 hV4
+    obtain ⟨e⟩ := order36_e9_v4_diag_equiv_rep11
+    haveI : Finite (order36_normal_reps (11 : Fin 12)) := Finite.of_equiv _ e.toEquiv
+    have heq := card_sylow_3_eq_of_mulEquiv e
+    change Nat.card (Sylow 3 (order36_normal_reps (11 : Fin 12))) = 1
+    exact heq.symm.trans hs
+
 /-- If there is a unique Sylow `3`-subgroup in a group of order `36`, it is normal. -/
 theorem sylow_3_normal_of_card_36_of_card_sylow_eq_one [Finite G]
     (hSyl : Nat.card (Sylow 3 G) = 1) (P : Sylow 3 G) :
@@ -2555,7 +4009,1827 @@ theorem order36_normal_rep_cases [Finite G] (hG : Nat.card G = 36)
     · obtain ⟨e⟩ := hrep
       exact Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨eG.trans e⟩
 
+theorem order36_normal_rep_cases_exists [Finite G] (hG : Nat.card G = 36)
+    (hSyl : Nat.card (Sylow 3 G) = 1) :
+    ∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i) := by
+  rcases order36_normal_rep_cases (G := G) hG hSyl with hnormal | hrest
+  · rcases hnormal with h | h | h | h | h | h | h | h
+    · exact ⟨0, h⟩
+    · exact ⟨1, h⟩
+    · exact ⟨2, h⟩
+    · exact ⟨3, h⟩
+    · exact ⟨4, h⟩
+    · exact ⟨5, h⟩
+    · exact ⟨6, h⟩
+    · exact ⟨7, h⟩
+  · rcases hrest with h | hrest
+    · exact ⟨8, h⟩
+    · rcases hrest with h | hrest
+      · exact ⟨9, h⟩
+      · rcases hrest with h | h
+        · exact ⟨10, h⟩
+        · exact ⟨11, h⟩
+
 /-! ### The non-normal Sylow branch -/
+
+/-- The alternating group `A₄`, realised as permutations of `Fin 4`. -/
+abbrev order36_A4 : Type := alternatingGroup (Fin 4)
+
+/-- The split central-extension candidate `C₃ × A₄`. -/
+abbrev order36_C3A4 : Type := order36_C3 × order36_A4
+
+local instance order36_a4KleinFourNormal :
+    (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4).Normal := by
+  exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+
+/-- The quotient `A₄ / V₄`, which is cyclic of order `3`. -/
+abbrev order36_A4Quot : Type :=
+  order36_A4 ⧸ (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4)
+
+theorem card_order36_A4 : Nat.card order36_A4 = 12 := by
+  rw [nat_card_alternatingGroup, Nat.card_fin]
+  norm_num [Nat.factorial]
+
+theorem card_order36_C3 : Nat.card order36_C3 = 3 := by
+  simp [order36_C3]
+
+theorem card_order36_C3A4 : Nat.card order36_C3A4 = 36 := by
+  rw [Nat.card_prod, card_order36_C3, card_order36_A4]
+
+theorem card_order36_C9 : Nat.card order36_C9 = 9 := by
+  simp [order36_C9]
+
+theorem card_order36_A4Quot : Nat.card order36_A4Quot = 3 := by
+  let K : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  have hcardA : Nat.card order36_A4 = 12 := card_order36_A4
+  have hcardK : Nat.card K = 4 := by
+    simpa [K] using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have h := Subgroup.card_eq_card_quotient_mul_card_subgroup K
+  change Nat.card order36_A4 = Nat.card order36_A4Quot * Nat.card K at h
+  rw [hcardA, hcardK] at h
+  omega
+
+theorem order36_A4_hom_to_order_two_trivial {H : Type*} [Group H]
+    (hH : Nat.card H = 2) (φ : order36_A4 →* H) : φ = 1 := by
+  let K : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  have hHcomm : ∀ x y : H, x * y = y * x := by
+    haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+    haveI : IsCyclic H := isCyclic_of_prime_card hH
+    exact fun x y => IsCyclic.commGroup.mul_comm x y
+  have hK_comm : K = commutator order36_A4 := by
+    simpa [K, order36_A4] using
+      alternatingGroup.kleinFour_eq_commutator (α := Fin 4) (by simp)
+  have hKker : K ≤ φ.ker := by
+    rw [hK_comm]
+    rw [commutator_def]
+    exact Subgroup.commutator_le.mpr fun a _ b _ => by
+      rw [MonoidHom.mem_ker, map_commutatorElement, commutatorElement_eq_one_iff_mul_comm]
+      exact hHcomm (φ a) (φ b)
+  let φQ : order36_A4Quot →* H := QuotientGroup.lift K φ hKker
+  have hQrange_dvd3 : Nat.card φQ.range ∣ 3 := by
+    simpa [φQ, card_order36_A4Quot] using Subgroup.card_range_dvd φQ
+  have hQrange_dvd2 : Nat.card φQ.range ∣ 2 := by
+    simpa [hH] using Subgroup.card_subgroup_dvd_card φQ.range
+  have hQrange_card : Nat.card φQ.range = 1 := by
+    have hle2 : Nat.card φQ.range ≤ 2 := Nat.le_of_dvd (by norm_num) hQrange_dvd2
+    have hpos : 0 < Nat.card φQ.range :=
+      Nat.pos_of_ne_zero (ne_zero_of_dvd_ne_zero (by norm_num : 2 ≠ 0) hQrange_dvd2)
+    interval_cases h : Nat.card φQ.range
+    · rfl
+    · exfalso
+      norm_num at hQrange_dvd3
+  have hQrange_bot : φQ.range = ⊥ := φQ.range.eq_bot_of_card_eq hQrange_card
+  have hφQ : φQ = 1 := MonoidHom.range_eq_bot_iff.mp hQrange_bot
+  apply MonoidHom.ext
+  intro a
+  have hq : φQ ((QuotientGroup.mk' K) a) = 1 := by
+    rw [hφQ]
+    rfl
+  simpa [φQ] using hq
+
+theorem order36_A4_hom_to_order_four_trivial {H : Type*} [Group H]
+    (hH : Nat.card H = 4) (φ : order36_A4 →* H) : φ = 1 := by
+  let K : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  have hHcomm : ∀ x y : H, x * y = y * x := by
+    haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+    intro x y
+    exact prime_sq_mul_comm (p := 2)
+      (by rw [hH]; norm_num) x y
+  have hK_comm : K = commutator order36_A4 := by
+    simpa [K, order36_A4] using
+      alternatingGroup.kleinFour_eq_commutator (α := Fin 4) (by simp)
+  have hKker : K ≤ φ.ker := by
+    rw [hK_comm]
+    rw [commutator_def]
+    exact Subgroup.commutator_le.mpr fun a _ b _ => by
+      rw [MonoidHom.mem_ker, map_commutatorElement, commutatorElement_eq_one_iff_mul_comm]
+      exact hHcomm (φ a) (φ b)
+  let φQ : order36_A4Quot →* H := QuotientGroup.lift K φ hKker
+  have hQrange_dvd3 : Nat.card φQ.range ∣ 3 := by
+    simpa [φQ, card_order36_A4Quot] using Subgroup.card_range_dvd φQ
+  have hQrange_dvd4 : Nat.card φQ.range ∣ 4 := by
+    simpa [hH] using Subgroup.card_subgroup_dvd_card φQ.range
+  have hQrange_card : Nat.card φQ.range = 1 := by
+    have hle4 : Nat.card φQ.range ≤ 4 := Nat.le_of_dvd (by norm_num) hQrange_dvd4
+    have hpos : 0 < Nat.card φQ.range :=
+      Nat.pos_of_ne_zero (ne_zero_of_dvd_ne_zero (by norm_num : 4 ≠ 0) hQrange_dvd4)
+    interval_cases h : Nat.card φQ.range
+    · rfl
+    · exfalso
+      norm_num [h] at hQrange_dvd3
+    · exfalso
+      norm_num [h] at hQrange_dvd4
+    · exfalso
+      norm_num [h] at hQrange_dvd3
+  have hQrange_bot : φQ.range = ⊥ := φQ.range.eq_bot_of_card_eq hQrange_card
+  have hφQ : φQ = 1 := MonoidHom.range_eq_bot_iff.mp hQrange_bot
+  apply MonoidHom.ext
+  intro a
+  have hq : φQ ((QuotientGroup.mk' K) a) = 1 := by
+    rw [hφQ]
+    rfl
+  simpa [φQ] using hq
+
+theorem order36_normal_order_three_A4_quotient_le_center {G : Type*} [Group G] [Finite G]
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    K ≤ Subgroup.center G := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hK]; norm_num)
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  haveI : IsCyclic K := isCyclic_of_prime_card hK
+  have hKcomm : ∀ x y : K, x * y = y * x :=
+    fun x y => IsCyclic.commGroup.mul_comm x y
+  have hAutK : Nat.card (MulAut K) = 2 := by
+    rw [IsCyclic.card_mulAut K, hK]
+    rw [Nat.totient_prime (by norm_num : Nat.Prime 3)]
+  let φ : G →* MulAut K := MulAut.conjNormal
+  have hKker : K ≤ φ.ker := by
+    intro k hk
+    rw [MonoidHom.mem_ker]
+    apply MulEquiv.ext
+    intro x
+    apply Subtype.ext
+    change k * (x : G) * k⁻¹ = (x : G)
+    have hcomm : (⟨k, hk⟩ : K) * x = x * ⟨k, hk⟩ := hKcomm _ _
+    have hcommG : k * (x : G) = (x : G) * k := congrArg Subtype.val hcomm
+    calc
+      k * (x : G) * k⁻¹ = ((x : G) * k) * k⁻¹ := by rw [hcommG]
+      _ = (x : G) := by group
+  let φQ : G ⧸ K →* MulAut K := QuotientGroup.lift K φ hKker
+  obtain ⟨e⟩ := hquot
+  let ψ : order36_A4 →* MulAut K := φQ.comp e.symm.toMonoidHom
+  have hψ : ψ = 1 := order36_A4_hom_to_order_two_trivial hAutK ψ
+  have hφ : φ = 1 := by
+    apply MonoidHom.ext
+    intro g
+    have hq : ψ (e ((QuotientGroup.mk' K) g)) = 1 := by
+      rw [hψ]
+      rfl
+    simpa [ψ, φQ] using hq
+  intro k hk
+  rw [Subgroup.mem_center_iff]
+  intro g
+  let kk : K := ⟨k, hk⟩
+  have hg : φ g = 1 := congrArg (fun f : G →* MulAut K => f g) hφ
+  have happ : (φ g) kk = kk := by
+    rw [hg]
+    rfl
+  have hconj : g * k * g⁻¹ = k := by
+    have happ_coe := congrArg (fun x : K => (x : G)) happ
+    simpa [φ, kk] using happ_coe
+  calc
+    g * k = (g * k * g⁻¹) * g := by group
+    _ = k * g := by rw [hconj]
+
+theorem order36_card_sylow_3_eq_four_of_normal_order_three_A4_quotient
+    {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    Nat.card (Sylow 3 G) = 4 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exfalso
+    obtain ⟨P0⟩ := (Sylow.nonempty : Nonempty (Sylow 3 G))
+    haveI hPnormal : (↑P0 : Subgroup G).Normal :=
+      sylow_3_normal_of_card_36_of_card_sylow_eq_one hSyl P0
+    have hPcard : Nat.card (↑P0 : Subgroup G) = 9 :=
+      card_sylow_3_subgroup_of_card_36 hG P0
+    have hKp : IsPGroup 3 K := IsPGroup.of_card (p := 3) (n := 1) (by rw [hK]; norm_num)
+    have hKleP : K ≤ (↑P0 : Subgroup G) := hKp.le_sylow_of_normal P0
+    let πP : G →* G ⧸ (↑P0 : Subgroup G) := QuotientGroup.mk' (↑P0 : Subgroup G)
+    have hKker : K ≤ πP.ker := by
+      intro k hk
+      rw [MonoidHom.mem_ker]
+      change (QuotientGroup.mk' (↑P0 : Subgroup G)) k = 1
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hKleP hk
+    let φQ : G ⧸ K →* G ⧸ (↑P0 : Subgroup G) := QuotientGroup.lift K πP hKker
+    have hφQ_surj : Function.Surjective φQ := by
+      intro q
+      obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective (↑P0 : Subgroup G) q
+      refine ⟨(QuotientGroup.mk' K) g, ?_⟩
+      change πP g = q
+      exact hg
+    have hquotPcard : Nat.card (G ⧸ (↑P0 : Subgroup G)) = 4 := by
+      have h := Subgroup.card_eq_card_quotient_mul_card_subgroup (↑P0 : Subgroup G)
+      change Nat.card G =
+        Nat.card (G ⧸ (↑P0 : Subgroup G)) * Nat.card (↑P0 : Subgroup G) at h
+      rw [hG, hPcard] at h
+      omega
+    obtain ⟨e⟩ := hquot
+    let ψ : order36_A4 →* G ⧸ (↑P0 : Subgroup G) := φQ.comp e.symm.toMonoidHom
+    have hψ_surj : Function.Surjective ψ := by
+      intro q
+      obtain ⟨x, hx⟩ := hφQ_surj q
+      refine ⟨e x, ?_⟩
+      change φQ (e.symm (e x)) = q
+      rw [MulEquiv.symm_apply_apply, hx]
+    have hψ : ψ = 1 := order36_A4_hom_to_order_four_trivial hquotPcard ψ
+    haveI : Subsingleton (G ⧸ (↑P0 : Subgroup G)) := by
+      refine ⟨fun x y => ?_⟩
+      obtain ⟨a, rfl⟩ := hψ_surj x
+      obtain ⟨b, rfl⟩ := hψ_surj y
+      rw [hψ]
+      simp
+    haveI : Unique (G ⧸ (↑P0 : Subgroup G)) :=
+    {
+      default := 1
+      uniq x := Subsingleton.elim x 1
+    }
+    have hcard1 : Nat.card (G ⧸ (↑P0 : Subgroup G)) = 1 := Nat.card_unique
+    rw [hquotPcard] at hcard1
+    norm_num at hcard1
+  · exact hSyl
+
+noncomputable def order36_A4QuotEquiv : order36_A4Quot ≃* order36_C3 :=
+  (prime_classification (by norm_num : Nat.Prime 3) card_order36_A4Quot).some
+
+noncomputable abbrev order36_A4ToC3 : order36_A4 →* order36_C3 :=
+  order36_A4QuotEquiv.toMonoidHom.comp
+    (QuotientGroup.mk' (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4))
+
+theorem order36_A4ToC3_range_top : order36_A4ToC3.range = ⊤ := by
+  rw [Subgroup.eq_top_iff']
+  intro x
+  let q : order36_A4Quot := order36_A4QuotEquiv.symm x
+  obtain ⟨a, ha⟩ := QuotientGroup.mk'_surjective
+    (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4) q
+  rw [MonoidHom.mem_range]
+  refine ⟨a, ?_⟩
+  change order36_A4QuotEquiv ((QuotientGroup.mk'
+    (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4)) a) = x
+  rw [ha]
+  simp [q]
+
+theorem order36_A4_kleinFour_semidirectProduct :
+    ∃ (H : Subgroup order36_A4)
+      (φ : H →* MulAut (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4)),
+      Nat.card H = 3 ∧ Nonempty (H ≃* order36_C3) ∧
+        Nonempty (order36_A4 ≃*
+          SemidirectProduct (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4) H φ) := by
+  let K : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  have hKcard : Nat.card K = 4 := by
+    simpa [K, order36_A4] using
+      alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have hKindex : K.index = 3 := by
+    have hmul := K.index_mul_card
+    rw [hKcard, card_order36_A4] at hmul
+    omega
+  haveI : K.Normal := by
+    dsimp [K, order36_A4]
+    exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+  have hcop : Nat.Coprime (Nat.card K) K.index := by
+    rw [hKcard, hKindex]
+    norm_num
+  obtain ⟨H, hHcomp⟩ := Subgroup.exists_right_complement'_of_coprime (N := K) hcop
+  have hHcard : Nat.card H = 3 := by
+    have hindex := (IsComplement'.symm hHcomp).index_eq_card
+    rw [hKindex] at hindex
+    exact hindex.symm
+  have hHiso : Nonempty (H ≃* order36_C3) := by
+    simpa [order36_C3, CyclicRep] using
+      (prime_classification (G := H) (p := 3) (by norm_num) hHcard)
+  exact ⟨H, _, hHcard, hHiso, ⟨(SemidirectProduct.mulEquivSubgroup hHcomp).symm⟩⟩
+
+theorem order36_mulEquiv_kleinFour_of_card_four_and_pow_two
+    {L : Type*} [Group L] (hLcard : Nat.card L = 4)
+    (hpow : ∀ l : L, l ^ 2 = 1) :
+    Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) := by
+  haveI : Finite L := Nat.finite_of_card_ne_zero (by rw [hLcard]; norm_num)
+  haveI : IsKleinFour L := {
+    card_four := hLcard
+    exponent_two := by
+      have hdvd : Monoid.exponent L ∣ 2 := by
+        rw [Monoid.exponent_dvd_iff_forall_pow_eq_one]
+        exact hpow
+      rw [Nat.dvd_prime Nat.prime_two] at hdvd
+      apply Or.resolve_left hdvd
+      intro hExp
+      have hsub : Subsingleton L := Monoid.exp_eq_one_iff.mp hExp
+      have hcard_le : Nat.card L ≤ 1 := Finite.card_le_one_iff_subsingleton.mpr hsub
+      rw [hLcard] at hcard_le
+      norm_num at hcard_le }
+  haveI : IsKleinFour (alternatingGroup.kleinFour (Fin 4)) :=
+    alternatingGroup.kleinFour_isKleinFour (α := Fin 4) (by simp)
+  exact IsKleinFour.nonempty_mulEquiv
+
+theorem order36_exists_klein_complement_of_C3_layer
+    {G : Type*} [Group G] (K W : Subgroup G) [K.Normal] (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) (hWcard : Nat.card W = 12)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K) :
+    ∃ L : Subgroup W, (K.subgroupOf W).IsComplement' L ∧ Nat.card L = 4 ∧
+      Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hKcard]; norm_num)
+  haveI : Finite W := Nat.finite_of_card_ne_zero (by rw [hWcard]; norm_num)
+  have hKWcard : Nat.card (K.subgroupOf W) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hKW).toEquiv, hKcard]
+  have hKWindex : (K.subgroupOf W).index = 4 := by
+    have hmul := (K.subgroupOf W).index_mul_card
+    rw [hKWcard, hWcard] at hmul
+    omega
+  have hcop : Nat.Coprime (Nat.card (K.subgroupOf W)) (K.subgroupOf W).index := by
+    rw [hKWcard, hKWindex]
+    norm_num
+  obtain ⟨L, hLcomp⟩ :=
+    Subgroup.exists_right_complement'_of_coprime (N := K.subgroupOf W) hcop
+  have hLcard : Nat.card L = 4 := by
+    have hindex := (IsComplement'.symm hLcomp).index_eq_card
+    rw [hKWindex] at hindex
+    exact hindex.symm
+  have hLpow : ∀ l : L, l ^ 2 = 1 := by
+    intro l
+    have hsqK_G : (((l : W) : G) ^ 2) ∈ K := hpow_in (l : W).property
+    have hsqK_W : ((l : W) ^ 2) ∈ K.subgroupOf W := by
+      rw [Subgroup.mem_subgroupOf]
+      change (((l : W) : G) ^ 2) ∈ K
+      simpa using hsqK_G
+    have hsqL_W : ((l : W) ^ 2) ∈ L := L.pow_mem l.property 2
+    have hsqinf : ((l : W) ^ 2) ∈ K.subgroupOf W ⊓ L := by
+      rw [Subgroup.mem_inf]
+      exact ⟨hsqK_W, hsqL_W⟩
+    have hsqbot : ((l : W) ^ 2) ∈ (⊥ : Subgroup W) :=
+      (disjoint_iff_inf_le.mp hLcomp.disjoint) hsqinf
+    have hsqW : (l : W) ^ 2 = 1 := Subgroup.mem_bot.mp hsqbot
+    apply Subtype.ext
+    simpa using hsqW
+  have hLklein : Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) :=
+    order36_mulEquiv_kleinFour_of_card_four_and_pow_two hLcard hLpow
+  exact ⟨L, hLcomp, hLcard, hLklein⟩
+
+theorem order36_klein_complement_pow_two
+    {G : Type*} [Group G] (K W : Subgroup G) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    {l : W} (hl : l ∈ L) : l ^ 2 = 1 := by
+  have hl2K : (l ^ 2) ∈ K.subgroupOf W := by
+    rw [Subgroup.mem_subgroupOf]
+    change ((l : G) ^ 2) ∈ K
+    exact hpow_in l.property
+  have hl2L : (l ^ 2) ∈ L := L.pow_mem hl 2
+  have hl2inf : (l ^ 2) ∈ K.subgroupOf W ⊓ L := by
+    rw [Subgroup.mem_inf]
+    exact ⟨hl2K, hl2L⟩
+  exact Subgroup.mem_bot.mp ((disjoint_iff_inf_le.mp hLcomp.disjoint) hl2inf)
+
+theorem order36_mem_klein_complement_of_sq_one
+    {G : Type*} [Group G] (K W : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    {w : W} (hw2 : ((w : G) ^ 2) = 1) : w ∈ L := by
+  have hKsubcard : Nat.card (K.subgroupOf W) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hKW).toEquiv, hKcard]
+  obtain ⟨⟨k, l⟩, hkl⟩ := hLcomp.2 w
+  have hkK : (k : W) ∈ K.subgroupOf W := k.property
+  have hlL : (l : W) ∈ L := l.property
+  have hklW : (k : W) * (l : W) = w := by
+    simpa using hkl
+  have hl2K : ((l : W) ^ 2) ∈ K.subgroupOf W := by
+    rw [Subgroup.mem_subgroupOf]
+    change (((l : W) : G) ^ 2) ∈ K
+    exact hpow_in (l : W).property
+  have hl2L : ((l : W) ^ 2) ∈ L := L.pow_mem hlL 2
+  have hl2inf : ((l : W) ^ 2) ∈ K.subgroupOf W ⊓ L := by
+    rw [Subgroup.mem_inf]
+    exact ⟨hl2K, hl2L⟩
+  have hl2W : (l : W) ^ 2 = 1 := by
+    exact Subgroup.mem_bot.mp ((disjoint_iff_inf_le.mp hLcomp.disjoint) hl2inf)
+  have hkKG : ((k : W) : G) ∈ K := by
+    exact Subgroup.mem_subgroupOf.mp hkK
+  have hcommG : ((k : W) : G) * ((l : W) : G) = ((l : W) : G) * ((k : W) : G) :=
+    ((Subgroup.mem_center_iff.mp (hKcenter hkKG)) ((l : W) : G)).symm
+  have hcommW : (k : W) * (l : W) = (l : W) * (k : W) := by
+    apply Subtype.ext
+    simpa using hcommG
+  have hw2W : w ^ 2 = 1 := by
+    apply Subtype.ext
+    simpa using hw2
+  have hkl2 : ((k : W) * (l : W)) ^ 2 = 1 := by
+    rw [hklW, hw2W]
+  have hkl2_eq_k2 : ((k : W) * (l : W)) ^ 2 = (k : W) ^ 2 := by
+    calc
+      ((k : W) * (l : W)) ^ 2
+          = (k : W) * (l : W) * ((k : W) * (l : W)) := by rw [pow_two]
+      _ = (k : W) * ((l : W) * (k : W)) * (l : W) := by simp [mul_assoc]
+      _ = (k : W) * ((k : W) * (l : W)) * (l : W) := by rw [hcommW]
+      _ = (k : W) ^ 2 * ((l : W) ^ 2) := by simp [pow_two, mul_assoc]
+      _ = (k : W) ^ 2 := by rw [hl2W, mul_one]
+  have hk2W : (k : W) ^ 2 = 1 := by
+    rw [← hkl2_eq_k2]
+    exact hkl2
+  have hk2K : k ^ 2 = 1 := by
+    apply Subtype.ext
+    exact hk2W
+  have hkord_dvd3 : orderOf k ∣ 3 := by
+    have := orderOf_dvd_natCard k
+    simpa [hKsubcard] using this
+  have hkord_dvd2 : orderOf k ∣ 2 :=
+    orderOf_dvd_of_pow_eq_one hk2K
+  have hkord_one : orderOf k = 1 := by
+    have hdiv : orderOf k ∣ 1 := by
+      simpa using Nat.dvd_gcd hkord_dvd3 hkord_dvd2
+    exact Nat.dvd_one.mp hdiv
+  have hk_one : (k : W) = 1 :=
+    congrArg (fun x : K.subgroupOf W => (x : W)) (orderOf_eq_one_iff.mp hkord_one)
+  have hl_eq_w : (l : W) = w := by
+    simpa [hk_one] using hklW
+  rw [← hl_eq_w]
+  exact hlL
+
+theorem order36_klein_complement_map_normal
+    {G : Type*} [Group G] (K W : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K) :
+    (L.map W.subtype).Normal := by
+  refine ⟨fun x hx g => ?_⟩
+  obtain ⟨l, hlL, hlx⟩ := Subgroup.mem_map.mp hx
+  rw [← hlx]
+  have hconjW : g * (l : G) * g⁻¹ ∈ W :=
+    (inferInstance : W.Normal).conj_mem (l : G) l.property g
+  let y : W := ⟨g * (l : G) * g⁻¹, hconjW⟩
+  have hl2W : l ^ 2 = 1 :=
+    order36_klein_complement_pow_two K W hLcomp hpow_in hlL
+  have hl2G : ((l : G) ^ 2) = 1 := by
+    exact congrArg (fun z : W => (z : G)) hl2W
+  have hy2 : ((y : G) ^ 2) = 1 := by
+    change (g * (l : G) * g⁻¹) ^ 2 = 1
+    calc
+      (g * (l : G) * g⁻¹) ^ 2 = g * ((l : G) ^ 2) * g⁻¹ := by
+        simp [pow_two, mul_assoc]
+      _ = 1 := by rw [hl2G]; simp
+  have hyL : y ∈ L :=
+    order36_mem_klein_complement_of_sq_one K W hKcenter hKW hKcard hLcomp hpow_in hy2
+  exact Subgroup.mem_map.mpr ⟨y, hyL, rfl⟩
+
+theorem order36_order_three_complement_le_normalizer_klein_complement
+    {G : Type*} [Group G] (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K) :
+    H ≤ Subgroup.normalizer (L.map W.subtype : Subgroup G) := by
+  haveI : (L.map W.subtype : Subgroup G).Normal :=
+    order36_klein_complement_map_normal K W hKcenter hKW hKcard hLcomp hpow_in
+  exact Subgroup.le_normalizer_of_normal
+
+theorem order36_klein_complement_map_card
+    {G : Type*} [Group G] (W : Subgroup G) {L : Subgroup W}
+    (hLcard : Nat.card L = 4) :
+    Nat.card (L.map W.subtype : Subgroup G) = 4 := by
+  rw [Subgroup.card_subtype, hLcard]
+
+theorem order36_klein_complement_map_disjoint_order_three_complement
+    {G : Type*} [Group G] (W H : Subgroup G) {L : Subgroup W}
+    (hHcomp : W.IsComplement' H) :
+    Disjoint (L.map W.subtype : Subgroup G) H := by
+  rw [disjoint_iff_inf_le]
+  intro x hx
+  rw [Subgroup.mem_inf] at hx
+  have hxW : x ∈ W := Subgroup.map_subtype_le L hx.1
+  exact (disjoint_iff_inf_le.mp hHcomp.disjoint) ⟨hxW, hx.2⟩
+
+theorem order36_C3_layer_disjoint_klein_complement_map
+    {G : Type*} [Group G] (K W : Subgroup G) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L) :
+    Disjoint K (L.map W.subtype : Subgroup G) := by
+  rw [disjoint_iff_inf_le]
+  intro x hx
+  rw [Subgroup.mem_inf] at hx
+  obtain ⟨l, hlL, hlx⟩ := Subgroup.mem_map.mp hx.2
+  have hlK : l ∈ K.subgroupOf W := by
+    rw [Subgroup.mem_subgroupOf]
+    change W.subtype l ∈ K
+    rw [hlx]
+    exact hx.1
+  have hlinf : l ∈ K.subgroupOf W ⊓ L := by
+    rw [Subgroup.mem_inf]
+    exact ⟨hlK, hlL⟩
+  have hlone : l = 1 :=
+    Subgroup.mem_bot.mp ((disjoint_iff_inf_le.mp hLcomp.disjoint) hlinf)
+  have hxone : x = 1 := by
+    rw [← hlx]
+    exact congrArg (fun y : W => (y : G)) hlone
+  exact Subgroup.mem_bot.mpr hxone
+
+theorem order36_klein_order_three_sup_subgroup_isComplement'
+    {G : Type*} [Group G] (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    (hHcomp : W.IsComplement' H) :
+    ((L.map W.subtype : Subgroup G).subgroupOf ((L.map W.subtype : Subgroup G) ⊔ H)).IsComplement'
+      (H.subgroupOf ((L.map W.subtype : Subgroup G) ⊔ H)) := by
+  let A : Subgroup G := L.map W.subtype
+  let S : Subgroup G := A ⊔ H
+  have hnormalizer : H ≤ Subgroup.normalizer A := by
+    dsimp [A]
+    exact order36_order_three_complement_le_normalizer_klein_complement
+      K W H hKcenter hKW hKcard hLcomp hpow_in
+  have hdisj : Disjoint A H := by
+    dsimp [A]
+    exact order36_klein_complement_map_disjoint_order_three_complement W H hHcomp
+  have hdisjS : Disjoint (A.subgroupOf S) (H.subgroupOf S) := by
+    rw [disjoint_iff_inf_le]
+    intro x hx
+    rw [Subgroup.mem_inf] at hx
+    have hxA : (x : G) ∈ A := Subgroup.mem_subgroupOf.mp hx.1
+    have hxH : (x : G) ∈ H := Subgroup.mem_subgroupOf.mp hx.2
+    have hxbotG : (x : G) ∈ (⊥ : Subgroup G) :=
+      (disjoint_iff_inf_le.mp hdisj) ⟨hxA, hxH⟩
+    exact Subgroup.mem_bot.mpr (Subtype.ext (Subgroup.mem_bot.mp hxbotG))
+  have hmulS : (↑(A.subgroupOf S) * ↑(H.subgroupOf S) : Set S) = Set.univ := by
+    rw [Set.eq_univ_iff_forall]
+    intro x
+    have hxS : (x : G) ∈ (S : Set G) := x.property
+    have hSset : (↑S : Set G) = (A : Set G) * (H : Set G) := by
+      simpa [S] using Subgroup.coe_mul_of_right_le_normalizer_left A H hnormalizer
+    rw [hSset] at hxS
+    obtain ⟨a, ha, b, hb, hxab⟩ := hxS
+    refine ⟨⟨a, Subgroup.mem_sup_left ha⟩, ?_, ⟨b, Subgroup.mem_sup_right hb⟩, ?_, ?_⟩
+    · change a ∈ A
+      exact ha
+    · change b ∈ H
+      exact hb
+    · exact Subtype.ext hxab
+  simpa [A, S] using Subgroup.isComplement'_of_disjoint_and_mul_eq_univ hdisjS hmulS
+
+theorem order36_klein_order_three_sup_card
+    {G : Type*} [Group G] (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hLcard : Nat.card L = 4)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    (hHcomp : W.IsComplement' H) (hHcard : Nat.card H = 3) :
+    Nat.card (((L.map W.subtype : Subgroup G) ⊔ H : Subgroup G)) = 12 := by
+  let A : Subgroup G := L.map W.subtype
+  let S : Subgroup G := A ⊔ H
+  have hAS : A ≤ S := by
+    dsimp [S]
+    exact le_sup_left
+  have hHS : H ≤ S := by
+    dsimp [S]
+    exact le_sup_right
+  have hAcard : Nat.card A = 4 := by
+    dsimp [A]
+    exact order36_klein_complement_map_card W hLcard
+  have hAcardS : Nat.card (A.subgroupOf S) = 4 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hAS).toEquiv, hAcard]
+  have hHcardS : Nat.card (H.subgroupOf S) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hHS).toEquiv, hHcard]
+  have hcompS : (A.subgroupOf S).IsComplement' (H.subgroupOf S) := by
+    dsimp [A, S]
+    exact order36_klein_order_three_sup_subgroup_isComplement'
+      K W H hKcenter hKW hKcard hLcomp hpow_in hHcomp
+  have hmul := hcompS.card_mul
+  have hScard : Nat.card S = 12 := by
+    rw [← hmul, hAcardS, hHcardS]
+  simpa [A, S] using hScard
+
+theorem order36_C3_layer_disjoint_klein_order_three_sup
+    {G : Type*} [Group G] (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    (hHcomp : W.IsComplement' H) :
+    Disjoint K ((L.map W.subtype : Subgroup G) ⊔ H : Subgroup G) := by
+  let A : Subgroup G := L.map W.subtype
+  let S : Subgroup G := A ⊔ H
+  have hKA : Disjoint K A := by
+    dsimp [A]
+    exact order36_C3_layer_disjoint_klein_complement_map K W hLcomp
+  have hcompS : (A.subgroupOf S).IsComplement' (H.subgroupOf S) := by
+    dsimp [A, S]
+    exact order36_klein_order_three_sup_subgroup_isComplement'
+      K W H hKcenter hKW hKcard hLcomp hpow_in hHcomp
+  rw [disjoint_iff_inf_le]
+  intro x hx
+  rw [Subgroup.mem_inf] at hx
+  let xS : S := ⟨x, hx.2⟩
+  obtain ⟨⟨aS, hS⟩, hprod⟩ := hcompS.2 xS
+  have haA : ((aS : S) : G) ∈ A := Subgroup.mem_subgroupOf.mp aS.property
+  have hhH : ((hS : S) : G) ∈ H := Subgroup.mem_subgroupOf.mp hS.property
+  have hprodG : ((aS : S) : G) * ((hS : S) : G) = x := by
+    simpa [xS] using congrArg (fun y : S => (y : G)) hprod
+  have hxW : x ∈ W := hKW hx.1
+  have haW : ((aS : S) : G) ∈ W := by
+    dsimp [A] at haA
+    exact Subgroup.map_subtype_le L haA
+  have hh_eq : ((hS : S) : G) = ((aS : S) : G)⁻¹ * x := by
+    rw [← hprodG]
+    simp
+  have hhW : ((hS : S) : G) ∈ W := by
+    rw [hh_eq]
+    exact W.mul_mem (W.inv_mem haW) hxW
+  have hhbotG : ((hS : S) : G) ∈ (⊥ : Subgroup G) :=
+    (disjoint_iff_inf_le.mp hHcomp.disjoint) ⟨hhW, hhH⟩
+  have hh_one : ((hS : S) : G) = 1 := Subgroup.mem_bot.mp hhbotG
+  have hxA : x ∈ A := by
+    have hx_eq_a : x = ((aS : S) : G) := by
+      rw [← hprodG, hh_one, mul_one]
+    rw [hx_eq_a]
+    exact haA
+  exact (disjoint_iff_inf_le.mp hKA) ⟨hx.1, hxA⟩
+
+theorem order36_C3_layer_complement_klein_order_three_sup
+    {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 36)
+    (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) {L : Subgroup W}
+    (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hLcard : Nat.card L = 4)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    (hHcomp : W.IsComplement' H) (hHcard : Nat.card H = 3) :
+    K.IsComplement' (((L.map W.subtype : Subgroup G) ⊔ H : Subgroup G)) := by
+  apply Subgroup.isComplement'_of_card_mul_and_disjoint
+  · rw [hKcard,
+      order36_klein_order_three_sup_card K W H hKcenter hKW hKcard hLcomp hLcard
+        hpow_in hHcomp hHcard,
+      hG]
+  · exact order36_C3_layer_disjoint_klein_order_three_sup
+      K W H hKcenter hKW hKcard hLcomp hpow_in hHcomp
+
+theorem order36_klein_order_three_sup_mulEquiv_A4
+    {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 36)
+    (K W H : Subgroup G) [K.Normal] [W.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKW : K ≤ W)
+    (hKcard : Nat.card K = 3) (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    {L : Subgroup W} (hLcomp : (K.subgroupOf W).IsComplement' L)
+    (hLcard : Nat.card L = 4)
+    (hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K)
+    (hHcomp : W.IsComplement' H) (hHcard : Nat.card H = 3) :
+    Nonempty ((((L.map W.subtype : Subgroup G) ⊔ H : Subgroup G)) ≃* order36_A4) := by
+  obtain ⟨e⟩ := hquot
+  have hcomp : K.IsComplement' (((L.map W.subtype : Subgroup G) ⊔ H : Subgroup G)) :=
+    order36_C3_layer_complement_klein_order_three_sup
+      (G := G) hG K W H hKcenter hKW hKcard hLcomp hLcard hpow_in hHcomp hHcard
+  exact ⟨(hcomp.symm.QuotientMulEquiv).symm.trans e⟩
+
+theorem order36_mulEquiv_C3_A4_of_central_order_three_A4_complement
+    {G : Type*} [Group G] (K S : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hKcard : Nat.card K = 3)
+    (hcomp : K.IsComplement' S) (hSiso : Nonempty (S ≃* order36_A4)) :
+    Nonempty (G ≃* order36_C3 × order36_A4) := by
+  obtain ⟨eK⟩ : Nonempty (K ≃* order36_C3) := by
+    simpa [order36_C3, CyclicRep] using
+      (prime_classification (G := K) (p := 3) (by norm_num) hKcard)
+  obtain ⟨eS⟩ := hSiso
+  let action : S →* MulAut K :=
+    K.normalizerMonoidHom.comp
+      (Subgroup.inclusion
+        (K.normalizer_eq_top ▸ le_top : S ≤ Subgroup.normalizer K))
+  have haction : action = 1 := by
+    ext s k
+    have hcomm := (Subgroup.mem_center_iff.mp (hKcenter k.property)) (s : G)
+    change ((s : G) * (k : G) * (s : G)⁻¹) = (k : G)
+    calc
+      (s : G) * (k : G) * (s : G)⁻¹
+          = (k : G) * (s : G) * (s : G)⁻¹ := by rw [hcomm]
+      _ = (k : G) := by simp [mul_assoc]
+  exact ⟨(SemidirectProduct.mulEquivSubgroup hcomp).symm.trans
+    ((semidirectProductCongr_eq haction).trans
+      (SemidirectProduct.mulEquivProd.trans (MulEquiv.prodCongr eK eS)))⟩
+
+theorem order36_A4_pow : ∀ a : order36_A4, a ^ 2 = 1 ∨ a ^ 3 = 1 := by
+  decide
+
+theorem order36_A4_order_two_mem_kleinFour (g : order36_A4) (hg : g ^ 2 = 1) :
+    g ∈ alternatingGroup.kleinFour (Fin 4) := by
+  have hgperm2 : ((g : Equiv.Perm (Fin 4)) ^ 2 = 1) := by
+    simpa using congrArg (fun x : order36_A4 => (x : Equiv.Perm (Fin 4))) hg
+  have hdiv : orderOf (g : Equiv.Perm (Fin 4)) ∣ 2 ^ 1 := by
+    rw [pow_one]
+    exact orderOf_dvd_of_pow_eq_one hgperm2
+  have hcycle := alternatingGroup.mem_kleinFour_of_order_two_pow (α := Fin 4)
+    (by simp) g.property (n := 1) hdiv
+  rw [← SetLike.mem_coe, alternatingGroup.coe_kleinFour_of_card_eq_four (α := Fin 4) (by simp),
+    Set.mem_union, Set.mem_singleton_iff, Set.mem_setOf_eq]
+  rcases hcycle with hcycle | hcycle
+  · left
+    apply Subtype.ext
+    exact Equiv.Perm.cycleType_eq_zero.mp hcycle
+  · right
+    exact hcycle
+
+theorem order36_A4_mem_kleinFour_sq {g : order36_A4}
+    (hg : g ∈ alternatingGroup.kleinFour (Fin 4)) : g ^ 2 = 1 := by
+  let K : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  have hpow : (⟨g, hg⟩ : K) ^ Monoid.exponent K = 1 := Monoid.pow_exponent_eq_one _
+  have hKexp : Monoid.exponent K = 2 := by
+    simpa [K] using
+      alternatingGroup.exponent_kleinFour_of_card_eq_four (α := Fin 4) (by simp)
+  rw [hKexp] at hpow
+  exact congrArg Subtype.val hpow
+
+theorem order36_A4_not_mem_kleinFour_cube {a : order36_A4}
+    (ha : a ∉ alternatingGroup.kleinFour (Fin 4)) : a ^ 3 = 1 := by
+  rcases order36_A4_pow a with h2 | h3
+  · exact False.elim (ha (order36_A4_order_two_mem_kleinFour a h2))
+  · exact h3
+
+theorem order36_A4_quotient_pow_two_or_three_mem {G : Type*} [Group G]
+    (K : Subgroup G) [K.Normal] (hquot : Nonempty (G ⧸ K ≃* order36_A4)) (g : G) :
+    g ^ 2 ∈ K ∨ g ^ 3 ∈ K := by
+  obtain ⟨e⟩ := hquot
+  rcases order36_A4_pow (e ((QuotientGroup.mk' K) g)) with h2 | h3
+  · left
+    have hq : ((QuotientGroup.mk' K) g) ^ 2 = 1 := by
+      apply e.injective
+      simpa using h2
+    change (g : G ⧸ K) ^ 2 = 1 at hq
+    rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
+    exact hq
+  · right
+    have hq : ((QuotientGroup.mk' K) g) ^ 3 = 1 := by
+      apply e.injective
+      simpa using h3
+    change (g : G ⧸ K) ^ 3 = 1 at hq
+    rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
+    exact hq
+
+theorem order36_A4_quotient_pow_six_or_nine_eq_one {G : Type*} [Group G]
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) (g : G) :
+    g ^ 6 = 1 ∨ g ^ 9 = 1 := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hK]; norm_num)
+  rcases order36_A4_quotient_pow_two_or_three_mem K hquot g with h2 | h3
+  · left
+    have hk_dvd : orderOf (⟨g ^ 2, h2⟩ : K) ∣ 3 := by
+      have := orderOf_dvd_natCard (⟨g ^ 2, h2⟩ : K)
+      rwa [hK] at this
+    have hk : (⟨g ^ 2, h2⟩ : K) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hk_dvd
+    have hkG := congrArg (fun x : K => (x : G)) hk
+    calc
+      g ^ 6 = g ^ (2 * 3) := by norm_num
+      _ = (g ^ 2) ^ 3 := by rw [pow_mul]
+      _ = 1 := by simpa using hkG
+  · right
+    have hk_dvd : orderOf (⟨g ^ 3, h3⟩ : K) ∣ 3 := by
+      have := orderOf_dvd_natCard (⟨g ^ 3, h3⟩ : K)
+      rwa [hK] at this
+    have hk : (⟨g ^ 3, h3⟩ : K) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hk_dvd
+    have hkG := congrArg (fun x : K => (x : G)) hk
+    calc
+      g ^ 9 = g ^ (3 * 3) := by norm_num
+      _ = (g ^ 3) ^ 3 := by rw [pow_mul]
+      _ = 1 := by simpa using hkG
+
+theorem order36_A4_quotient_klein_preimage [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ W : Subgroup G, W.Normal ∧ K ≤ W ∧ Nat.card W = 12 := by
+  obtain ⟨e⟩ := hquot
+  let φ : G →* order36_A4 := e.toMonoidHom.comp (QuotientGroup.mk' K)
+  let V : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  let W : Subgroup G := V.comap φ
+  refine ⟨W, ?_, ?_, ?_⟩
+  · have hVnormal : V.Normal := by
+      dsimp [V]
+      exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+    dsimp [W]
+    exact hVnormal.comap φ
+  · intro k hk
+    have hkq : (QuotientGroup.mk' K) k = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hk
+    have hφk : φ k = 1 := by
+      change e ((QuotientGroup.mk' K) k) = 1
+      rw [hkq]
+      simp
+    change φ k ∈ V
+    rw [hφk]
+    exact V.one_mem
+  · have hφ_surj : Function.Surjective φ := by
+      intro a
+      obtain ⟨q, hq⟩ := e.surjective a
+      obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective K q
+      refine ⟨g, ?_⟩
+      change e ((QuotientGroup.mk' K) g) = a
+      rw [hg, hq]
+    have hV_card : Nat.card V = 4 := by
+      simpa [V] using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+    have hV_index : V.index = 3 := by
+      have hmul := V.index_mul_card
+      rw [hV_card, card_order36_A4] at hmul
+      omega
+    have hW_index : W.index = 3 := by
+      dsimp [W]
+      rw [V.index_comap_of_surjective hφ_surj, hV_index]
+    have hmul := W.index_mul_card
+    rw [hW_index, hG] at hmul
+    omega
+
+theorem order36_A4_quotient_klein_preimage_pow_cases [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ W : Subgroup G, W.Normal ∧ K ≤ W ∧ Nat.card W = 12 ∧
+      (∀ {g : G}, g ∈ W → g ^ 2 ∈ K) ∧
+        (∀ {g : G}, g ∉ W → g ^ 3 ∈ K) := by
+  obtain ⟨e⟩ := hquot
+  let φ : G →* order36_A4 := e.toMonoidHom.comp (QuotientGroup.mk' K)
+  let V : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  let W : Subgroup G := V.comap φ
+  have hVnormal : V.Normal := by
+    dsimp [V]
+    exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+  have hWnormal : W.Normal := by
+    dsimp [W]
+    exact hVnormal.comap φ
+  have hKW : K ≤ W := by
+    intro k hk
+    have hkq : (QuotientGroup.mk' K) k = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hk
+    have hφk : φ k = 1 := by
+      change e ((QuotientGroup.mk' K) k) = 1
+      rw [hkq]
+      simp
+    change φ k ∈ V
+    rw [hφk]
+    exact V.one_mem
+  have hφ_surj : Function.Surjective φ := by
+    intro a
+    obtain ⟨q, hq⟩ := e.surjective a
+    obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective K q
+    refine ⟨g, ?_⟩
+    change e ((QuotientGroup.mk' K) g) = a
+    rw [hg, hq]
+  have hV_card : Nat.card V = 4 := by
+    simpa [V] using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have hV_index : V.index = 3 := by
+    have hmul := V.index_mul_card
+    rw [hV_card, card_order36_A4] at hmul
+    omega
+  have hW_index : W.index = 3 := by
+    dsimp [W]
+    rw [V.index_comap_of_surjective hφ_surj, hV_index]
+  have hWcard : Nat.card W = 12 := by
+    have hmul := W.index_mul_card
+    rw [hW_index, hG] at hmul
+    omega
+  refine ⟨W, hWnormal, hKW, hWcard, ?_, ?_⟩
+  · intro g hgW
+    change φ g ∈ V at hgW
+    have hφsq : (φ g) ^ 2 = 1 := order36_A4_mem_kleinFour_sq hgW
+    have hq : ((QuotientGroup.mk' K) g) ^ 2 = 1 := by
+      apply e.injective
+      simpa [φ] using hφsq
+    change (g : G ⧸ K) ^ 2 = 1 at hq
+    rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
+    exact hq
+  · intro g hgW
+    have hgV : φ g ∉ V := by
+      exact hgW
+    have hφcube : (φ g) ^ 3 = 1 := order36_A4_not_mem_kleinFour_cube hgV
+    have hq : ((QuotientGroup.mk' K) g) ^ 3 = 1 := by
+      apply e.injective
+      simpa [φ] using hφcube
+    change (g : G ⧸ K) ^ 3 = 1 at hq
+    rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
+    exact hq
+
+theorem order36_orderOf_eq_nine_of_cube_mem_card_three
+    (K : Subgroup G) (hKcard : Nat.card K = 3) {g : G}
+    (hg3K : g ^ 3 ∈ K) (hg3ne : g ^ 3 ≠ 1) :
+    orderOf g = 9 := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hKcard]; norm_num)
+  have hk_dvd : orderOf (⟨g ^ 3, hg3K⟩ : K) ∣ 3 := by
+    have := orderOf_dvd_natCard (⟨g ^ 3, hg3K⟩ : K)
+    rwa [hKcard] at this
+  have hk : (⟨g ^ 3, hg3K⟩ : K) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hk_dvd
+  have hkG := congrArg (fun x : K => (x : G)) hk
+  have hg9 : g ^ 9 = 1 := by
+    calc
+      g ^ 9 = g ^ (3 * 3) := by norm_num
+      _ = (g ^ 3) ^ 3 := by rw [pow_mul]
+      _ = 1 := by simpa using hkG
+  have hdvd : orderOf g ∣ 9 := orderOf_dvd_of_pow_eq_one hg9
+  have hle : orderOf g ≤ 9 := Nat.le_of_dvd (by norm_num) hdvd
+  have hpos : 0 < orderOf g := by
+    exact Nat.pos_of_ne_zero (fun hzero => by rw [hzero] at hdvd; norm_num at hdvd)
+  have hcases : orderOf g = 1 ∨ orderOf g = 3 ∨ orderOf g = 9 := by
+    interval_cases h : orderOf g <;> try norm_num [h] at hdvd <;> simp
+  rcases hcases with h1 | h3 | h9
+  · have hg1 : g = 1 := orderOf_eq_one_iff.mp h1
+    exact False.elim (hg3ne (by rw [hg1]; simp))
+  · have hg3 : g ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp (by rw [h3])
+    exact False.elim (hg3ne hg3)
+  · exact h9
+
+theorem order36_cube_ne_one_of_orderOf_eq_nine {g : G} (hg9 : orderOf g = 9) :
+    g ^ 3 ≠ 1 := by
+  intro hg3
+  have hdvd : orderOf g ∣ 3 := orderOf_dvd_of_pow_eq_one hg3
+  rw [hg9] at hdvd
+  norm_num at hdvd
+
+theorem order36_order_nine_cube_generates_card_three_subgroup
+    (K : Subgroup G) (hKcard : Nat.card K = 3) {g : G}
+    (hg3K : g ^ 3 ∈ K) (hg9 : orderOf g = 9) :
+    Subgroup.zpowers (⟨g ^ 3, hg3K⟩ : K) = ⊤ := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hKcard]; norm_num)
+  let x : K := ⟨g ^ 3, hg3K⟩
+  have hg9pow : g ^ 9 = 1 := orderOf_dvd_iff_pow_eq_one.mp (by rw [hg9])
+  have hx3 : x ^ 3 = 1 := by
+    ext
+    change (g ^ 3) ^ 3 = 1
+    rw [← pow_mul]
+    simpa using hg9pow
+  have hx_ne : x ≠ 1 := by
+    intro hx
+    exact order36_cube_ne_one_of_orderOf_eq_nine hg9 (by
+      have hxG := congrArg (fun y : K => (y : G)) hx
+      simpa [x] using hxG)
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hxord : orderOf x = 3 := orderOf_eq_prime hx3 hx_ne
+  change Subgroup.zpowers x = ⊤
+  exact Subgroup.eq_top_of_card_eq _ (by rw [Nat.card_zpowers, hxord, hKcard])
+
+theorem order36_card_three_subgroup_le_zpowers_of_order_nine_cube_mem
+    (K : Subgroup G) (hKcard : Nat.card K = 3) {g : G}
+    (hg3K : g ^ 3 ∈ K) (hg9 : orderOf g = 9) :
+    K ≤ Subgroup.zpowers g := by
+  have hgen := order36_order_nine_cube_generates_card_three_subgroup K hKcard hg3K hg9
+  intro k hk
+  have hkzp : (⟨k, hk⟩ : K) ∈ Subgroup.zpowers (⟨g ^ 3, hg3K⟩ : K) := by
+    rw [hgen]
+    exact Subgroup.mem_top _
+  obtain ⟨n, hn⟩ := Subgroup.mem_zpowers_iff.mp hkzp
+  rw [Subgroup.mem_zpowers_iff]
+  refine ⟨3 * n, ?_⟩
+  have hnG := congrArg (fun x : K => (x : G)) hn
+  change g ^ (3 * n) = k
+  rw [zpow_mul]
+  rw [show g ^ (3 : ℤ) = g ^ (3 : ℕ) by
+    change g ^ ((3 : ℕ) : ℤ) = g ^ (3 : ℕ)
+    rw [zpow_natCast]]
+  simpa using hnG
+
+theorem order36_A4_quotient_klein_preimage_order_nine_of_cube_ne_one
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ W : Subgroup G, W.Normal ∧ K ≤ W ∧ Nat.card W = 12 ∧
+      ∀ {g : G}, g ∉ W → g ^ 3 ≠ 1 → orderOf g = 9 := by
+  obtain ⟨W, hWnormal, hKW, hWcard, _hpow_in, hpow_out⟩ :=
+    order36_A4_quotient_klein_preimage_pow_cases (G := G) hG K hquot
+  refine ⟨W, hWnormal, hKW, hWcard, ?_⟩
+  intro g hgW hg3ne
+  exact order36_orderOf_eq_nine_of_cube_mem_card_three
+    K hK (hpow_out hgW) hg3ne
+
+theorem order36_A4_quotient_klein_preimage_cube_one_of_no_order_nine
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ W : Subgroup G, W.Normal ∧ K ≤ W ∧ Nat.card W = 12 ∧
+      ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  obtain ⟨W, hWnormal, hKW, hWcard, hpow⟩ :=
+    order36_A4_quotient_klein_preimage_order_nine_of_cube_ne_one (G := G)
+      hG K hK hquot
+  refine ⟨W, hWnormal, hKW, hWcard, ?_⟩
+  intro g hgW
+  by_contra hg3ne
+  exact hno9 g (hpow hgW hg3ne)
+
+theorem order36_A4_quotient_klein_preimage_complement [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      ∃ H : Subgroup W, (K.subgroupOf W).IsComplement' H ∧ Nat.card H = 4 := by
+  obtain ⟨W, hWnormal, hKW, hWcard⟩ :=
+    order36_A4_quotient_klein_preimage (G := G) hG K hquot
+  have hKWcard : Nat.card (K.subgroupOf W) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hKW).toEquiv, hK]
+  have hKWindex : (K.subgroupOf W).index = 4 := by
+    have hmul := (K.subgroupOf W).index_mul_card
+    rw [hKWcard, hWcard] at hmul
+    omega
+  have hcop : Nat.Coprime (Nat.card (K.subgroupOf W)) (K.subgroupOf W).index := by
+    rw [hKWcard, hKWindex]
+    norm_num
+  obtain ⟨H, hHcomp⟩ :=
+    Subgroup.exists_right_complement'_of_coprime (N := K.subgroupOf W) hcop
+  have hHcard : Nat.card H = 4 := by
+    have hindex := (IsComplement'.symm hHcomp).index_eq_card
+    rw [hKWindex] at hindex
+    exact hindex.symm
+  exact ⟨W, hWnormal, hKW, hWcard, H, hHcomp, hHcard⟩
+
+theorem order36_A4_quotient_klein_preimage_quotient [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ⧸ K.subgroupOf W ≃* alternatingGroup.kleinFour (Fin 4)) := by
+  obtain ⟨e⟩ := hquot
+  let φ : G →* order36_A4 := e.toMonoidHom.comp (QuotientGroup.mk' K)
+  let V : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  let W : Subgroup G := V.comap φ
+  have hVnormal : V.Normal := by
+    dsimp [V]
+    exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+  have hWnormal : W.Normal := by
+    dsimp [W]
+    exact hVnormal.comap φ
+  have hKW : K ≤ W := by
+    intro k hk
+    have hkq : (QuotientGroup.mk' K) k = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hk
+    have hφk : φ k = 1 := by
+      change e ((QuotientGroup.mk' K) k) = 1
+      rw [hkq]
+      simp
+    change φ k ∈ V
+    rw [hφk]
+    exact V.one_mem
+  have hφ_surj : Function.Surjective φ := by
+    intro a
+    obtain ⟨q, hq⟩ := e.surjective a
+    obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective K q
+    refine ⟨g, ?_⟩
+    change e ((QuotientGroup.mk' K) g) = a
+    rw [hg, hq]
+  have hV_card : Nat.card V = 4 := by
+    simpa [V] using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have hV_index : V.index = 3 := by
+    have hmul := V.index_mul_card
+    rw [hV_card, card_order36_A4] at hmul
+    omega
+  have hW_index : W.index = 3 := by
+    dsimp [W]
+    rw [V.index_comap_of_surjective hφ_surj, hV_index]
+  have hWcard : Nat.card W = 12 := by
+    have hmul := W.index_mul_card
+    rw [hW_index, hG] at hmul
+    omega
+  let ψ : W →* order36_A4 := φ.comp W.subtype
+  have hψker : ψ.ker = K.subgroupOf W := by
+    ext w
+    constructor
+    · intro hw
+      rw [MonoidHom.mem_ker] at hw
+      rw [Subgroup.mem_subgroupOf]
+      have hq : (QuotientGroup.mk' K) (w : G) = 1 := by
+        apply e.injective
+        simpa [ψ, φ] using hw
+      rwa [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq
+    · intro hw
+      rw [Subgroup.mem_subgroupOf] at hw
+      rw [MonoidHom.mem_ker]
+      have hq : (QuotientGroup.mk' K) (w : G) = 1 := by
+        rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+        exact hw
+      change e ((QuotientGroup.mk' K) (w : G)) = 1
+      rw [hq]
+      simp
+  have hψrange : ψ.range = V := by
+    apply le_antisymm
+    · intro a ha
+      rw [MonoidHom.mem_range] at ha
+      obtain ⟨w, hw⟩ := ha
+      rw [← hw]
+      change φ (w : G) ∈ V
+      exact w.property
+    · intro a ha
+      rw [MonoidHom.mem_range]
+      obtain ⟨g, hg⟩ := hφ_surj a
+      have hgW : g ∈ W := by
+        change φ g ∈ V
+        rw [hg]
+        exact ha
+      refine ⟨⟨g, hgW⟩, ?_⟩
+      change φ g = a
+      exact hg
+  haveI : (K.subgroupOf W).Normal := hψker ▸ MonoidHom.normal_ker ψ
+  refine ⟨W, hWnormal, hKW, hWcard, ?_⟩
+  change Nonempty (W ⧸ K.subgroupOf W ≃* V)
+  exact ⟨(QuotientGroup.quotientMulEquivOfEq hψker.symm).trans
+    ((QuotientGroup.quotientKerEquivRange ψ).trans (MulEquiv.subgroupCongr hψrange))⟩
+
+theorem order36_A4_quotient_klein_preimage_complement_klein [Finite G]
+    (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal] (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      ∃ H : Subgroup W, (K.subgroupOf W).IsComplement' H ∧ Nat.card H = 4 ∧
+        Nonempty (H ≃* alternatingGroup.kleinFour (Fin 4)) := by
+  obtain ⟨W, hWnormal, hKW, hWcard, hWquot⟩ :=
+    order36_A4_quotient_klein_preimage_quotient (G := G) hG K hquot
+  have hKWcard : Nat.card (K.subgroupOf W) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hKW).toEquiv, hK]
+  have hKWindex : (K.subgroupOf W).index = 4 := by
+    have hmul := (K.subgroupOf W).index_mul_card
+    rw [hKWcard, hWcard] at hmul
+    omega
+  have hcop : Nat.Coprime (Nat.card (K.subgroupOf W)) (K.subgroupOf W).index := by
+    rw [hKWcard, hKWindex]
+    norm_num
+  obtain ⟨H, hHcomp⟩ :=
+    Subgroup.exists_right_complement'_of_coprime (N := K.subgroupOf W) hcop
+  have hHcard : Nat.card H = 4 := by
+    have hindex := (IsComplement'.symm hHcomp).index_eq_card
+    rw [hKWindex] at hindex
+    exact hindex.symm
+  obtain ⟨eW⟩ := hWquot
+  have hHklein : Nonempty (H ≃* alternatingGroup.kleinFour (Fin 4)) := by
+    exact ⟨(hHcomp.symm.QuotientMulEquiv).symm.trans eW⟩
+  exact ⟨W, hWnormal, hKW, hWcard, H, hHcomp, hHcard, hHklein⟩
+
+theorem order36_mulEquiv_C3_klein_of_central_order_three_klein_quotient
+    {G : Type*} [Group G] (K W : Subgroup G) (hKW : K ≤ W)
+    (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
+    (hWcard : Nat.card W = 12) [(K.subgroupOf W).Normal]
+    (hWquot : Nonempty (W ⧸ K.subgroupOf W ≃* alternatingGroup.kleinFour (Fin 4))) :
+    Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) := by
+  have hKWcard : Nat.card (K.subgroupOf W) = 3 := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hKW).toEquiv, hK]
+  have hKWindex : (K.subgroupOf W).index = 4 := by
+    have hmul := (K.subgroupOf W).index_mul_card
+    rw [hKWcard, hWcard] at hmul
+    omega
+  have hcop : Nat.Coprime (Nat.card (K.subgroupOf W)) (K.subgroupOf W).index := by
+    rw [hKWcard, hKWindex]
+    norm_num
+  obtain ⟨H, hHcomp⟩ :=
+    Subgroup.exists_right_complement'_of_coprime (N := K.subgroupOf W) hcop
+  have hHcard : Nat.card H = 4 := by
+    have hindex := (IsComplement'.symm hHcomp).index_eq_card
+    rw [hKWindex] at hindex
+    exact hindex.symm
+  obtain ⟨eW⟩ := hWquot
+  have hHklein : Nonempty (H ≃* alternatingGroup.kleinFour (Fin 4)) := by
+    exact ⟨(hHcomp.symm.QuotientMulEquiv).symm.trans eW⟩
+  have hKsubcard : Nat.card (K.subgroupOf W) = 3 := hKWcard
+  obtain ⟨eK⟩ : Nonempty (K.subgroupOf W ≃* order36_C3) := by
+    simpa [order36_C3, CyclicRep] using
+      (prime_classification (G := K.subgroupOf W) (p := 3) (by norm_num) hKsubcard)
+  obtain ⟨eH⟩ := hHklein
+  let action : H →* MulAut (K.subgroupOf W) :=
+    (K.subgroupOf W).normalizerMonoidHom.comp
+      (Subgroup.inclusion
+        ((K.subgroupOf W).normalizer_eq_top ▸ le_top :
+          H ≤ Subgroup.normalizer (K.subgroupOf W)))
+  have haction : action = 1 := by
+    ext h k
+    have hkK : ((k : K.subgroupOf W) : W) ∈ K.subgroupOf W := k.property
+    rw [Subgroup.mem_subgroupOf] at hkK
+    have hcomm := (Subgroup.mem_center_iff.mp (hKcenter hkK)) ((h : W) : G)
+    change (((h : W) : G) * ((k : K.subgroupOf W) : W) *
+        ((h : W) : G)⁻¹) = ((k : K.subgroupOf W) : W)
+    calc
+      ((h : W) : G) * ((k : K.subgroupOf W) : W) * ((h : W) : G)⁻¹
+          = ((k : K.subgroupOf W) : W) * ((h : W) : G) * ((h : W) : G)⁻¹ := by
+            rw [hcomm]
+      _ = ((k : K.subgroupOf W) : W) := by simp [mul_assoc]
+  exact ⟨(SemidirectProduct.mulEquivSubgroup hHcomp).symm.trans
+    ((semidirectProductCongr_eq haction).trans
+      (SemidirectProduct.mulEquivProd.trans (MulEquiv.prodCongr eK eH)))⟩
+
+theorem order36_A4_quotient_klein_preimage_mulEquiv_C3_klein [Finite G]
+    (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) := by
+  obtain ⟨W, hWnormal, hKW, hWcard, hWquot⟩ :=
+    order36_A4_quotient_klein_preimage_quotient (G := G) hG K hquot
+  exact ⟨W, hWnormal, hKW, hWcard,
+    order36_mulEquiv_C3_klein_of_central_order_three_klein_quotient
+      K W hKW hKcenter hK hWcard hWquot⟩
+
+theorem order36_A4_quotient_klein_preimage_top_quotient [Finite G]
+    (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (G ⧸ W ≃* order36_C3) := by
+  obtain ⟨W, hWnormal, hKW, hWcard⟩ :=
+    order36_A4_quotient_klein_preimage (G := G) hG K hquot
+  have hWindex : W.index = 3 := by
+    have hmul := W.index_mul_card
+    rw [hWcard, hG] at hmul
+    omega
+  haveI : W.Normal := hWnormal
+  have hquotcard : Nat.card (G ⧸ W) = 3 := by
+    rw [← W.index_eq_card, hWindex]
+  have hWquot : Nonempty (G ⧸ W ≃* order36_C3) := by
+    simpa [order36_C3, CyclicRep] using
+      (prime_classification (G := G ⧸ W) (p := 3) (by norm_num) hquotcard)
+  exact ⟨W, hWnormal, hKW, hWcard, hWquot⟩
+
+theorem order36_A4_quotient_klein_preimage_layers [Finite G]
+    (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (G ⧸ W ≃* order36_C3) := by
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso⟩ :=
+    order36_A4_quotient_klein_preimage_mulEquiv_C3_klein (G := G)
+      hG K hKcenter hK hquot
+  have hWindex : W.index = 3 := by
+    have hmul := W.index_mul_card
+    rw [hWcard, hG] at hmul
+    omega
+  haveI : W.Normal := hWnormal
+  have hquotcard : Nat.card (G ⧸ W) = 3 := by
+    rw [← W.index_eq_card, hWindex]
+  have hWquot : Nonempty (G ⧸ W ≃* order36_C3) := by
+    simpa [order36_C3, CyclicRep] using
+      (prime_classification (G := G ⧸ W) (p := 3) (by norm_num) hquotcard)
+  exact ⟨W, hWnormal, hKW, hWcard, hWiso, hWquot⟩
+
+theorem order36_quotient_zpowers_eq_top_of_not_mem_index_three
+    [Finite G] (hG : Nat.card G = 36) (W : Subgroup G) [W.Normal]
+    (hWcard : Nat.card W = 12) {g : G} (hgW : g ∉ W) :
+    Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤ := by
+  let q : G ⧸ W := (QuotientGroup.mk' W) g
+  have hWindex : W.index = 3 := by
+    have hmul := W.index_mul_card
+    rw [hWcard, hG] at hmul
+    omega
+  have hquotcard : Nat.card (G ⧸ W) = 3 := by
+    rw [← W.index_eq_card, hWindex]
+  have hq_ne : q ≠ 1 := by
+    intro hq
+    have hq' : (QuotientGroup.mk' W) g = 1 := by
+      simpa [q] using hq
+    rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq'
+    exact hgW hq'
+  have hq_dvd : orderOf q ∣ 3 := by
+    have := orderOf_dvd_natCard q
+    rwa [hquotcard] at this
+  have hq3 : q ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hq_dvd
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hqord : orderOf q = 3 := orderOf_eq_prime hq3 hq_ne
+  change Subgroup.zpowers q = ⊤
+  exact Subgroup.eq_top_of_card_eq _ (by rw [Nat.card_zpowers, hqord, hquotcard])
+
+theorem order36_zpowers_map_quotient_top_of_quotient_zpowers_top
+    (W : Subgroup G) [W.Normal] {g : G}
+    (hqgen : Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤) :
+    (Subgroup.zpowers g).map (QuotientGroup.mk' W) = ⊤ := by
+  rw [MonoidHom.map_zpowers, hqgen]
+
+theorem order36_A4_quotient_klein_preimage_C3_klein_pow_cases [Finite G]
+    (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    ∃ W : Subgroup G, W.Normal ∧ K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        (∀ {g : G}, g ∈ W → g ^ 2 ∈ K) ∧
+          (∀ {g : G}, g ∉ W → g ^ 3 ∈ K) := by
+  obtain ⟨e⟩ := hquot
+  let φ : G →* order36_A4 := e.toMonoidHom.comp (QuotientGroup.mk' K)
+  let V : Subgroup order36_A4 := alternatingGroup.kleinFour (Fin 4)
+  let W : Subgroup G := V.comap φ
+  have hVnormal : V.Normal := by
+    dsimp [V]
+    exact alternatingGroup.normal_kleinFour (α := Fin 4) (by simp)
+  have hWnormal : W.Normal := by
+    dsimp [W]
+    exact hVnormal.comap φ
+  have hKW : K ≤ W := by
+    intro k hk
+    have hkq : (QuotientGroup.mk' K) k = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hk
+    have hφk : φ k = 1 := by
+      change e ((QuotientGroup.mk' K) k) = 1
+      rw [hkq]
+      simp
+    change φ k ∈ V
+    rw [hφk]
+    exact V.one_mem
+  have hφ_surj : Function.Surjective φ := by
+    intro a
+    obtain ⟨q, hq⟩ := e.surjective a
+    obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective K q
+    refine ⟨g, ?_⟩
+    change e ((QuotientGroup.mk' K) g) = a
+    rw [hg, hq]
+  have hV_card : Nat.card V = 4 := by
+    simpa [V] using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+  have hV_index : V.index = 3 := by
+    have hmul := V.index_mul_card
+    rw [hV_card, card_order36_A4] at hmul
+    omega
+  have hW_index : W.index = 3 := by
+    dsimp [W]
+    rw [V.index_comap_of_surjective hφ_surj, hV_index]
+  have hWcard : Nat.card W = 12 := by
+    have hmul := W.index_mul_card
+    rw [hW_index, hG] at hmul
+    omega
+  have hpow_in : ∀ {g : G}, g ∈ W → g ^ 2 ∈ K := by
+    intro g hgW
+    change φ g ∈ V at hgW
+    have hφsq : (φ g) ^ 2 = 1 := order36_A4_mem_kleinFour_sq hgW
+    have hq : ((QuotientGroup.mk' K) g) ^ 2 = 1 := by
+      apply e.injective
+      simpa [φ] using hφsq
+    change (g : G ⧸ K) ^ 2 = 1 at hq
+    rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
+    exact hq
+  have hpow_out : ∀ {g : G}, g ∉ W → g ^ 3 ∈ K := by
+    intro g hgW
+    have hgV : φ g ∉ V := by
+      exact hgW
+    have hφcube : (φ g) ^ 3 = 1 := order36_A4_not_mem_kleinFour_cube hgV
+    have hq : ((QuotientGroup.mk' K) g) ^ 3 = 1 := by
+      apply e.injective
+      simpa [φ] using hφcube
+    change (g : G ⧸ K) ^ 3 = 1 at hq
+    rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq
+    exact hq
+  let ψ : W →* order36_A4 := φ.comp W.subtype
+  have hψker : ψ.ker = K.subgroupOf W := by
+    ext w
+    constructor
+    · intro hw
+      rw [MonoidHom.mem_ker] at hw
+      rw [Subgroup.mem_subgroupOf]
+      have hq : (QuotientGroup.mk' K) (w : G) = 1 := by
+        apply e.injective
+        simpa [ψ, φ] using hw
+      rwa [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq
+    · intro hw
+      rw [Subgroup.mem_subgroupOf] at hw
+      rw [MonoidHom.mem_ker]
+      have hq : (QuotientGroup.mk' K) (w : G) = 1 := by
+        rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+        exact hw
+      change e ((QuotientGroup.mk' K) (w : G)) = 1
+      rw [hq]
+      simp
+  have hψrange : ψ.range = V := by
+    apply le_antisymm
+    · intro a ha
+      rw [MonoidHom.mem_range] at ha
+      obtain ⟨w, hw⟩ := ha
+      rw [← hw]
+      change φ (w : G) ∈ V
+      exact w.property
+    · intro a ha
+      rw [MonoidHom.mem_range]
+      obtain ⟨g, hg⟩ := hφ_surj a
+      have hgW : g ∈ W := by
+        change φ g ∈ V
+        rw [hg]
+        exact ha
+      refine ⟨⟨g, hgW⟩, ?_⟩
+      change φ g = a
+      exact hg
+  haveI : (K.subgroupOf W).Normal := hψker ▸ MonoidHom.normal_ker ψ
+  have hWquot : Nonempty (W ⧸ K.subgroupOf W ≃* V) := by
+    exact ⟨(QuotientGroup.quotientMulEquivOfEq hψker.symm).trans
+      ((QuotientGroup.quotientKerEquivRange ψ).trans (MulEquiv.subgroupCongr hψrange))⟩
+  have hWiso : Nonempty (W ≃* order36_C3 × V) :=
+    order36_mulEquiv_C3_klein_of_central_order_three_klein_quotient
+      K W hKW hKcenter hK hWcard hWquot
+  exact ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hpow_out⟩
+
+theorem order36_C3_klein_no_order_nine
+    (x : order36_C3 × alternatingGroup.kleinFour (Fin 4)) :
+    orderOf x ≠ 9 := by
+  rw [Prod.orderOf_mk]
+  have hleft : orderOf x.1 ∣ 3 := by
+    simpa [order36_C3] using orderOf_dvd_natCard x.1
+  have hright : orderOf x.2 ∣ 4 := by
+    have hcard : Nat.card (alternatingGroup.kleinFour (Fin 4)) = 4 := by
+      simpa using alternatingGroup.kleinFour_card_of_card_eq_four (α := Fin 4) (by simp)
+    have := orderOf_dvd_natCard x.2
+    rwa [hcard] at this
+  intro hx
+  have hlcm_dvd : Nat.lcm (orderOf x.1) (orderOf x.2) ∣ 12 :=
+    Nat.lcm_dvd (hleft.trans (by norm_num : 3 ∣ 12))
+      (hright.trans (by norm_num : 4 ∣ 12))
+  rw [hx] at hlcm_dvd
+  norm_num at hlcm_dvd
+
+theorem order36_no_order_nine_of_C3_klein_layer_cube_one {G : Type*} [Group G]
+    (W : Subgroup G)
+    (hWiso : Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)))
+    (hcube : ∀ {g : G}, g ∉ W → g ^ 3 = 1) :
+    ∀ g : G, orderOf g ≠ 9 := by
+  intro g hg9
+  by_cases hgW : g ∈ W
+  · obtain ⟨e⟩ := hWiso
+    have hw9 : orderOf (e ⟨g, hgW⟩) = 9 := by
+      rw [MulEquiv.orderOf_eq, Subgroup.orderOf_mk, hg9]
+    exact order36_C3_klein_no_order_nine (e ⟨g, hgW⟩) hw9
+  · have hdvd : orderOf g ∣ 3 := orderOf_dvd_of_pow_eq_one (hcube hgW)
+    rw [hg9] at hdvd
+    norm_num at hdvd
+
+theorem order36_A4_quotient_no_order_nine_iff_C3_klein_cube_one
+    [Finite G] (hG : Nat.card G = 36) (K : Subgroup G) [K.Normal]
+    (hKcenter : K ≤ Subgroup.center G) (hK : Nat.card K = 3)
+    (hquot : Nonempty (G ⧸ K ≃* order36_A4)) :
+    (∀ g : G, orderOf g ≠ 9) ↔
+      ∃ W : Subgroup G, W.Normal ∧ K ≤ W ∧ Nat.card W = 12 ∧
+        Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+          ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  constructor
+  · intro hno9
+    obtain ⟨W, hWnormal, hKW, hWcard, hWiso, _hpow_in, hpow_out⟩ :=
+      order36_A4_quotient_klein_preimage_C3_klein_pow_cases
+        (G := G) hG K hKcenter hK hquot
+    refine ⟨W, hWnormal, hKW, hWcard, hWiso, ?_⟩
+    intro g hgW
+    by_contra hg3ne
+    exact hno9 g (order36_orderOf_eq_nine_of_cube_mem_card_three
+      K hK (hpow_out hgW) hg3ne)
+  · rintro ⟨W, _hWnormal, _hKW, _hWcard, hWiso, hcube⟩
+    exact order36_no_order_nine_of_C3_klein_layer_cube_one W hWiso hcube
+
+theorem order36_A4_quotient_C3_klein_order_nine_cube_generates
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hKcenter : K ≤ Subgroup.center G)
+    (hK : Nat.card K = 3) (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∃ hpow_out : (∀ {g : G}, g ∉ W → g ^ 3 ∈ K),
+          ∃ (g : G) (hgW : g ∉ W), orderOf g = 9 ∧
+            K ≤ Subgroup.zpowers g ∧
+            Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤ ∧
+            Subgroup.zpowers (⟨g ^ 3, hpow_out hgW⟩ : K) = ⊤ := by
+  obtain ⟨g, hg9⟩ := h9
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, _hpow_in, hpow_out⟩ :=
+    order36_A4_quotient_klein_preimage_C3_klein_pow_cases
+      (G := G) hG K hKcenter hK hquot
+  have hgW : g ∉ W := by
+    intro hgW
+    obtain ⟨e⟩ := hWiso
+    have himage : orderOf (e ⟨g, hgW⟩) = 9 := by
+      rw [MulEquiv.orderOf_eq, Subgroup.orderOf_mk, hg9]
+    exact order36_C3_klein_no_order_nine (e ⟨g, hgW⟩) himage
+  refine ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, ?_, ?_, ?_⟩
+  · exact order36_card_three_subgroup_le_zpowers_of_order_nine_cube_mem
+      K hK (hpow_out hgW) hg9
+  · exact order36_quotient_zpowers_eq_top_of_not_mem_index_three
+      (G := G) hG W hWcard hgW
+  · exact order36_order_nine_cube_generates_card_three_subgroup K hK (hpow_out hgW) hg9
+
+noncomputable def order36_C9ToC3 : order36_C9 →* order36_C3 where
+  toFun x := Multiplicative.ofAdd ((x.toAdd.val : Nat) : ZMod 3)
+  map_one' := by rfl
+  map_mul' x y := by
+    obtain ⟨a, rfl⟩ := Multiplicative.ofAdd.surjective x
+    obtain ⟨b, rfl⟩ := Multiplicative.ofAdd.surjective y
+    ext
+    fin_cases a <;> fin_cases b <;> decide
+
+theorem order36_C9ToC3_range_top : order36_C9ToC3.range = ⊤ := by
+  rw [Subgroup.eq_top_iff']
+  intro x
+  obtain ⟨n, rfl⟩ := Multiplicative.ofAdd.surjective x
+  fin_cases n
+  · rw [MonoidHom.mem_range]
+    refine ⟨1, ?_⟩
+    ext
+    simp [order36_C9ToC3]
+    rfl
+  · rw [MonoidHom.mem_range]
+    refine ⟨Multiplicative.ofAdd (1 : ZMod 9), ?_⟩
+    ext
+    simp [order36_C9ToC3]
+    rfl
+  · rw [MonoidHom.mem_range]
+    refine ⟨Multiplicative.ofAdd (2 : ZMod 9), ?_⟩
+    ext
+    simp only [Nat.reduceAdd, Fin.reduceFinMk, Fin.isValue, toAdd_ofAdd]
+    decide
+
+/-- The difference between the `A₄ → C₃` quotient map and the reduction `C₉ → C₃`. -/
+noncomputable abbrev order36_A4C9Diff : order36_A4 × order36_C9 →* order36_C3 :=
+  (order36_A4ToC3.comp (MonoidHom.fst order36_A4 order36_C9)) *
+    (order36_C9ToC3.comp (MonoidHom.snd order36_A4 order36_C9))⁻¹
+
+/-- A non-split central-extension candidate in the non-normal Sylow branch. -/
+abbrev order36_A4C9 : Type := order36_A4C9Diff.ker
+
+theorem order36_A4C9Diff_range_top : order36_A4C9Diff.range = ⊤ := by
+  rw [Subgroup.eq_top_iff']
+  intro x
+  obtain ⟨n, rfl⟩ := Multiplicative.ofAdd.surjective x
+  fin_cases n
+  · rw [MonoidHom.mem_range]
+    refine ⟨(1, 1), ?_⟩
+    ext
+    simp [order36_A4C9Diff, order36_C9ToC3]
+    rfl
+  · rw [MonoidHom.mem_range]
+    refine ⟨(1, Multiplicative.ofAdd (2 : ZMod 9)), ?_⟩
+    ext
+    simp only [MonoidHom.mul_apply, MonoidHom.coe_comp, MulEquiv.toMonoidHom_eq_coe,
+      MonoidHom.coe_coe, QuotientGroup.coe_mk', MonoidHom.coe_fst, Function.comp_apply,
+      QuotientGroup.mk_one, map_one, MonoidHom.inv_apply, MonoidHom.coe_snd, one_mul,
+      toAdd_inv, Nat.reduceAdd, Fin.mk_one, Fin.isValue, toAdd_ofAdd]
+    decide
+  · rw [MonoidHom.mem_range]
+    refine ⟨(1, Multiplicative.ofAdd (1 : ZMod 9)), ?_⟩
+    ext
+    simp only [MonoidHom.mul_apply, MonoidHom.coe_comp, MulEquiv.toMonoidHom_eq_coe,
+      MonoidHom.coe_coe, QuotientGroup.coe_mk', MonoidHom.coe_fst, Function.comp_apply,
+      QuotientGroup.mk_one, map_one, MonoidHom.inv_apply, MonoidHom.coe_snd, one_mul,
+      toAdd_inv, Nat.reduceAdd, Fin.reduceFinMk, Fin.isValue, toAdd_ofAdd]
+    decide
+
+theorem card_order36_A4C9 : Nat.card order36_A4C9 = 36 := by
+  change Nat.card order36_A4C9Diff.ker = 36
+  have hprod : Nat.card (order36_A4 × order36_C9) = 108 := by
+    rw [Nat.card_prod, card_order36_A4, card_order36_C9]
+  have hrange : Nat.card order36_A4C9Diff.range = 3 := by
+    rw [order36_A4C9Diff_range_top]
+    simp [order36_C3]
+  have hidx : order36_A4C9Diff.ker.index = 3 := by
+    rw [Subgroup.index_ker, hrange]
+  have h := order36_A4C9Diff.ker.card_mul_index
+  rw [hidx, hprod] at h
+  omega
+
+theorem order36_C3A4_has_normal_order_three_and_A4_quotient :
+    ∃ (K : Subgroup order36_C3A4) (_ : K.Normal), Nat.card K = 3 ∧
+      Nonempty (order36_C3A4 ⧸ K ≃* order36_A4) := by
+  let π : order36_C3A4 →* order36_A4 := MonoidHom.snd order36_C3 order36_A4
+  have hrange_top : π.range = ⊤ := by
+    rw [Subgroup.eq_top_iff']
+    intro a
+    rw [MonoidHom.mem_range]
+    exact ⟨(1, a), rfl⟩
+  refine ⟨π.ker, MonoidHom.normal_ker π, ?_, ?_⟩
+  · have hidx : π.ker.index = 12 := by
+      rw [Subgroup.index_ker, hrange_top]
+      simpa using card_order36_A4
+    have h := π.ker.card_mul_index
+    rw [hidx, card_order36_C3A4] at h
+    omega
+  · exact ⟨((QuotientGroup.quotientKerEquivRange π).trans
+      (MulEquiv.subgroupCongr hrange_top)).trans Subgroup.topEquiv⟩
+
+theorem order36_C3A4_has_central_order_three_and_A4_quotient :
+    ∃ (K : Subgroup order36_C3A4) (_ : K.Normal), K ≤ Subgroup.center order36_C3A4 ∧
+      Nat.card K = 3 ∧ Nonempty (order36_C3A4 ⧸ K ≃* order36_A4) := by
+  obtain ⟨K, hKnormal, hKcard, hquot⟩ :=
+    order36_C3A4_has_normal_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  exact ⟨K, hKnormal,
+    order36_normal_order_three_A4_quotient_le_center K hKcard hquot, hKcard, hquot⟩
+
+theorem order36_C3A4_no_order_nine (x : order36_C3A4) : orderOf x ≠ 9 := by
+  rw [Prod.orderOf_mk]
+  have hleft : orderOf x.1 ∣ 3 := by
+    simpa [order36_C3] using orderOf_dvd_natCard x.1
+  have hright : orderOf x.2 ∣ 6 := by
+    rcases order36_A4_pow x.2 with h2 | h3
+    · exact (orderOf_dvd_of_pow_eq_one h2).trans (by norm_num : 2 ∣ 6)
+    · exact (orderOf_dvd_of_pow_eq_one h3).trans (by norm_num : 3 ∣ 6)
+  intro h
+  have hlcm_dvd : Nat.lcm (orderOf x.1) (orderOf x.2) ∣ 6 :=
+    Nat.lcm_dvd (hleft.trans (by norm_num : 3 ∣ 6)) hright
+  rw [h] at hlcm_dvd
+  norm_num at hlcm_dvd
+
+theorem order36_C3A4_has_C3_klein_cube_one :
+    ∃ (W : Subgroup order36_C3A4) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_C3A4}, g ∉ W → g ^ 3 = 1 := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_C3A4_has_central_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, _hKW, hWcard, hWiso, hcube⟩ :=
+    (order36_A4_quotient_no_order_nine_iff_C3_klein_cube_one
+      (G := order36_C3A4) card_order36_C3A4 K hKcenter hKcard hquot).mp
+        order36_C3A4_no_order_nine
+  exact ⟨W, hWnormal, hWcard, hWiso, hcube⟩
+
+theorem order36_A4C9_has_normal_order_three_and_A4_quotient :
+    ∃ (K : Subgroup order36_A4C9) (_ : K.Normal), Nat.card K = 3 ∧
+      Nonempty (order36_A4C9 ⧸ K ≃* order36_A4) := by
+  let π : order36_A4C9 →* order36_A4 :=
+    (MonoidHom.fst order36_A4 order36_C9).comp order36_A4C9Diff.ker.subtype
+  have hrange_top : π.range = ⊤ := by
+    rw [Subgroup.eq_top_iff']
+    intro a
+    have ha : order36_A4ToC3 a ∈ order36_C9ToC3.range := by
+      rw [order36_C9ToC3_range_top]
+      trivial
+    rw [MonoidHom.mem_range] at ha
+    obtain ⟨z, hz⟩ := ha
+    rw [MonoidHom.mem_range]
+    refine ⟨⟨(a, z), ?_⟩, rfl⟩
+    change order36_A4C9Diff (a, z) = 1
+    simp [order36_A4C9Diff, hz]
+  refine ⟨π.ker, MonoidHom.normal_ker π, ?_, ?_⟩
+  · have hidx : π.ker.index = 12 := by
+      rw [Subgroup.index_ker, hrange_top]
+      simpa using card_order36_A4
+    have h := π.ker.card_mul_index
+    rw [hidx, card_order36_A4C9] at h
+    omega
+  · exact ⟨((QuotientGroup.quotientKerEquivRange π).trans
+      (MulEquiv.subgroupCongr hrange_top)).trans Subgroup.topEquiv⟩
+
+theorem order36_A4C9_has_central_order_three_and_A4_quotient :
+    ∃ (K : Subgroup order36_A4C9) (_ : K.Normal), K ≤ Subgroup.center order36_A4C9 ∧
+      Nat.card K = 3 ∧ Nonempty (order36_A4C9 ⧸ K ≃* order36_A4) := by
+  obtain ⟨K, hKnormal, hKcard, hquot⟩ :=
+    order36_A4C9_has_normal_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  exact ⟨K, hKnormal,
+    order36_normal_order_three_A4_quotient_le_center K hKcard hquot, hKcard, hquot⟩
+
+theorem card_sylow_3_order36_C3A4 : Nat.card (Sylow 3 order36_C3A4) = 4 := by
+  obtain ⟨K, hKnormal, hKcard, hquot⟩ :=
+    order36_C3A4_has_normal_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  exact order36_card_sylow_3_eq_four_of_normal_order_three_A4_quotient
+    card_order36_C3A4 K hKcard hquot
+
+theorem card_sylow_3_order36_A4C9 : Nat.card (Sylow 3 order36_A4C9) = 4 := by
+  obtain ⟨K, hKnormal, hKcard, hquot⟩ :=
+    order36_A4C9_has_normal_order_three_and_A4_quotient
+  haveI : K.Normal := hKnormal
+  exact order36_card_sylow_3_eq_four_of_normal_order_three_A4_quotient
+    card_order36_A4C9 K hKcard hquot
+
+theorem order36_A4C9_has_order_nine : ∃ x : order36_A4C9, orderOf x = 9 := by
+  let z : order36_C9 := Multiplicative.ofAdd (1 : ZMod 9)
+  have hzrange : order36_C9ToC3 z ∈ order36_A4ToC3.range := by
+    rw [order36_A4ToC3_range_top]
+    trivial
+  rw [MonoidHom.mem_range] at hzrange
+  obtain ⟨a, ha⟩ := hzrange
+  have hz_ne_one : order36_C9ToC3 z ≠ 1 := by
+    intro hz
+    change Multiplicative.ofAdd (((1 : ZMod 9).val : Nat) : ZMod 3) = 1 at hz
+    norm_num at hz
+  have ha_notK : a ∉ alternatingGroup.kleinFour (Fin 4) := by
+    intro hK
+    have hq : ((QuotientGroup.mk'
+        (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4)) a) = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hK
+    apply hz_ne_one
+    rw [← ha]
+    change order36_A4QuotEquiv ((QuotientGroup.mk'
+      (alternatingGroup.kleinFour (Fin 4) : Subgroup order36_A4)) a) = 1
+    rw [hq]
+    simp
+  let x : order36_A4C9 := ⟨(a, z), by
+    change order36_A4ToC3 a * (order36_C9ToC3 z)⁻¹ = 1
+    rw [ha]
+    simp
+  ⟩
+  refine ⟨x, ?_⟩
+  rw [Subgroup.orderOf_mk]
+  change orderOf ((a, z) : order36_A4 × order36_C9) = 9
+  rw [Prod.orderOf_mk]
+  have hz9 : orderOf z = 9 := by
+    rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+  have ha_dvd3 : orderOf a ∣ 3 :=
+    orderOf_dvd_of_pow_eq_one (order36_A4_not_mem_kleinFour_cube ha_notK)
+  rw [hz9]
+  rcases Nat.prime_three.eq_one_or_self_of_dvd (orderOf a) ha_dvd3 with ha1 | ha3
+  · rw [ha1]
+    norm_num
+  · rw [ha3]
+    norm_num
+
+theorem order36_C3A4_not_mulEquiv_A4C9 :
+    ¬ Nonempty (order36_C3A4 ≃* order36_A4C9) := by
+  rintro ⟨e⟩
+  obtain ⟨x, hx⟩ := order36_A4C9_has_order_nine
+  have hpre : orderOf (e.symm x) = 9 := by
+    rw [MulEquiv.orderOf_eq, hx]
+  exact order36_C3A4_no_order_nine (e.symm x) hpre
+
+theorem order36_C3A4_or_A4C9_branch_witnesses :
+    (∃ (W : Subgroup order36_C3A4) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_C3A4}, g ∉ W → g ^ 3 = 1) ∧
+      (∃ g : order36_A4C9, orderOf g = 9) := by
+  exact ⟨order36_C3A4_has_C3_klein_cube_one, order36_A4C9_has_order_nine⟩
+
+/-- The two representatives in the non-normal Sylow-`3` branch of order `36`. -/
+noncomputable def order36_nonnormal_reps : Fin 2 → Type
+  | 0 => order36_C3A4
+  | 1 => order36_A4C9
+
+noncomputable instance order36_nonnormal_reps_group :
+    ∀ i, Group (order36_nonnormal_reps i)
+  | 0 => by dsimp [order36_nonnormal_reps]; infer_instance
+  | 1 => by dsimp [order36_nonnormal_reps]; infer_instance
+
+theorem card_order36_nonnormal_reps (i : Fin 2) :
+    Nat.card (order36_nonnormal_reps i) = 36 := by
+  fin_cases i
+  · simpa [order36_nonnormal_reps] using card_order36_C3A4
+  · simpa [order36_nonnormal_reps] using card_order36_A4C9
+
+theorem card_sylow_3_order36_nonnormal_reps (i : Fin 2) :
+    Nat.card (Sylow 3 (order36_nonnormal_reps i)) = 4 := by
+  fin_cases i
+  · exact card_sylow_3_order36_C3A4
+  · exact card_sylow_3_order36_A4C9
+
+theorem order36_nonnormal_reps_order_nine_or_C3_klein_cube_one (i : Fin 2) :
+    (∃ g : order36_nonnormal_reps i, orderOf g = 9) ∨
+    ∃ (W : Subgroup (order36_nonnormal_reps i)) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_nonnormal_reps i}, g ∉ W → g ^ 3 = 1 := by
+  fin_cases i
+  · right
+    change ∃ (W : Subgroup order36_C3A4) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_C3A4}, g ∉ W → g ^ 3 = 1
+    exact order36_C3A4_has_C3_klein_cube_one
+  · left
+    change ∃ g : order36_A4C9, orderOf g = 9
+    exact order36_A4C9_has_order_nine
+
+/-- The two non-normal representatives of order `36` are non-isomorphic. -/
+theorem order36_nonnormal_reps_pairwise :
+    PairwiseNonMulEquiv order36_nonnormal_reps := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact absurd hiso order36_C3A4_not_mulEquiv_A4C9
+  · exact absurd ⟨hiso.some.symm⟩ order36_C3A4_not_mulEquiv_A4C9
+  · rfl
+
+/-- The normal and non-normal Sylow-`3` branch representatives are disjoint. -/
+theorem order36_normal_nonnormal_reps_disjoint :
+    ∀ i j, ¬ Nonempty (order36_normal_reps i ≃* order36_nonnormal_reps j) := by
+  intro i j hiso
+  obtain ⟨e⟩ := hiso
+  haveI : Finite (order36_normal_reps i) :=
+    Nat.finite_of_card_ne_zero (by rw [card_order36_normal_reps i]; norm_num)
+  haveI : Finite (order36_nonnormal_reps j) :=
+    Nat.finite_of_card_ne_zero (by rw [card_order36_nonnormal_reps j]; norm_num)
+  have heq := card_sylow_3_eq_of_mulEquiv e
+  rw [card_sylow_3_order36_normal_reps i,
+    card_sylow_3_order36_nonnormal_reps j] at heq
+  norm_num at heq
+
+/-- Once the normal branch representatives are internally separated, the normal and non-normal
+branches combine into a pairwise non-isomorphic family. -/
+theorem order36_sum_reps_pairwise_of_normal_reps_pairwise
+    (hnormal : PairwiseNonMulEquiv order36_normal_reps) :
+    PairwiseNonMulEquiv (Sum.elim order36_normal_reps order36_nonnormal_reps) := by
+  exact hnormal.sum order36_nonnormal_reps_pairwise order36_normal_nonnormal_reps_disjoint
+
+theorem order36_sum_reps_pairwise :
+    PairwiseNonMulEquiv (Sum.elim order36_normal_reps order36_nonnormal_reps) :=
+  order36_sum_reps_pairwise_of_normal_reps_pairwise order36_normal_reps_pairwise
+
+theorem order36_nonnormal_reps_has_normal_order_three_and_A4_quotient (i : Fin 2) :
+    ∃ (K : Subgroup (order36_nonnormal_reps i)) (_ : K.Normal), Nat.card K = 3 ∧
+      Nonempty ((order36_nonnormal_reps i) ⧸ K ≃* order36_A4) := by
+  fin_cases i
+  · change ∃ (K : Subgroup order36_C3A4) (_ : K.Normal), Nat.card K = 3 ∧
+        Nonempty (order36_C3A4 ⧸ K ≃* order36_A4)
+    exact order36_C3A4_has_normal_order_three_and_A4_quotient
+  · change ∃ (K : Subgroup order36_A4C9) (_ : K.Normal), Nat.card K = 3 ∧
+        Nonempty (order36_A4C9 ⧸ K ≃* order36_A4)
+    exact order36_A4C9_has_normal_order_three_and_A4_quotient
+
+theorem order36_nonnormal_reps_has_central_order_three_and_A4_quotient (i : Fin 2) :
+    ∃ (K : Subgroup (order36_nonnormal_reps i)) (_ : K.Normal),
+      K ≤ Subgroup.center (order36_nonnormal_reps i) ∧ Nat.card K = 3 ∧
+        Nonempty ((order36_nonnormal_reps i) ⧸ K ≃* order36_A4) := by
+  fin_cases i
+  · change ∃ (K : Subgroup order36_C3A4) (_ : K.Normal),
+        K ≤ Subgroup.center order36_C3A4 ∧ Nat.card K = 3 ∧
+          Nonempty (order36_C3A4 ⧸ K ≃* order36_A4)
+    exact order36_C3A4_has_central_order_three_and_A4_quotient
+  · change ∃ (K : Subgroup order36_A4C9) (_ : K.Normal),
+        K ≤ Subgroup.center order36_A4C9 ∧ Nat.card K = 3 ∧
+          Nonempty (order36_A4C9 ⧸ K ≃* order36_A4)
+    exact order36_A4C9_has_central_order_three_and_A4_quotient
 
 /-- If there are four Sylow `3`-subgroups, each Sylow `3`-subgroup is self-normalizing. -/
 theorem sylow_3_eq_normalizer_of_card_36_of_card_sylow_3_eq_four [Finite G]
@@ -2692,5 +5966,564 @@ theorem order36_has_normal_order_three_and_A4_quotient_of_card_sylow_3_eq_four [
     order36_sylow_3_conj_action_A4_of_card_sylow_3_eq_four (G := G) hG hSyl
   exact ⟨ψ.ker, MonoidHom.normal_ker ψ, hker_card,
     ⟨(QuotientGroup.quotientKerEquivRange ψ).trans (MulEquiv.subgroupCongr h_alt)⟩⟩
+
+theorem order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four [Finite G]
+    (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) := by
+  obtain ⟨K, hKnormal, hKcard, hquot⟩ :=
+    order36_has_normal_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  exact ⟨K, hKnormal,
+    order36_normal_order_three_A4_quotient_le_center K hKcard hquot, hKcard, hquot⟩
+
+theorem order36_has_C3_klein_preimage_of_card_sylow_3_eq_four [Finite G]
+    (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, _, hWcard, hWiso⟩ :=
+    order36_A4_quotient_klein_preimage_mulEquiv_C3_klein (G := G)
+      hG K hKcenter hKcard hquot
+  exact ⟨W, hWnormal, hWcard, hWiso⟩
+
+theorem order36_has_C3_klein_layer_of_card_sylow_3_eq_four [Finite G]
+    (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (G ⧸ W ≃* order36_C3) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, _, hWcard, hWiso, hWquot⟩ :=
+    order36_A4_quotient_klein_preimage_layers (G := G)
+      hG K hKcenter hKcard hquot
+  exact ⟨W, hWnormal, hWcard, hWiso, hWquot⟩
+
+theorem order36_has_C3_klein_layer_with_order_nine_outside_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (G ⧸ W ≃* order36_C3) ∧
+          ∃ g : G, g ∉ W ∧ orderOf g = 9 := by
+  obtain ⟨g, hg9⟩ := h9
+  obtain ⟨W, hWnormal, hWcard, hWiso, hWquot⟩ :=
+    order36_has_C3_klein_layer_of_card_sylow_3_eq_four (G := G) hG hSyl
+  have hgW : g ∉ W := by
+    intro hgW
+    obtain ⟨e⟩ := hWiso
+    have himage : orderOf (e ⟨g, hgW⟩) = 9 := by
+      rw [MulEquiv.orderOf_eq, Subgroup.orderOf_mk, hg9]
+    exact order36_C3_klein_no_order_nine (e ⟨g, hgW⟩) himage
+  exact ⟨W, hWnormal, hWcard, hWiso, hWquot, g, hgW, hg9⟩
+
+theorem order36_has_central_C3_klein_layer_with_order_nine_cube_generates_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) ∧
+        ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+          Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+            ∃ hpow_out : (∀ {g : G}, g ∉ W → g ^ 3 ∈ K),
+              ∃ (g : G) (hgW : g ∉ W), orderOf g = 9 ∧
+                K ≤ Subgroup.zpowers g ∧
+                Subgroup.zpowers ((QuotientGroup.mk' W) g) = ⊤ ∧
+                Subgroup.zpowers (⟨g ^ 3, hpow_out hgW⟩ : K) = ⊤ := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9,
+    hKle, hqgen, hgen⟩ :=
+    order36_A4_quotient_C3_klein_order_nine_cube_generates
+      (G := G) hG K hKcenter hKcard hquot h9
+  exact ⟨K, hKnormal, hKcenter, hKcard, hquot,
+    W, hWnormal, hKW, hWcard, hWiso, hpow_out, g, hgW, hg9, hKle, hqgen, hgen⟩
+
+theorem order36_has_klein_preimage_order_nine_of_cube_ne_one_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      ∀ {g : G}, g ∉ W → g ^ 3 ≠ 1 → orderOf g = 9 := by
+  obtain ⟨K, hKnormal, _hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, _hKW, hWcard, hpow⟩ :=
+    order36_A4_quotient_klein_preimage_order_nine_of_cube_ne_one (G := G)
+      hG K hKcard hquot
+  exact ⟨W, hWnormal, hWcard, hpow⟩
+
+theorem order36_has_klein_preimage_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  obtain ⟨K, hKnormal, _hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, _hKW, hWcard, hcube⟩ :=
+    order36_A4_quotient_klein_preimage_cube_one_of_no_order_nine (G := G)
+      hG K hKcard hquot hno9
+  exact ⟨W, hWnormal, hWcard, hcube⟩
+
+theorem order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, _hKW, hWcard, hWiso, hcube⟩ :=
+    (order36_A4_quotient_no_order_nine_iff_C3_klein_cube_one
+      (G := G) hG K hKcenter hKcard hquot).mp hno9
+  exact ⟨W, hWnormal, hWcard, hWiso, hcube⟩
+
+theorem order36_exists_order_three_complement_of_C3_klein_cube_one
+    [Finite G] (hG : Nat.card G = 36) (W : Subgroup G) [W.Normal]
+    (hWcard : Nat.card W = 12)
+    (hcube : ∀ {g : G}, g ∉ W → g ^ 3 = 1) :
+    ∃ H : Subgroup G, W.IsComplement' H ∧ Nat.card H = 3 ∧
+      Nonempty (H ≃* order36_C3) := by
+  classical
+  have hWindex : W.index = 3 := by
+    have hmul := W.index_mul_card
+    rw [hWcard, hG] at hmul
+    omega
+  have hquotcard : Nat.card (G ⧸ W) = 3 := by
+    rw [← W.index_eq_card, hWindex]
+  haveI : Nontrivial (G ⧸ W) := by
+    exact Finite.one_lt_card_iff_nontrivial.mp (by rw [hquotcard]; norm_num)
+  obtain ⟨q, hq_ne⟩ : ∃ q : G ⧸ W, q ≠ 1 := exists_ne 1
+  obtain ⟨g, hgq⟩ := QuotientGroup.mk'_surjective W q
+  have hgW : g ∉ W := by
+    intro hgW
+    have hgq_one : (QuotientGroup.mk' W) g = 1 := by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hgW
+    rw [hgq] at hgq_one
+    exact hq_ne hgq_one
+  have hg3 : g ^ 3 = 1 := hcube hgW
+  have hg_ne : g ≠ 1 := by
+    intro hg
+    exact hgW (by rw [hg]; exact W.one_mem)
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hgord : orderOf g = 3 := orderOf_eq_prime hg3 hg_ne
+  let H : Subgroup G := Subgroup.zpowers g
+  have hHcard : Nat.card H = 3 := by
+    dsimp [H]
+    rw [Nat.card_zpowers, hgord]
+  let f : H →* G ⧸ W := (QuotientGroup.mk' W).restrict H
+  have hmk_ne : (QuotientGroup.mk' W) g ≠ 1 := by
+    intro hgq_one
+    rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hgq_one
+    exact hgW hgq_one
+  have hker_bot : f.ker = ⊥ := by
+    haveI : Fact (Nat.card H).Prime := ⟨by rw [hHcard]; norm_num⟩
+    rcases f.ker.eq_bot_or_eq_top_of_prime_card with hbot | htop
+    · exact hbot
+    · exfalso
+      have hgker : (⟨g, Subgroup.mem_zpowers g⟩ : H) ∈ f.ker := by
+        rw [htop]
+        exact Subgroup.mem_top _
+      have hgimage : f ⟨g, Subgroup.mem_zpowers g⟩ = 1 := MonoidHom.mem_ker.mp hgker
+      exact hmk_ne (by simpa [f, H, MonoidHom.restrict_apply] using hgimage)
+  have hf_inj : Function.Injective f := f.ker_eq_bot_iff.mp hker_bot
+  have hdisj : Disjoint W H := by
+    rw [disjoint_iff_inf_le]
+    intro x hx
+    rw [Subgroup.mem_inf] at hx
+    have hximage : f ⟨x, hx.2⟩ = 1 := by
+      change (QuotientGroup.mk' W) x = 1
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+      exact hx.1
+    have hxone : (⟨x, hx.2⟩ : H) = 1 := by
+      apply hf_inj
+      simpa using hximage
+    exact Subgroup.mem_bot.mpr (by simpa using congrArg (fun y : H => (y : G)) hxone)
+  have hcomp : W.IsComplement' H := by
+    apply Subgroup.isComplement'_of_card_mul_and_disjoint
+    · rw [hWcard, hHcard, hG]
+    · exact hdisj
+  have hHiso : Nonempty (H ≃* order36_C3) := by
+    simpa [order36_C3, CyclicRep] using
+      (prime_classification (G := H) (p := 3) (by norm_num) hHcard)
+  exact ⟨H, hcomp, hHcard, hHiso⟩
+
+theorem order36_A4_quotient_C3_klein_split_of_no_order_nine
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hKcenter : K ≤ Subgroup.center G)
+    (hK : Nat.card K = 3) (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        (∀ {g : G}, g ∈ W → g ^ 2 ∈ K) ∧
+          (∀ {g : G}, g ∉ W → g ^ 3 = 1) ∧
+            ∃ H : Subgroup G, W.IsComplement' H ∧ Nat.card H = 3 ∧
+              Nonempty (H ≃* order36_C3) := by
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hpow_out⟩ :=
+    order36_A4_quotient_klein_preimage_C3_klein_pow_cases
+      (G := G) hG K hKcenter hK hquot
+  haveI : W.Normal := hWnormal
+  have hcube : ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+    intro g hgW
+    by_contra hg3ne
+    exact hno9 g (order36_orderOf_eq_nine_of_cube_mem_card_three
+      K hK (hpow_out hgW) hg3ne)
+  obtain ⟨H, hHcomp, hHcard, hHiso⟩ :=
+    order36_exists_order_three_complement_of_C3_klein_cube_one
+      (G := G) hG W hWcard hcube
+  exact ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hcube, H, hHcomp, hHcard, hHiso⟩
+
+theorem order36_A4_quotient_C3_klein_complements_of_no_order_nine
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hKcenter : K ≤ Subgroup.center G)
+    (hK : Nat.card K = 3) (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        (∀ {g : G}, g ∈ W → g ^ 2 ∈ K) ∧
+          (∀ {g : G}, g ∉ W → g ^ 3 = 1) ∧
+            (∃ L : Subgroup W, (K.subgroupOf W).IsComplement' L ∧ Nat.card L = 4 ∧
+              Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4))) ∧
+                ∃ H : Subgroup G, W.IsComplement' H ∧ Nat.card H = 3 ∧
+                  Nonempty (H ≃* order36_C3) := by
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hcube, H, hHcomp,
+    hHcard, hHiso⟩ :=
+    order36_A4_quotient_C3_klein_split_of_no_order_nine
+      (G := G) hG K hKcenter hK hquot hno9
+  obtain ⟨L, hLcomp, hLcard, hLiso⟩ :=
+    order36_exists_klein_complement_of_C3_layer K W hKW hK hWcard hpow_in
+  exact ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hcube,
+    ⟨L, hLcomp, hLcard, hLiso⟩, H, hHcomp, hHcard, hHiso⟩
+
+theorem order36_A4_quotient_C3_A4_split_of_no_order_nine
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hKcenter : K ≤ Subgroup.center G)
+    (hKcard : Nat.card K = 3) (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ S : Subgroup G, K.IsComplement' S ∧ Nat.card S = 12 ∧
+      Nonempty (S ≃* order36_A4) := by
+  obtain ⟨W, hWnormal, hKW, _hWcard, _hWiso, hpow_in, _hcube,
+    hL, H, hHcomp, hHcard, _hHiso⟩ :=
+    order36_A4_quotient_C3_klein_complements_of_no_order_nine
+      (G := G) hG K hKcenter hKcard hquot hno9
+  haveI : W.Normal := hWnormal
+  obtain ⟨L, hLcomp, hLcard, _hLiso⟩ := hL
+  let S : Subgroup G := (L.map W.subtype : Subgroup G) ⊔ H
+  have hcomp : K.IsComplement' S := by
+    dsimp [S]
+    exact order36_C3_layer_complement_klein_order_three_sup
+      (G := G) hG K W H hKcenter hKW hKcard hLcomp hLcard hpow_in hHcomp hHcard
+  have hScard : Nat.card S = 12 := by
+    dsimp [S]
+    exact order36_klein_order_three_sup_card
+      K W H hKcenter hKW hKcard hLcomp hLcard hpow_in hHcomp hHcard
+  have hSiso : Nonempty (S ≃* order36_A4) := by
+    dsimp [S]
+    exact order36_klein_order_three_sup_mulEquiv_A4
+      (G := G) hG K W H hKcenter hKW hKcard hquot hLcomp hLcard hpow_in hHcomp hHcard
+  exact ⟨S, hcomp, hScard, hSiso⟩
+
+theorem order36_A4_quotient_mulEquiv_C3A4_of_no_order_nine
+    [Finite G] (hG : Nat.card G = 36)
+    (K : Subgroup G) [K.Normal] (hKcenter : K ≤ Subgroup.center G)
+    (hKcard : Nat.card K = 3) (hquot : Nonempty (G ⧸ K ≃* order36_A4))
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    Nonempty (G ≃* order36_C3A4) := by
+  obtain ⟨S, hcomp, _hScard, hSiso⟩ :=
+    order36_A4_quotient_C3_A4_split_of_no_order_nine
+      (G := G) hG K hKcenter hKcard hquot hno9
+  simpa [order36_C3A4] using
+    order36_mulEquiv_C3_A4_of_central_order_three_A4_complement
+      K S hKcenter hKcard hcomp hSiso
+
+theorem order36_has_central_C3_and_A4_complement_of_no_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) ∧
+        ∃ S : Subgroup G, K.IsComplement' S ∧ Nat.card S = 12 ∧
+          Nonempty (S ≃* order36_A4) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨S, hcomp, hScard, hSiso⟩ :=
+    order36_A4_quotient_C3_A4_split_of_no_order_nine
+      (G := G) hG K hKcenter hKcard hquot hno9
+  exact ⟨K, hKnormal, hKcenter, hKcard, hquot, S, hcomp, hScard, hSiso⟩
+
+theorem order36_mulEquiv_C3A4_of_no_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    Nonempty (G ≃* order36_C3A4) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  exact order36_A4_quotient_mulEquiv_C3A4_of_no_order_nine
+    (G := G) hG K hKcenter hKcard hquot hno9
+
+theorem order36_normal_rep_or_order_nine_or_C3A4_cases
+    [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    (∃ g : G, orderOf g = 9) ∨
+    Nonempty (G ≃* order36_C3A4) := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · by_cases h9 : ∃ g : G, orderOf g = 9
+    · exact Or.inr (Or.inl h9)
+    · push Not at h9
+      exact Or.inr <| Or.inr
+        (order36_mulEquiv_C3A4_of_no_order_nine_of_card_sylow_3_eq_four
+          (G := G) hG hSyl h9)
+
+theorem order36_has_central_C3_and_C3_klein_split_of_no_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) ∧
+        ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+          Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+            (∀ {g : G}, g ∈ W → g ^ 2 ∈ K) ∧
+              (∀ {g : G}, g ∉ W → g ^ 3 = 1) ∧
+                ∃ H : Subgroup G, W.IsComplement' H ∧ Nat.card H = 3 ∧
+                  Nonempty (H ≃* order36_C3) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hcube, H, hHcomp,
+    hHcard, hHiso⟩ :=
+    order36_A4_quotient_C3_klein_split_of_no_order_nine
+      (G := G) hG K hKcenter hKcard hquot hno9
+  exact ⟨K, hKnormal, hKcenter, hKcard, hquot, W, hWnormal, hKW, hWcard, hWiso,
+    hpow_in, hcube, H, hHcomp, hHcard, hHiso⟩
+
+theorem order36_has_central_C3_and_C3_klein_complements_of_no_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) ∧
+        ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+          Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+            (∀ {g : G}, g ∈ W → g ^ 2 ∈ K) ∧
+              (∀ {g : G}, g ∉ W → g ^ 3 = 1) ∧
+                (∃ L : Subgroup W, (K.subgroupOf W).IsComplement' L ∧
+                  Nat.card L = 4 ∧
+                    Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4))) ∧
+                  ∃ H : Subgroup G, W.IsComplement' H ∧ Nat.card H = 3 ∧
+                    Nonempty (H ≃* order36_C3) := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot⟩ :=
+    order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+      (G := G) hG hSyl
+  haveI : K.Normal := hKnormal
+  obtain ⟨W, hWnormal, hKW, hWcard, hWiso, hpow_in, hcube, hL, H, hHcomp,
+    hHcard, hHiso⟩ :=
+    order36_A4_quotient_C3_klein_complements_of_no_order_nine
+      (G := G) hG K hKcenter hKcard hquot hno9
+  exact ⟨K, hKnormal, hKcenter, hKcard, hquot, W, hWnormal, hKW, hWcard, hWiso,
+    hpow_in, hcube, hL, H, hHcomp, hHcard, hHiso⟩
+
+theorem order36_semidirectProduct_of_C3_klein_cube_one
+    [Finite G] (hG : Nat.card G = 36) (W : Subgroup G) [W.Normal]
+    (hWcard : Nat.card W = 12)
+    (_hWiso : Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)))
+    (hcube : ∀ {g : G}, g ∉ W → g ^ 3 = 1) :
+    ∃ (H : Subgroup G) (φ : H →* MulAut W), Nat.card H = 3 ∧
+      Nonempty (H ≃* order36_C3) ∧ Nonempty (G ≃* SemidirectProduct W H φ) := by
+  obtain ⟨H, hcomp, hHcard, hHiso⟩ :=
+    order36_exists_order_three_complement_of_C3_klein_cube_one
+      (G := G) hG W hWcard hcube
+  exact ⟨H, _, hHcard, hHiso, ⟨(SemidirectProduct.mulEquivSubgroup hcomp).symm⟩⟩
+
+theorem order36_has_C3_klein_semidirectProduct_of_no_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        (∀ {g : G}, g ∉ W → g ^ 3 = 1) ∧
+          ∃ (H : Subgroup G) (φ : H →* MulAut W), Nat.card H = 3 ∧
+            Nonempty (H ≃* order36_C3) ∧
+              Nonempty (G ≃* SemidirectProduct W H φ) := by
+  obtain ⟨W, hWnormal, hWcard, hWiso, hcube⟩ :=
+    order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+      (G := G) hG hSyl hno9
+  haveI : W.Normal := hWnormal
+  obtain ⟨H, φ, hHcard, hHiso, hsplit⟩ :=
+    order36_semidirectProduct_of_C3_klein_cube_one
+      (G := G) hG W hWcard hWiso hcube
+  exact ⟨W, hWnormal, hWcard, hWiso, hcube, H, φ, hHcard, hHiso, hsplit⟩
+
+theorem order36_normal_rep_or_order_nine_or_C3_klein_semidirectProduct_cases
+    [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    (∃ g : G, orderOf g = 9) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        (∀ {g : G}, g ∉ W → g ^ 3 = 1) ∧
+          ∃ (H : Subgroup G) (φ : H →* MulAut W), Nat.card H = 3 ∧
+            Nonempty (H ≃* order36_C3) ∧
+              Nonempty (G ≃* SemidirectProduct W H φ) := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · by_cases h9 : ∃ g : G, orderOf g = 9
+    · exact Or.inr (Or.inl h9)
+    · push Not at h9
+      exact Or.inr <| Or.inr
+        (order36_has_C3_klein_semidirectProduct_of_no_order_nine_of_card_sylow_3_eq_four
+          (G := G) hG hSyl h9)
+
+theorem order36_has_order_nine_or_C3_klein_cube_one_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    (∃ g : G, orderOf g = 9) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  by_cases hno9 : ∀ g : G, orderOf g ≠ 9
+  · exact Or.inr
+      (order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+        (G := G) hG hSyl hno9)
+  · push Not at hno9
+    exact Or.inl hno9
+
+theorem order36_normal_rep_or_A4_quotient_cases [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (K : Subgroup G) (_ : K.Normal), Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr
+      (order36_has_normal_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+        (G := G) hG hSyl)
+
+theorem order36_normal_rep_or_central_A4_quotient_cases [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr
+      (order36_has_central_order_three_and_A4_quotient_of_card_sylow_3_eq_four
+        (G := G) hG hSyl)
+
+theorem order36_normal_rep_or_C3_klein_layer_cases [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (G ⧸ W ≃* order36_C3) := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr (order36_has_C3_klein_layer_of_card_sylow_3_eq_four
+      (G := G) hG hSyl)
+
+theorem order36_normal_rep_or_klein_preimage_order_nine_test_cases
+    [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      ∀ {g : G}, g ∉ W → g ^ 3 ≠ 1 → orderOf g = 9 := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr
+      (order36_has_klein_preimage_order_nine_of_cube_ne_one_of_card_sylow_3_eq_four
+        (G := G) hG hSyl)
+
+theorem order36_normal_rep_or_klein_preimage_cube_one_cases
+    [Finite G] (hG : Nat.card G = 36) (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr
+      (order36_has_klein_preimage_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+        (G := G) hG hSyl hno9)
+
+theorem order36_normal_rep_or_C3_klein_cube_one_cases
+    [Finite G] (hG : Nat.card G = 36) (hno9 : ∀ g : G, orderOf g ≠ 9) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · exact Or.inr
+      (order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+        (G := G) hG hSyl hno9)
+
+theorem order36_normal_rep_or_order_nine_or_C3_klein_cube_one_cases
+    [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    (∃ g : G, orderOf g = 9) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · rcases order36_has_order_nine_or_C3_klein_cube_one_of_card_sylow_3_eq_four
+      (G := G) hG hSyl with h | h
+    · exact Or.inr (Or.inl h)
+    · exact Or.inr (Or.inr h)
+
+theorem order36_normal_rep_or_order_nine_C3_klein_layer_or_C3_klein_cube_one_cases
+    [Finite G] (hG : Nat.card G = 36) :
+    (∃ i : Fin 12, Nonempty (G ≃* order36_normal_reps i)) ∨
+    (∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (G ⧸ W ≃* order36_C3) ∧
+          ∃ g : G, g ∉ W ∧ orderOf g = 9) ∨
+    ∃ (W : Subgroup G) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : G}, g ∉ W → g ^ 3 = 1 := by
+  rcases card_sylow_3_eq_one_or_four_of_card_36 (G := G) hG with hSyl | hSyl
+  · exact Or.inl (order36_normal_rep_cases_exists (G := G) hG hSyl)
+  · by_cases h9 : ∃ g : G, orderOf g = 9
+    · exact Or.inr <| Or.inl
+        (order36_has_C3_klein_layer_with_order_nine_outside_of_card_sylow_3_eq_four
+          (G := G) hG hSyl h9)
+    · push Not at h9
+      exact Or.inr <| Or.inr
+        (order36_has_C3_klein_cube_one_of_no_order_nine_of_card_sylow_3_eq_four
+          (G := G) hG hSyl h9)
+
+theorem order36_A4C9_has_C3_klein_layer_with_order_nine_outside :
+    ∃ (W : Subgroup order36_A4C9) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (order36_A4C9 ⧸ W ≃* order36_C3) ∧
+          ∃ g : order36_A4C9, g ∉ W ∧ orderOf g = 9 := by
+  exact order36_has_C3_klein_layer_with_order_nine_outside_of_card_sylow_3_eq_four
+    (G := order36_A4C9) card_order36_A4C9 card_sylow_3_order36_A4C9
+      order36_A4C9_has_order_nine
+
+theorem order36_nonnormal_reps_strong_branch_witnesses (i : Fin 2) :
+    (∃ (W : Subgroup (order36_nonnormal_reps i)) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty ((order36_nonnormal_reps i) ⧸ W ≃* order36_C3) ∧
+          ∃ g : order36_nonnormal_reps i, g ∉ W ∧ orderOf g = 9) ∨
+    ∃ (W : Subgroup (order36_nonnormal_reps i)) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_nonnormal_reps i}, g ∉ W → g ^ 3 = 1 := by
+  fin_cases i
+  · right
+    change ∃ (W : Subgroup order36_C3A4) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        ∀ {g : order36_C3A4}, g ∉ W → g ^ 3 = 1
+    exact order36_C3A4_has_C3_klein_cube_one
+  · left
+    change ∃ (W : Subgroup order36_A4C9) (_ : W.Normal), Nat.card W = 12 ∧
+      Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+        Nonempty (order36_A4C9 ⧸ W ≃* order36_C3) ∧
+          ∃ g : order36_A4C9, g ∉ W ∧ orderOf g = 9
+    exact order36_A4C9_has_C3_klein_layer_with_order_nine_outside
 
 end Smallgroups.UsefulTheorems
