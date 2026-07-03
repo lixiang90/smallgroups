@@ -1537,4 +1537,295 @@ theorem order24_classification [Finite G] (hG : Nat.card G = 24) :
           order24_classification_of_card_sylow_3_eq_four_of_card_sylow_2_eq_three
             hG hSyl3 hSyl2⟩
 
+/-! ### Distinctness and `IsClassif` packaging -/
+
+private theorem order24_nat_card_eq_of_fintype_card_eq {α : Type*} [Fintype α] {n : Nat}
+    (h : Fintype.card α = n) : Nat.card α = n :=
+  Nat.card_eq_of_equiv_fin (Fintype.equivFinOfCardEq h)
+
+theorem card_center_order24_RA : Nat.card (Subgroup.center order24_RA) = 24 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RB : Nat.card (Subgroup.center order24_RB) = 24 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RC : Nat.card (Subgroup.center order24_RC) = 24 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RD : Nat.card (Subgroup.center order24_RD) = 6 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RE : Nat.card (Subgroup.center order24_RE) = 6 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RF : Nat.card (Subgroup.center order24_RF) = 4 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RG : Nat.card (Subgroup.center order24_RG) = 4 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RH : Nat.card (Subgroup.center order24_RH) = 4 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RI : Nat.card (Subgroup.center order24_RI) = 4 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RJ : Nat.card (Subgroup.center order24_RJ) = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RK : Nat.card (Subgroup.center order24_RK) = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RL : Nat.card (Subgroup.center order24_RL) = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RM : Nat.card (Subgroup.center order24_RM) = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RN : Nat.card (Subgroup.center order24_RN) = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order24_RO : Nat.card (Subgroup.center order24_RO) = 1 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Center cardinalities of the fifteen displayed representatives. -/
+def order24_center_card : Fin 15 → Nat
+  | 0 => 24
+  | 1 => 24
+  | 2 => 24
+  | 3 => 6
+  | 4 => 6
+  | 5 => 4
+  | 6 => 4
+  | 7 => 4
+  | 8 => 4
+  | 9 => 2
+  | 10 => 2
+  | 11 => 2
+  | 12 => 2
+  | 13 => 2
+  | 14 => 1
+
+theorem card_center_order24_reps (i : Fin 15) :
+    Nat.card (Subgroup.center (order24_reps i)) = order24_center_card i := by
+  fin_cases i
+  · exact card_center_order24_RA
+  · exact card_center_order24_RB
+  · exact card_center_order24_RC
+  · exact card_center_order24_RD
+  · exact card_center_order24_RE
+  · exact card_center_order24_RF
+  · exact card_center_order24_RG
+  · exact card_center_order24_RH
+  · exact card_center_order24_RI
+  · exact card_center_order24_RJ
+  · exact card_center_order24_RK
+  · exact card_center_order24_RL
+  · exact card_center_order24_RM
+  · exact card_center_order24_RN
+  · exact card_center_order24_RO
+
+theorem card_pow_two_eq_one_order24_RA : pow_eq_one_card order24_RA 2 = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RB : pow_eq_one_card order24_RB 2 = 4 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RC : pow_eq_one_card order24_RC 2 = 8 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RD : pow_eq_one_card order24_RD 2 = 6 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RE : pow_eq_one_card order24_RE 2 = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RF : pow_eq_one_card order24_RF 2 = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RG : pow_eq_one_card order24_RG 2 = 4 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RH : pow_eq_one_card order24_RH 2 = 8 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RI : pow_eq_one_card order24_RI 2 = 16 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RJ : pow_eq_one_card order24_RJ 2 = 10 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RK : pow_eq_one_card order24_RK 2 = 14 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RL : pow_eq_one_card order24_RL 2 = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RM : pow_eq_one_card order24_RM 2 = 8 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RN : pow_eq_one_card order24_RN 2 = 2 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_two_eq_one_order24_RO : pow_eq_one_card order24_RO 2 = 10 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Cardinalities of `{x | x ^ 2 = 1}` in the fifteen displayed representatives. -/
+def order24_pow_two_eq_one_card : Fin 15 → Nat
+  | 0 => 2
+  | 1 => 4
+  | 2 => 8
+  | 3 => 6
+  | 4 => 2
+  | 5 => 2
+  | 6 => 4
+  | 7 => 8
+  | 8 => 16
+  | 9 => 10
+  | 10 => 14
+  | 11 => 2
+  | 12 => 8
+  | 13 => 2
+  | 14 => 10
+
+theorem card_pow_two_eq_one_order24_reps (i : Fin 15) :
+    pow_eq_one_card (order24_reps i) 2 = order24_pow_two_eq_one_card i := by
+  fin_cases i
+  · exact card_pow_two_eq_one_order24_RA
+  · exact card_pow_two_eq_one_order24_RB
+  · exact card_pow_two_eq_one_order24_RC
+  · exact card_pow_two_eq_one_order24_RD
+  · exact card_pow_two_eq_one_order24_RE
+  · exact card_pow_two_eq_one_order24_RF
+  · exact card_pow_two_eq_one_order24_RG
+  · exact card_pow_two_eq_one_order24_RH
+  · exact card_pow_two_eq_one_order24_RI
+  · exact card_pow_two_eq_one_order24_RJ
+  · exact card_pow_two_eq_one_order24_RK
+  · exact card_pow_two_eq_one_order24_RL
+  · exact card_pow_two_eq_one_order24_RM
+  · exact card_pow_two_eq_one_order24_RN
+  · exact card_pow_two_eq_one_order24_RO
+
+theorem card_pow_three_eq_one_order24_RA : pow_eq_one_card order24_RA 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RB : pow_eq_one_card order24_RB 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RC : pow_eq_one_card order24_RC 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RD : pow_eq_one_card order24_RD 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RE : pow_eq_one_card order24_RE 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RF : pow_eq_one_card order24_RF 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RG : pow_eq_one_card order24_RG 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RH : pow_eq_one_card order24_RH 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RI : pow_eq_one_card order24_RI 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RJ : pow_eq_one_card order24_RJ 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RK : pow_eq_one_card order24_RK 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RL : pow_eq_one_card order24_RL 3 = 3 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RM : pow_eq_one_card order24_RM 3 = 9 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RN : pow_eq_one_card order24_RN 3 = 9 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_pow_three_eq_one_order24_RO : pow_eq_one_card order24_RO 3 = 9 :=
+  order24_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+/-- Cardinalities of `{x | x ^ 3 = 1}` in the fifteen displayed representatives. -/
+def order24_pow_three_eq_one_card : Fin 15 → Nat
+  | 0 => 3
+  | 1 => 3
+  | 2 => 3
+  | 3 => 3
+  | 4 => 3
+  | 5 => 3
+  | 6 => 3
+  | 7 => 3
+  | 8 => 3
+  | 9 => 3
+  | 10 => 3
+  | 11 => 3
+  | 12 => 9
+  | 13 => 9
+  | 14 => 9
+
+theorem card_pow_three_eq_one_order24_reps (i : Fin 15) :
+    pow_eq_one_card (order24_reps i) 3 = order24_pow_three_eq_one_card i := by
+  fin_cases i
+  · exact card_pow_three_eq_one_order24_RA
+  · exact card_pow_three_eq_one_order24_RB
+  · exact card_pow_three_eq_one_order24_RC
+  · exact card_pow_three_eq_one_order24_RD
+  · exact card_pow_three_eq_one_order24_RE
+  · exact card_pow_three_eq_one_order24_RF
+  · exact card_pow_three_eq_one_order24_RG
+  · exact card_pow_three_eq_one_order24_RH
+  · exact card_pow_three_eq_one_order24_RI
+  · exact card_pow_three_eq_one_order24_RJ
+  · exact card_pow_three_eq_one_order24_RK
+  · exact card_pow_three_eq_one_order24_RL
+  · exact card_pow_three_eq_one_order24_RM
+  · exact card_pow_three_eq_one_order24_RN
+  · exact card_pow_three_eq_one_order24_RO
+
+def order24_reps_invariant (i : Fin 15) : Nat × Nat × Nat :=
+  (order24_center_card i, order24_pow_two_eq_one_card i, order24_pow_three_eq_one_card i)
+
+theorem order24_reps_invariant_injective : Function.Injective order24_reps_invariant := by
+  intro i j h
+  fin_cases i <;> fin_cases j <;>
+    simp [order24_reps_invariant, order24_center_card, order24_pow_two_eq_one_card,
+      order24_pow_three_eq_one_card] at h ⊢
+
+theorem order24_reps_invariant_eq_of_mulEquiv {i j : Fin 15}
+    (hiso : Nonempty (order24_reps i ≃* order24_reps j)) :
+    order24_reps_invariant i = order24_reps_invariant j := by
+  rcases hiso with ⟨e⟩
+  apply Prod.ext
+  · change order24_center_card i = order24_center_card j
+    rw [← card_center_order24_reps i, ← card_center_order24_reps j]
+    exact card_center_eq_of_mulEquiv e
+  · apply Prod.ext
+    · change order24_pow_two_eq_one_card i = order24_pow_two_eq_one_card j
+      rw [← card_pow_two_eq_one_order24_reps i, ← card_pow_two_eq_one_order24_reps j]
+      exact pow_eq_one_card_eq_of_mulEquiv 2 e
+    · change order24_pow_three_eq_one_card i = order24_pow_three_eq_one_card j
+      rw [← card_pow_three_eq_one_order24_reps i, ← card_pow_three_eq_one_order24_reps j]
+      exact pow_eq_one_card_eq_of_mulEquiv 3 e
+
+theorem order24_reps_pairwise : PairwiseNonMulEquiv order24_reps := by
+  intro i j hiso
+  exact order24_reps_invariant_injective (order24_reps_invariant_eq_of_mulEquiv hiso)
+
+theorem order24_complete (G : Type*) [Group G] (hG : Nat.card G = 24) :
+    ∃ i, Nonempty (G ≃* order24_reps i) := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hG]; norm_num)
+  exact order24_classification hG
+
+theorem order24_isClassif : IsClassif 24 order24_reps where
+  card := card_order24_reps
+  complete := order24_complete
+  distinct := order24_reps_pairwise
+
 end Smallgroups.UsefulTheorems
