@@ -6283,6 +6283,20 @@ theorem card_order36_A4C9 : Nat.card order36_A4C9 = 36 := by
   rw [hidx, hprod] at h
   omega
 
+theorem order36_A4C9_goursatFst :
+    order36_A4C9Diff.ker.goursatFst = order36_A4ToC3.ker := by
+  ext a
+  rw [Subgroup.mem_goursatFst, MonoidHom.mem_ker]
+  change order36_A4C9Diff (a, 1) = 1 ↔ order36_A4ToC3 a = 1
+  simp [order36_A4C9Diff]
+
+theorem order36_A4C9_goursatSnd :
+    order36_A4C9Diff.ker.goursatSnd = order36_C9ToC3.ker := by
+  ext z
+  rw [Subgroup.mem_goursatSnd, MonoidHom.mem_ker]
+  change order36_A4C9Diff (1, z) = 1 ↔ order36_C9ToC3 z = 1
+  simp [order36_A4C9Diff]
+
 theorem order36_C3A4_has_normal_order_three_and_A4_quotient :
     ∃ (K : Subgroup order36_C3A4) (_ : K.Normal), Nat.card K = 3 ∧
       Nonempty (order36_C3A4 ⧸ K ≃* order36_A4) := by
@@ -6843,6 +6857,47 @@ theorem order36_has_A4_C9_product_range_goursat_of_order_nine_of_card_sylow_3_eq
       (G := G) hG K hKcenter hKcard hquot h9
   exact ⟨K, hKnormal, hKcenter, hKcard, hquot, W, hWnormal, hKW, hWcard, hWiso,
     L, hLcomp, hLcard, hLiso, hLnormal, eA4, eC9, hrange, hfst, hsnd⟩
+
+theorem order36_has_A4_C9_product_range_standard_goursat_of_order_nine_of_card_sylow_3_eq_four
+    [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (h9 : ∃ g : G, orderOf g = 9) :
+    ∃ (K : Subgroup G) (_ : K.Normal), K ≤ Subgroup.center G ∧ Nat.card K = 3 ∧
+      Nonempty (G ⧸ K ≃* order36_A4) ∧
+        ∃ (W : Subgroup G) (_ : W.Normal), K ≤ W ∧ Nat.card W = 12 ∧
+          Nonempty (W ≃* order36_C3 × alternatingGroup.kleinFour (Fin 4)) ∧
+            ∃ L : Subgroup W, (K.subgroupOf W).IsComplement' L ∧ Nat.card L = 4 ∧
+              Nonempty (L ≃* alternatingGroup.kleinFour (Fin 4)) ∧
+                ∃ _ : (L.map W.subtype : Subgroup G).Normal,
+                  ∃ (eA4 : G ⧸ K ≃* order36_A4)
+                    (eC9 : G ⧸ (L.map W.subtype : Subgroup G) ≃* order36_C9),
+                    let φ : G →* order36_A4 × order36_C9 :=
+                      (eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+                        (eC9.toMonoidHom.comp
+                          (QuotientGroup.mk' (L.map W.subtype : Subgroup G)))
+                    Nonempty (G ≃* φ.range) ∧
+                      φ.range.goursatFst = order36_A4ToC3.ker ∧
+                      φ.range.goursatSnd = order36_C9ToC3.ker := by
+  obtain ⟨K, hKnormal, hKcenter, hKcard, hquot, W, hWnormal, hKW, hWcard, hWiso,
+    L, hLcomp, hLcard, hLiso, hLnormal, eA4, eC9, hrange, hfst, _hsnd⟩ :=
+    order36_has_A4_C9_product_range_goursat_of_order_nine_of_card_sylow_3_eq_four
+      (G := G) hG hSyl h9
+  have hfstStd :
+      ((eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+        (eC9.toMonoidHom.comp
+          (QuotientGroup.mk' (L.map W.subtype : Subgroup G)))).range.goursatFst =
+        order36_A4ToC3.ker :=
+    hfst.trans order36_A4ToC3_ker_eq_kleinFour.symm
+  have hKA : Disjoint K (L.map W.subtype : Subgroup G) :=
+    order36_C3_layer_disjoint_klein_complement_map K W hLcomp
+  have hsndStd :
+      ((eA4.toMonoidHom.comp (QuotientGroup.mk' K)).prod
+        (eC9.toMonoidHom.comp
+          (QuotientGroup.mk' (L.map W.subtype : Subgroup G)))).range.goursatSnd =
+        order36_C9ToC3.ker :=
+    order36_A4_C9_product_range_goursatSnd_eq_C9ToC3_ker
+      K (L.map W.subtype : Subgroup G) hKcard hKA eA4 eC9
+  exact ⟨K, hKnormal, hKcenter, hKcard, hquot, W, hWnormal, hKW, hWcard, hWiso,
+    L, hLcomp, hLcard, hLiso, hLnormal, eA4, eC9, hrange, hfstStd, hsndStd⟩
 
 theorem order36_has_klein_preimage_order_nine_of_cube_ne_one_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4) :
