@@ -6753,6 +6753,13 @@ theorem card_order36_sum_reps (i : Fin 12 ⊕ Fin 2) :
   · exact card_order36_normal_reps i
   · exact card_order36_nonnormal_reps i
 
+/-- The fourteen representatives of groups of order `36`, reindexed by `Fin 14`. -/
+noncomputable abbrev order36_reps : Fin 14 → Type :=
+  fun i => Sum.elim order36_normal_reps order36_nonnormal_reps (finSumFinEquiv.symm i)
+
+theorem card_order36_reps (i : Fin 14) : Nat.card (order36_reps i) = 36 := by
+  simpa [order36_reps] using card_order36_sum_reps (finSumFinEquiv.symm i)
+
 theorem order36_nonnormal_reps_has_normal_order_three_and_A4_quotient (i : Fin 2) :
     ∃ (K : Subgroup (order36_nonnormal_reps i)) (_ : K.Normal), Nat.card K = 3 ∧
       Nonempty ((order36_nonnormal_reps i) ⧸ K ≃* order36_A4) := by
@@ -7405,7 +7412,7 @@ theorem order36_normal_rep_or_A4C9_or_C3A4_cases
         (order36_mulEquiv_C3A4_of_no_order_nine_of_card_sylow_3_eq_four
           (G := G) hG hSyl h9)
 
-theorem order36_complete (G : Type*) [Group G] (hG : Nat.card G = 36) :
+theorem order36_sum_reps_complete (G : Type*) [Group G] (hG : Nat.card G = 36) :
     ∃ i : Fin 12 ⊕ Fin 2,
       Nonempty (G ≃* Sum.elim order36_normal_reps order36_nonnormal_reps i) := by
   haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hG]; norm_num)
@@ -7419,6 +7426,27 @@ theorem order36_complete (G : Type*) [Group G] (hG : Nat.card G = 36) :
     · exact ⟨Sum.inr (0 : Fin 2), by
         change Nonempty (G ≃* order36_C3A4)
         exact hC3A4⟩
+
+theorem order36_reps_pairwise : PairwiseNonMulEquiv order36_reps := by
+  simpa [order36_reps] using
+    (PairwiseNonMulEquiv.reindex finSumFinEquiv.symm order36_sum_reps_pairwise)
+
+theorem order36_complete (G : Type*) [Group G] (hG : Nat.card G = 36) :
+    ∃ i, Nonempty (G ≃* order36_reps i) := by
+  obtain ⟨i, hi⟩ := order36_sum_reps_complete G hG
+  exact ⟨finSumFinEquiv i, by
+    change Nonempty (G ≃*
+      Sum.elim order36_normal_reps order36_nonnormal_reps
+        (finSumFinEquiv.symm (finSumFinEquiv i)))
+    have hidx : finSumFinEquiv.symm (finSumFinEquiv i) = i :=
+      finSumFinEquiv.symm_apply_apply i
+    rw [hidx]
+    exact hi⟩
+
+theorem order36_isClassif : IsClassif 36 order36_reps where
+  card := card_order36_reps
+  complete := order36_complete
+  distinct := order36_reps_pairwise
 
 theorem order36_has_central_C3_and_C3_klein_split_of_no_order_nine_of_card_sylow_3_eq_four
     [Finite G] (hG : Nat.card G = 36) (hSyl : Nat.card (Sylow 3 G) = 4)
