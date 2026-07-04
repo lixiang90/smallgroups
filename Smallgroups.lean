@@ -38,8 +38,7 @@ import Smallgroups.UsefulTheorems.Order40
 import Smallgroups.UsefulTheorems.Order54
 import Smallgroups.UsefulTheorems.Order56
 import Smallgroups.UsefulTheorems.Order60
-import Smallgroups.UsefulTheorems.Order60.Semiproduct
-import Smallgroups.UsefulTheorems.Order60.Classification
+import Smallgroups.UsefulTheorems.Order80
 import Smallgroups.UsefulTheorems.Order63
 import Smallgroups.UsefulTheorems.Order84
 import Smallgroups.UsefulTheorems.Order88
