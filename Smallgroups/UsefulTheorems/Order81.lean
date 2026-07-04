@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Counting
+import Smallgroups.UsefulTheorems.P3Group
 import Smallgroups.UsefulTheorems.OrderP4_Abel
 import Smallgroups.UsefulTheorems.OrderP4_NonAbel
 import Mathlib.Tactic.NormNum.Prime
@@ -25,6 +26,7 @@ non-abelian representatives and their distinctness still need a separate develop
 namespace Smallgroups.UsefulTheorems
 
 open Subgroup
+open P3Group
 
 /-! ## The five abelian representatives -/
 
@@ -87,5 +89,138 @@ theorem order81_center_classification_of_nonabelian {G : Type*} [Group G]
     rw [hcard]
     norm_num
   simpa using center_classification_of_nonabelian_p4 (p := 3) hcard' hnonab
+
+/-! ## Two immediate non-abelian representatives -/
+
+/-- `HeisenbergGroup 3 × C_3`, a non-abelian group of order `81`. -/
+abbrev order81_heisenberg_prod_cyclic : Type :=
+  HeisenbergGroup 3 × CyclicRep 3
+
+/-- `SemidirectP2P 3 × C_3`, a non-abelian group of order `81`. -/
+abbrev order81_semidirectP2P_prod_cyclic : Type :=
+  SemidirectP2P 3 × CyclicRep 3
+
+/-- `HeisenbergGroup 3 × C_3` has order `81`. -/
+theorem card_order81_heisenberg_prod_cyclic :
+    Nat.card order81_heisenberg_prod_cyclic = 81 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  rw [order81_heisenberg_prod_cyclic, Nat.card_prod, HeisenbergGroup.card_heisenberg 3,
+    card_cyclicRep (by norm_num : (3 : ℕ) ≠ 0)]
+  norm_num
+
+/-- `SemidirectP2P 3 × C_3` has order `81`. -/
+theorem card_order81_semidirectP2P_prod_cyclic :
+    Nat.card order81_semidirectP2P_prod_cyclic = 81 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  rw [order81_semidirectP2P_prod_cyclic, Nat.card_prod,
+    SemidirectP2P.card_semidirectP2P 3, card_cyclicRep (by norm_num : (3 : ℕ) ≠ 0)]
+  norm_num
+
+/-- `HeisenbergGroup 3 × C_3` is non-abelian. -/
+theorem order81_heisenberg_prod_cyclic_nonabelian :
+    ¬ ∀ x y : order81_heisenberg_prod_cyclic, x * y = y * x := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  intro hcomm
+  exact HeisenbergGroup.heisenberg_nonabelian 3 (by
+    intro x y
+    have h := hcomm ((x, (1 : CyclicRep 3)) : order81_heisenberg_prod_cyclic)
+      ((y, (1 : CyclicRep 3)) : order81_heisenberg_prod_cyclic)
+    exact congrArg Prod.fst h)
+
+/-- `SemidirectP2P 3 × C_3` is non-abelian. -/
+theorem order81_semidirectP2P_prod_cyclic_nonabelian :
+    ¬ ∀ x y : order81_semidirectP2P_prod_cyclic, x * y = y * x := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  intro hcomm
+  exact SemidirectP2P.semidirectP2P_nonabelian 3 (by
+    intro x y
+    have h := hcomm ((x, (1 : CyclicRep 3)) : order81_semidirectP2P_prod_cyclic)
+      ((y, (1 : CyclicRep 3)) : order81_semidirectP2P_prod_cyclic)
+    exact congrArg Prod.fst h)
+
+/-- `HeisenbergGroup 3 × C_3` has exponent `3`. -/
+theorem exponent_order81_heisenberg_prod_cyclic :
+    Monoid.exponent order81_heisenberg_prod_cyclic = 3 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  change Monoid.exponent (HeisenbergGroup 3 × CyclicRep 3) = 3
+  rw [Monoid.exponent_prod, HeisenbergGroup.heisenberg_exponent 3 (by norm_num)]
+  simp only [Monoid.exponent_multiplicative, ZMod.exponent]
+  norm_num [lcm_eq_nat_lcm]
+
+/-- `SemidirectP2P 3 × C_3` has exponent `9`. -/
+theorem exponent_order81_semidirectP2P_prod_cyclic :
+    Monoid.exponent order81_semidirectP2P_prod_cyclic = 9 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  change Monoid.exponent (SemidirectP2P 3 × CyclicRep 3) = 9
+  rw [Monoid.exponent_prod, SemidirectP2P.semidirectP2P_exponent 3]
+  simp only [Monoid.exponent_multiplicative, ZMod.exponent]
+  norm_num [lcm_eq_nat_lcm]
+
+/-- The two direct-product non-abelian representatives are not isomorphic. -/
+theorem order81_heisenberg_prod_cyclic_not_equiv_semidirectP2P_prod_cyclic :
+    ¬ Nonempty (order81_heisenberg_prod_cyclic ≃* order81_semidirectP2P_prod_cyclic) := by
+  rintro ⟨e⟩
+  have hExp : Monoid.exponent order81_heisenberg_prod_cyclic =
+      Monoid.exponent order81_semidirectP2P_prod_cyclic :=
+    Monoid.exponent_eq_of_mulEquiv e
+  rw [exponent_order81_heisenberg_prod_cyclic, exponent_order81_semidirectP2P_prod_cyclic] at hExp
+  norm_num at hExp
+
+/-- The two direct-product non-abelian representatives of order `81`. -/
+abbrev order81_direct_nonabelian_reps : Fin 2 → Type :=
+  rep2 order81_heisenberg_prod_cyclic order81_semidirectP2P_prod_cyclic
+
+/-- Each direct-product non-abelian representative has order `81`. -/
+theorem card_order81_direct_nonabelian_reps (i : Fin 2) :
+    Nat.card (order81_direct_nonabelian_reps i) = 81 := by
+  fin_cases i
+  · exact card_order81_heisenberg_prod_cyclic
+  · exact card_order81_semidirectP2P_prod_cyclic
+
+/-- Each direct-product non-abelian representative is non-abelian. -/
+theorem order81_direct_nonabelian_reps_nonabelian (i : Fin 2) :
+    ¬ ∀ x y : order81_direct_nonabelian_reps i, x * y = y * x := by
+  fin_cases i
+  · exact order81_heisenberg_prod_cyclic_nonabelian
+  · exact order81_semidirectP2P_prod_cyclic_nonabelian
+
+/-- The two direct-product non-abelian representatives are pairwise non-isomorphic. -/
+theorem order81_direct_nonabelian_reps_pairwise :
+    PairwiseNonMulEquiv order81_direct_nonabelian_reps := by
+  intro i j h
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact absurd h order81_heisenberg_prod_cyclic_not_equiv_semidirectP2P_prod_cyclic
+  · exact absurd ⟨h.some.symm⟩
+      order81_heisenberg_prod_cyclic_not_equiv_semidirectP2P_prod_cyclic
+  · rfl
+
+/-! ## The currently formalized representatives -/
+
+/-- The five abelian representatives together with the two direct-product non-abelian
+representatives formalized above. -/
+abbrev order81_known_reps : Fin 5 ⊕ Fin 2 → Type :=
+  Sum.elim order81_abelian_reps order81_direct_nonabelian_reps
+
+/-- Every currently formalized representative has order `81`. -/
+theorem card_order81_known_reps (i : Fin 5 ⊕ Fin 2) :
+    Nat.card (order81_known_reps i) = 81 := by
+  rcases i with i | i
+  · exact card_order81_abelian_reps i
+  · exact card_order81_direct_nonabelian_reps i
+
+/-- No abelian representative is isomorphic to one of the non-abelian direct-product
+representatives. -/
+theorem order81_abelian_direct_nonabelian_disjoint :
+    ∀ i j, ¬ Nonempty (order81_abelian_reps i ≃* order81_direct_nonabelian_reps j) :=
+  pairwise_disjoint_of_comm_noncomm
+    (fun _ a b => mul_comm a b)
+    order81_direct_nonabelian_reps_nonabelian
+
+/-- The currently formalized seven representatives are pairwise non-isomorphic. -/
+theorem order81_known_reps_pairwise : PairwiseNonMulEquiv order81_known_reps := by
+  simpa [order81_known_reps] using
+    PairwiseNonMulEquiv.sum order81_abelian_distinct order81_direct_nonabelian_reps_pairwise
+      order81_abelian_direct_nonabelian_disjoint
 
 end Smallgroups.UsefulTheorems
