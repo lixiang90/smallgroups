@@ -2748,6 +2748,83 @@ theorem order81_zmod_three_power_not_mem_kernel_of_not_mem {G : Type*} [Group G]
         _ = y := by group
     simpa [hy_eq] using hinv
 
+/-- If an element outside `K` has cube `1`, then it has exact order `3`. -/
+theorem order81_orderOf_eq_three_of_not_mem_kernel_pow_three {G : Type*} [Group G]
+    {K : Subgroup G} {g : G} (hgK : g ∉ K) (hg3 : g ^ 3 = 1) :
+    orderOf g = 3 :=
+  orderOf_eq_prime hg3 (by
+    intro hg1
+    exact hgK (by simp [hg1]))
+
+/-- If `g ∉ K` and `g ^ 3 = 1`, then `K` intersects `⟨g⟩` trivially. -/
+theorem order81_zpowers_order_three_disjoint_kernel {G : Type*} [Group G]
+    {K : Subgroup G} {g : G} (hgK : g ∉ K) (hg3 : g ^ 3 = 1) :
+    Disjoint K (Subgroup.zpowers g) := by
+  rw [disjoint_iff]
+  apply le_antisymm
+  · intro x hx
+    rw [Subgroup.mem_inf] at hx
+    rw [Subgroup.mem_bot]
+    rcases hx with ⟨hxK, hxzp⟩
+    rw [Subgroup.mem_zpowers_iff] at hxzp
+    rcases hxzp with ⟨n, rfl⟩
+    have hmod : n % 3 = 0 ∨ n % 3 = 1 ∨ n % 3 = 2 := by
+      have hnonneg : 0 ≤ n % 3 := Int.emod_nonneg n (by norm_num)
+      have hlt : n % 3 < 3 := Int.emod_lt_of_pos n (by norm_num)
+      omega
+    have hpowmod : g ^ n = g ^ (n % 3) := by
+      apply zpow_eq_zpow_iff_modEq.mpr
+      rw [order81_orderOf_eq_three_of_not_mem_kernel_pow_three hgK hg3]
+      exact (Int.mod_modEq n 3).symm
+    rcases hmod with h0 | h1 | h2
+    · rw [hpowmod, h0]
+      simp
+    · exfalso
+      apply hgK
+      simpa [hpowmod, h1] using hxK
+    · exfalso
+      have hg2K : g ^ (2 : ℤ) ∈ K := by simpa [hpowmod, h2] using hxK
+      have hginvK : g⁻¹ ∈ K := by
+        have hg2eq : g ^ (2 : ℤ) = g⁻¹ := by
+          rw [zpow_ofNat]
+          have h : g ^ 2 * g = 1 := by
+            simpa [pow_succ, pow_two, mul_assoc] using hg3
+          exact eq_inv_of_mul_eq_one_left h
+        simpa [hg2eq] using hg2K
+      exact hgK (by simpa using K.inv_mem hginvK)
+  · exact bot_le
+
+/-- If `|G| = 81`, `|K| = 27`, and `g` is an outside element of order `3`, then `K`
+and `⟨g⟩` are complementary subgroups. -/
+theorem order81_zpowers_order_three_isComplement_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [Finite G] (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27)
+    {g : G} (hgK : g ∉ K) (hg3 : g ^ 3 = 1) :
+    K.IsComplement' (Subgroup.zpowers g) := by
+  refine Subgroup.isComplement'_of_card_mul_and_disjoint ?_
+    (order81_zpowers_order_three_disjoint_kernel hgK hg3)
+  rw [hKcard, Nat.card_zpowers,
+    order81_orderOf_eq_three_of_not_mem_kernel_pow_three hgK hg3, hcard]
+
+/-- If a normal order-`27` subgroup has an outside order-`3` generator, then the group
+splits as a semidirect product over `⟨g⟩`. -/
+theorem order81_split_extension_mulEquiv_zpowers_of_order_three_generator
+    {G : Type*} [Group G] {K : Subgroup G} [K.Normal] [Finite G]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) {g : G}
+    (hgK : g ∉ K) (hg3 : g ^ 3 = 1) :
+    ∃ φ : Subgroup.zpowers g →* MulAut K,
+      Nonempty (G ≃* SemidirectProduct K (Subgroup.zpowers g) φ) := by
+  let hcomp : K.IsComplement' (Subgroup.zpowers g) :=
+    order81_zpowers_order_three_isComplement_kernel hcard hKcard hgK hg3
+  have hle : Subgroup.zpowers g ≤ Subgroup.normalizer (K : Set G) := by
+    rw [Subgroup.normalizer_eq_top K]
+    exact le_top
+  let φ : Subgroup.zpowers g →* MulAut K :=
+    K.normalizerMonoidHom.comp (Subgroup.inclusion hle)
+  refine ⟨φ, ?_⟩
+  change Nonempty (G ≃* SemidirectProduct K (Subgroup.zpowers g)
+    (K.normalizerMonoidHom.comp (Subgroup.inclusion hle)))
+  exact ⟨(SemidirectProduct.mulEquivSubgroup hcomp).symm⟩
+
 /-- The parametrisation `(a, b) ↦ x^a y^b` is injective when `x` has order `9`
 inside `K` and `y` is an order-`3` element outside `K`. -/
 theorem order81_c9c3_param_injective {G : Type*} [Group G] {K : Subgroup G} {x y : G}
