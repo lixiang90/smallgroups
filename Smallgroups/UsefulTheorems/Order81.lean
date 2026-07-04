@@ -407,6 +407,59 @@ theorem order81_exists_normal_abelian_subgroup_card_27 {G : Type*} [Group G]
     norm_num
   exact ⟨K, hnormal, hKcard, hKcomm⟩
 
+/-- Any abelian subgroup of order `27` is one of the three abelian groups of order
+`3 ^ 3`. -/
+theorem order81_abelian_subgroup_card_27_classification {G : Type*} [Group G]
+    {K : Subgroup G} (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K) :
+    Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3)) ∨
+    Nonempty (K ≃* (Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3))) ∨
+    Nonempty (K ≃* (Multiplicative (ZMod 3) ×
+      Multiplicative (ZMod 3) × Multiplicative (ZMod 3))) := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hKcard]; norm_num)
+  haveI : Fintype K := Fintype.ofFinite K
+  letI commGroupK : CommGroup K := { (inferInstance : Group K) with
+    mul_comm := fun a b => mul_comm' a b }
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hcard : Nat.card K = 3 ^ 3 := by
+    rw [hKcard]
+    norm_num
+  have h := P3Group.abelian_p3_classification (p := 3) K hcard
+  rcases h with hcyc | hp2p | helem
+  · left
+    rcases hcyc with ⟨e⟩
+    exact ⟨{ e.toEquiv with
+      map_mul' := by
+        intro x y
+        simp [commGroupK] }⟩
+  · right
+    left
+    rcases hp2p with ⟨e⟩
+    exact ⟨{ e.toEquiv with
+      map_mul' := by
+        intro x y
+        simp [commGroupK] }⟩
+  · right
+    right
+    rcases helem with ⟨e⟩
+    exact ⟨{ e.toEquiv with
+      map_mul' := by
+        intro x y
+        simp [commGroupK] }⟩
+
+/-- Every group of order `81` has a normal abelian subgroup of order `27`, and that
+subgroup is one of the three abelian groups of order `3 ^ 3`. -/
+theorem order81_exists_normal_abelian_subgroup_card_27_with_kernel_classification
+    {G : Type*} [Group G] (hcard : Nat.card G = 81) :
+    ∃ K : Subgroup G, K.Normal ∧ Nat.card K = 27 ∧ IsMulCommutative K ∧
+      (Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3)) ∨
+        Nonempty (K ≃* (Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3))) ∨
+        Nonempty (K ≃* (Multiplicative (ZMod 3) ×
+          Multiplicative (ZMod 3) × Multiplicative (ZMod 3)))) := by
+  obtain ⟨K, hKnormal, hKcard, hKcomm⟩ :=
+    order81_exists_normal_abelian_subgroup_card_27 hcard
+  exact ⟨K, hKnormal, hKcard, hKcomm,
+    order81_abelian_subgroup_card_27_classification hKcard hKcomm⟩
+
 /-- If `K` is a normal subgroup of order `27` in a group of order `81`, then the quotient
 has prime order `3`, hence is cyclic. -/
 theorem order81_quotient_cyclic_of_normal_subgroup_card_27 {G : Type*} [Group G]
@@ -714,6 +767,72 @@ theorem order81_exists_normal_abelian_subgroup_card_27_with_generator_action
       hcard hKcard hKcomm g
   · exact order81_conjNormal_order_dvd_three_of_abelian_normal_subgroup_card_27
       hcard hKcard hKcomm g
+
+/-- In a non-abelian group of order `81`, one can choose a normal abelian subgroup of
+order `27`, identify its abelian type, and choose a quotient generator whose conjugation
+action on the subgroup is nontrivial of order dividing `3`. -/
+theorem order81_exists_kernel_classification_with_nontrivial_generator_action
+    {G : Type*} [Group G] (hcard : Nat.card G = 81) (hnoncomm : ¬ IsMulCommutative G) :
+    ∃ (K : Subgroup G), ∃ (hKnormal : K.Normal),
+      Nat.card K = 27 ∧ IsMulCommutative K ∧
+        (Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3)) ∨
+          Nonempty (K ≃* (Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3))) ∨
+          Nonempty (K ≃* (Multiplicative (ZMod 3) ×
+            Multiplicative (ZMod 3) × Multiplicative (ZMod 3)))) ∧
+          ∃ g : G, g ∉ K ∧
+            letI : K.Normal := hKnormal
+            (MulAut.conjNormal (H := K) g) ^ 3 = 1 ∧
+              orderOf (MulAut.conjNormal (H := K) g) ∣ 3 ∧
+                MulAut.conjNormal (H := K) g ≠ 1 := by
+  obtain ⟨K, hKnormal, hKcard, hKcomm, g, hgK, hpow, hord⟩ :=
+    order81_exists_normal_abelian_subgroup_card_27_with_generator_action hcard
+  refine ⟨K, hKnormal, hKcard, hKcomm,
+    order81_abelian_subgroup_card_27_classification hKcard hKcomm, g, hgK, hpow, hord, ?_⟩
+  letI : K.Normal := hKnormal
+  exact order81_conjNormal_generator_ne_one_of_noncommutative
+    hcard hKcard hKcomm hgK hnoncomm
+
+/-- The non-abelian order-`81` classification can be split into the three possible
+abelian kernels of order `27`.  Each branch retains a quotient generator with nontrivial
+conjugation action of order dividing `3`. -/
+theorem order81_nonabelian_kernel_classification_cases
+    {G : Type*} [Group G] (hcard : Nat.card G = 81) (hnoncomm : ¬ IsMulCommutative G) :
+    (∃ (K : Subgroup G), ∃ (hKnormal : K.Normal),
+      Nat.card K = 27 ∧ IsMulCommutative K ∧
+        Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3)) ∧
+          ∃ g : G, g ∉ K ∧
+            letI : K.Normal := hKnormal
+            (MulAut.conjNormal (H := K) g) ^ 3 = 1 ∧
+              orderOf (MulAut.conjNormal (H := K) g) ∣ 3 ∧
+                MulAut.conjNormal (H := K) g ≠ 1) ∨
+    (∃ (K : Subgroup G), ∃ (hKnormal : K.Normal),
+      Nat.card K = 27 ∧ IsMulCommutative K ∧
+        Nonempty (K ≃* (Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3))) ∧
+          ∃ g : G, g ∉ K ∧
+            letI : K.Normal := hKnormal
+            (MulAut.conjNormal (H := K) g) ^ 3 = 1 ∧
+              orderOf (MulAut.conjNormal (H := K) g) ∣ 3 ∧
+                MulAut.conjNormal (H := K) g ≠ 1) ∨
+      (∃ (K : Subgroup G), ∃ (hKnormal : K.Normal),
+        Nat.card K = 27 ∧ IsMulCommutative K ∧
+          Nonempty (K ≃* (Multiplicative (ZMod 3) ×
+            Multiplicative (ZMod 3) × Multiplicative (ZMod 3))) ∧
+            ∃ g : G, g ∉ K ∧
+              letI : K.Normal := hKnormal
+              (MulAut.conjNormal (H := K) g) ^ 3 = 1 ∧
+                orderOf (MulAut.conjNormal (H := K) g) ∣ 3 ∧
+                  MulAut.conjNormal (H := K) g ≠ 1) := by
+  obtain ⟨K, hKnormal, hKcard, hKcomm, hKtype, g, hgK, hpow, hord, hne⟩ :=
+    order81_exists_kernel_classification_with_nontrivial_generator_action hcard hnoncomm
+  rcases hKtype with hcyc | hp2p | helem
+  · left
+    exact ⟨K, hKnormal, hKcard, hKcomm, hcyc, g, hgK, hpow, hord, hne⟩
+  · right
+    left
+    exact ⟨K, hKnormal, hKcard, hKcomm, hp2p, g, hgK, hpow, hord, hne⟩
+  · right
+    right
+    exact ⟨K, hKnormal, hKcard, hKcomm, helem, g, hgK, hpow, hord, hne⟩
 
 /-! ## Two immediate non-abelian representatives -/
 
