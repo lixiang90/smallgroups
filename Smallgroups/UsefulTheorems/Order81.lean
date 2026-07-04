@@ -944,6 +944,29 @@ theorem order81_commutator_mem_normal_subgroup_card_27
   exact (order81_commutator_le_normal_subgroup_card_27 hcard hKcard)
     (commutator_mem_commutator (Subgroup.mem_top x) (Subgroup.mem_top y))
 
+/-- If the commutator subgroup lies in a central subgroup, then every commutator element is
+central. -/
+theorem order81_commutator_mem_center_of_le_central
+    {G : Type*} [Group G] {Z : Subgroup G}
+    (hZle : Z ≤ center G) (hcomm_le : commutator G ≤ Z) (x y : G) :
+    ⁅x, y⁆ ∈ center G := by
+  exact hZle (hcomm_le (commutator_mem_commutator (Subgroup.mem_top x) (Subgroup.mem_top y)))
+
+/-- If the commutator subgroup lies in a subgroup of order `3`, then every commutator element
+has cube `1`. -/
+theorem order81_commutator_pow_three_of_le_order_three
+    {G : Type*} [Group G] {Z : Subgroup G}
+    (hZcard : Nat.card Z = 3) (hcomm_le : commutator G ≤ Z) (x y : G) :
+    ⁅x, y⁆ ^ 3 = 1 := by
+  have hcZ : ⁅x, y⁆ ∈ Z :=
+    hcomm_le (commutator_mem_commutator (Subgroup.mem_top x) (Subgroup.mem_top y))
+  haveI : Finite Z := Nat.finite_of_card_ne_zero (by rw [hZcard]; norm_num)
+  have hdiv : orderOf (⟨⁅x, y⁆, hcZ⟩ : Z) ∣ 3 := by
+    rw [← hZcard]
+    exact orderOf_dvd_natCard (⟨⁅x, y⁆, hcZ⟩ : Z)
+  have hpow : (⟨⁅x, y⁆, hcZ⟩ : Z) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hdiv
+  exact congrArg Subtype.val hpow
+
 /-- If conjugation by `g` is trivial on `K`, then `g` commutes with every element of `K`. -/
 theorem order81_commute_of_conjNormal_eq_one
     {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
