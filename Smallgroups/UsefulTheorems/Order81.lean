@@ -517,6 +517,38 @@ theorem order81_exists_orderOf_eq_9_mem_of_p2p_kernel {G : Type*} [Group G]
   rw [← Subgroup.orderOf_mk k.1 k.2]
   exact hkord
 
+/-- The elementary abelian model `(C_3)^3` has exponent `3`. -/
+theorem order81_elementaryP3_pow_three_eq_one
+    (x : Multiplicative (ZMod 3) × Multiplicative (ZMod 3) × Multiplicative (ZMod 3)) :
+    x ^ 3 = 1 := by
+  cases x with
+  | mk a bc =>
+      cases bc with
+      | mk b c =>
+          fin_cases a <;> fin_cases b <;> fin_cases c <;> decide +kernel
+
+/-- Every element of a subgroup isomorphic to `(C_3)^3` has cube `1`. -/
+theorem order81_pow_three_eq_one_of_elementary_kernel {G : Type*} [Group G]
+    {K : Subgroup G}
+    (hKelem : Nonempty (K ≃* (Multiplicative (ZMod 3) ×
+      Multiplicative (ZMod 3) × Multiplicative (ZMod 3)))) (k : K) :
+    k ^ 3 = 1 := by
+  rcases hKelem with ⟨e⟩
+  apply e.injective
+  rw [map_pow, order81_elementaryP3_pow_three_eq_one (e k), map_one]
+
+/-- If the normal abelian kernel has type `(C_3)^3`, then every element of that kernel
+has cube `1` in the ambient group. -/
+theorem order81_pow_three_eq_one_mem_of_elementary_kernel {G : Type*} [Group G]
+    {K : Subgroup G}
+    (hKelem : Nonempty (K ≃* (Multiplicative (ZMod 3) ×
+      Multiplicative (ZMod 3) × Multiplicative (ZMod 3)))) {x : G} (hx : x ∈ K) :
+    x ^ 3 = 1 := by
+  have hk : ((⟨x, hx⟩ : K) ^ 3) = 1 :=
+    order81_pow_three_eq_one_of_elementary_kernel hKelem ⟨x, hx⟩
+  have hval := congrArg Subtype.val hk
+  simpa using hval
+
 /-- If `K` is a normal subgroup of order `27` in a group of order `81`, then the quotient
 has prime order `3`, hence is cyclic. -/
 theorem order81_quotient_cyclic_of_normal_subgroup_card_27 {G : Type*} [Group G]
