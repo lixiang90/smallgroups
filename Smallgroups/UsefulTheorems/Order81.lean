@@ -224,6 +224,30 @@ theorem order81_exists_central_orderOf_eq_3 {G : Type*} [Group G]
   order81_exists_central_orderOf_eq_3_of_center_card
     (order81_center_card_eq_three_or_nine hcard hnonab)
 
+/-- A non-abelian group of order `81` has a central normal subgroup of order `3` whose
+quotient has order `27`. -/
+theorem order81_exists_central_order_three_subgroup_quotient_card {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
+    ∃ Z : Subgroup G, Z.Normal ∧ Z ≤ center G ∧ Nat.card Z = 3 ∧ Nat.card (G ⧸ Z) = 27 := by
+  obtain ⟨z, hzcent, hzord⟩ := order81_exists_central_orderOf_eq_3 hcard hnonab
+  let Z : Subgroup G := Subgroup.zpowers z
+  have hZle : Z ≤ center G := Subgroup.zpowers_le.mpr hzcent
+  have hZcard : Nat.card Z = 3 := by
+    rw [Nat.card_zpowers, hzord]
+  have hZnormal : Z.Normal := by
+    constructor
+    intro n hn g
+    have hcn : ∀ h : G, h * n = n * h := Subgroup.mem_center_iff.mp (hZle hn)
+    have hfix : g * n * g⁻¹ = n := by rw [hcn g]; group
+    rw [hfix]
+    exact hn
+  have hquot : Nat.card (G ⧸ Z) = 27 := by
+    have hmul := Subgroup.card_eq_card_quotient_mul_card_subgroup Z
+    change Nat.card G = Nat.card (G ⧸ Z) * Nat.card Z at hmul
+    rw [hcard, hZcard] at hmul
+    omega
+  exact ⟨Z, hZnormal, hZle, hZcard, hquot⟩
+
 /-- In a non-abelian group of order `81`, the center is `C_3`, `C_9`, or `C_3 × C_3`. -/
 theorem order81_center_classification_of_nonabelian {G : Type*} [Group G]
     (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
