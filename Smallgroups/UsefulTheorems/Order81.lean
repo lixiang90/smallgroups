@@ -1985,6 +1985,25 @@ theorem order81_commute_cube_of_mem_cyclic_kernel {G : Type*} [Group G]
     simpa [mul_assoc] using hmul
   exact hcomm
 
+/-- A cyclic order-`27` kernel contains a central element of order `9` in the ambient
+order-`81` group. -/
+theorem order81_exists_central_orderOf_eq_9_mem_of_cyclic_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3))) :
+    ∃ x : G, x ∈ K ∧ orderOf x = 9 ∧ ∀ g : G, Commute g x := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hKcard]; norm_num)
+  obtain ⟨k, hkord⟩ := order81_exists_orderOf_eq_27_of_cyclic_kernel hKcyc
+  refine ⟨(k ^ 3).1, (k ^ 3).2, ?_, ?_⟩
+  · rw [← Subgroup.orderOf_mk (k ^ 3).1 (k ^ 3).2]
+    change orderOf (k ^ 3) = 9
+    rw [orderOf_pow, hkord]
+    norm_num
+  · intro g
+    have hcomm := order81_commute_cube_of_mem_cyclic_kernel
+      hcard hKcard hKcomm hKcyc g k.2
+    simpa using hcomm
+
 /-- The cube of `g * k` is `g ^ 3` times the norm of `k` for the inverse conjugation
 action. -/
 theorem order81_conjNormal_symm_norm_formula {G : Type*} [Group G]
@@ -2061,6 +2080,120 @@ theorem order81_exists_order_three_generator_of_cyclic_kernel {G : Type*} [Group
       rw [hkx, hx3val]
     rw [hk3val]
     simp
+
+/-- In a non-abelian order-`81` group with cyclic order-`27` kernel, one can choose a
+quotient generator of order `3`. -/
+theorem order81_exists_order_three_quotient_generator_of_cyclic_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3))) {g : G}
+    (hgK : g ∉ K) (hnoncomm : ¬ IsMulCommutative G) :
+    ∃ y : G, y ∉ K ∧ y ^ 3 = 1 ∧
+      Subgroup.zpowers ((QuotientGroup.mk' K) y) = ⊤ ∧
+        K ⊔ Subgroup.zpowers y = ⊤ := by
+  obtain ⟨y, hyK, hy3⟩ := order81_exists_order_three_generator_of_cyclic_kernel
+    hcard hKcard hKcomm hKcyc hgK hnoncomm
+  refine ⟨y, hyK, hy3, ?_, ?_⟩
+  · exact order81_quotient_zpowers_eq_top_of_not_mem_card_27 hcard hKcard hyK
+  · exact order81_normal_layer_sup_zpowers_eq_top_of_not_mem_card_27 hcard hKcard hyK
+
+/-- Powers of an element of exact order `n` are indexed injectively by `ZMod n`. -/
+theorem order81_zmod_eq_of_pow_eq {G : Type*} [Group G] {x : G} {n : ℕ} [NeZero n]
+    (hord : orderOf x = n) (i j : ZMod n) (h : x ^ i.val = x ^ j.val) :
+    i = j := by
+  apply ZMod.val_injective n
+  have hmod : i.val ≡ j.val [MOD n] := by
+    have hmod0 := (pow_eq_pow_iff_modEq.mp h)
+    rwa [hord] at hmod0
+  exact Nat.ModEq.eq_of_lt_of_lt hmod (ZMod.val_lt i) (ZMod.val_lt j)
+
+/-- If an order-`3` quotient generator is outside `K`, then its nonzero `ZMod 3`
+powers are still outside `K`. -/
+theorem order81_zmod_three_power_not_mem_kernel_of_not_mem {G : Type*} [Group G]
+    {K : Subgroup G} {y : G} (hyK : y ∉ K) (hy3 : y ^ 3 = 1)
+    (i : ZMod 3) (hi : i ≠ 0) :
+    y ^ i.val ∉ K := by
+  fin_cases i
+  · exact (hi rfl).elim
+  · change y ^ 1 ∉ K
+    simpa using hyK
+  · change y ^ 2 ∉ K
+    intro hmem
+    apply hyK
+    have hinv : (y ^ 2)⁻¹ ∈ K := K.inv_mem hmem
+    have hy_eq : (y ^ 2)⁻¹ = y := by
+      calc
+        (y ^ 2)⁻¹ = y ^ 3 * (y ^ 2)⁻¹ := by rw [hy3]; simp
+        _ = y := by group
+    simpa [hy_eq] using hinv
+
+/-- The parametrisation `(a, b) ↦ x^a y^b` is injective when `x` has order `9`
+inside `K` and `y` is an order-`3` element outside `K`. -/
+theorem order81_c9c3_param_injective {G : Type*} [Group G] {K : Subgroup G} {x y : G}
+    (hxK : x ∈ K) (hxord : orderOf x = 9) (hyK : y ∉ K) (hy3 : y ^ 3 = 1) :
+    Function.Injective (fun p : order81_C9C3 =>
+      x ^ (Multiplicative.toAdd p.1).val * y ^ (Multiplicative.toAdd p.2).val) := by
+  intro a b h
+  rcases a with ⟨a1, a2⟩
+  rcases b with ⟨b1, b2⟩
+  let i : ZMod 9 := Multiplicative.toAdd a1
+  let j : ZMod 9 := Multiplicative.toAdd b1
+  let r : ZMod 3 := Multiplicative.toAdd a2
+  let s : ZMod 3 := Multiplicative.toAdd b2
+  change x ^ i.val * y ^ r.val = x ^ j.val * y ^ s.val at h
+  have hsep : y ^ r.val * (y ^ s.val)⁻¹ = (x ^ i.val)⁻¹ * x ^ j.val := by
+    calc
+      y ^ r.val * (y ^ s.val)⁻¹ =
+          (x ^ i.val)⁻¹ * (x ^ i.val * y ^ r.val) * (y ^ s.val)⁻¹ := by group
+      _ = (x ^ i.val)⁻¹ * (x ^ j.val * y ^ s.val) * (y ^ s.val)⁻¹ := by rw [h]
+      _ = (x ^ i.val)⁻¹ * x ^ j.val := by group
+  have hleftK : y ^ r.val * (y ^ s.val)⁻¹ ∈ K := by
+    rw [hsep]
+    exact K.mul_mem (K.inv_mem (K.pow_mem hxK i.val)) (K.pow_mem hxK j.val)
+  have hsubpow : y ^ (r - s).val = y ^ r.val * (y ^ s.val)⁻¹ := by
+    have hadd := pow_val_add hy3 (r - s) s
+    have hadd' : y ^ r.val = y ^ (r - s).val * y ^ s.val := by
+      simpa using hadd
+    rw [hadd']
+    group
+  have hrs : r = s := by
+    by_contra hne
+    have hdiff : r - s ≠ 0 := sub_ne_zero.mpr hne
+    have hmem : y ^ (r - s).val ∈ K := by
+      rw [hsubpow]
+      exact hleftK
+    exact (order81_zmod_three_power_not_mem_kernel_of_not_mem hyK hy3 (r - s) hdiff) hmem
+  have ha2b2 : a2 = b2 := by
+    exact Multiplicative.toAdd.injective hrs
+  have hi_eq : i = j := by
+    have hxpow : x ^ i.val = x ^ j.val := by
+      subst ha2b2
+      simpa [i, j, r, s] using h
+    exact order81_zmod_eq_of_pow_eq hxord i j hxpow
+  have ha1b1 : a1 = b1 := by
+    exact Multiplicative.toAdd.injective hi_eq
+  subst ha1b1
+  subst ha2b2
+  rfl
+
+/-- In the cyclic-kernel case, a non-abelian order-`81` group has a central element
+of order `9` and a quotient generator of order `3`. -/
+theorem order81_exists_central_order_nine_and_order_three_quotient_generator_of_cyclic_kernel
+    {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3))) {g : G}
+    (hgK : g ∉ K) (hnoncomm : ¬ IsMulCommutative G) :
+    ∃ x y : G,
+      x ∈ K ∧ orderOf x = 9 ∧ (∀ z : G, Commute z x) ∧
+        y ∉ K ∧ y ^ 3 = 1 ∧
+          Subgroup.zpowers ((QuotientGroup.mk' K) y) = ⊤ ∧
+            K ⊔ Subgroup.zpowers y = ⊤ := by
+  obtain ⟨x, hxK, hxord, hxcentral⟩ :=
+    order81_exists_central_orderOf_eq_9_mem_of_cyclic_kernel hcard hKcard hKcomm hKcyc
+  obtain ⟨y, hyK, hy3, hyq, hysup⟩ :=
+    order81_exists_order_three_quotient_generator_of_cyclic_kernel
+      hcard hKcard hKcomm hKcyc hgK hnoncomm
+  exact ⟨x, y, hxK, hxord, hxcentral, hyK, hy3, hyq, hysup⟩
 
 /-- The `C_3` action on `C_27` generated by multiplication by `10`. -/
 noncomputable abbrev order81_c27Action : CyclicRep 3 →* MulAut order81_C27 :=
