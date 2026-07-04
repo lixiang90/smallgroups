@@ -2259,6 +2259,20 @@ theorem order81_c9c3_shearAut_eq_param :
     order81_c9c3_shearAut = order81_c9c3_paramAut 0 0 1 := by
   ext x <;> fin_cases x <;> rfl
 
+theorem order81_c9c3_param001_equiv_shear :
+    Nonempty (order81_c9c3_param_rep 0 0 1 ≃* order81_c9c3_shear_rep) := by
+  have haction : order81_c9c3_paramAction 0 0 1 = order81_c9c3_shearAction := by
+    apply order81_cyclicRep3_hom_ext
+    rw [order81_actionOfOrderThree_ofAdd_one, order81_actionOfOrderThree_ofAdd_one]
+    exact order81_c9c3_shearAut_eq_param.symm
+  exact ⟨semidirectProductCongr_eq haction⟩
+
+theorem order81_c9c3_param002_equiv_shear :
+    Nonempty (order81_c9c3_param_rep 0 0 2 ≃* order81_c9c3_shear_rep) := by
+  rcases order81_c9c3_param_sq_equiv_param 0 0 1 with ⟨e⟩
+  rcases order81_c9c3_param001_equiv_shear with ⟨f⟩
+  exact ⟨e.trans f⟩
+
 /-- The additive shear `(a, b) ↦ (a + 3b, b)` on `ZMod 9 × ZMod 3`. -/
 noncomputable def order81_c9c3_liftAddEquiv : (ZMod 9 × ZMod 3) ≃+ (ZMod 9 × ZMod 3) where
   toFun x := (x.1 + order81_c9c3_liftAddHom x.2, x.2)
@@ -2316,6 +2330,20 @@ theorem order81_c9c3_liftAction_gen :
     order81_c9c3_liftAction (Multiplicative.ofAdd (1 : ZMod 3)) =
       order81_c9c3_liftAut :=
   order81_actionOfOrderThree_ofAdd_one _ _
+
+theorem order81_c9c3_param010_equiv_lift :
+    Nonempty (order81_c9c3_param_rep 0 1 0 ≃* order81_c9c3_lift_rep) := by
+  have haction : order81_c9c3_paramAction 0 1 0 = order81_c9c3_liftAction := by
+    apply order81_cyclicRep3_hom_ext
+    rw [order81_actionOfOrderThree_ofAdd_one, order81_c9c3_liftAction_gen]
+    exact order81_c9c3_liftAut_eq_param.symm
+  exact ⟨semidirectProductCongr_eq haction⟩
+
+theorem order81_c9c3_param020_equiv_lift :
+    Nonempty (order81_c9c3_param_rep 0 2 0 ≃* order81_c9c3_lift_rep) := by
+  rcases order81_c9c3_param_sq_equiv_param 0 1 0 with ⟨e⟩
+  rcases order81_c9c3_param010_equiv_lift with ⟨f⟩
+  exact ⟨e.trans f⟩
 
 /-- The lift semidirect product is non-abelian. -/
 theorem order81_c9c3_lift_rep_nonabelian :
@@ -2430,6 +2458,20 @@ theorem order81_c9c3_doubleShearAction_gen :
     order81_c9c3_doubleShearAction (Multiplicative.ofAdd (1 : ZMod 3)) =
       order81_c9c3_doubleShearAut :=
   order81_actionOfOrderThree_ofAdd_one _ _
+
+theorem order81_c9c3_param011_equiv_doubleShear :
+    Nonempty (order81_c9c3_param_rep 0 1 1 ≃* order81_c9c3_doubleShear_rep) := by
+  have haction : order81_c9c3_paramAction 0 1 1 = order81_c9c3_doubleShearAction := by
+    apply order81_cyclicRep3_hom_ext
+    rw [order81_actionOfOrderThree_ofAdd_one, order81_c9c3_doubleShearAction_gen]
+    exact order81_c9c3_doubleShearAut_eq_param.symm
+  exact ⟨semidirectProductCongr_eq haction⟩
+
+theorem order81_c9c3_param122_equiv_doubleShear :
+    Nonempty (order81_c9c3_param_rep 1 2 2 ≃* order81_c9c3_doubleShear_rep) := by
+  rcases order81_c9c3_param_sq_equiv_param 0 1 1 with ⟨e⟩
+  rcases order81_c9c3_param011_equiv_doubleShear with ⟨f⟩
+  exact ⟨e.trans f⟩
 
 /-- The combined-shear semidirect product is non-abelian. -/
 theorem order81_c9c3_doubleShear_rep_nonabelian :
@@ -2573,6 +2615,20 @@ theorem order81_c9c3_sixShearAction_gen :
     order81_c9c3_sixShearAction (Multiplicative.ofAdd (1 : ZMod 3)) =
       order81_c9c3_sixShearAut :=
   order81_actionOfOrderThree_ofAdd_one _ _
+
+theorem order81_c9c3_param021_equiv_sixShear :
+    Nonempty (order81_c9c3_param_rep 0 2 1 ≃* order81_c9c3_sixShear_rep) := by
+  have haction : order81_c9c3_paramAction 0 2 1 = order81_c9c3_sixShearAction := by
+    apply order81_cyclicRep3_hom_ext
+    rw [order81_actionOfOrderThree_ofAdd_one, order81_c9c3_sixShearAction_gen]
+    exact order81_c9c3_sixShearAut_eq_param.symm
+  exact ⟨semidirectProductCongr_eq haction⟩
+
+theorem order81_c9c3_param212_equiv_sixShear :
+    Nonempty (order81_c9c3_param_rep 2 1 2 ≃* order81_c9c3_sixShear_rep) := by
+  rcases order81_c9c3_param_sq_equiv_param 0 2 1 with ⟨e⟩
+  rcases order81_c9c3_param021_equiv_sixShear with ⟨f⟩
+  exact ⟨e.trans f⟩
 
 /-- The six-shear semidirect product is non-abelian. -/
 theorem order81_c9c3_sixShear_rep_nonabelian :
