@@ -1161,6 +1161,61 @@ theorem order81_quotient_center_pow_three_eq_one_of_commutators_central_cube_one
   rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
   exact order81_cube_mem_center_of_commutators_central_cube_one hcenter hcube x
 
+/-- In the class-two exponent-`3` commutator branch, the cube subgroup is central. -/
+theorem order81_cubeSubgroup_le_center_of_commutators_central_cube_one
+    {G : Type*} [Group G]
+    (hcenter : ∀ x y : G, ⁅x, y⁆ ∈ center G)
+    (hcube : ∀ x y : G, ⁅x, y⁆ ^ 3 = 1) :
+    cubeSubgroup G ≤ center G := by
+  rw [cubeSubgroup, Subgroup.closure_le]
+  rintro x ⟨y, rfl⟩
+  exact order81_cube_mem_center_of_commutators_central_cube_one hcenter hcube y
+
+/-- In the class-two exponent-`3` commutator branch, the set of cubes is itself a subgroup. -/
+def order81_cubeSetSubgroup_of_commutators_central_cube_one
+    {G : Type*} [Group G]
+    (hcenter : ∀ x y : G, ⁅x, y⁆ ∈ center G)
+    (hcube : ∀ x y : G, ⁅x, y⁆ ^ 3 = 1) : Subgroup G where
+  carrier := {x : G | ∃ y : G, y ^ 3 = x}
+  one_mem' := ⟨1, by simp⟩
+  mul_mem' := by
+    rintro a b ⟨x, rfl⟩ ⟨y, rfl⟩
+    exact ⟨x * y, order81_mul_pow_three_of_commutators_central_cube_one hcenter hcube x y⟩
+  inv_mem' := by
+    rintro a ⟨x, rfl⟩
+    exact ⟨x⁻¹, by simp [inv_pow]⟩
+
+/-- In the class-two exponent-`3` commutator branch, membership in `cubeSubgroup` is the
+same as being an actual cube. -/
+theorem order81_mem_cubeSubgroup_iff_exists_cube_of_commutators_central_cube_one
+    {G : Type*} [Group G]
+    (hcenter : ∀ x y : G, ⁅x, y⁆ ∈ center G)
+    (hcube : ∀ x y : G, ⁅x, y⁆ ^ 3 = 1) {x : G} :
+    x ∈ cubeSubgroup G ↔ ∃ y : G, y ^ 3 = x := by
+  let C := order81_cubeSetSubgroup_of_commutators_central_cube_one hcenter hcube
+  constructor
+  · intro hx
+    have hle : cubeSubgroup G ≤ C := by
+      rw [cubeSubgroup, Subgroup.closure_le]
+      intro z hz
+      exact hz
+    exact hle hx
+  · intro hx
+    exact Subgroup.subset_closure hx
+
+/-- In the class-two exponent-`3` commutator branch, the cube subgroup is abelian. -/
+theorem order81_cubeSubgroup_isMulCommutative_of_commutators_central_cube_one
+    {G : Type*} [Group G]
+    (hcenter : ∀ x y : G, ⁅x, y⁆ ∈ center G)
+    (hcube : ∀ x y : G, ⁅x, y⁆ ^ 3 = 1) :
+    IsMulCommutative (cubeSubgroup G) := by
+  refine IsMulCommutative.of_comm ?_
+  intro a b
+  apply Subtype.ext
+  have ha : (a : G) ∈ center G :=
+    order81_cubeSubgroup_le_center_of_commutators_central_cube_one hcenter hcube a.2
+  exact (Subgroup.mem_center_iff.mp ha (b : G)).symm
+
 /-- If conjugation by `g` is trivial on `K`, then `g` commutes with every element of `K`. -/
 theorem order81_commute_of_conjNormal_eq_one
     {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
