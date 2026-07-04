@@ -273,6 +273,41 @@ theorem order81_exists_central_order_three_quotient_p3_classification {G : Type*
   letI : Fintype (G ⧸ Z) := hF
   exact P3Group.classification 3 (G ⧸ Z) hquot'
 
+/-- A cleaned-up five-way classification for the quotient by a central order-`3`
+subgroup in a non-abelian order-`81` group. -/
+theorem order81_exists_central_order_three_quotient_classification_cases
+    {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
+    ∃ (Z : Subgroup G) (hZnormal : Z.Normal),
+      Z ≤ center G ∧ Nat.card Z = 3 ∧
+        letI : Z.Normal := hZnormal
+        Nat.card (G ⧸ Z) = 27 ∧
+          (Nonempty ((G ⧸ Z) ≃* Multiplicative (P3Group.CyclicP3 3)) ∨
+            Nonempty ((G ⧸ Z) ≃*
+              (Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3))) ∨
+            Nonempty ((G ⧸ Z) ≃*
+              (Multiplicative (ZMod 3) × Multiplicative (ZMod 3) ×
+                Multiplicative (ZMod 3))) ∨
+            Nonempty ((G ⧸ Z) ≃* P3Group.HeisenbergGroup 3) ∨
+            Nonempty ((G ⧸ Z) ≃* P3Group.SemidirectP2P 3)) := by
+  obtain ⟨Z, hZnormal, hZle, hZcard, hquot, hF, hclass⟩ :=
+    order81_exists_central_order_three_quotient_p3_classification hcard hnonab
+  refine ⟨Z, hZnormal, hZle, hZcard, hquot, ?_⟩
+  letI : Z.Normal := hZnormal
+  letI : Fintype (G ⧸ Z) := hF
+  rcases hclass with hcyc | hp2p | helem | hheis | hsemi | hdih | hquat
+  · exact Or.inl hcyc
+  · exact Or.inr (Or.inl hp2p)
+  · exact Or.inr (Or.inr (Or.inl helem))
+  · rcases hheis with ⟨_, h⟩
+    exact Or.inr (Or.inr (Or.inr (Or.inl h)))
+  · rcases hsemi with ⟨_, h⟩
+    exact Or.inr (Or.inr (Or.inr (Or.inr h)))
+  · rcases hdih with ⟨h32, _⟩
+    norm_num at h32
+  · rcases hquat with ⟨h32, _⟩
+    norm_num at h32
+
 /-- In a non-abelian group of order `81`, the center is `C_3`, `C_9`, or `C_3 × C_3`. -/
 theorem order81_center_classification_of_nonabelian {G : Type*} [Group G]
     (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
