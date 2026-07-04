@@ -201,6 +201,29 @@ theorem order81_center_card_eq_three_or_nine {G : Type*} [Group G]
     rw [hcenter]
     norm_num
 
+/-- If the center has order `3` or `9`, then it contains a central element of order `3`. -/
+theorem order81_exists_central_orderOf_eq_3_of_center_card {G : Type*} [Group G]
+    (hcenter : Nat.card (center G) = 3 ∨ Nat.card (center G) = 9) :
+    ∃ z : G, z ∈ center G ∧ orderOf z = 3 := by
+  have hdiv : 3 ∣ Nat.card (center G) := by
+    rcases hcenter with h | h
+    · exact h.symm ▸ (by norm_num : 3 ∣ 3)
+    · exact h.symm ▸ (by norm_num : 3 ∣ 9)
+  have hne : Nat.card (center G) ≠ 0 := by
+    rcases hcenter with h | h
+    · exact h.symm ▸ (by norm_num : (3 : ℕ) ≠ 0)
+    · exact h.symm ▸ (by norm_num : (9 : ℕ) ≠ 0)
+  haveI : Finite (center G) := Nat.finite_of_card_ne_zero hne
+  obtain ⟨z, hzord⟩ := exists_prime_orderOf_dvd_card' (G := center G) 3 hdiv
+  exact ⟨z.1, z.2, by rwa [← Subgroup.orderOf_mk z.1 z.2]⟩
+
+/-- A non-abelian group of order `81` contains a central element of order `3`. -/
+theorem order81_exists_central_orderOf_eq_3 {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
+    ∃ z : G, z ∈ center G ∧ orderOf z = 3 :=
+  order81_exists_central_orderOf_eq_3_of_center_card
+    (order81_center_card_eq_three_or_nine hcard hnonab)
+
 /-- In a non-abelian group of order `81`, the center is `C_3`, `C_9`, or `C_3 × C_3`. -/
 theorem order81_center_classification_of_nonabelian {G : Type*} [Group G]
     (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
