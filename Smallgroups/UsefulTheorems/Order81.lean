@@ -1442,18 +1442,269 @@ theorem order81_c9c3_sixShear_rep_not_equiv_e27_jordan_rep :
         card_pow_three_eq_one_order81_e27_jordan_rep]
       norm_num)
 
+/-! ## A non-split six-shear `C_9 × C_3` extension by `C_3` -/
+
+/-- The additive kernel used for the non-split `C_9 × C_3` extension. -/
+abbrev order81_C9C3Add : Type :=
+  ZMod 9 × ZMod 3
+
+/-- The central carry element `v = (3, 0)` used to make the six-shear extension non-split. -/
+def order81_c9c3_nonSplitTwist : order81_C9C3Add :=
+  (3, 0)
+
+/-- The `0`, `1`, or `2`-fold iterate of the six-shear additive automorphism. -/
+noncomputable def order81_c9c3_nonSplitAct (t : ZMod 3) :
+    order81_C9C3Add ≃+ order81_C9C3Add :=
+  if t = 0 then AddEquiv.refl order81_C9C3Add
+  else if t = 1 then order81_c9c3_sixShearAddEquiv
+  else order81_c9c3_sixShearAddEquiv.trans order81_c9c3_sixShearAddEquiv
+
+/-- The carry cocycle for the section `ZMod 3 → {0,1,2}` with `t^3 = (3,0)`. -/
+def order81_c9c3_nonSplitCarry (i j : ZMod 3) : order81_C9C3Add :=
+  if 3 ≤ i.val + j.val then order81_c9c3_nonSplitTwist else 0
+
+@[simp] theorem order81_c9c3_nonSplitAct_zero_apply (n : order81_C9C3Add) :
+    order81_c9c3_nonSplitAct 0 n = n := by
+  simp [order81_c9c3_nonSplitAct]
+
+@[simp] theorem order81_c9c3_nonSplitAct_apply_zero (i : ZMod 3) :
+    order81_c9c3_nonSplitAct i (0 : order81_C9C3Add) = 0 :=
+  (order81_c9c3_nonSplitAct i).map_zero
+
+theorem order81_c9c3_nonSplitAct_add_apply (i j : ZMod 3) (n : order81_C9C3Add) :
+    order81_c9c3_nonSplitAct (i + j) n =
+      order81_c9c3_nonSplitAct i (order81_c9c3_nonSplitAct j n) := by
+  fin_cases i <;> fin_cases j <;> fin_cases n <;> rfl
+
+theorem order81_c9c3_nonSplitAct_carry (i j k : ZMod 3) :
+    order81_c9c3_nonSplitAct i (order81_c9c3_nonSplitCarry j k) =
+      order81_c9c3_nonSplitCarry j k := by
+  fin_cases i <;> fin_cases j <;> fin_cases k <;> rfl
+
+theorem order81_c9c3_nonSplitCarry_cocycle (i j k : ZMod 3) :
+    order81_c9c3_nonSplitCarry i j + order81_c9c3_nonSplitCarry (i + j) k =
+      order81_c9c3_nonSplitAct i (order81_c9c3_nonSplitCarry j k) +
+        order81_c9c3_nonSplitCarry i (j + k) := by
+  fin_cases i <;> fin_cases j <;> fin_cases k <;> rfl
+
+@[simp] theorem order81_c9c3_nonSplitCarry_zero_left (i : ZMod 3) :
+    order81_c9c3_nonSplitCarry 0 i = 0 := by
+  fin_cases i <;> rfl
+
+@[simp] theorem order81_c9c3_nonSplitCarry_zero_right (i : ZMod 3) :
+    order81_c9c3_nonSplitCarry i 0 = 0 := by
+  fin_cases i <;> rfl
+
+/-- The non-split extension with kernel `C_9 × C_3`, quotient `C_3`, six-shear action, and
+`t^3 = (3,0)`. -/
+@[ext]
+structure Order81C9C3NonSplit where
+  n : order81_C9C3Add
+  t : ZMod 3
+  deriving DecidableEq
+
+namespace Order81C9C3NonSplit
+
+noncomputable def mul (x y : Order81C9C3NonSplit) : Order81C9C3NonSplit :=
+  ⟨x.n + order81_c9c3_nonSplitAct x.t y.n + order81_c9c3_nonSplitCarry x.t y.t,
+    x.t + y.t⟩
+
+noncomputable def inv (x : Order81C9C3NonSplit) : Order81C9C3NonSplit :=
+  ⟨-(order81_c9c3_nonSplitAct (-x.t) x.n + order81_c9c3_nonSplitCarry (-x.t) x.t),
+    -x.t⟩
+
+noncomputable instance instMul : Mul Order81C9C3NonSplit :=
+  ⟨mul⟩
+
+instance instOne : One Order81C9C3NonSplit :=
+  ⟨⟨0, 0⟩⟩
+
+noncomputable instance instInv : Inv Order81C9C3NonSplit :=
+  ⟨inv⟩
+
+@[simp] theorem mul_n (x y : Order81C9C3NonSplit) :
+    (x * y).n =
+      x.n + order81_c9c3_nonSplitAct x.t y.n + order81_c9c3_nonSplitCarry x.t y.t :=
+  rfl
+
+@[simp] theorem mul_t (x y : Order81C9C3NonSplit) :
+    (x * y).t = x.t + y.t :=
+  rfl
+
+@[simp] theorem one_n : (1 : Order81C9C3NonSplit).n = 0 :=
+  rfl
+
+@[simp] theorem one_t : (1 : Order81C9C3NonSplit).t = 0 :=
+  rfl
+
+@[simp] theorem inv_n (x : Order81C9C3NonSplit) :
+    x⁻¹.n =
+      -(order81_c9c3_nonSplitAct (-x.t) x.n + order81_c9c3_nonSplitCarry (-x.t) x.t) :=
+  rfl
+
+@[simp] theorem inv_t (x : Order81C9C3NonSplit) :
+    x⁻¹.t = -x.t :=
+  rfl
+
+noncomputable instance instGroup : Group Order81C9C3NonSplit where
+  mul_assoc x y z := by
+    apply Order81C9C3NonSplit.ext
+    · simp only [mul_n, mul_t]
+      calc
+        x.n + order81_c9c3_nonSplitAct x.t y.n +
+            order81_c9c3_nonSplitCarry x.t y.t +
+            order81_c9c3_nonSplitAct (x.t + y.t) z.n +
+            order81_c9c3_nonSplitCarry (x.t + y.t) z.t =
+          x.n + order81_c9c3_nonSplitAct x.t y.n +
+            order81_c9c3_nonSplitAct x.t (order81_c9c3_nonSplitAct y.t z.n) +
+            (order81_c9c3_nonSplitCarry x.t y.t +
+              order81_c9c3_nonSplitCarry (x.t + y.t) z.t) := by
+            rw [order81_c9c3_nonSplitAct_add_apply]
+            abel
+        _ = x.n + order81_c9c3_nonSplitAct x.t y.n +
+            order81_c9c3_nonSplitAct x.t (order81_c9c3_nonSplitAct y.t z.n) +
+            (order81_c9c3_nonSplitAct x.t (order81_c9c3_nonSplitCarry y.t z.t) +
+              order81_c9c3_nonSplitCarry x.t (y.t + z.t)) := by
+            rw [order81_c9c3_nonSplitCarry_cocycle]
+        _ = x.n + order81_c9c3_nonSplitAct x.t
+            (y.n + order81_c9c3_nonSplitAct y.t z.n +
+              order81_c9c3_nonSplitCarry y.t z.t) +
+            order81_c9c3_nonSplitCarry x.t (y.t + z.t) := by
+            rw [(order81_c9c3_nonSplitAct x.t).map_add,
+              (order81_c9c3_nonSplitAct x.t).map_add]
+            abel
+    · simp only [mul_t]
+      abel
+  one_mul x := by
+    apply Order81C9C3NonSplit.ext <;> simp
+  mul_one x := by
+    apply Order81C9C3NonSplit.ext <;> simp
+  inv_mul_cancel x := by
+    apply Order81C9C3NonSplit.ext <;> simp
+
+def equivProd : Order81C9C3NonSplit ≃ (order81_C9C3Add × ZMod 3) where
+  toFun x := (x.n, x.t)
+  invFun x := ⟨x.1, x.2⟩
+  left_inv x := by cases x; rfl
+  right_inv x := by cases x; rfl
+
+noncomputable instance instFintype : Fintype Order81C9C3NonSplit :=
+  Fintype.ofEquiv _ equivProd.symm
+
+end Order81C9C3NonSplit
+
+/-- The non-split six-shear representative of order `81`. -/
+abbrev order81_c9c3_nonSplit_rep : Type :=
+  Order81C9C3NonSplit
+
+theorem card_order81_c9c3_nonSplit_rep :
+    Nat.card order81_c9c3_nonSplit_rep = 81 := by
+  rw [Nat.card_congr Order81C9C3NonSplit.equivProd]
+  simp [order81_C9C3Add, Fintype.card_prod]
+
+theorem order81_c9c3_nonSplit_rep_nonabelian :
+    ¬ ∀ x y : order81_c9c3_nonSplit_rep, x * y = y * x := by
+  let x : order81_c9c3_nonSplit_rep := ⟨0, 1⟩
+  let y : order81_c9c3_nonSplit_rep := ⟨((1 : ZMod 9), (0 : ZMod 3)), 0⟩
+  intro hcomm
+  exact (by decide +kernel : x * y ≠ y * x) (hcomm x y)
+
+theorem card_pow_three_eq_one_order81_c9c3_nonSplit_rep :
+    order81_pow_eq_one_card order81_c9c3_nonSplit_rep 3 = 9 :=
+  order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order81_c9c3_nonSplit_rep :
+    Nat.card (Subgroup.center order81_c9c3_nonSplit_rep) = 3 :=
+  order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order81_c27_semidirect_rep :
+    Nat.card (Subgroup.center order81_c27_semidirect_rep) = 9 :=
+  order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem card_center_order81_c9_semidirect_c9_rep :
+    Nat.card (Subgroup.center order81_c9_semidirect_c9_rep) = 9 :=
+  order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
+theorem order81_c9c3_nonSplit_rep_not_equiv_heisenberg_prod_cyclic :
+    ¬ Nonempty (order81_c9c3_nonSplit_rep ≃* order81_heisenberg_prod_cyclic) :=
+  order81_not_nonempty_mulEquiv_of_pow_eq_one_card_ne
+    (H := order81_c9c3_nonSplit_rep) (K := order81_heisenberg_prod_cyclic) (n := 3) (by
+      rw [card_pow_three_eq_one_order81_c9c3_nonSplit_rep,
+        card_pow_three_eq_one_order81_heisenberg_prod_cyclic]
+      norm_num)
+
+theorem order81_c9c3_nonSplit_rep_not_equiv_semidirectP2P_prod_cyclic :
+    ¬ Nonempty (order81_c9c3_nonSplit_rep ≃* order81_semidirectP2P_prod_cyclic) :=
+  order81_not_nonempty_mulEquiv_of_pow_eq_one_card_ne
+    (H := order81_c9c3_nonSplit_rep) (K := order81_semidirectP2P_prod_cyclic) (n := 3) (by
+      rw [card_pow_three_eq_one_order81_c9c3_nonSplit_rep,
+        card_pow_three_eq_one_order81_semidirectP2P_prod_cyclic]
+      norm_num)
+
+theorem order81_c9c3_nonSplit_rep_not_equiv_c9c3_shear_rep :
+    ¬ Nonempty (order81_c9c3_nonSplit_rep ≃* order81_c9c3_shear_rep) :=
+  order81_not_nonempty_mulEquiv_of_pow_eq_one_card_ne
+    (H := order81_c9c3_nonSplit_rep) (K := order81_c9c3_shear_rep) (n := 3) (by
+      rw [card_pow_three_eq_one_order81_c9c3_nonSplit_rep,
+        card_pow_three_eq_one_order81_c9c3_shear_rep]
+      norm_num)
+
+theorem order81_c9c3_nonSplit_rep_not_equiv_c9c3_lift_rep :
+    ¬ Nonempty (order81_c9c3_nonSplit_rep ≃* order81_c9c3_lift_rep) :=
+  order81_not_nonempty_mulEquiv_of_pow_eq_one_card_ne
+    (H := order81_c9c3_nonSplit_rep) (K := order81_c9c3_lift_rep) (n := 3) (by
+      rw [card_pow_three_eq_one_order81_c9c3_nonSplit_rep,
+        card_pow_three_eq_one_order81_c9c3_lift_rep]
+      norm_num)
+
+theorem order81_c9c3_nonSplit_rep_not_equiv_c9c3_doubleShear_rep :
+    ¬ Nonempty (order81_c9c3_nonSplit_rep ≃* order81_c9c3_doubleShear_rep) :=
+  order81_not_nonempty_mulEquiv_of_pow_eq_one_card_ne
+    (H := order81_c9c3_nonSplit_rep) (K := order81_c9c3_doubleShear_rep) (n := 3) (by
+      rw [card_pow_three_eq_one_order81_c9c3_nonSplit_rep,
+        card_pow_three_eq_one_order81_c9c3_doubleShear_rep]
+      norm_num)
+
+theorem order81_c9c3_nonSplit_rep_not_equiv_c9c3_sixShear_rep :
+    ¬ Nonempty (order81_c9c3_nonSplit_rep ≃* order81_c9c3_sixShear_rep) :=
+  order81_not_nonempty_mulEquiv_of_pow_eq_one_card_ne
+    (H := order81_c9c3_nonSplit_rep) (K := order81_c9c3_sixShear_rep) (n := 3) (by
+      rw [card_pow_three_eq_one_order81_c9c3_nonSplit_rep,
+        card_pow_three_eq_one_order81_c9c3_sixShear_rep]
+      norm_num)
+
+theorem order81_c9c3_nonSplit_rep_not_equiv_e27_jordan_rep :
+    ¬ Nonempty (order81_c9c3_nonSplit_rep ≃* order81_e27_jordan_rep) :=
+  order81_not_nonempty_mulEquiv_of_pow_eq_one_card_ne
+    (H := order81_c9c3_nonSplit_rep) (K := order81_e27_jordan_rep) (n := 3) (by
+      rw [card_pow_three_eq_one_order81_c9c3_nonSplit_rep,
+        card_pow_three_eq_one_order81_e27_jordan_rep]
+      norm_num)
+
+theorem order81_c9c3_nonSplit_rep_not_equiv_c27_semidirect_rep :
+    ¬ Nonempty (order81_c9c3_nonSplit_rep ≃* order81_c27_semidirect_rep) :=
+  not_nonempty_mulEquiv_of_card_center_ne (by
+    rw [card_center_order81_c9c3_nonSplit_rep, card_center_order81_c27_semidirect_rep]
+    norm_num)
+
+theorem order81_c9c3_nonSplit_rep_not_equiv_c9_semidirect_c9_rep :
+    ¬ Nonempty (order81_c9c3_nonSplit_rep ≃* order81_c9_semidirect_c9_rep) :=
+  not_nonempty_mulEquiv_of_card_center_ne (by
+    rw [card_center_order81_c9c3_nonSplit_rep, card_center_order81_c9_semidirect_c9_rep]
+    norm_num)
+
 /-! ## The currently formalized representatives -/
 
-/-- The nine currently certified non-abelian representatives of order `81`. -/
-abbrev order81_nonabelian_reps : Fin 9 → Type :=
+/-- The first nine certified non-abelian representatives of order `81`. -/
+abbrev order81_nonabelian_reps9 : Fin 9 → Type :=
   rep9 order81_heisenberg_prod_cyclic order81_semidirectP2P_prod_cyclic
     order81_c9c3_shear_rep order81_c27_semidirect_rep order81_c9_semidirect_c9_rep
     order81_e27_jordan_rep order81_c9c3_lift_rep order81_c9c3_doubleShear_rep
     order81_c9c3_sixShear_rep
 
-/-- Each currently certified non-abelian representative has order `81`. -/
-theorem card_order81_nonabelian_reps (i : Fin 9) :
-    Nat.card (order81_nonabelian_reps i) = 81 := by
+/-- Each of the first nine certified non-abelian representatives has order `81`. -/
+theorem card_order81_nonabelian_reps9 (i : Fin 9) :
+    Nat.card (order81_nonabelian_reps9 i) = 81 := by
   fin_cases i
   · exact card_order81_heisenberg_prod_cyclic
   · exact card_order81_semidirectP2P_prod_cyclic
@@ -1465,9 +1716,9 @@ theorem card_order81_nonabelian_reps (i : Fin 9) :
   · exact card_order81_c9c3_doubleShear_rep
   · exact card_order81_c9c3_sixShear_rep
 
-/-- Each currently certified non-abelian representative is non-abelian. -/
-theorem order81_nonabelian_reps_nonabelian (i : Fin 9) :
-    ¬ ∀ x y : order81_nonabelian_reps i, x * y = y * x := by
+/-- Each of the first nine certified non-abelian representatives is non-abelian. -/
+theorem order81_nonabelian_reps9_nonabelian (i : Fin 9) :
+    ¬ ∀ x y : order81_nonabelian_reps9 i, x * y = y * x := by
   fin_cases i
   · exact order81_heisenberg_prod_cyclic_nonabelian
   · exact order81_semidirectP2P_prod_cyclic_nonabelian
@@ -1479,9 +1730,9 @@ theorem order81_nonabelian_reps_nonabelian (i : Fin 9) :
   · exact order81_c9c3_doubleShear_rep_nonabelian
   · exact order81_c9c3_sixShear_rep_nonabelian
 
-/-- The nine currently certified non-abelian representatives are pairwise non-isomorphic. -/
-theorem order81_nonabelian_reps_pairwise :
-    PairwiseNonMulEquiv order81_nonabelian_reps := by
+/-- The first nine certified non-abelian representatives are pairwise non-isomorphic. -/
+theorem order81_nonabelian_reps9_pairwise :
+    PairwiseNonMulEquiv order81_nonabelian_reps9 := by
   intro i j h
   fin_cases i
   · fin_cases j
@@ -1583,13 +1834,85 @@ theorem order81_nonabelian_reps_pairwise :
     · exact absurd h order81_c9c3_sixShear_rep_not_equiv_c9c3_doubleShear_rep
     · rfl
 
+/-- The final non-split non-abelian representative, kept separate from the first nine for
+bookkeeping. -/
+abbrev order81_nonabelian_extra_reps : Fin 1 → Type :=
+  rep1 order81_c9c3_nonSplit_rep
+
+theorem card_order81_nonabelian_extra_reps (i : Fin 1) :
+    Nat.card (order81_nonabelian_extra_reps i) = 81 := by
+  fin_cases i
+  exact card_order81_c9c3_nonSplit_rep
+
+theorem order81_nonabelian_extra_reps_nonabelian (i : Fin 1) :
+    ¬ ∀ x y : order81_nonabelian_extra_reps i, x * y = y * x := by
+  fin_cases i
+  exact order81_c9c3_nonSplit_rep_nonabelian
+
+theorem order81_nonabelian_extra_reps_pairwise :
+    PairwiseNonMulEquiv order81_nonabelian_extra_reps := by
+  intro i j _
+  fin_cases i
+  fin_cases j
+  rfl
+
+theorem order81_nonabelian_reps9_extra_disjoint :
+    ∀ i j, ¬ Nonempty (order81_nonabelian_reps9 i ≃* order81_nonabelian_extra_reps j) := by
+  intro i j h
+  fin_cases i <;> fin_cases j
+  · exact absurd ⟨h.some.symm⟩ order81_c9c3_nonSplit_rep_not_equiv_heisenberg_prod_cyclic
+  · exact absurd ⟨h.some.symm⟩ order81_c9c3_nonSplit_rep_not_equiv_semidirectP2P_prod_cyclic
+  · exact absurd ⟨h.some.symm⟩ order81_c9c3_nonSplit_rep_not_equiv_c9c3_shear_rep
+  · exact absurd ⟨h.some.symm⟩ order81_c9c3_nonSplit_rep_not_equiv_c27_semidirect_rep
+  · exact absurd ⟨h.some.symm⟩ order81_c9c3_nonSplit_rep_not_equiv_c9_semidirect_c9_rep
+  · exact absurd ⟨h.some.symm⟩ order81_c9c3_nonSplit_rep_not_equiv_e27_jordan_rep
+  · exact absurd ⟨h.some.symm⟩ order81_c9c3_nonSplit_rep_not_equiv_c9c3_lift_rep
+  · exact absurd ⟨h.some.symm⟩ order81_c9c3_nonSplit_rep_not_equiv_c9c3_doubleShear_rep
+  · exact absurd ⟨h.some.symm⟩ order81_c9c3_nonSplit_rep_not_equiv_c9c3_sixShear_rep
+
+/-- The ten currently certified non-abelian representatives of order `81`. -/
+abbrev order81_nonabelian_reps : Fin 9 ⊕ Fin 1 → Type :=
+  Sum.elim order81_nonabelian_reps9 order81_nonabelian_extra_reps
+
+noncomputable instance instGroupOrder81NonabelianReps (i : Fin 9 ⊕ Fin 1) :
+    Group (order81_nonabelian_reps i) := by
+  rcases i with i | i
+  · exact inferInstanceAs (Group (order81_nonabelian_reps9 i))
+  · exact inferInstanceAs (Group (order81_nonabelian_extra_reps i))
+
+theorem card_order81_nonabelian_reps (i : Fin 9 ⊕ Fin 1) :
+    Nat.card (order81_nonabelian_reps i) = 81 := by
+  rcases i with i | i
+  · exact card_order81_nonabelian_reps9 i
+  · exact card_order81_nonabelian_extra_reps i
+
+theorem order81_nonabelian_reps_nonabelian (i : Fin 9 ⊕ Fin 1) :
+    ¬ ∀ x y : order81_nonabelian_reps i, x * y = y * x := by
+  rcases i with i | i
+  · exact order81_nonabelian_reps9_nonabelian i
+  · exact order81_nonabelian_extra_reps_nonabelian i
+
+theorem order81_nonabelian_reps_pairwise :
+    PairwiseNonMulEquiv order81_nonabelian_reps := by
+  rintro (i | i) (j | j) h
+  · exact congrArg Sum.inl (order81_nonabelian_reps9_pairwise i j h)
+  · exact absurd h (order81_nonabelian_reps9_extra_disjoint i j)
+  · exact absurd ⟨h.some.symm⟩ (order81_nonabelian_reps9_extra_disjoint j i)
+  · exact congrArg Sum.inr (order81_nonabelian_extra_reps_pairwise i j h)
+
 /-- The five abelian representatives together with the currently certified non-abelian
 representatives formalized above. -/
-abbrev order81_known_reps : Fin 5 ⊕ Fin 9 → Type :=
+abbrev order81_known_reps : Fin 5 ⊕ (Fin 9 ⊕ Fin 1) → Type :=
   Sum.elim order81_abelian_reps order81_nonabelian_reps
 
+noncomputable instance instGroupOrder81KnownReps (i : Fin 5 ⊕ (Fin 9 ⊕ Fin 1)) :
+    Group (order81_known_reps i) := by
+  rcases i with i | i
+  · exact inferInstanceAs (Group (order81_abelian_reps i))
+  · exact inferInstanceAs (Group (order81_nonabelian_reps i))
+
 /-- Every currently formalized representative has order `81`. -/
-theorem card_order81_known_reps (i : Fin 5 ⊕ Fin 9) :
+theorem card_order81_known_reps (i : Fin 5 ⊕ (Fin 9 ⊕ Fin 1)) :
     Nat.card (order81_known_reps i) = 81 := by
   rcases i with i | i
   · exact card_order81_abelian_reps i
@@ -1603,10 +1926,12 @@ theorem order81_abelian_nonabelian_disjoint :
     (fun _ a b => mul_comm a b)
     order81_nonabelian_reps_nonabelian
 
-/-- The currently formalized fourteen representatives are pairwise non-isomorphic. -/
+/-- The currently formalized fifteen representatives are pairwise non-isomorphic. -/
 theorem order81_known_reps_pairwise : PairwiseNonMulEquiv order81_known_reps := by
-  simpa [order81_known_reps] using
-    PairwiseNonMulEquiv.sum order81_abelian_distinct order81_nonabelian_reps_pairwise
-      order81_abelian_nonabelian_disjoint
+  rintro (i | i) (j | j) h
+  · exact congrArg Sum.inl (order81_abelian_distinct i j h)
+  · exact absurd h (order81_abelian_nonabelian_disjoint i j)
+  · exact absurd ⟨h.some.symm⟩ (order81_abelian_nonabelian_disjoint j i)
+  · exact congrArg Sum.inr (order81_nonabelian_reps_pairwise i j h)
 
 end Smallgroups.UsefulTheorems
