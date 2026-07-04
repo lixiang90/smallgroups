@@ -377,4 +377,334 @@ theorem order80_classify_C16 (φ' : Multiplicative (ZMod 16) →* MulAut (Multip
   · exact Or.inr (Or.inr (Or.inl (c16_hom_ext (by rw [h]; decide))))
   · exact Or.inr (Or.inr (Or.inr (c16_hom_ext (by rw [h]; decide))))
 
+/-! ### `K = C₄` (auxiliary): character case-split reused for `G₁₂`, `G₁₃` -/
+
+/-- Homomorphisms out of `Multiplicative (ZMod 4)` are determined by the generator. -/
+theorem c4_hom_ext {M : Type*} [Monoid M] {χ ψ : Multiplicative (ZMod 4) →* M}
+    (h : χ (Multiplicative.ofAdd (1 : ZMod 4)) = ψ (Multiplicative.ofAdd (1 : ZMod 4))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  let n : ZMod 4 := Multiplicative.toAdd x
+  have hx : x = (Multiplicative.ofAdd (1 : ZMod 4)) ^ n.val := by
+    rw [show x = Multiplicative.ofAdd n from (ofAdd_toAdd _).symm]
+    calc
+      Multiplicative.ofAdd n = Multiplicative.ofAdd ((n.val : ZMod 4)) := by
+        rw [ZMod.natCast_zmod_val]
+      _ = Multiplicative.ofAdd (n.val • (1 : ZMod 4)) := by simp
+      _ = (Multiplicative.ofAdd (1 : ZMod 4)) ^ n.val := by rw [ofAdd_nsmul]
+  rw [hx, map_pow, map_pow, h]
+
+/-- Characters `Multiplicative (ZMod 4) → (ZMod 5)ˣ` are one of the four order-dividing-`4`
+characters. -/
+theorem c4_unit_character_cases (χ : Multiplicative (ZMod 4) →* (ZMod 5)ˣ) :
+    χ = 1 ∨ χ = powHom (p := 5) (q := 4) order40_u4 (by decide) ∨
+      χ = powHom (p := 5) (q := 4) (order40_u4 ^ 2) (by decide) ∨
+      χ = powHom (p := 5) (q := 4) (order40_u4 ^ 3) (by decide) := by
+  rcases order40_unit_cases (χ (Multiplicative.ofAdd (1 : ZMod 4))) with h | h | h | h
+  · exact Or.inl (c4_hom_ext (by simp [h]))
+  · exact Or.inr (Or.inl (c4_hom_ext (by rw [h]; decide)))
+  · exact Or.inr (Or.inr (Or.inl (c4_hom_ext (by rw [h]; decide))))
+  · exact Or.inr (Or.inr (Or.inr (c4_hom_ext (by rw [h]; decide))))
+
+/-! ### The direct-product family: `G₁ = C₈ × C₂`, `G₇ = K₈ × C₂`, `G₁₁ = Q₈ × C₂`
+
+These `K`'s are literal direct products, so a character `χ : K →* (ZMod 5)ˣ` is simply an
+independent pair of characters on the two factors (`MonoidHom.coprod_unique`), with no
+invariance constraint (unlike the semidirect-product families above). -/
+
+/-- **Exhaustiveness for `K = C₈ × C₂` (`G₁`).**  No constraint links the two factors. -/
+theorem order80_classify_G1 (φ' : order16_wild_G1 →* MulAut (Multiplicative (ZMod 5))) :
+    ∃ χ : order16_wild_G1 →* (ZMod 5)ˣ,
+      (χ.comp (MonoidHom.inl _ _) = 1 ∨ χ.comp (MonoidHom.inl _ _) = order40_chiC8_four ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiC8_two ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiC8_four_inv) ∧
+      (χ.comp (MonoidHom.inr _ _) = 1 ∨ χ.comp (MonoidHom.inr _ _) = order40_c2UnitHom) ∧
+      Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G1 φ' ≃*
+        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G1 (unitAutHom.comp χ)) := by
+  obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
+  exact ⟨ψ, order40_c8_unit_character_cases _, c2_unit_character_cases _,
+    ⟨semidirectProductCongr_eq hψ⟩⟩
+
+/-- **Exhaustiveness for `K = K₈ × C₂ = C₄ × C₂ × C₂` (`G₇`).**  No constraint links the
+factors. -/
+theorem order80_classify_G7 (φ' : order16_wild_G7 →* MulAut (Multiplicative (ZMod 5))) :
+    ∃ χ : order16_wild_G7 →* (ZMod 5)ˣ,
+      (χ.comp (MonoidHom.inl _ _) = 1 ∨ χ.comp (MonoidHom.inl _ _) = order40_chiC4C2_fst_two ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiC4C2_snd_two ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiC4C2_prod_two ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiC4C2_fst_four ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiC4C2_fst_four_snd ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiC4C2_fst_four_inv ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiC4C2_fst_four_inv_snd) ∧
+      (χ.comp (MonoidHom.inr _ _) = 1 ∨ χ.comp (MonoidHom.inr _ _) = order40_c2UnitHom) ∧
+      Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G7 φ' ≃*
+        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G7 (unitAutHom.comp χ)) := by
+  obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
+  exact ⟨ψ, order40_c4c2_unit_character_cases _, c2_unit_character_cases _,
+    ⟨semidirectProductCongr_eq hψ⟩⟩
+
+/-- **Exhaustiveness for `K = Q₈ × C₂` (`G₁₁`).**  No constraint links the factors. -/
+theorem order80_classify_G11 (φ' : order16_wild_G11 →* MulAut (Multiplicative (ZMod 5))) :
+    ∃ χ : order16_wild_G11 →* (ZMod 5)ˣ,
+      (χ.comp (MonoidHom.inl _ _) = 1 ∨ χ.comp (MonoidHom.inl _ _) = order40_chiQ8 ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiQ8_xa ∨
+        χ.comp (MonoidHom.inl _ _) = order40_chiQ8_prod) ∧
+      (χ.comp (MonoidHom.inr _ _) = 1 ∨ χ.comp (MonoidHom.inr _ _) = order40_c2UnitHom) ∧
+      Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G11 φ' ≃*
+        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G11 (unitAutHom.comp χ)) := by
+  obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
+  exact ⟨ψ, order40_q8_unit_character_cases _, c2_unit_character_cases _,
+    ⟨semidirectProductCongr_eq hψ⟩⟩
+
+/-! ### `K = C₄ ⋊ C₄` (`G₁₂ = order16_N3`, inversion action `x ↦ x³`) -/
+
+/-- The generator computation for `c4ActionAut 4 zmod4_unit_3 zmod4_unit_3_pow4`: it sends the
+generator of the acting `C₄` to the automorphism cubing the acted-on `C₄`. -/
+theorem c4ActionAut3_gen :
+    c4ActionAut 4 zmod4_unit_3 zmod4_unit_3_pow4 (Multiplicative.ofAdd (1 : ZMod 4))
+      (Multiplicative.ofAdd (1 : ZMod 4)) = (Multiplicative.ofAdd (1 : ZMod 4)) ^ 3 := by
+  have hc4 : c4UnitHom 4 zmod4_unit_3 zmod4_unit_3_pow4 (Multiplicative.ofAdd (1 : ZMod 4)) =
+      zmod4_unit_3 := by decide
+  change (unitAut 4).comp (c4UnitHom 4 zmod4_unit_3 zmod4_unit_3_pow4)
+    (Multiplicative.ofAdd (1 : ZMod 4)) (Multiplicative.ofAdd (1 : ZMod 4)) = _
+  rw [MonoidHom.comp_apply, hc4, unitAut_ofAdd_one,
+    show (zmod4_unit_3 : ZMod 4).val = 3 from by decide]
+
+/-- **Exhaustiveness for `K = C₄ ⋊ C₄` (`G₁₂`, inversion action).**  The character on the
+normal `C₄`-factor must square to `1`. -/
+theorem order80_classify_G12 (φ' : order16_wild_G12 →* MulAut (Multiplicative (ZMod 5))) :
+    ∃ χ : order16_wild_G12 →* (ZMod 5)ˣ,
+      (χ.comp SemidirectProduct.inl = 1 ∨
+        χ.comp SemidirectProduct.inl = powHom (p := 5) (q := 4) order40_u4 (by decide) ∨
+        χ.comp SemidirectProduct.inl = powHom (p := 5) (q := 4) (order40_u4 ^ 2) (by decide) ∨
+        χ.comp SemidirectProduct.inl = powHom (p := 5) (q := 4) (order40_u4 ^ 3) (by decide)) ∧
+      Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 φ' ≃*
+        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 (unitAutHom.comp χ)) := by
+  obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
+  refine ⟨ψ, ?_, ⟨semidirectProductCongr_eq hψ⟩⟩
+  set χA := ψ.comp SemidirectProduct.inl with hχA
+  set g : Multiplicative (ZMod 4) := Multiplicative.ofAdd (1 : ZMod 4) with hg
+  have hkey : χA g ^ 3 = χA g := by
+    have h1 := hom_semidirectProduct_inl_invariant ψ g g
+    rw [show (c4ActionAut 4 zmod4_unit_3 zmod4_unit_3_pow4) g g = g ^ 3 from
+      c4ActionAut3_gen, map_pow, map_pow] at h1
+    exact h1
+  have hsq : χA g ^ 2 = 1 := by
+    have := congrArg (· * (χA g)⁻¹) hkey
+    simpa [pow_succ, mul_assoc] using this
+  rcases c4_unit_character_cases χA with h | h | h | h
+  · exact Or.inl h
+  · exfalso
+    rw [h] at hsq
+    exact absurd hsq (by decide)
+  · exact Or.inr (Or.inr (Or.inl h))
+  · exfalso
+    rw [h] at hsq
+    exact absurd hsq (by decide)
+
+/-! ### `K = C₄ × C₄` (`G₁₃`), stated on the concrete model.  `order16_wild_G13 = order16_A3
+≃* Multiplicative (ZMod 4) × Multiplicative (ZMod 4)` via `order16_A3_iso_concrete`. -/
+
+/-- **Exhaustiveness for `K = C₄ × C₄` (`G₁₃`).**  No constraint links the two factors. -/
+theorem order80_classify_G13
+    (φ' : (Multiplicative (ZMod 4) × Multiplicative (ZMod 4)) →*
+      MulAut (Multiplicative (ZMod 5))) :
+    ∃ χ : (Multiplicative (ZMod 4) × Multiplicative (ZMod 4)) →* (ZMod 5)ˣ,
+      (χ.comp (MonoidHom.inl _ _) = 1 ∨
+        χ.comp (MonoidHom.inl _ _) = powHom (p := 5) (q := 4) order40_u4 (by decide) ∨
+        χ.comp (MonoidHom.inl _ _) = powHom (p := 5) (q := 4) (order40_u4 ^ 2) (by decide) ∨
+        χ.comp (MonoidHom.inl _ _) = powHom (p := 5) (q := 4) (order40_u4 ^ 3) (by decide)) ∧
+      (χ.comp (MonoidHom.inr _ _) = 1 ∨
+        χ.comp (MonoidHom.inr _ _) = powHom (p := 5) (q := 4) order40_u4 (by decide) ∨
+        χ.comp (MonoidHom.inr _ _) = powHom (p := 5) (q := 4) (order40_u4 ^ 2) (by decide) ∨
+        χ.comp (MonoidHom.inr _ _) = powHom (p := 5) (q := 4) (order40_u4 ^ 3) (by decide)) ∧
+      Nonempty (SemidirectProduct (Multiplicative (ZMod 5))
+        (Multiplicative (ZMod 4) × Multiplicative (ZMod 4)) φ' ≃*
+        SemidirectProduct (Multiplicative (ZMod 5))
+        (Multiplicative (ZMod 4) × Multiplicative (ZMod 4)) (unitAutHom.comp χ)) := by
+  obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
+  exact ⟨ψ, c4_unit_character_cases _, c4_unit_character_cases _,
+    ⟨semidirectProductCongr_eq hψ⟩⟩
+
+/-! ### `K = (C₂)⁴` (`G₀`), stated on the concrete model.  `order16_wild_G0 = order16_A5
+≃* order16_wild_C2pow4` via `order16_A5_iso_concrete`. -/
+
+/-- **Exhaustiveness for `K = (C₂)⁴` (`G₀`).**  No constraint links the four factors. -/
+theorem order80_classify_G0 (φ' : order16_wild_C2pow4 →* MulAut (Multiplicative (ZMod 5))) :
+    ∃ χ : order16_wild_C2pow4 →* (ZMod 5)ˣ,
+      (χ.comp (MonoidHom.inl _ _) = 1 ∨ χ.comp (MonoidHom.inl _ _) = order40_c2UnitHom) ∧
+      ((χ.comp (MonoidHom.inr _ _)).comp (MonoidHom.inl _ _) = 1 ∨
+        (χ.comp (MonoidHom.inr _ _)).comp (MonoidHom.inl _ _) = order40_c2UnitHom) ∧
+      (((χ.comp (MonoidHom.inr _ _)).comp (MonoidHom.inr _ _)).comp (MonoidHom.inl _ _) = 1 ∨
+        ((χ.comp (MonoidHom.inr _ _)).comp (MonoidHom.inr _ _)).comp (MonoidHom.inl _ _) =
+          order40_c2UnitHom) ∧
+      (((χ.comp (MonoidHom.inr _ _)).comp (MonoidHom.inr _ _)).comp (MonoidHom.inr _ _) = 1 ∨
+        ((χ.comp (MonoidHom.inr _ _)).comp (MonoidHom.inr _ _)).comp (MonoidHom.inr _ _) =
+          order40_c2UnitHom) ∧
+      Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_C2pow4 φ' ≃*
+        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_C2pow4 (unitAutHom.comp χ)) := by
+  obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
+  exact ⟨ψ, c2_unit_character_cases _, c2_unit_character_cases _, c2_unit_character_cases _,
+    c2_unit_character_cases _, ⟨semidirectProductCongr_eq hψ⟩⟩
+
+/-! ### `K = Q₁₆` (`G₅ = QuaternionGroup 4`, generalised quaternion) -/
+
+/-- A representative `Q₁₆ → C₂` character, nontrivial on the order-`8` generator `a 1`. -/
+noncomputable def order80_chiQ16 : QuaternionGroup 4 →* Multiplicative (ZMod 2) where
+  toFun
+    | QuaternionGroup.a i => Multiplicative.ofAdd ((ZMod.castHom (by norm_num : 2 ∣ 8) (ZMod 2)) i)
+    | QuaternionGroup.xa i =>
+      Multiplicative.ofAdd ((ZMod.castHom (by norm_num : 2 ∣ 8) (ZMod 2)) i)
+  map_one' := rfl
+  map_mul' := by
+    rintro (i | i) (j | j)
+    · simp [QuaternionGroup.a_mul_a, map_add, ofAdd_add]
+    · simp only [QuaternionGroup.a_mul_xa]
+      apply_fun Multiplicative.toAdd
+      simp [toAdd_mul, sub_eq_add_neg, CharTwo.neg_eq]
+      ac_rfl
+    · simp [QuaternionGroup.xa_mul_a, map_add, ofAdd_add]
+    · simp only [QuaternionGroup.xa_mul_xa]
+      apply_fun Multiplicative.toAdd
+      simp [toAdd_mul, sub_eq_add_neg, CharTwo.neg_eq]
+      ac_rfl
+
+/-- The `Q₁₆ → C₂` character nontrivial on `xa 0`. -/
+noncomputable def order80_chiQ16_xa : QuaternionGroup 4 →* Multiplicative (ZMod 2) where
+  toFun
+    | QuaternionGroup.a _ => 1
+    | QuaternionGroup.xa _ => Multiplicative.ofAdd (1 : ZMod 2)
+  map_one' := rfl
+  map_mul' := by
+    rintro (i | i) (j | j)
+    · rfl
+    · rfl
+    · rfl
+    · simp only [QuaternionGroup.xa_mul_xa]
+      decide
+
+/-- The product of the two displayed `Q₁₆ → C₂` characters. -/
+noncomputable abbrev order80_chiQ16_prod : QuaternionGroup 4 →* Multiplicative (ZMod 2) :=
+  order80_chiQ16 * order80_chiQ16_xa
+
+noncomputable abbrev order80_chiQ16_c5 : QuaternionGroup 4 →* (ZMod 5)ˣ :=
+  order40_c2UnitHom.comp order80_chiQ16
+
+noncomputable abbrev order80_chiQ16_xa_c5 : QuaternionGroup 4 →* (ZMod 5)ˣ :=
+  order40_c2UnitHom.comp order80_chiQ16_xa
+
+noncomputable abbrev order80_chiQ16_prod_c5 : QuaternionGroup 4 →* (ZMod 5)ˣ :=
+  order40_c2UnitHom.comp order80_chiQ16_prod
+
+@[simp] theorem order80_chiQ16_c5_a1 :
+    order80_chiQ16_c5 (QuaternionGroup.a (1 : ZMod 8)) = order40_u4 ^ 2 := by decide
+
+@[simp] theorem order80_chiQ16_c5_x0 :
+    order80_chiQ16_c5 (QuaternionGroup.xa (0 : ZMod 8)) = 1 := by decide
+
+@[simp] theorem order80_chiQ16_xa_c5_a1 :
+    order80_chiQ16_xa_c5 (QuaternionGroup.a (1 : ZMod 8)) = 1 := by decide
+
+@[simp] theorem order80_chiQ16_xa_c5_x0 :
+    order80_chiQ16_xa_c5 (QuaternionGroup.xa (0 : ZMod 8)) = order40_u4 ^ 2 := by decide
+
+@[simp] theorem order80_chiQ16_prod_c5_a1 :
+    order80_chiQ16_prod_c5 (QuaternionGroup.a (1 : ZMod 8)) = order40_u4 ^ 2 := by decide
+
+@[simp] theorem order80_chiQ16_prod_c5_x0 :
+    order80_chiQ16_prod_c5 (QuaternionGroup.xa (0 : ZMod 8)) = order40_u4 ^ 2 := by decide
+
+/-- Homomorphisms out of `Q₁₆` are determined by the two displayed generators. -/
+theorem order80_q16_hom_ext {M : Type} [Group M] {χ ψ : QuaternionGroup 4 →* M}
+    (ha : χ (QuaternionGroup.a (1 : ZMod 8)) = ψ (QuaternionGroup.a (1 : ZMod 8)))
+    (hx : χ (QuaternionGroup.xa (0 : ZMod 8)) = ψ (QuaternionGroup.xa (0 : ZMod 8))) :
+    χ = ψ := by
+  apply MonoidHom.ext
+  intro x
+  rcases x with i | i
+  · have hi : QuaternionGroup.a i =
+        (QuaternionGroup.a (1 : ZMod 8) : QuaternionGroup 4) ^ i.val := by
+      calc
+        QuaternionGroup.a i = QuaternionGroup.a ((i.val : ZMod 8)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = (QuaternionGroup.a (1 : ZMod 8) : QuaternionGroup 4) ^ i.val := by
+          rw [QuaternionGroup.a_one_pow]
+    rw [hi, map_pow, map_pow, ha]
+  · have hai : QuaternionGroup.a i =
+        (QuaternionGroup.a (1 : ZMod 8) : QuaternionGroup 4) ^ i.val := by
+      calc
+        QuaternionGroup.a i = QuaternionGroup.a ((i.val : ZMod 8)) := by
+          rw [ZMod.natCast_zmod_val]
+        _ = (QuaternionGroup.a (1 : ZMod 8) : QuaternionGroup 4) ^ i.val := by
+          rw [QuaternionGroup.a_one_pow]
+    have hi : QuaternionGroup.xa i =
+        QuaternionGroup.xa (0 : ZMod 8) *
+          (QuaternionGroup.a (1 : ZMod 8) : QuaternionGroup 4) ^ i.val := by
+      rw [← hai]
+      simp [QuaternionGroup.xa_mul_a]
+    rw [hi, map_mul, map_mul, map_pow, map_pow, hx, ha]
+
+/-- The conjugation relation forces the character on `a 1` to square to `1`. -/
+theorem order80_q16_character_a_sq (χ : QuaternionGroup 4 →* (ZMod 5)ˣ) :
+    χ (QuaternionGroup.a (1 : ZMod 8)) ^ 2 = 1 := by
+  let a1 : QuaternionGroup 4 := QuaternionGroup.a (1 : ZMod 8)
+  let x0 : QuaternionGroup 4 := QuaternionGroup.xa (0 : ZMod 8)
+  have hrel : x0 * a1 = a1⁻¹ * x0 := by decide
+  have himg : χ (x0 * a1) = χ (a1⁻¹ * x0) := congrArg χ hrel
+  rw [map_mul, map_mul, map_inv] at himg
+  have hmul : χ a1 = (χ a1)⁻¹ := by
+    have := congrArg (fun x => x * (χ x0)⁻¹) himg
+    simpa [mul_assoc, mul_comm, mul_left_comm] using this
+  rw [pow_two]
+  nth_rw 2 [hmul]
+  exact mul_inv_cancel _
+
+/-- The relation `(xa 0)² = (a 1)⁴` transports the previous constraint to `xa 0`. -/
+theorem order80_q16_character_x_sq (χ : QuaternionGroup 4 →* (ZMod 5)ˣ)
+    (ha : χ (QuaternionGroup.a (1 : ZMod 8)) ^ 2 = 1) :
+    χ (QuaternionGroup.xa (0 : ZMod 8)) ^ 2 = 1 := by
+  let a1 : QuaternionGroup 4 := QuaternionGroup.a (1 : ZMod 8)
+  let x0 : QuaternionGroup 4 := QuaternionGroup.xa (0 : ZMod 8)
+  have hrel : x0 ^ 2 = a1 ^ 4 := by decide
+  have himg : χ (x0 ^ 2) = χ (a1 ^ 4) := congrArg χ hrel
+  rw [map_pow, map_pow] at himg
+  change χ x0 ^ 2 = 1
+  rw [himg]
+  change χ a1 ^ (2 * 2) = 1
+  rw [pow_mul, ha, one_pow]
+
+/-- **Exhaustiveness for `K = Q₁₆` (`G₅`).**  A character `Q₁₆ → (ZMod 5)ˣ` is one of the four
+displayed characters. -/
+theorem order80_q16_unit_character_cases (χ : QuaternionGroup 4 →* (ZMod 5)ˣ) :
+    χ = 1 ∨ χ = order80_chiQ16_c5 ∨ χ = order80_chiQ16_xa_c5 ∨ χ = order80_chiQ16_prod_c5 := by
+  let a1 : QuaternionGroup 4 := QuaternionGroup.a (1 : ZMod 8)
+  let x0 : QuaternionGroup 4 := QuaternionGroup.xa (0 : ZMod 8)
+  have hsq_a : χ a1 ^ 2 = 1 := order80_q16_character_a_sq χ
+  have hsq_x : χ x0 ^ 2 = 1 := order80_q16_character_x_sq χ hsq_a
+  rcases order40_unit_sq_eq_one_cases (χ a1) hsq_a with ha | ha <;>
+    rcases order40_unit_sq_eq_one_cases (χ x0) hsq_x with hx | hx
+  · left
+    apply order80_q16_hom_ext <;> simp [a1, x0, ha, hx]
+  · right
+    right
+    left
+    apply order80_q16_hom_ext <;> simp [a1, x0, ha, hx]
+  · right
+    left
+    apply order80_q16_hom_ext <;> simp [a1, x0, ha, hx]
+  · right
+    right
+    right
+    apply order80_q16_hom_ext <;> simp [a1, x0, ha, hx]
+
+/-- **Exhaustiveness for `K = Q₁₆` (`G₅`, action classification).** -/
+theorem order80_classify_G5 (φ' : QuaternionGroup 4 →* MulAut (Multiplicative (ZMod 5))) :
+    ∃ χ : QuaternionGroup 4 →* (ZMod 5)ˣ,
+      (χ = 1 ∨ χ = order80_chiQ16_c5 ∨ χ = order80_chiQ16_xa_c5 ∨ χ = order80_chiQ16_prod_c5) ∧
+      Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) (QuaternionGroup 4) φ' ≃*
+        SemidirectProduct (Multiplicative (ZMod 5)) (QuaternionGroup 4) (unitAutHom.comp χ)) := by
+  obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
+  exact ⟨ψ, order80_q16_unit_character_cases ψ, ⟨semidirectProductCongr_eq hψ⟩⟩
+
 end Smallgroups.UsefulTheorems
