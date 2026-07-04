@@ -419,6 +419,129 @@ theorem order81_quotient_cyclic_of_normal_subgroup_card_27 {G : Type*} [Group G]
   haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
   exact isCyclic_of_prime_card hquot_card
 
+/-- If `K` is a normal subgroup of order `27` in a group of order `81`, then every cube
+lies in `K`. -/
+theorem order81_cube_mem_of_normal_subgroup_card_27 {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal] (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27)
+    (g : G) :
+    g ^ 3 ∈ K := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  have hKindex : K.index = 3 := by
+    have hmul := K.index_mul_card
+    rw [hKcard, hcard] at hmul
+    omega
+  have hquotcard : Nat.card (G ⧸ K) = 3 := by
+    rw [← K.index_eq_card, hKindex]
+  have hq_dvd : orderOf (g : G ⧸ K) ∣ 3 := by
+    have := orderOf_dvd_natCard (g : G ⧸ K)
+    rwa [hquotcard] at this
+  have hq3 : (g : G ⧸ K) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hq_dvd
+  rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff] at hq3
+  exact hq3
+
+/-- In the quotient by a normal subgroup of order `27`, any element outside the subgroup
+generates the quotient. -/
+theorem order81_quotient_zpowers_eq_top_of_not_mem_card_27 {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal] (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27)
+    {g : G} (hgK : g ∉ K) :
+    Subgroup.zpowers ((QuotientGroup.mk' K) g) = ⊤ := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  haveI : Finite (G ⧸ K) := Quotient.finite _
+  let q : G ⧸ K := (QuotientGroup.mk' K) g
+  have hKindex : K.index = 3 := by
+    have hmul := K.index_mul_card
+    rw [hKcard, hcard] at hmul
+    omega
+  have hquotcard : Nat.card (G ⧸ K) = 3 := by
+    rw [← K.index_eq_card, hKindex]
+  have hq_ne : q ≠ 1 := by
+    intro hq
+    have hq' : (QuotientGroup.mk' K) g = 1 := by
+      simpa [q] using hq
+    rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq'
+    exact hgK hq'
+  have hq_dvd : orderOf q ∣ 3 := by
+    have := orderOf_dvd_natCard q
+    rwa [hquotcard] at this
+  have hq3 : q ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hq_dvd
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hqord : orderOf q = 3 := orderOf_eq_prime hq3 hq_ne
+  change Subgroup.zpowers q = ⊤
+  exact Subgroup.eq_top_of_card_eq _ (by rw [Nat.card_zpowers, hqord, hquotcard])
+
+/-- If the image of `g` generates the quotient by `K`, then the image of `⟨g⟩` is the
+whole quotient. -/
+theorem order81_zpowers_map_quotient_top_of_quotient_zpowers_top {G : Type*} [Group G]
+    (K : Subgroup G) [K.Normal] {g : G}
+    (hqgen : Subgroup.zpowers ((QuotientGroup.mk' K) g) = ⊤) :
+    (Subgroup.zpowers g).map (QuotientGroup.mk' K) = ⊤ := by
+  rw [MonoidHom.map_zpowers, hqgen]
+
+/-- If `K` is a normal subgroup of order `27` in a group of order `81`, then `K` and any
+element outside `K` generate the whole group. -/
+theorem order81_normal_layer_sup_zpowers_eq_top_of_not_mem_card_27
+    {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) {g : G} (hgK : g ∉ K) :
+    K ⊔ Subgroup.zpowers g = ⊤ := by
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  rw [Subgroup.eq_top_iff']
+  intro x
+  have hqgen : Subgroup.zpowers ((QuotientGroup.mk' K) g) = ⊤ :=
+    order81_quotient_zpowers_eq_top_of_not_mem_card_27 hcard hKcard hgK
+  have hxq : (QuotientGroup.mk' K) x ∈
+      Subgroup.zpowers ((QuotientGroup.mk' K) g) := by
+    rw [hqgen]
+    exact Subgroup.mem_top _
+  obtain ⟨n, hn⟩ := Subgroup.mem_zpowers_iff.mp hxq
+  have hq_y : (QuotientGroup.mk' K) (g ^ n) = (QuotientGroup.mk' K) x := by
+    rw [map_zpow]
+    exact hn
+  have hk : x * (g ^ n)⁻¹ ∈ K := by
+    have hq : (QuotientGroup.mk' K) (x * (g ^ n)⁻¹) = 1 := by
+      calc
+        (QuotientGroup.mk' K) (x * (g ^ n)⁻¹)
+            = (QuotientGroup.mk' K) x * ((QuotientGroup.mk' K) (g ^ n))⁻¹ := by simp
+        _ = (QuotientGroup.mk' K) x * ((QuotientGroup.mk' K) x)⁻¹ := by rw [hq_y]
+        _ = 1 := by simp
+    rwa [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq
+  have hy : g ^ n ∈ Subgroup.zpowers g := by
+    rw [Subgroup.mem_zpowers_iff]
+    exact ⟨n, rfl⟩
+  have hleft : x * (g ^ n)⁻¹ ∈ K ⊔ Subgroup.zpowers g :=
+    (le_sup_left : K ≤ K ⊔ Subgroup.zpowers g) hk
+  have hright : g ^ n ∈ K ⊔ Subgroup.zpowers g :=
+    (le_sup_right : Subgroup.zpowers g ≤ K ⊔ Subgroup.zpowers g) hy
+  have hx : x = (x * (g ^ n)⁻¹) * g ^ n := by simp [mul_assoc]
+  rw [hx]
+  exact (K ⊔ Subgroup.zpowers g).mul_mem hleft hright
+
+/-- If `K` is a normal subgroup of order `27` in a group of order `81` and `g ∉ K`, then
+every element has the form `k * g^n` with `k ∈ K`. -/
+theorem order81_normal_layer_exists_mul_zpow_of_not_mem_card_27
+    {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) {g x : G} (hgK : g ∉ K) :
+    ∃ k ∈ K, ∃ n : ℤ, x = k * g ^ n := by
+  have hqgen : Subgroup.zpowers ((QuotientGroup.mk' K) g) = ⊤ :=
+    order81_quotient_zpowers_eq_top_of_not_mem_card_27 hcard hKcard hgK
+  have hxq : (QuotientGroup.mk' K) x ∈
+      Subgroup.zpowers ((QuotientGroup.mk' K) g) := by
+    rw [hqgen]
+    exact Subgroup.mem_top _
+  obtain ⟨n, hn⟩ := Subgroup.mem_zpowers_iff.mp hxq
+  have hq_y : (QuotientGroup.mk' K) (g ^ n) = (QuotientGroup.mk' K) x := by
+    rw [map_zpow]
+    exact hn
+  have hk : x * (g ^ n)⁻¹ ∈ K := by
+    have hq : (QuotientGroup.mk' K) (x * (g ^ n)⁻¹) = 1 := by
+      calc
+        (QuotientGroup.mk' K) (x * (g ^ n)⁻¹)
+            = (QuotientGroup.mk' K) x * ((QuotientGroup.mk' K) (g ^ n))⁻¹ := by simp
+        _ = (QuotientGroup.mk' K) x * ((QuotientGroup.mk' K) x)⁻¹ := by rw [hq_y]
+        _ = 1 := by simp
+    rwa [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff] at hq
+  refine ⟨x * (g ^ n)⁻¹, hk, n, ?_⟩
+  simp [mul_assoc]
+
 /-- Every group of order `81` has a normal abelian subgroup of order `27` whose quotient is
 cyclic of order `3`. -/
 theorem order81_exists_normal_abelian_subgroup_card_27_with_cyclic_quotient
@@ -431,6 +554,36 @@ theorem order81_exists_normal_abelian_subgroup_card_27_with_cyclic_quotient
     order81_exists_normal_abelian_subgroup_card_27 hcard
   refine ⟨K, hKnormal, hKcard, hKcomm, ?_⟩
   exact order81_quotient_cyclic_of_normal_subgroup_card_27 hcard hKcard
+
+/-- Every group of order `81` has a normal abelian subgroup of order `27` and an element
+whose image generates the quotient by that subgroup. -/
+theorem order81_exists_normal_abelian_subgroup_card_27_with_generator
+    {G : Type*} [Group G] (hcard : Nat.card G = 81) :
+    ∃ (K : Subgroup G), ∃ (hKnormal : K.Normal),
+      Nat.card K = 27 ∧ IsMulCommutative K ∧
+        ∃ g : G, g ∉ K ∧
+          letI : K.Normal := hKnormal
+          Subgroup.zpowers ((QuotientGroup.mk' K) g) = ⊤ ∧
+            K ⊔ Subgroup.zpowers g = ⊤ ∧
+              ∀ x : G, ∃ k ∈ K, ∃ n : ℤ, x = k * g ^ n := by
+  obtain ⟨K, hKnormal, hKcard, hKcomm⟩ :=
+    order81_exists_normal_abelian_subgroup_card_27 hcard
+  have hg_exists : ∃ g : G, g ∉ K := by
+    by_contra hnone
+    push Not at hnone
+    have htop : K = ⊤ := by
+      rw [Subgroup.eq_top_iff']
+      intro g
+      exact hnone g
+    have : Nat.card K = 81 := by
+      rw [htop, Subgroup.card_top, hcard]
+    omega
+  obtain ⟨g, hgK⟩ := hg_exists
+  refine ⟨K, hKnormal, hKcard, hKcomm, g, hgK, ?_, ?_, ?_⟩
+  · exact order81_quotient_zpowers_eq_top_of_not_mem_card_27 hcard hKcard hgK
+  · exact order81_normal_layer_sup_zpowers_eq_top_of_not_mem_card_27 hcard hKcard hgK
+  · intro x
+    exact order81_normal_layer_exists_mul_zpow_of_not_mem_card_27 hcard hKcard hgK
 
 /-! ## Two immediate non-abelian representatives -/
 
