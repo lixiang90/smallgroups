@@ -684,6 +684,25 @@ theorem order81_normal_layer_exists_mul_zpow_of_not_mem_card_27
   refine ⟨x * (g ^ n)⁻¹, hk, n, ?_⟩
   simp [mul_assoc]
 
+/-- If `K` is an abelian normal subgroup of order `27` in a group of order `81` and
+`g ∉ K`, then `g^3` is central in the whole group. -/
+theorem order81_generator_cube_central_of_abelian_normal_subgroup_card_27
+    {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    {g : G} (hgK : g ∉ K) :
+    ∀ x : G, Commute x (g ^ 3) := by
+  have hg3K : g ^ 3 ∈ K := order81_cube_mem_of_normal_subgroup_card_27 hcard hKcard g
+  intro x
+  obtain ⟨k, hkK, n, hx⟩ :=
+    order81_normal_layer_exists_mul_zpow_of_not_mem_card_27 hcard hKcard (g := g) (x := x) hgK
+  rw [hx]
+  have hkg3 : Commute k (g ^ 3) := by
+    have h := mul_comm' (⟨k, hkK⟩ : K) (⟨g ^ 3, hg3K⟩ : K)
+    exact congrArg Subtype.val h
+  have hgg3 : Commute (g ^ n) (g ^ 3) := by
+    exact ((Commute.refl g).zpow_left n).pow_right 3
+  exact hkg3.mul_left hgg3
+
 /-- An element of an abelian normal subgroup acts trivially by conjugation on that subgroup. -/
 theorem order81_conjNormal_mem_eq_one_of_abelian_normal_subgroup
     {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
