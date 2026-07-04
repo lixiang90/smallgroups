@@ -391,6 +391,47 @@ theorem order81_exists_abelian_subgroup_card_27 {G : Type*} [Group G]
     · exact order81_exists_abelian_subgroup_card_27_of_center_card_3 hcard hcenter
     · exact order81_exists_abelian_subgroup_card_27_of_center_card_9 hcard hcenter
 
+/-- Every group of order `81` has a normal abelian subgroup of order `27`. -/
+theorem order81_exists_normal_abelian_subgroup_card_27 {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) :
+    ∃ K : Subgroup G, K.Normal ∧ Nat.card K = 27 ∧ IsMulCommutative K := by
+  obtain ⟨K, hKcard, hKcomm⟩ := order81_exists_abelian_subgroup_card_27 hcard
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  have hindex : K.index = 3 := by
+    have hmul := K.card_mul_index
+    rw [hKcard, hcard] at hmul
+    omega
+  have hnormal : K.Normal := by
+    apply Subgroup.normal_of_index_eq_minFac_card
+    rw [hindex, hcard]
+    norm_num
+  exact ⟨K, hnormal, hKcard, hKcomm⟩
+
+/-- If `K` is a normal subgroup of order `27` in a group of order `81`, then the quotient
+has prime order `3`, hence is cyclic. -/
+theorem order81_quotient_cyclic_of_normal_subgroup_card_27 {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal] (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) :
+    IsCyclic (G ⧸ K) := by
+  have hquot_card : Nat.card (G ⧸ K) = 3 := by
+    have hmul := Subgroup.card_eq_card_quotient_mul_card_subgroup K
+    rw [hcard, hKcard] at hmul
+    omega
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  exact isCyclic_of_prime_card hquot_card
+
+/-- Every group of order `81` has a normal abelian subgroup of order `27` whose quotient is
+cyclic of order `3`. -/
+theorem order81_exists_normal_abelian_subgroup_card_27_with_cyclic_quotient
+    {G : Type*} [Group G] (hcard : Nat.card G = 81) :
+    ∃ (K : Subgroup G), ∃ (hKnormal : K.Normal),
+      Nat.card K = 27 ∧ IsMulCommutative K ∧
+        letI : K.Normal := hKnormal
+        IsCyclic (G ⧸ K) := by
+  obtain ⟨K, hKnormal, hKcard, hKcomm⟩ :=
+    order81_exists_normal_abelian_subgroup_card_27 hcard
+  refine ⟨K, hKnormal, hKcard, hKcomm, ?_⟩
+  exact order81_quotient_cyclic_of_normal_subgroup_card_27 hcard hKcard
+
 /-! ## Two immediate non-abelian representatives -/
 
 /-- The non-abelian group of order `27` and exponent `9`, reused in order `81` products. -/
