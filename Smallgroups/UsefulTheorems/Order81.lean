@@ -248,6 +248,31 @@ theorem order81_exists_central_order_three_subgroup_quotient_card {G : Type*} [G
     omega
   exact ⟨Z, hZnormal, hZle, hZcard, hquot⟩
 
+/-- The quotient by a central subgroup of order `3` in a non-abelian order-`81` group is
+one of the classified groups of order `27`.  The `Fintype` witness is returned explicitly so
+callers can reuse the `P3Group` classification without rebuilding quotient finiteness. -/
+theorem order81_exists_central_order_three_quotient_p3_classification {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
+    ∃ (Z : Subgroup G) (hZnormal : Z.Normal),
+      Z ≤ center G ∧ Nat.card Z = 3 ∧
+        letI : Z.Normal := hZnormal
+        Nat.card (G ⧸ Z) = 27 ∧
+          ∃ hF : Fintype (G ⧸ Z), @P3Group.IsP3Group 3 ⟨by norm_num⟩ (G ⧸ Z)
+            inferInstance hF := by
+  obtain ⟨Z, hZnormal, hZle, hZcard, hquot⟩ :=
+    order81_exists_central_order_three_subgroup_quotient_card hcard hnonab
+  refine ⟨Z, hZnormal, hZle, hZcard, ?_⟩
+  letI : Z.Normal := hZnormal
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  let hF : Fintype (G ⧸ Z) := Fintype.ofFinite _
+  have hquot' : Nat.card (G ⧸ Z) = 3 ^ 3 := by
+    rw [hquot]
+    norm_num
+  refine ⟨hquot, hF, ?_⟩
+  letI : Fintype (G ⧸ Z) := hF
+  exact P3Group.classification 3 (G ⧸ Z) hquot'
+
 /-- In a non-abelian group of order `81`, the center is `C_3`, `C_9`, or `C_3 × C_3`. -/
 theorem order81_center_classification_of_nonabelian {G : Type*} [Group G]
     (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
