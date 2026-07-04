@@ -2176,6 +2176,63 @@ theorem order81_c9c3_param_injective {G : Type*} [Group G] {K : Subgroup G} {x y
   subst ha2b2
   rfl
 
+/-- The parametrisation `(a, b) ↦ x^a y^b` as a homomorphism from `C_9 × C_3`
+whenever `x` is central and `y` has order dividing `3`. -/
+noncomputable def order81_c9c3_param_hom {G : Type*} [Group G] (x y : G)
+    (hxcentral : ∀ z : G, Commute z x) (hx9 : x ^ 9 = 1) (hy3 : y ^ 3 = 1) :
+    order81_C9C3 →* G :=
+  MonoidHom.mk'
+    (fun p : order81_C9C3 =>
+      x ^ (Multiplicative.toAdd p.1).val * y ^ (Multiplicative.toAdd p.2).val)
+    (by
+      intro a b
+      rcases a with ⟨a1, a2⟩
+      rcases b with ⟨b1, b2⟩
+      let i : ZMod 9 := Multiplicative.toAdd a1
+      let j : ZMod 9 := Multiplicative.toAdd b1
+      let r : ZMod 3 := Multiplicative.toAdd a2
+      let s : ZMod 3 := Multiplicative.toAdd b2
+      change x ^ (i + j).val * y ^ (r + s).val =
+        (x ^ i.val * y ^ r.val) * (x ^ j.val * y ^ s.val)
+      rw [pow_val_add hx9 i j, pow_val_add hy3 r s]
+      have hcomm : y ^ r.val * x ^ j.val = x ^ j.val * y ^ r.val := by
+        exact ((hxcentral (y ^ r.val)).pow_right j.val).eq
+      calc
+        x ^ i.val * x ^ j.val * (y ^ r.val * y ^ s.val)
+            = x ^ i.val * (x ^ j.val * y ^ r.val) * y ^ s.val := by group
+        _ = x ^ i.val * (y ^ r.val * x ^ j.val) * y ^ s.val := by rw [← hcomm]
+        _ = x ^ i.val * y ^ r.val * (x ^ j.val * y ^ s.val) := by group)
+
+/-- The parametrisation homomorphism is injective under the exact-order hypotheses. -/
+theorem order81_c9c3_param_hom_injective {G : Type*} [Group G]
+    {K : Subgroup G} {x y : G}
+    (hxK : x ∈ K) (hxord : orderOf x = 9) (hxcentral : ∀ z : G, Commute z x)
+    (hx9 : x ^ 9 = 1) (hyK : y ∉ K) (hy3 : y ^ 3 = 1) :
+    Function.Injective (order81_c9c3_param_hom x y hxcentral hx9 hy3) := by
+  exact order81_c9c3_param_injective hxK hxord hyK hy3
+
+/-- The image of the `C_9 × C_3` parametrisation is isomorphic to `C_9 × C_3`. -/
+theorem order81_c9c3_param_range_mulEquiv {G : Type*} [Group G]
+    {K : Subgroup G} {x y : G}
+    (hxK : x ∈ K) (hxord : orderOf x = 9) (hxcentral : ∀ z : G, Commute z x)
+    (hx9 : x ^ 9 = 1) (hyK : y ∉ K) (hy3 : y ^ 3 = 1) :
+    Nonempty ((order81_c9c3_param_hom x y hxcentral hx9 hy3).range ≃* order81_C9C3) := by
+  have hinj := order81_c9c3_param_hom_injective hxK hxord hxcentral hx9 hyK hy3
+  exact ⟨(MonoidHom.ofInjective hinj).symm⟩
+
+/-- The image of the `C_9 × C_3` parametrisation has cardinality `27`. -/
+theorem order81_c9c3_param_range_card {G : Type*} [Group G]
+    {K : Subgroup G} {x y : G}
+    (hxK : x ∈ K) (hxord : orderOf x = 9) (hxcentral : ∀ z : G, Commute z x)
+    (hx9 : x ^ 9 = 1) (hyK : y ∉ K) (hy3 : y ^ 3 = 1) :
+    Nat.card (order81_c9c3_param_hom x y hxcentral hx9 hy3).range = 27 := by
+  let f := order81_c9c3_param_hom x y hxcentral hx9 hy3
+  have hinj : Function.Injective f :=
+    order81_c9c3_param_hom_injective hxK hxord hxcentral hx9 hyK hy3
+  let e : order81_C9C3 ≃* f.range := MonoidHom.ofInjective hinj
+  change Nat.card f.range = 27
+  rw [← Nat.card_congr e.toEquiv, card_order81_C9C3]
+
 /-- In the cyclic-kernel case, a non-abelian order-`81` group has a central element
 of order `9` and a quotient generator of order `3`. -/
 theorem order81_exists_central_order_nine_and_order_three_quotient_generator_of_cyclic_kernel
@@ -2194,6 +2251,45 @@ theorem order81_exists_central_order_nine_and_order_three_quotient_generator_of_
     order81_exists_order_three_quotient_generator_of_cyclic_kernel
       hcard hKcard hKcomm hKcyc hgK hnoncomm
   exact ⟨x, y, hxK, hxord, hxcentral, hyK, hy3, hyq, hysup⟩
+
+/-- A non-abelian order-`81` group with a cyclic order-`27` kernel contains a
+normal subgroup isomorphic to `C_9 × C_3`. -/
+theorem order81_exists_c9c3_subgroup_of_cyclic_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3)))
+    (hnoncomm : ¬ IsMulCommutative G) :
+    ∃ H : Subgroup G, H.Normal ∧ Nat.card H = 27 ∧ Nonempty (H ≃* order81_C9C3) := by
+  have hg_exists : ∃ g : G, g ∉ K := by
+    by_contra hnone
+    push Not at hnone
+    have htop : K = ⊤ := by
+      rw [Subgroup.eq_top_iff']
+      intro g
+      exact hnone g
+    have : Nat.card K = 81 := by
+      rw [htop, Subgroup.card_top, hcard]
+    omega
+  obtain ⟨g, hgK⟩ := hg_exists
+  obtain ⟨x, y, hxK, hxord, hxcentral, hyK, hy3, _hyq, _hysup⟩ :=
+    order81_exists_central_order_nine_and_order_three_quotient_generator_of_cyclic_kernel
+      hcard hKcard hKcomm hKcyc hgK hnoncomm
+  have hx9 : x ^ 9 = 1 := by
+    have hdiv : orderOf x ∣ 9 := by rw [hxord]
+    exact orderOf_dvd_iff_pow_eq_one.mp hdiv
+  let H : Subgroup G := (order81_c9c3_param_hom x y hxcentral hx9 hy3).range
+  have hHcard : Nat.card H = 27 :=
+    order81_c9c3_param_range_card hxK hxord hxcentral hx9 hyK hy3
+  have hHnormal : H.Normal := by
+    have hindex : H.index = 3 := by
+      have hmul := H.index_mul_card
+      rw [hHcard, hcard] at hmul
+      omega
+    apply Subgroup.normal_of_index_eq_minFac_card
+    rw [hindex, hcard]
+    norm_num
+  refine ⟨H, hHnormal, hHcard, ?_⟩
+  exact order81_c9c3_param_range_mulEquiv hxK hxord hxcentral hx9 hyK hy3
 
 /-- The `C_3` action on `C_27` generated by multiplication by `10`. -/
 noncomputable abbrev order81_c27Action : CyclicRep 3 →* MulAut order81_C27 :=
