@@ -967,6 +967,32 @@ theorem order81_commutator_pow_three_of_le_order_three
   have hpow : (⟨⁅x, y⁆, hcZ⟩ : Z) ^ 3 = 1 := orderOf_dvd_iff_pow_eq_one.mp hdiv
   exact congrArg Subtype.val hpow
 
+/-- A semantic form of the central quotient split: the class-two branch is expressed by
+central commutators of exponent dividing `3`, while the remaining branch has a non-abelian
+central quotient of order `27`. -/
+theorem order81_abelian_or_commutators_central_cube_one_or_nonabelian_quotient_cases
+    {G : Type*} [Group G] (hcard : Nat.card G = 81) :
+    (∃ i, Nonempty (G ≃* order81_abelian_reps i)) ∨
+    ((∀ x y : G, ⁅x, y⁆ ∈ center G) ∧ (∀ x y : G, ⁅x, y⁆ ^ 3 = 1)) ∨
+    (∃ (Z : Subgroup G) (hZnormal : Z.Normal),
+      Z ≤ center G ∧ Nat.card Z = 3 ∧
+        letI : Z.Normal := hZnormal
+        Nat.card (G ⧸ Z) = 27 ∧
+          (Nonempty ((G ⧸ Z) ≃* P3Group.HeisenbergGroup 3) ∨
+            Nonempty ((G ⧸ Z) ≃* P3Group.SemidirectP2P 3))) := by
+  rcases order81_abelian_or_commutator_le_central_or_nonabelian_quotient_cases
+      (G := G) hcard with
+    hab | hmiddle | hnonabquot
+  · exact Or.inl hab
+  · right
+    left
+    rcases hmiddle with ⟨Z, _hZnormal, hZle, hZcard, hcomm_le⟩
+    exact ⟨fun x y => order81_commutator_mem_center_of_le_central hZle hcomm_le x y,
+      fun x y => order81_commutator_pow_three_of_le_order_three hZcard hcomm_le x y⟩
+  · right
+    right
+    exact hnonabquot
+
 /-- If conjugation by `g` is trivial on `K`, then `g` commutes with every element of `K`. -/
 theorem order81_commute_of_conjNormal_eq_one
     {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
