@@ -1147,6 +1147,20 @@ def order81_cubeCenterHom_of_commutators_central_cube_one
     ext
     exact order81_mul_pow_three_of_commutators_central_cube_one hcenter hcube x y
 
+/-- In the class-two exponent-`3` commutator branch, the quotient by the center has exponent
+dividing `3`. -/
+theorem order81_quotient_center_pow_three_eq_one_of_commutators_central_cube_one
+    {G : Type*} [Group G]
+    (hcenter : ∀ x y : G, ⁅x, y⁆ ∈ center G)
+    (hcube : ∀ x y : G, ⁅x, y⁆ ^ 3 = 1) (q : G ⧸ center G) :
+    q ^ 3 = 1 := by
+  refine QuotientGroup.induction_on q ?_
+  intro x
+  change ((QuotientGroup.mk' (center G)) x) ^ 3 = 1
+  rw [← map_pow (QuotientGroup.mk' (center G)) x 3]
+  rw [QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
+  exact order81_cube_mem_center_of_commutators_central_cube_one hcenter hcube x
+
 /-- If conjugation by `g` is trivial on `K`, then `g` commutes with every element of `K`. -/
 theorem order81_commute_of_conjNormal_eq_one
     {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
