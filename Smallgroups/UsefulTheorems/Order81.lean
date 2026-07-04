@@ -2091,6 +2091,37 @@ theorem order81_c9c3_paramAut_pow_three (r s t : ZMod 3) :
     order81_c9c3_paramAut r s t ^ 3 = 1 := by
   ext x <;> fin_cases r <;> fin_cases s <;> fin_cases t <;> fin_cases x <;> rfl
 
+theorem order81_c9c3_paramAut_sq_eq (r s t : ZMod 3) :
+    order81_c9c3_paramAut r s t ^ 2 =
+      order81_c9c3_paramAut (2 * r + s * t) (2 * s) (2 * t) := by
+  ext x <;> fin_cases r <;> fin_cases s <;> fin_cases t <;> fin_cases x <;> rfl
+
+theorem order81_c9c3_paramAction_sq_eq (r s t : ZMod 3) :
+    order81_squareActionOfOrderThree (order81_c9c3_paramAut r s t)
+        (order81_c9c3_paramAut_pow_three r s t) =
+      order81_actionOfOrderThree (order81_c9c3_paramAut (2 * r + s * t) (2 * s) (2 * t))
+        (order81_c9c3_paramAut_pow_three (2 * r + s * t) (2 * s) (2 * t)) := by
+  apply order81_cyclicRep3_hom_ext
+  rw [order81_actionOfOrderThree_ofAdd_one, order81_actionOfOrderThree_ofAdd_one]
+  exact order81_c9c3_paramAut_sq_eq r s t
+
+theorem order81_c9c3_paramAction_sq_equiv_action (r s t : ZMod 3) :
+    Nonempty (order81_C9C3 ⋊[
+        order81_actionOfOrderThree (order81_c9c3_paramAut (2 * r + s * t) (2 * s) (2 * t))
+          (order81_c9c3_paramAut_pow_three (2 * r + s * t) (2 * s) (2 * t))]
+        CyclicRep 3 ≃*
+      order81_C9C3 ⋊[
+        order81_actionOfOrderThree (order81_c9c3_paramAut r s t)
+          (order81_c9c3_paramAut_pow_three r s t)] CyclicRep 3) := by
+  exact ⟨(semidirectProductCongr_eq (N := order81_C9C3) (H := CyclicRep 3)
+    (φ := order81_actionOfOrderThree (order81_c9c3_paramAut (2 * r + s * t) (2 * s) (2 * t))
+      (order81_c9c3_paramAut_pow_three (2 * r + s * t) (2 * s) (2 * t)))
+    (ψ := order81_squareActionOfOrderThree (order81_c9c3_paramAut r s t)
+      (order81_c9c3_paramAut_pow_three r s t))
+    (order81_c9c3_paramAction_sq_eq r s t).symm).trans
+      (Classical.choice (order81_squareActionOfOrderThree_equiv_action
+        (order81_c9c3_paramAut r s t) (order81_c9c3_paramAut_pow_three r s t)))⟩
+
 theorem order81_c9c3_shearAut_eq_param :
     order81_c9c3_shearAut = order81_c9c3_paramAut 0 0 1 := by
   ext x <;> fin_cases x <;> rfl
