@@ -8,6 +8,7 @@ import Smallgroups.UsefulTheorems.P3Group
 import Smallgroups.UsefulTheorems.PrimePairNonabelian
 import Smallgroups.UsefulTheorems.OrderP4_Abel
 import Smallgroups.UsefulTheorems.OrderP4_NonAbel
+import Mathlib.GroupTheory.GroupAction.Quotient
 import Mathlib.Tactic.NormNum.Prime
 
 /-!
@@ -257,6 +258,138 @@ theorem order81_exists_abelian_subgroup_card_27_of_center_card_9 {G : Type*} [Gr
     norm_num
   simpa using exists_abelian_subgroup_card_p_cube_of_center_card_p_sq
     (p := 3) (G := G) hcard' (by simpa using hcenter_card)
+
+/-- In an order-`81` group with center of order `3`, a noncentral element whose centralizer has
+order `27` has an abelian centralizer. -/
+theorem order81_isMulCommutative_centralizer_singleton_of_card_27_of_center_card_3
+    {G : Type*} [Group G] {x : G} (hcard : Nat.card G = 81)
+    (hx_not_center : x ∉ Subgroup.center G)
+    (hcenter_card : Nat.card (Subgroup.center G) = 3)
+    (hCcard : Nat.card (Subgroup.centralizer ({x} : Set G)) = 27) :
+    IsMulCommutative (Subgroup.centralizer ({x} : Set G)) := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  simpa using isMulCommutative_centralizer_singleton_of_card_p_cube_of_center_card_p
+    (p := 3) (G := G) hx_not_center (by simpa using hcenter_card) (by simpa using hCcard)
+
+/-- In an order-`81` group with center of order `3`, some noncentral element has centralizer of
+order `27`. -/
+theorem order81_exists_noncentral_centralizer_card_27_of_center_card_3 {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) (hcenter_card : Nat.card (Subgroup.center G) = 3) :
+    ∃ x : G, x ∉ Subgroup.center G ∧
+      Nat.card (Subgroup.centralizer ({x} : Set G)) = 27 := by
+  classical
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  letI : Fintype G := Fintype.ofFinite G
+  by_contra hnone
+  push Not at hnone
+  have hcardF : Fintype.card G = 81 := by
+    rw [← Nat.card_eq_fintype_card]
+    exact hcard
+  have hcenterF : Fintype.card (Subgroup.center G) = 3 := by
+    rw [← Nat.card_eq_fintype_card]
+    exact hcenter_card
+  have hclass := Group.card_center_add_sum_card_noncenter_eq_card G
+  rw [hcenterF, hcardF] at hclass
+  have hsum_eq : (∑ x ∈ (ConjClasses.noncenter G).toFinset,
+      x.carrier.toFinset.card) = 78 := by
+    omega
+  have hterm_dvd : ∀ c ∈ (ConjClasses.noncenter G).toFinset,
+      9 ∣ c.carrier.toFinset.card := by
+    intro c hcfin
+    have hcset : c ∈ ConjClasses.noncenter G := by
+      simpa using hcfin
+    obtain ⟨x, hxc⟩ := ConjClasses.exists_rep c
+    have hx_not_center : x ∉ Subgroup.center G := by
+      intro hxcenter
+      have hcomp_mk : ConjClasses.mk x ∈ (ConjClasses.noncenter G)ᶜ :=
+        (ConjClasses.mk_bijOn G).1 hxcenter
+      have hcomp_c : c ∈ (ConjClasses.noncenter G)ᶜ := by
+        rwa [hxc] at hcomp_mk
+      exact hcomp_c hcset
+    let C : Subgroup G := Subgroup.centralizer ({x} : Set G)
+    have hZ_le_C : Subgroup.center G ≤ C := by
+      intro z hz
+      change z ∈ Subgroup.centralizer ({x} : Set G)
+      rw [Subgroup.mem_centralizer_singleton_iff]
+      exact (Subgroup.mem_center_iff.mp hz x).symm
+    have hxC : x ∈ C := by
+      change x ∈ Subgroup.centralizer ({x} : Set G)
+      rw [Subgroup.mem_centralizer_singleton_iff]
+    have hC_gt3 : 3 < Nat.card C := by
+      by_contra hnot
+      push Not at hnot
+      have hZ_eq_C : Subgroup.center G = C := by
+        exact Subgroup.eq_of_le_of_card_ge hZ_le_C (by rw [hcenter_card]; exact hnot)
+      exact hx_not_center (by rw [hZ_eq_C]; exact hxC)
+    have hC_ne27 : Nat.card C ≠ 27 :=
+      hnone x hx_not_center
+    have hmul_orbit : Nat.card (MulAction.orbit (ConjAct G) x) *
+        Nat.card (MulAction.stabilizer (ConjAct G) x) = Nat.card (ConjAct G) := by
+      rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+      exact MulAction.card_orbit_mul_card_stabilizer_eq_card_group (ConjAct G) x
+    rw [ConjAct.orbit_eq_carrier_conjClasses] at hmul_orbit
+    rw [← Subgroup.nat_card_centralizer_nat_card_stabilizer x] at hmul_orbit
+    have hconj_card : Nat.card (ConjAct G) = 81 := by
+      rw [Nat.card_congr ConjAct.ofConjAct.toEquiv, hcard]
+    rw [hconj_card] at hmul_orbit
+    rw [hxc] at hmul_orbit
+    have hmul : c.carrier.toFinset.card * Nat.card C = 81 := by
+      rw [← Set.ncard_eq_toFinset_card', ← Nat.card_coe_set_eq]
+      exact hmul_orbit
+    have hdvd : Nat.card C ∣ 81 := ⟨c.carrier.toFinset.card, by
+      rw [mul_comm]
+      exact hmul.symm⟩
+    have hC_cases : Nat.card C = 9 ∨ Nat.card C = 27 ∨ Nat.card C = 81 := by
+      have hle : Nat.card C ≤ 81 := Nat.le_of_dvd (by norm_num) hdvd
+      interval_cases Nat.card C <;> simp at hdvd ⊢
+    have hC_eq9 : Nat.card C = 9 := by
+      rcases hC_cases with h9 | h27 | h81
+      · exact h9
+      · exact (hC_ne27 h27).elim
+      · have hCtop : C = ⊤ := by
+          exact Subgroup.eq_top_of_card_eq C (by rw [h81, hcard])
+        have hxcenter : x ∈ Subgroup.center G := by
+          rw [Subgroup.mem_center_iff]
+          intro g
+          have hgC : g ∈ C := by
+            rw [hCtop]
+            exact Subgroup.mem_top g
+          exact Subgroup.mem_centralizer_singleton_iff.mp hgC
+        exact (hx_not_center hxcenter).elim
+    have hcarrier : c.carrier.toFinset.card = 9 := by
+      rw [hC_eq9] at hmul
+      omega
+    rw [hcarrier]
+  have hsum_dvd : 9 ∣ (∑ x ∈ (ConjClasses.noncenter G).toFinset,
+      x.carrier.toFinset.card) :=
+    Finset.dvd_sum hterm_dvd
+  rw [hsum_eq] at hsum_dvd
+  norm_num at hsum_dvd
+
+/-- If an order-`81` group has center of order `3`, then it has an abelian subgroup of
+order `27`. -/
+theorem order81_exists_abelian_subgroup_card_27_of_center_card_3 {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) (hcenter_card : Nat.card (Subgroup.center G) = 3) :
+    ∃ K : Subgroup G, Nat.card K = 27 ∧ IsMulCommutative K := by
+  obtain ⟨x, hx_not_center, hCcard⟩ :=
+    order81_exists_noncentral_centralizer_card_27_of_center_card_3 hcard hcenter_card
+  exact ⟨Subgroup.centralizer ({x} : Set G), hCcard,
+    order81_isMulCommutative_centralizer_singleton_of_card_27_of_center_card_3
+      hcard hx_not_center hcenter_card hCcard⟩
+
+/-- Every group of order `81` has an abelian subgroup of order `27`. -/
+theorem order81_exists_abelian_subgroup_card_27 {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) :
+    ∃ K : Subgroup G, Nat.card K = 27 ∧ IsMulCommutative K := by
+  by_cases hcomm : ∀ a b : G, a * b = b * a
+  · obtain ⟨K, _hKnormal, hKcard⟩ := order81_exists_normal_subgroup_card_27 hcard
+    have hKcomm : IsMulCommutative K :=
+      IsMulCommutative.of_comm fun a b => Subtype.ext (hcomm a.1 b.1)
+    exact ⟨K, hKcard, hKcomm⟩
+  · rcases order81_center_card_eq_three_or_nine hcard hcomm with hcenter | hcenter
+    · exact order81_exists_abelian_subgroup_card_27_of_center_card_3 hcard hcenter
+    · exact order81_exists_abelian_subgroup_card_27_of_center_card_9 hcard hcenter
 
 /-! ## Two immediate non-abelian representatives -/
 

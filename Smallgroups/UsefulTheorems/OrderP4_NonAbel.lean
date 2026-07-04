@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.CenterInvariant
+import Smallgroups.UsefulTheorems.P3Group.Structural
 import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.PrimeSqClassification
 import Mathlib.GroupTheory.IndexNormal
@@ -140,6 +141,50 @@ theorem exists_abelian_subgroup_card_p_cube_of_center_card_p_sq {G : Type*} [Gro
   refine ⟨K, hKcard, ?_⟩
   exact isMulCommutative_of_center_le_subgroup_card_p_cube
     (p := p) (G := G) hcenter_le_K hcenter_card hKcard
+
+/-- If `|Z(G)| = p` and a noncentral element has centralizer of order `p^3`, then that
+centralizer is abelian. -/
+theorem isMulCommutative_centralizer_singleton_of_card_p_cube_of_center_card_p
+    {G : Type*} [Group G] [Finite G] {x : G}
+    (hx_not_center : x ∉ Subgroup.center G)
+    (hcenter_card : Nat.card (Subgroup.center G) = p)
+    (hCcard : Nat.card (Subgroup.centralizer ({x} : Set G)) = p ^ 3) :
+    IsMulCommutative (Subgroup.centralizer ({x} : Set G)) := by
+  let C : Subgroup G := Subgroup.centralizer ({x} : Set G)
+  classical
+  haveI : Fintype C := Fintype.ofFinite C
+  by_contra hcomm
+  rw [isMulCommutative_iff] at hcomm
+  have hcenterC_card : Nat.card (Subgroup.center C) = p := by
+    exact P3Group.center_card_eq_p_of_nonabelian (p := p) (G := C)
+      (show Nat.card C = p ^ 3 from by simpa [C] using hCcard) hcomm
+  have hZ_le_C : Subgroup.center G ≤ C := by
+    intro z hz
+    change z ∈ Subgroup.centralizer ({x} : Set G)
+    rw [Subgroup.mem_centralizer_singleton_iff]
+    exact (Subgroup.mem_center_iff.mp hz x).symm
+  have hZsub_centerC : (Subgroup.center G).subgroupOf C ≤ Subgroup.center C := by
+    intro z hz
+    rw [Subgroup.mem_center_iff]
+    intro c
+    ext
+    exact Subgroup.mem_center_iff.mp hz c.1
+  have hZsub_card : Nat.card ((Subgroup.center G).subgroupOf C) = p := by
+    rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hZ_le_C).toEquiv, hcenter_card]
+  have hZsub_eq_centerC : (Subgroup.center G).subgroupOf C = Subgroup.center C := by
+    exact Subgroup.eq_of_le_of_card_ge hZsub_centerC (by rw [hcenterC_card, hZsub_card])
+  have hxC : x ∈ C := by
+    change x ∈ Subgroup.centralizer ({x} : Set G)
+    rw [Subgroup.mem_centralizer_singleton_iff]
+  have hx_centerC : (⟨x, hxC⟩ : C) ∈ Subgroup.center C := by
+    rw [Subgroup.mem_center_iff]
+    intro c
+    ext
+    exact Subgroup.mem_centralizer_singleton_iff.mp c.2
+  have hxZsub : (⟨x, hxC⟩ : C) ∈ (Subgroup.center G).subgroupOf C := by
+    rw [hZsub_eq_centerC]
+    exact hx_centerC
+  exact hx_not_center hxZsub
 
 /-- In a non-abelian group of order `p^4`, the center has order `p` or `p^2`. -/
 theorem center_card_eq_p_or_p_sq_of_nonabelian_p4 {G : Type*} [Group G] [Finite G]
