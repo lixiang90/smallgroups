@@ -1992,4 +1992,9 @@ theorem card_order81_reps (i : Fin 15) : Nat.card (order81_reps i) = 81 :=
 theorem order81_reps_pairwise : PairwiseNonMulEquiv order81_reps :=
   PairwiseNonMulEquiv.reindex order81_fin15Equiv order81_known_reps_pairwise
 
+/-- Any complete classification of groups of order `81` has at least fifteen representatives. -/
+theorem order81_atLeast15 {k : ℕ} {rep : Fin k → Type} [∀ i, Group (rep i)]
+    (h : IsClassif 81 rep) : 15 ≤ k :=
+  IsClassif.card_ge_of_pairwise h card_order81_reps order81_reps_pairwise
+
 end Smallgroups.UsefulTheorems
