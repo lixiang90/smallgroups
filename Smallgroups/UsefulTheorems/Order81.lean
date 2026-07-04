@@ -1802,6 +1802,24 @@ theorem order81_C27_aut_pow_three_apply_cube (σ : MulAut order81_C27) (hσ : σ
       decide +kernel
     rw [h]
 
+/-- For an automorphism of `C_27` whose cube is trivial, the norm
+`σ(x) * σ²(x) * x` is `x ^ 3`. -/
+theorem order81_C27_aut_norm_eq_cube (σ : MulAut order81_C27) (hσ : σ ^ 3 = 1)
+    (x : order81_C27) :
+    σ x * (σ ^ 2) x * x = x ^ 3 := by
+  obtain ⟨u, huσ⟩ := order81_mulAut_C27_eq_unitAutHom σ
+  subst σ
+  have hu3 : u ^ 3 = 1 := by
+    apply order81_unitAutHom27_injective
+    simpa using hσ
+  rcases order81_unit_cube_eq_one_cases u hu3 with rfl | rfl | rfl
+  · rw [map_one (unitAutHom (p := 27))]
+    simp [pow_succ]
+  · obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+    decide +kernel +revert
+  · obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+    decide +kernel +revert
+
 /-- For a nontrivial automorphism of `C_27` whose cube is trivial, every fixed point is
 a cube. -/
 theorem order81_C27_fixed_of_nontrivial_aut_is_cube (σ : MulAut order81_C27)
@@ -1872,6 +1890,35 @@ theorem order81_cyclic_kernel_aut_pow_three_apply_cube {G : Type*} [Group G]
     _ = (e x) ^ 3 := hfix
     _ = e (x ^ 3) := by simp
 
+/-- For an automorphism of a cyclic order-`27` subgroup whose cube is trivial, the norm
+`σ(x) * σ²(x) * x` is `x ^ 3`. -/
+theorem order81_cyclic_kernel_aut_norm_eq_cube {G : Type*} [Group G]
+    {K : Subgroup G}
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3)))
+    (σ : MulAut K) (hσ : σ ^ 3 = 1) (x : K) :
+    σ x * (σ ^ 2) x * x = x ^ 3 := by
+  rcases hKcyc with ⟨e⟩
+  let τ : MulAut order81_C27 := e.symm.trans (σ.trans e)
+  have hτ : τ ^ 3 = 1 := by
+    apply MulEquiv.ext
+    intro y
+    calc
+      (τ ^ 3) y = τ (τ (τ y)) := by simp [pow_succ]
+      _ = e (σ (σ (σ (e.symm y)))) := by simp [τ]
+      _ = y := by
+        have hpow0 : (σ ^ 3) (e.symm y) = e.symm y := by rw [hσ]; rfl
+        have hpow : σ (σ (σ (e.symm y))) = e.symm y := by
+          simpa [pow_succ] using hpow0
+        simpa using congrArg e hpow
+  have hnorm := order81_C27_aut_norm_eq_cube τ hτ (e x)
+  apply e.injective
+  calc
+    e (σ x * (σ ^ 2) x * x) = τ (e x) * τ (τ (e x)) * e x := by
+      simp [τ, pow_succ]
+    _ = τ (e x) * (τ ^ 2) (e x) * e x := by simp [pow_succ]
+    _ = (e x) ^ 3 := hnorm
+    _ = e (x ^ 3) := by simp
+
 /-- For a nontrivial automorphism of a cyclic order-`27` subgroup whose cube is trivial,
 every fixed point is a cube. -/
 theorem order81_cyclic_kernel_fixed_of_nontrivial_aut_is_cube {G : Type*} [Group G]
@@ -1938,6 +1985,15 @@ theorem order81_commute_cube_of_mem_cyclic_kernel {G : Type*} [Group G]
     simpa [mul_assoc] using hmul
   exact hcomm
 
+/-- The cube of `g * k` is `g ^ 3` times the norm of `k` for the inverse conjugation
+action. -/
+theorem order81_conjNormal_symm_norm_formula {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal] (g : G) (k : K) :
+    (g * k.1) ^ 3 = g ^ 3 * (((MulAut.conjNormal (H := K) g).symm ^ 2) k *
+      (MulAut.conjNormal (H := K) g).symm k * k).1 := by
+  simp [pow_succ]
+  group
+
 /-- In a non-abelian order-`81` group with cyclic order-`27` kernel, the cube of a
 quotient generator is itself a cube inside the kernel. -/
 theorem order81_generator_cube_is_kernel_cube_of_cyclic_kernel {G : Type*} [Group G]
@@ -1961,6 +2017,50 @@ theorem order81_generator_cube_is_kernel_cube_of_cyclic_kernel {G : Type*} [Grou
     group
   simpa [v, σ] using
     order81_cyclic_kernel_fixed_of_nontrivial_aut_is_cube hKcyc σ hσ3 hσne hv
+
+/-- In a non-abelian order-`81` group with cyclic order-`27` kernel, every quotient
+generator can be adjusted by a kernel element to have cube `1`. -/
+theorem order81_exists_order_three_generator_of_cyclic_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3))) {g : G}
+    (hgK : g ∉ K) (hnoncomm : ¬ IsMulCommutative G) :
+    ∃ y : G, y ∉ K ∧ y ^ 3 = 1 := by
+  obtain ⟨x, hx3⟩ := order81_generator_cube_is_kernel_cube_of_cyclic_kernel
+    hcard hKcard hKcomm hKcyc hgK hnoncomm
+  let k : K := x⁻¹
+  refine ⟨g * k.1, ?_, ?_⟩
+  · intro hyK
+    have hxK : x.1 ∈ K := x.2
+    have : g = (g * k.1) * x.1 := by
+      simp [k, mul_assoc]
+    exact hgK (by
+      rw [this]
+      exact K.mul_mem hyK hxK)
+  · let σ : MulAut K := MulAut.conjNormal (H := K) g
+    have hσ3pos : σ ^ 3 = 1 :=
+      order81_conjNormal_cube_eq_one_of_abelian_normal_subgroup_card_27
+        hcard hKcard hKcomm g
+    have hσ3 : σ.symm ^ 3 = 1 := by
+      change σ⁻¹ ^ 3 = 1
+      rw [inv_pow, hσ3pos, inv_one]
+    have hnorm := order81_cyclic_kernel_aut_norm_eq_cube hKcyc σ.symm hσ3 k
+    have hterm : ((σ.symm ^ 2) k * σ.symm k * k) = k ^ 3 := by
+      rw [mul_comm' ((σ.symm ^ 2) k) (σ.symm k)]
+      exact hnorm
+    rw [order81_conjNormal_symm_norm_formula]
+    change g ^ 3 * (((σ.symm ^ 2) k * σ.symm k * k).1) = 1
+    rw [hterm]
+    have hk3val : (k ^ 3).1 = (g ^ 3)⁻¹ := by
+      have hx3val : x.1 ^ 3 = g ^ 3 := by
+        exact congrArg Subtype.val hx3
+      have hkx : (k ^ 3).1 = (x.1 ^ 3)⁻¹ := by
+        simp only [k, SubmonoidClass.coe_pow]
+        change (x.1⁻¹) ^ 3 = (x.1 ^ 3)⁻¹
+        rw [inv_pow]
+      rw [hkx, hx3val]
+    rw [hk3val]
+    simp
 
 /-- The `C_3` action on `C_27` generated by multiplication by `10`. -/
 noncomputable abbrev order81_c27Action : CyclicRep 3 →* MulAut order81_C27 :=
