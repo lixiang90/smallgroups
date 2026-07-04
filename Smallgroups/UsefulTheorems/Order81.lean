@@ -487,6 +487,36 @@ theorem order81_exists_orderOf_eq_27_mem_of_cyclic_kernel {G : Type*} [Group G]
   rw [← Subgroup.orderOf_mk k.1 k.2]
   exact hkord
 
+/-- A subgroup isomorphic to `C_9 × C_3` contains an element of order `9`. -/
+theorem order81_exists_orderOf_eq_9_of_p2p_kernel {G : Type*} [Group G]
+    {K : Subgroup G}
+    (hKp2p : Nonempty (K ≃* (Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3)))) :
+    ∃ k : K, orderOf k = 9 := by
+  rcases hKp2p with ⟨e⟩
+  let x : Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3) :=
+    (Multiplicative.ofAdd (1 : ZMod (3 ^ 2)), 1)
+  refine ⟨e.symm x, ?_⟩
+  calc
+    orderOf (e.symm x) = orderOf (e (e.symm x)) :=
+      (MulEquiv.orderOf_eq e (e.symm x)).symm
+    _ = orderOf x := by rw [MulEquiv.apply_symm_apply]
+    _ = 9 := by
+      change orderOf ((Multiplicative.ofAdd (1 : ZMod (3 ^ 2)), 1) :
+        Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3)) = 9
+      rw [Prod.orderOf_mk, orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one, orderOf_one]
+      norm_num
+
+/-- If the normal abelian kernel has type `C_9 × C_3`, then the ambient group contains
+an element of order `9` lying in that kernel. -/
+theorem order81_exists_orderOf_eq_9_mem_of_p2p_kernel {G : Type*} [Group G]
+    {K : Subgroup G}
+    (hKp2p : Nonempty (K ≃* (Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3)))) :
+    ∃ x : G, x ∈ K ∧ orderOf x = 9 := by
+  obtain ⟨k, hkord⟩ := order81_exists_orderOf_eq_9_of_p2p_kernel hKp2p
+  refine ⟨k.1, k.2, ?_⟩
+  rw [← Subgroup.orderOf_mk k.1 k.2]
+  exact hkord
+
 /-- If `K` is a normal subgroup of order `27` in a group of order `81`, then the quotient
 has prime order `3`, hence is cyclic. -/
 theorem order81_quotient_cyclic_of_normal_subgroup_card_27 {G : Type*} [Group G]
