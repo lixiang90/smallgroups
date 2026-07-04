@@ -1900,6 +1900,112 @@ theorem order81_nonabelian_reps_pairwise :
   · exact absurd ⟨h.some.symm⟩ (order81_nonabelian_reps9_extra_disjoint j i)
   · exact congrArg Sum.inr (order81_nonabelian_extra_reps_pairwise i j h)
 
+/-- The center cardinalities of the ten certified non-abelian representatives, in the order used
+by `order81_nonabelian_reps`. -/
+def order81_nonabelian_centerCard : Fin 9 ⊕ Fin 1 → ℕ
+  | Sum.inl 0 => 9
+  | Sum.inl 1 => 9
+  | Sum.inl 2 => 9
+  | Sum.inl 3 => 9
+  | Sum.inl 4 => 9
+  | Sum.inl 5 => 3
+  | Sum.inl 6 => 9
+  | Sum.inl 7 => 3
+  | Sum.inl 8 => 3
+  | Sum.inr 0 => 3
+
+/-- The number of elements satisfying `x ^ 3 = 1` in the ten certified non-abelian
+representatives, in the order used by `order81_nonabelian_reps`. -/
+def order81_nonabelian_powThreeCard : Fin 9 ⊕ Fin 1 → ℕ
+  | Sum.inl 0 => 81
+  | Sum.inl 1 => 27
+  | Sum.inl 2 => 27
+  | Sum.inl 3 => 9
+  | Sum.inl 4 => 9
+  | Sum.inl 5 => 45
+  | Sum.inl 6 => 27
+  | Sum.inl 7 => 27
+  | Sum.inl 8 => 63
+  | Sum.inr 0 => 9
+
+/-- The number of central elements satisfying `z ^ 3 = 1` in the ten certified non-abelian
+representatives, in the order used by `order81_nonabelian_reps`. -/
+def order81_nonabelian_centerPowThreeCard : Fin 9 ⊕ Fin 1 → ℕ
+  | Sum.inl 0 => 9
+  | Sum.inl 1 => 9
+  | Sum.inl 2 => 9
+  | Sum.inl 3 => 3
+  | Sum.inl 4 => 9
+  | Sum.inl 5 => 3
+  | Sum.inl 6 => 3
+  | Sum.inl 7 => 3
+  | Sum.inl 8 => 3
+  | Sum.inr 0 => 3
+
+/-- The center cardinality profile of the ten certified non-abelian representatives. -/
+theorem card_center_order81_nonabelian_reps (i : Fin 9 ⊕ Fin 1) :
+    Nat.card (Subgroup.center (order81_nonabelian_reps i)) =
+      order81_nonabelian_centerCard i := by
+  rcases i with i | i
+  · fin_cases i
+    · change Nat.card (Subgroup.center order81_heisenberg_prod_cyclic) = 9
+      exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+    · exact card_center_order81_semidirectP2P_prod_cyclic
+    · exact card_center_order81_c9c3_shear_rep
+    · exact card_center_order81_c27_semidirect_rep
+    · exact card_center_order81_c9_semidirect_c9_rep
+    · change Nat.card (Subgroup.center order81_e27_jordan_rep) = 3
+      exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+    · exact card_center_order81_c9c3_lift_rep
+    · exact card_center_order81_c9c3_doubleShear_rep
+    · change Nat.card (Subgroup.center order81_c9c3_sixShear_rep) = 3
+      exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · fin_cases i
+    exact card_center_order81_c9c3_nonSplit_rep
+
+/-- The `x ^ 3 = 1` profile of the ten certified non-abelian representatives. -/
+theorem card_pow_three_eq_one_order81_nonabelian_reps (i : Fin 9 ⊕ Fin 1) :
+    order81_pow_eq_one_card (order81_nonabelian_reps i) 3 =
+      order81_nonabelian_powThreeCard i := by
+  rcases i with i | i
+  · fin_cases i
+    · exact card_pow_three_eq_one_order81_heisenberg_prod_cyclic
+    · exact card_pow_three_eq_one_order81_semidirectP2P_prod_cyclic
+    · exact card_pow_three_eq_one_order81_c9c3_shear_rep
+    · exact card_pow_three_eq_one_order81_c27_semidirect_rep
+    · exact card_pow_three_eq_one_order81_c9_semidirect_c9_rep
+    · exact card_pow_three_eq_one_order81_e27_jordan_rep
+    · exact card_pow_three_eq_one_order81_c9c3_lift_rep
+    · exact card_pow_three_eq_one_order81_c9c3_doubleShear_rep
+    · exact card_pow_three_eq_one_order81_c9c3_sixShear_rep
+  · fin_cases i
+    exact card_pow_three_eq_one_order81_c9c3_nonSplit_rep
+
+/-- The central `z ^ 3 = 1` profile of the ten certified non-abelian representatives. -/
+theorem card_center_pow_three_eq_one_order81_nonabelian_reps (i : Fin 9 ⊕ Fin 1) :
+    order81_center_pow_eq_one_card (order81_nonabelian_reps i) 3 =
+      order81_nonabelian_centerPowThreeCard i := by
+  rcases i with i | i
+  · fin_cases i
+    · change order81_center_pow_eq_one_card order81_heisenberg_prod_cyclic 3 = 9
+      exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+    · exact card_center_pow_three_eq_one_order81_semidirectP2P_prod_cyclic
+    · exact card_center_pow_three_eq_one_order81_c9c3_shear_rep
+    · change order81_center_pow_eq_one_card order81_c27_semidirect_rep 3 = 3
+      exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+    · change order81_center_pow_eq_one_card order81_c9_semidirect_c9_rep 3 = 9
+      exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+    · change order81_center_pow_eq_one_card order81_e27_jordan_rep 3 = 3
+      exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+    · exact card_center_pow_three_eq_one_order81_c9c3_lift_rep
+    · change order81_center_pow_eq_one_card order81_c9c3_doubleShear_rep 3 = 3
+      exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+    · change order81_center_pow_eq_one_card order81_c9c3_sixShear_rep 3 = 3
+      exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+  · fin_cases i
+    change order81_center_pow_eq_one_card order81_c9c3_nonSplit_rep 3 = 3
+    exact order81_nat_card_eq_of_fintype_card_eq (by decide +kernel)
+
 /-- The five abelian representatives together with the currently certified non-abelian
 representatives formalized above. -/
 abbrev order81_known_reps : Fin 5 ⊕ (Fin 9 ⊕ Fin 1) → Type :=
