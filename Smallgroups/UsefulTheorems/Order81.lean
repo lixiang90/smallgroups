@@ -332,6 +332,61 @@ theorem order81_abelian_or_central_quotient_classification_cases
   · right
     exact order81_exists_central_order_three_quotient_classification_cases hcard hcomm
 
+/-- A coarser order-`81` split: either the group is abelian, or it has a central
+order-`3` subgroup containing the commutator subgroup, or the corresponding central
+quotient is one of the two non-abelian groups of order `27`. -/
+theorem order81_abelian_or_commutator_le_central_or_nonabelian_quotient_cases
+    {G : Type*} [Group G] (hcard : Nat.card G = 81) :
+    (∃ i, Nonempty (G ≃* order81_abelian_reps i)) ∨
+    (∃ (Z : Subgroup G) (hZnormal : Z.Normal),
+      Z ≤ center G ∧ Nat.card Z = 3 ∧
+        letI : Z.Normal := hZnormal
+        commutator G ≤ Z) ∨
+    (∃ (Z : Subgroup G) (hZnormal : Z.Normal),
+      Z ≤ center G ∧ Nat.card Z = 3 ∧
+        letI : Z.Normal := hZnormal
+        Nat.card (G ⧸ Z) = 27 ∧
+          (Nonempty ((G ⧸ Z) ≃* P3Group.HeisenbergGroup 3) ∨
+            Nonempty ((G ⧸ Z) ≃* P3Group.SemidirectP2P 3))) := by
+  rcases order81_abelian_or_central_quotient_classification_cases (G := G) hcard with
+    hab | hquotCases
+  · exact Or.inl hab
+  · right
+    rcases hquotCases with ⟨Z, hZnormal, hZle, hZcard, hquot, hcase⟩
+    letI : Z.Normal := hZnormal
+    rcases hcase with hcyc | hp2p | helem | hheis | hsemi
+    · rcases hcyc with ⟨e⟩
+      have hquot_comm : IsMulCommutative (G ⧸ Z) := by
+        refine IsMulCommutative.of_comm ?_
+        intro a b
+        apply e.injective
+        simpa using mul_comm (e a) (e b)
+      left
+      exact ⟨Z, hZnormal, hZle, hZcard,
+        Subgroup.Normal.quotient_commutative_iff_commutator_le.mp hquot_comm⟩
+    · rcases hp2p with ⟨e⟩
+      have hquot_comm : IsMulCommutative (G ⧸ Z) := by
+        refine IsMulCommutative.of_comm ?_
+        intro a b
+        apply e.injective
+        simpa using mul_comm (e a) (e b)
+      left
+      exact ⟨Z, hZnormal, hZle, hZcard,
+        Subgroup.Normal.quotient_commutative_iff_commutator_le.mp hquot_comm⟩
+    · rcases helem with ⟨e⟩
+      have hquot_comm : IsMulCommutative (G ⧸ Z) := by
+        refine IsMulCommutative.of_comm ?_
+        intro a b
+        apply e.injective
+        simpa using mul_comm (e a) (e b)
+      left
+      exact ⟨Z, hZnormal, hZle, hZcard,
+        Subgroup.Normal.quotient_commutative_iff_commutator_le.mp hquot_comm⟩
+    · right
+      exact ⟨Z, hZnormal, hZle, hZcard, hquot, Or.inl hheis⟩
+    · right
+      exact ⟨Z, hZnormal, hZle, hZcard, hquot, Or.inr hsemi⟩
+
 /-- In a non-abelian group of order `81`, the center is `C_3`, `C_9`, or `C_3 × C_3`. -/
 theorem order81_center_classification_of_nonabelian {G : Type*} [Group G]
     (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
