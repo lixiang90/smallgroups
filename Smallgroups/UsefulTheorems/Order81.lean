@@ -2051,6 +2051,50 @@ noncomputable def order81_c9c3_liftAddHom : ZMod 3 →+ ZMod 9 where
     intro b d
     fin_cases b <;> fin_cases d <;> decide +kernel
 
+/-- A three-parameter family of additive automorphisms of `ZMod 9 × ZMod 3`.
+
+These are the automorphisms fixing the cube subgroup generator and inducing a unipotent
+map modulo `3`.  They include the split `C_9 × C_3` actions used below. -/
+noncomputable def order81_c9c3_paramAddFun (r s t : ZMod 3)
+    (x : ZMod 9 × ZMod 3) : ZMod 9 × ZMod 3 :=
+  (((1 : ZMod 9) + (3 : ZMod 9) * (r.val : ZMod 9)) * x.1 +
+      order81_c9c3_liftAddHom (s * x.2),
+    x.2 + t * order81_zmod9To3 x.1)
+
+noncomputable def order81_c9c3_paramAddEquiv (r s t : ZMod 3) :
+    (ZMod 9 × ZMod 3) ≃+ (ZMod 9 × ZMod 3) where
+  toFun := order81_c9c3_paramAddFun r s t
+  invFun := order81_c9c3_paramAddFun r s t ∘ order81_c9c3_paramAddFun r s t
+  left_inv := by
+    fin_cases r <;> fin_cases s <;> fin_cases t <;> intro x <;> fin_cases x <;> rfl
+  right_inv := by
+    fin_cases r <;> fin_cases s <;> fin_cases t <;> intro x <;> fin_cases x <;> rfl
+  map_add' := by
+    intro x y
+    ext <;> simp [order81_c9c3_paramAddFun, map_add, left_distrib, right_distrib,
+      add_assoc, add_left_comm, add_comm]
+
+noncomputable def order81_c9c3_paramAut (r s t : ZMod 3) : MulAut order81_C9C3 :=
+  (MulEquiv.prodMultiplicative (ZMod 9) (ZMod 3)).symm.trans
+    ((AddEquiv.toMultiplicative (order81_c9c3_paramAddEquiv r s t)).trans
+      (MulEquiv.prodMultiplicative (ZMod 9) (ZMod 3)))
+
+@[simp] theorem order81_c9c3_paramAut_apply (r s t : ZMod 3) (a : ZMod 9) (b : ZMod 3) :
+    order81_c9c3_paramAut r s t
+      ((Multiplicative.ofAdd a, Multiplicative.ofAdd b) : order81_C9C3) =
+      (Multiplicative.ofAdd (((1 : ZMod 9) + (3 : ZMod 9) * (r.val : ZMod 9)) * a +
+          order81_c9c3_liftAddHom (s * b)),
+        Multiplicative.ofAdd (b + t * order81_zmod9To3 a)) := by
+  rfl
+
+theorem order81_c9c3_paramAut_pow_three (r s t : ZMod 3) :
+    order81_c9c3_paramAut r s t ^ 3 = 1 := by
+  ext x <;> fin_cases r <;> fin_cases s <;> fin_cases t <;> fin_cases x <;> rfl
+
+theorem order81_c9c3_shearAut_eq_param :
+    order81_c9c3_shearAut = order81_c9c3_paramAut 0 0 1 := by
+  ext x <;> fin_cases x <;> rfl
+
 /-- The additive shear `(a, b) ↦ (a + 3b, b)` on `ZMod 9 × ZMod 3`. -/
 noncomputable def order81_c9c3_liftAddEquiv : (ZMod 9 × ZMod 3) ≃+ (ZMod 9 × ZMod 3) where
   toFun x := (x.1 + order81_c9c3_liftAddHom x.2, x.2)
@@ -2082,6 +2126,10 @@ noncomputable def order81_c9c3_liftAut : MulAut order81_C9C3 :=
       ((Multiplicative.ofAdd a, Multiplicative.ofAdd b) : order81_C9C3) =
       (Multiplicative.ofAdd (a + order81_c9c3_liftAddHom b), Multiplicative.ofAdd b) := by
   rfl
+
+theorem order81_c9c3_liftAut_eq_param :
+    order81_c9c3_liftAut = order81_c9c3_paramAut 0 1 0 := by
+  ext x <;> fin_cases x <;> rfl
 
 /-- The lift automorphism has order dividing `3`. -/
 theorem order81_c9c3_liftAut_pow_three : order81_c9c3_liftAut ^ 3 = 1 := by
@@ -2190,6 +2238,10 @@ noncomputable def order81_c9c3_doubleShearAut : MulAut order81_C9C3 :=
       (Multiplicative.ofAdd (a + order81_c9c3_liftAddHom b),
         Multiplicative.ofAdd (b + order81_zmod9To3 (a + order81_c9c3_liftAddHom b))) := by
   rfl
+
+theorem order81_c9c3_doubleShearAut_eq_param :
+    order81_c9c3_doubleShearAut = order81_c9c3_paramAut 0 1 1 := by
+  ext x <;> fin_cases x <;> rfl
 
 /-- The combined shear automorphism has order dividing `3`. -/
 theorem order81_c9c3_doubleShearAut_pow_three : order81_c9c3_doubleShearAut ^ 3 = 1 := by
@@ -2330,6 +2382,10 @@ noncomputable def order81_c9c3_sixShearAut : MulAut order81_C9C3 :=
       (Multiplicative.ofAdd (a + order81_c9c3_sixAddHom b),
         Multiplicative.ofAdd (b + order81_zmod9To3 a)) := by
   rfl
+
+theorem order81_c9c3_sixShearAut_eq_param :
+    order81_c9c3_sixShearAut = order81_c9c3_paramAut 0 2 1 := by
+  ext x <;> fin_cases x <;> rfl
 
 /-- The six-shear automorphism has order dividing `3`. -/
 theorem order81_c9c3_sixShearAut_pow_three : order81_c9c3_sixShearAut ^ 3 = 1 := by
