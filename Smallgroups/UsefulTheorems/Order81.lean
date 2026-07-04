@@ -1745,6 +1745,223 @@ noncomputable abbrev order81_u10 : (ZMod 27)ˣ :=
 theorem order81_u10_cube : order81_u10 ^ 3 = 1 := by
   decide
 
+/-- Multiplication by units embeds into automorphisms of `C_27`. -/
+theorem order81_unitAutHom27_injective : Function.Injective (unitAutHom (p := 27)) := by
+  intro u v h
+  have h1 : unitAutHom u (Multiplicative.ofAdd (1 : ZMod 27)) =
+      unitAutHom v (Multiplicative.ofAdd (1 : ZMod 27)) := by rw [h]
+  simp only [unitAutHom_apply, mul_one, EmbeddingLike.apply_eq_iff_eq] at h1
+  exact Units.ext (congrArg Multiplicative.toAdd h1)
+
+/-- Every automorphism of `C_27` is multiplication by a unit of `ZMod 27`. -/
+theorem order81_mulAut_C27_eq_unitAutHom (σ : MulAut order81_C27) :
+    ∃ u : (ZMod 27)ˣ, σ = unitAutHom u := by
+  let f : AddAut (ZMod 27) := Multiplicative.toAdd ((MulAutMultiplicative (ZMod 27)) σ)
+  let u : (ZMod 27)ˣ := Additive.toMul ((ZMod.AddAutEquivUnits 27) f)
+  refine ⟨u, ?_⟩
+  ext x
+  obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+  change Multiplicative.ofAdd (f m) = unitAutHom u (Multiplicative.ofAdd m)
+  have hu : Additive.ofMul u = (ZMod.AddAutEquivUnits 27) f := by simp [u]
+  have hf : f = (ZMod.AddAutEquivUnits 27).symm (Additive.ofMul u) := by
+    symm
+    rw [hu]
+    exact AddEquiv.symm_apply_apply (ZMod.AddAutEquivUnits 27) f
+  rw [hf, unitAutHom_apply]
+  simp [ZMod.AddAutEquivUnits_symm_apply, Units.smul_def]
+
+/-- The cube roots of unity in `(ZMod 27)ˣ` are `1`, `10`, and `10 ^ 2`. -/
+theorem order81_unit_cube_eq_one_cases (u : (ZMod 27)ˣ) (hu : u ^ 3 = 1) :
+    u = 1 ∨ u = order81_u10 ∨ u = order81_u10 ^ 2 := by
+  decide +revert
+
+/-- Any automorphism of `C_27` whose cube is trivial fixes all cubes. -/
+theorem order81_C27_aut_pow_three_apply_cube (σ : MulAut order81_C27) (hσ : σ ^ 3 = 1)
+    (x : order81_C27) :
+    σ (x ^ 3) = x ^ 3 := by
+  obtain ⟨u, huσ⟩ := order81_mulAut_C27_eq_unitAutHom σ
+  subst σ
+  have hu3 : u ^ 3 = 1 := by
+    apply order81_unitAutHom27_injective
+    simpa using hσ
+  rcases order81_unit_cube_eq_one_cases u hu3 with rfl | rfl | rfl
+  · simp
+  · obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+    rw [← ofAdd_nsmul, unitAutHom_apply]
+    congr 1
+    rw [show (3 : ℕ) • m = (3 : ZMod 27) * m by norm_num]
+    rw [← mul_assoc]
+    have h : (order81_u10 : ZMod 27) * 3 = 3 := by decide +kernel
+    rw [h]
+  · obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective x
+    rw [← ofAdd_nsmul, unitAutHom_apply]
+    congr 1
+    rw [show (3 : ℕ) • m = (3 : ZMod 27) * m by norm_num]
+    rw [← mul_assoc]
+    have h : (((order81_u10 ^ 2 : (ZMod 27)ˣ) : ZMod 27) * 3) = 3 := by
+      decide +kernel
+    rw [h]
+
+/-- For a nontrivial automorphism of `C_27` whose cube is trivial, every fixed point is
+a cube. -/
+theorem order81_C27_fixed_of_nontrivial_aut_is_cube (σ : MulAut order81_C27)
+    (hσ : σ ^ 3 = 1) (hne : σ ≠ 1) {v : order81_C27} (hv : σ v = v) :
+    ∃ x : order81_C27, x ^ 3 = v := by
+  obtain ⟨u, huσ⟩ := order81_mulAut_C27_eq_unitAutHom σ
+  subst σ
+  have hu3 : u ^ 3 = 1 := by
+    apply order81_unitAutHom27_injective
+    simpa using hσ
+  rcases order81_unit_cube_eq_one_cases u hu3 with rfl | rfl | rfl
+  · exfalso
+    exact hne (map_one (unitAutHom (p := 27)))
+  · obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective v
+    have hm : (10 : ZMod 27) * m = m := by
+      simpa [unitAutHom_apply, order81_u10] using congrArg Multiplicative.toAdd hv
+    obtain ⟨r, hr⟩ : ∃ r : ZMod 27, 3 * r = m := by
+      exact (by
+        decide +kernel +revert :
+          ∀ m : ZMod 27, (10 : ZMod 27) * m = m → ∃ r : ZMod 27, 3 * r = m) m hm
+    refine ⟨Multiplicative.ofAdd r, ?_⟩
+    rw [← ofAdd_nsmul]
+    congr 1
+    rw [show (3 : ℕ) • r = (3 : ZMod 27) * r by norm_num]
+    exact hr
+  · obtain ⟨m, rfl⟩ := Multiplicative.ofAdd.surjective v
+    have hm : (100 : ZMod 27) * m = m := by
+      have hm0 := congrArg Multiplicative.toAdd hv
+      change (((order81_u10 ^ 2 : (ZMod 27)ˣ) : ZMod 27) * m) = m at hm0
+      have h100 : (((order81_u10 ^ 2 : (ZMod 27)ˣ) : ZMod 27) : ZMod 27) = 100 := by
+        decide +kernel
+      rwa [h100] at hm0
+    obtain ⟨r, hr⟩ : ∃ r : ZMod 27, 3 * r = m := by
+      exact (by
+        decide +kernel +revert :
+          ∀ m : ZMod 27, (100 : ZMod 27) * m = m → ∃ r : ZMod 27, 3 * r = m) m hm
+    refine ⟨Multiplicative.ofAdd r, ?_⟩
+    rw [← ofAdd_nsmul]
+    congr 1
+    rw [show (3 : ℕ) • r = (3 : ZMod 27) * r by norm_num]
+    exact hr
+
+/-- Any automorphism of a cyclic order-`27` subgroup whose cube is trivial fixes all
+cubes. -/
+theorem order81_cyclic_kernel_aut_pow_three_apply_cube {G : Type*} [Group G]
+    {K : Subgroup G}
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3)))
+    (σ : MulAut K) (hσ : σ ^ 3 = 1) (x : K) :
+    σ (x ^ 3) = x ^ 3 := by
+  rcases hKcyc with ⟨e⟩
+  let τ : MulAut order81_C27 := e.symm.trans (σ.trans e)
+  have hτ : τ ^ 3 = 1 := by
+    apply MulEquiv.ext
+    intro y
+    calc
+      (τ ^ 3) y = τ (τ (τ y)) := by simp [pow_succ]
+      _ = e (σ (σ (σ (e.symm y)))) := by simp [τ]
+      _ = y := by
+        have hpow0 : (σ ^ 3) (e.symm y) = e.symm y := by rw [hσ]; rfl
+        have hpow : σ (σ (σ (e.symm y))) = e.symm y := by
+          simpa [pow_succ] using hpow0
+        simpa using congrArg e hpow
+  have hfix := order81_C27_aut_pow_three_apply_cube τ hτ (e x)
+  apply e.injective
+  calc
+    e (σ (x ^ 3)) = τ ((e x) ^ 3) := by
+      simp [τ]
+    _ = (e x) ^ 3 := hfix
+    _ = e (x ^ 3) := by simp
+
+/-- For a nontrivial automorphism of a cyclic order-`27` subgroup whose cube is trivial,
+every fixed point is a cube. -/
+theorem order81_cyclic_kernel_fixed_of_nontrivial_aut_is_cube {G : Type*} [Group G]
+    {K : Subgroup G}
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3)))
+    (σ : MulAut K) (hσ : σ ^ 3 = 1) (hne : σ ≠ 1) {v : K} (hv : σ v = v) :
+    ∃ x : K, x ^ 3 = v := by
+  rcases hKcyc with ⟨e⟩
+  let τ : MulAut order81_C27 := e.symm.trans (σ.trans e)
+  have hτ : τ ^ 3 = 1 := by
+    apply MulEquiv.ext
+    intro y
+    calc
+      (τ ^ 3) y = τ (τ (τ y)) := by simp [pow_succ]
+      _ = e (σ (σ (σ (e.symm y)))) := by simp [τ]
+      _ = y := by
+        have hpow0 : (σ ^ 3) (e.symm y) = e.symm y := by rw [hσ]; rfl
+        have hpow : σ (σ (σ (e.symm y))) = e.symm y := by
+          simpa [pow_succ] using hpow0
+        simpa using congrArg e hpow
+  have hτne : τ ≠ 1 := by
+    intro hτ1
+    apply hne
+    apply MulEquiv.ext
+    intro x
+    apply e.injective
+    have happly := congrArg (fun f : MulAut order81_C27 => f (e x)) hτ1
+    simpa [τ] using happly
+  have hfixed : τ (e v) = e v := by
+    simp [τ, hv]
+  obtain ⟨y, hy⟩ := order81_C27_fixed_of_nontrivial_aut_is_cube τ hτ hτne hfixed
+  refine ⟨e.symm y, ?_⟩
+  apply e.injective
+  calc
+    e ((e.symm y) ^ 3) = y ^ 3 := by simp
+    _ = e v := hy
+
+/-- In an order-`81` group, conjugation fixes the cubes in any cyclic abelian normal
+subgroup of order `27`. -/
+theorem order81_conjNormal_apply_cube_of_cyclic_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3))) (g : G) (x : K) :
+    (MulAut.conjNormal (H := K) g) (x ^ 3) = x ^ 3 := by
+  exact order81_cyclic_kernel_aut_pow_three_apply_cube hKcyc
+    (MulAut.conjNormal (H := K) g)
+    (order81_conjNormal_cube_eq_one_of_abelian_normal_subgroup_card_27
+      hcard hKcard hKcomm g) x
+
+/-- In an order-`81` group, any element commutes with the cubes of elements in a cyclic
+abelian normal subgroup of order `27`. -/
+theorem order81_commute_cube_of_mem_cyclic_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3))) (g : G)
+    {x : G} (hx : x ∈ K) :
+    Commute g (x ^ 3) := by
+  have hfix := order81_conjNormal_apply_cube_of_cyclic_kernel
+    hcard hKcard hKcomm hKcyc g (⟨x, hx⟩ : K)
+  have hval : g * (x ^ 3) * g⁻¹ = x ^ 3 := by
+    simpa using congrArg Subtype.val hfix
+  have hmul := congrArg (fun t : G => t * g) hval
+  have hcomm : g * (x ^ 3) = (x ^ 3) * g := by
+    simpa [mul_assoc] using hmul
+  exact hcomm
+
+/-- In a non-abelian order-`81` group with cyclic order-`27` kernel, the cube of a
+quotient generator is itself a cube inside the kernel. -/
+theorem order81_generator_cube_is_kernel_cube_of_cyclic_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3))) {g : G}
+    (hgK : g ∉ K) (hnoncomm : ¬ IsMulCommutative G) :
+    ∃ x : K, x ^ 3 = (⟨g ^ 3,
+      order81_cube_mem_of_normal_subgroup_card_27 hcard hKcard g⟩ : K) := by
+  let v : K := ⟨g ^ 3, order81_cube_mem_of_normal_subgroup_card_27 hcard hKcard g⟩
+  let σ : MulAut K := MulAut.conjNormal (H := K) g
+  have hσ3 : σ ^ 3 = 1 :=
+    order81_conjNormal_cube_eq_one_of_abelian_normal_subgroup_card_27
+      hcard hKcard hKcomm g
+  have hσne : σ ≠ 1 :=
+    order81_conjNormal_generator_ne_one_of_noncommutative
+      hcard hKcard hKcomm hgK hnoncomm
+  have hv : σ v = v := by
+    apply Subtype.ext
+    change g * (g ^ 3) * g⁻¹ = g ^ 3
+    group
+  simpa [v, σ] using
+    order81_cyclic_kernel_fixed_of_nontrivial_aut_is_cube hKcyc σ hσ3 hσne hv
+
 /-- The `C_3` action on `C_27` generated by multiplication by `10`. -/
 noncomputable abbrev order81_c27Action : CyclicRep 3 →* MulAut order81_C27 :=
   unitAutHom.comp (powHom (p := 27) (q := 3) order81_u10 order81_u10_cube)
