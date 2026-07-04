@@ -6,6 +6,7 @@ Authors: Smallgroups contributors
 import Smallgroups.UsefulTheorems.Counting
 import Smallgroups.UsefulTheorems.P3Group
 import Smallgroups.UsefulTheorems.PrimePairNonabelian
+import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Smallgroups.UsefulTheorems.OrderP4_Abel
 import Smallgroups.UsefulTheorems.OrderP4_NonAbel
 import Mathlib.GroupTheory.GroupAction.Quotient
@@ -2824,6 +2825,32 @@ theorem order81_split_extension_mulEquiv_zpowers_of_order_three_generator
   change Nonempty (G ≃* SemidirectProduct K (Subgroup.zpowers g)
     (K.normalizerMonoidHom.comp (Subgroup.inclusion hle)))
   exact ⟨(SemidirectProduct.mulEquivSubgroup hcomp).symm⟩
+
+/-- An outside order-`3` element generates a subgroup isomorphic to the standard `C_3`. -/
+theorem order81_zpowers_mulEquiv_cyclicRep3_of_order_three {G : Type*} [Group G]
+    {K : Subgroup G} {g : G} (hgK : g ∉ K) (hg3 : g ^ 3 = 1) :
+    Nonempty (Subgroup.zpowers g ≃* CyclicRep 3) := by
+  have hcard : Nat.card (Subgroup.zpowers g) = 3 := by
+    rw [Nat.card_zpowers, order81_orderOf_eq_three_of_not_mem_kernel_pow_three hgK hg3]
+  exact cyclicRep_classification (by norm_num : (3 : ℕ) ≠ 0) hcard
+
+/-- If a normal order-`27` subgroup has an outside order-`3` generator, then the group
+splits as a semidirect product over the standard `C_3`. -/
+theorem order81_split_extension_mulEquiv_cyclicRep3_of_order_three_generator
+    {G : Type*} [Group G] {K : Subgroup G} [K.Normal] [Finite G]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) {g : G}
+    (hgK : g ∉ K) (hg3 : g ^ 3 = 1) :
+    ∃ φ : CyclicRep 3 →* MulAut K,
+      Nonempty (G ≃* SemidirectProduct K (CyclicRep 3) φ) := by
+  obtain ⟨φz, ⟨e⟩⟩ :=
+    order81_split_extension_mulEquiv_zpowers_of_order_three_generator hcard hKcard hgK hg3
+  obtain ⟨σ⟩ := order81_zpowers_mulEquiv_cyclicRep3_of_order_three hgK hg3
+  let φ : CyclicRep 3 →* MulAut K := φz.comp σ.symm.toMonoidHom
+  refine ⟨φ, ⟨e.trans ?_⟩⟩
+  exact semidirectProductCongr (MulEquiv.refl K) σ (by
+    intro h
+    ext x
+    simp [φ])
 
 /-- The parametrisation `(a, b) ↦ x^a y^b` is injective when `x` has order `9`
 inside `K` and `y` is an order-`3` element outside `K`. -/
