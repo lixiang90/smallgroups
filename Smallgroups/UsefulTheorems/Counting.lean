@@ -348,6 +348,29 @@ instance instGroupRep7 (A B C D E F G : Type)
   | 5 => ‹Group F›
   | 6 => ‹Group G›
 
+/-- The eight-element representative family. -/
+def rep8 (A B C D E F G H : Type) : Fin 8 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+  | 5 => F
+  | 6 => G
+  | 7 => H
+
+instance instGroupRep8 (A B C D E F G H : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F] [Group G] [Group H] :
+    ∀ i, Group (rep8 A B C D E F G H i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+  | 5 => ‹Group F›
+  | 6 => ‹Group G›
+  | 7 => ‹Group H›
+
 /-- The twelve-element representative family. -/
 def rep12 (A B C D E F G H I J K L : Type) : Fin 12 → Type
   | 0 => A
