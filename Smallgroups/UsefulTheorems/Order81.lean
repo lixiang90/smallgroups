@@ -993,6 +993,160 @@ theorem order81_abelian_or_commutators_central_cube_one_or_nonabelian_quotient_c
     right
     exact hnonabquot
 
+/-- If all commutators are central and have cube `1`, then the cube map is multiplicative. -/
+theorem order81_mul_pow_three_of_commutators_central_cube_one
+    {G : Type*} [Group G]
+    (hcenter : ∀ x y : G, ⁅x, y⁆ ∈ center G)
+    (hcube : ∀ x y : G, ⁅x, y⁆ ^ 3 = 1) (a b : G) :
+    (a * b) ^ 3 = a ^ 3 * b ^ 3 := by
+  set z := a * b * a⁻¹ * b⁻¹ with hz
+  have hz_cent : z ∈ center G := by
+    simpa [hz, commutatorElement_def] using hcenter a b
+  have hz_comm (g : G) : Commute z g := (Subgroup.mem_center_iff.mp hz_cent g).symm
+  have hz_pow3 : z ^ 3 = 1 := by
+    simpa [hz, commutatorElement_def] using hcube a b
+  let z' := z⁻¹
+  have hz'_comm (g : G) : Commute z' g :=
+    (Subgroup.mem_center_iff.mp (Subgroup.inv_mem _ hz_cent) g).symm
+  have hz'_pow3 : z' ^ 3 = 1 := by
+    calc
+      z' ^ 3 = (z ^ 3)⁻¹ := by simp [z']
+      _ = 1⁻¹ := by rw [hz_pow3]
+      _ = 1 := by simp
+  have hz'_pow_comm (n : ℕ) (g : G) : Commute (z' ^ n) g :=
+    (hz'_comm g).pow_left n
+  have h_ab_ba : a * b = b * a * z := by
+    calc
+      a * b = (a * b * a⁻¹ * b⁻¹) * (b * a) := by group
+      _ = z * (b * a) := by rw [hz]
+      _ = b * a * z := hz_comm (b * a)
+  have h_ba_ab : b * a = a * b * z' := by
+    calc
+      b * a = (b * a * z) * z⁻¹ := by group
+      _ = (a * b) * z⁻¹ := by rw [← h_ab_ba]
+      _ = a * b * z' := rfl
+  have h_pow_ba : ∀ n : ℕ, b ^ n * a = a * b ^ n * z' ^ n := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ n ih =>
+      calc
+        b ^ (n + 1) * a = b * (b ^ n * a) := by group
+        _ = b * (a * b ^ n * z' ^ n) := by rw [ih]
+        _ = (b * a) * b ^ n * z' ^ n := by group
+        _ = (a * b * z') * b ^ n * z' ^ n := by rw [h_ba_ab]
+        _ = a * b * (z' * b ^ n) * z' ^ n := by group
+        _ = a * b * (b ^ n * z') * z' ^ n := by rw [hz'_comm (b ^ n)]
+        _ = a * (b * b ^ n) * (z' * z' ^ n) := by group
+        _ = a * b ^ (n + 1) * z' ^ (n + 1) := by
+          rw [← pow_succ' b n, ← pow_succ' z' n]
+  let c : ℕ → G := Nat.rec 1 (fun n cn => cn * z' ^ n)
+  have hc_zero : c 0 = 1 := rfl
+  have hc_succ (n : ℕ) : c (n + 1) = c n * z' ^ n := rfl
+  have hc_comm (n : ℕ) : ∀ g : G, Commute (c n) g := by
+    induction n with
+    | zero =>
+      intro g
+      rw [hc_zero]
+      exact Commute.one_left g
+    | succ n ih =>
+      intro g
+      rw [hc_succ n]
+      exact ((ih g).mul_left (hz'_pow_comm n g))
+  have h_prod_comm (n : ℕ) : ∀ g : G, Commute (c n * z' ^ n) g := by
+    intro g
+    exact ((hc_comm n g).mul_left (hz'_pow_comm n g))
+  have h_formula : ∀ n : ℕ, (a * b) ^ n = a ^ n * b ^ n * c n := by
+    intro n
+    induction n with
+    | zero => simp [hc_zero]
+    | succ n ih =>
+      calc
+        (a * b) ^ (n + 1) = ((a * b) ^ n) * (a * b) := by rw [pow_succ]
+        _ = (a ^ n * b ^ n * c n) * (a * b) := by rw [ih]
+        _ = a ^ n * (b ^ n * c n * a) * b := by group
+        _ = a ^ n * (b ^ n * (c n * a)) * b := by group
+        _ = a ^ n * (b ^ n * (a * c n)) * b := by rw [hc_comm n a]
+        _ = a ^ n * ((b ^ n * a) * c n) * b := by group
+        _ = a ^ n * ((a * b ^ n * z' ^ n) * c n) * b := by rw [h_pow_ba n]
+        _ = a ^ n * (a * b ^ n * (z' ^ n * c n)) * b := by group
+        _ = a ^ n * (a * b ^ n * (c n * z' ^ n)) * b := by rw [hc_comm n (z' ^ n)]
+        _ = (a ^ n * a) * b ^ n * (c n * z' ^ n) * b := by group
+        _ = a ^ (n + 1) * b ^ n * (c n * z' ^ n) * b := by rw [← pow_succ a n]
+        _ = a ^ (n + 1) * b ^ n * ((c n * z' ^ n) * b) := by group
+        _ = a ^ (n + 1) * b ^ n * (b * (c n * z' ^ n)) := by
+          rw [h_prod_comm n b]
+        _ = a ^ (n + 1) * (b ^ n * b) * (c n * z' ^ n) := by group
+        _ = a ^ (n + 1) * b ^ (n + 1) * (c n * z' ^ n) := by
+          rw [← pow_succ b n]
+        _ = a ^ (n + 1) * b ^ (n + 1) * c (n + 1) := by rw [hc_succ n]
+  rw [h_formula 3]
+  have hc3 : c 3 = 1 := by
+    change ((1 * z' ^ 0) * z' ^ 1) * z' ^ 2 = 1
+    simp only [pow_zero, pow_one, mul_one, one_mul]
+    rw [← pow_succ' z' 2, hz'_pow3]
+  rw [hc3, mul_one]
+
+/-- If all commutators are central and have cube `1`, then every cube is central. -/
+theorem order81_cube_mem_center_of_commutators_central_cube_one
+    {G : Type*} [Group G]
+    (hcenter : ∀ x y : G, ⁅x, y⁆ ∈ center G)
+    (hcube : ∀ x y : G, ⁅x, y⁆ ^ 3 = 1) (x : G) :
+    x ^ 3 ∈ center G := by
+  rw [Subgroup.mem_center_iff]
+  intro g
+  set z := x * g * x⁻¹ * g⁻¹ with hz
+  have hz_cent : z ∈ center G := by
+    simpa [hz, commutatorElement_def] using hcenter x g
+  have hz_comm (u : G) : Commute z u := (Subgroup.mem_center_iff.mp hz_cent u).symm
+  have hz_pow3 : z ^ 3 = 1 := by
+    simpa [hz, commutatorElement_def] using hcube x g
+  let z' := z⁻¹
+  have hz'_comm (u : G) : Commute z' u :=
+    (Subgroup.mem_center_iff.mp (Subgroup.inv_mem _ hz_cent) u).symm
+  have hz'_pow3 : z' ^ 3 = 1 := by
+    calc
+      z' ^ 3 = (z ^ 3)⁻¹ := by simp [z']
+      _ = 1⁻¹ := by rw [hz_pow3]
+      _ = 1 := by simp
+  have h_xg_gx : x * g = g * x * z := by
+    calc
+      x * g = (x * g * x⁻¹ * g⁻¹) * (g * x) := by group
+      _ = z * (g * x) := by rw [hz]
+      _ = g * x * z := hz_comm (g * x)
+  have h_gx_xg : g * x = x * g * z' := by
+    calc
+      g * x = (g * x * z) * z⁻¹ := by group
+      _ = (x * g) * z⁻¹ := by rw [← h_xg_gx]
+      _ = x * g * z' := rfl
+  have hconj : g * x * g⁻¹ = x * z' := by
+    calc
+      g * x * g⁻¹ = (x * g * z') * g⁻¹ := by rw [h_gx_xg]
+      _ = x * (g * z') * g⁻¹ := by group
+      _ = x * (z' * g) * g⁻¹ := by rw [← (hz'_comm g).eq]
+      _ = x * z' := by group
+  have hconj3 : g * x ^ 3 * g⁻¹ = x ^ 3 := by
+    calc
+      g * x ^ 3 * g⁻¹ = (g * x * g⁻¹) ^ 3 := by rw [conj_pow]
+      _ = (x * z') ^ 3 := by rw [hconj]
+      _ = x ^ 3 * z' ^ 3 := (hz'_comm x).symm.mul_pow 3
+      _ = x ^ 3 := by rw [hz'_pow3, mul_one]
+  have hmul := congrArg (fun t : G => t * g) hconj3
+  simpa [mul_assoc] using hmul
+
+/-- In the class-two exponent-`3` commutator branch, the cube map is a homomorphism into
+the center. -/
+def order81_cubeCenterHom_of_commutators_central_cube_one
+    {G : Type*} [Group G]
+    (hcenter : ∀ x y : G, ⁅x, y⁆ ∈ center G)
+    (hcube : ∀ x y : G, ⁅x, y⁆ ^ 3 = 1) :
+    G →* center G where
+  toFun x := ⟨x ^ 3, order81_cube_mem_center_of_commutators_central_cube_one hcenter hcube x⟩
+  map_one' := by ext; simp
+  map_mul' x y := by
+    ext
+    exact order81_mul_pow_three_of_commutators_central_cube_one hcenter hcube x y
+
 /-- If conjugation by `g` is trivial on `K`, then `g` commutes with every element of `K`. -/
 theorem order81_commute_of_conjNormal_eq_one
     {G : Type*} [Group G] {K : Subgroup G} [K.Normal]
