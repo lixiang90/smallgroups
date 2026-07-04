@@ -103,4 +103,140 @@ theorem semidirectProduct_action_inj (e : SemidirectProduct N H φ ≃* Semidire
     rwa [hl] at hcalc
   exact SemidirectProduct.inl_inj.mp key
 
+/-! ### A characteristic normal subgroup has a well-defined complement
+
+If `G = N ⋊ H₁ = N ⋊ H₂` (i.e. `H₁` and `H₂` are both complements of the *same* subgroup `N` in
+the *same* ambient group `G`) and `N` is characteristic, then `H₁ ≅ H₂`: both realise the quotient
+`G ⧸ N`. This does not even need `N` characteristic, just normal — `N.Characteristic` is a
+convenient sufficient hypothesis since it gives `N.Normal` for free
+(`Subgroup.normal_of_characteristic`), and it is what is available in practice (e.g. `N` is the
+unique subgroup of its order, see `characteristic_of_coprime_index` below). -/
+
+/-- **A characteristic subgroup has an isomorphism-unique complement.** If `H₁` and `H₂` are both
+complements of the same characteristic subgroup `N` in `G`, then `H₁ ≅ H₂`. -/
+theorem IsComplement'.mulEquiv_of_characteristic {G : Type*} [Group G] {N H1 H2 : Subgroup G}
+    [N.Characteristic] (h1 : H1.IsComplement' N) (h2 : H2.IsComplement' N) :
+    Nonempty (H1 ≃* H2) :=
+  ⟨h1.QuotientMulEquiv.symm.trans h2.QuotientMulEquiv⟩
+
+/-! ### Coprime order forces uniqueness, hence characteristic-ness
+
+The hypothesis `N.Characteristic` in the theorem above is easiest to establish, in the
+Schur–Zassenhaus setting used throughout this project, via **coprime order**: a normal subgroup
+whose order is coprime to its index is the *unique* subgroup of that order, and is therefore fixed
+by every automorphism. -/
+
+/-- **A general helper.** A subgroup contained in another of the same (finite) cardinality equals
+it. -/
+private theorem eq_of_le_of_card_eq {G : Type*} [Group G] [Finite G] {H K : Subgroup G}
+    (hle : H ≤ K) (hcard : Nat.card H = Nat.card K) : H = K := by
+  apply SetLike.coe_injective
+  have hH : Nat.card H = (↑H : Set G).ncard := Nat.card_coe_set_eq (↑H : Set G)
+  have hK : Nat.card K = (↑K : Set G).ncard := Nat.card_coe_set_eq (↑K : Set G)
+  exact Set.eq_of_subset_of_ncard_le (SetLike.coe_subset_coe.mpr hle) (by omega)
+
+/-- **A normal subgroup with coprime index is the unique subgroup of its order.** If `N` is normal
+in the finite group `G` with `Nat.card N` coprime to `N.index`, then any subgroup `K` with
+`Nat.card K = Nat.card N` equals `N`. -/
+theorem eq_of_normal_of_coprime_index_of_card_eq {G : Type*} [Group G] [Finite G]
+    {N K : Subgroup G} [N.Normal] (hcop : Nat.Coprime (Nat.card N) N.index)
+    (hK : Nat.card K = Nat.card N) : K = N := by
+  have hle : K ≤ N := by
+    intro x hx
+    have hd1 : Nat.card (K.map (QuotientGroup.mk' N)) ∣ Nat.card K :=
+      Subgroup.card_map_dvd K (QuotientGroup.mk' N)
+    have hd2 : Nat.card (K.map (QuotientGroup.mk' N)) ∣ N.index := by
+      rw [N.index_eq_card]
+      exact (K.map (QuotientGroup.mk' N)).card_subgroup_dvd_card
+    rw [hK] at hd1
+    have h1 : Nat.card (K.map (QuotientGroup.mk' N)) = 1 :=
+      Nat.eq_one_of_dvd_coprimes hcop hd1 hd2
+    have hbot : K.map (QuotientGroup.mk' N) = ⊥ := Subgroup.card_eq_one.mp h1
+    have hmem : QuotientGroup.mk' N x ∈ K.map (QuotientGroup.mk' N) :=
+      Subgroup.mem_map_of_mem _ hx
+    rw [hbot, Subgroup.mem_bot] at hmem
+    exact (QuotientGroup.eq_one_iff x).mp hmem
+  exact eq_of_le_of_card_eq hle (by rw [hK])
+
+/-- **Coprime index implies characteristic.** A normal subgroup whose order is coprime to its
+index is characteristic: any automorphism sends it to a normal subgroup of the same order, which
+must be itself by uniqueness. -/
+theorem characteristic_of_coprime_index {G : Type*} [Group G] [Finite G]
+    {N : Subgroup G} [N.Normal] (hcop : Nat.Coprime (Nat.card N) N.index) : N.Characteristic := by
+  refine Subgroup.characteristic_iff_map_eq.mpr fun ϕ => ?_
+  haveI : (N.map ϕ.toMonoidHom).Normal :=
+    Subgroup.Normal.map ‹N.Normal› ϕ.toMonoidHom ϕ.surjective
+  have hcard : Nat.card (N.map ϕ.toMonoidHom) = Nat.card N :=
+    Nat.card_congr (Equiv.Set.image ϕ N.carrier ϕ.injective).symm
+  have hidx : (N.map ϕ.toMonoidHom).index = N.index := by
+    have h1 := (N.map ϕ.toMonoidHom).card_mul_index
+    have h2 := N.card_mul_index
+    rw [hcard] at h1
+    have hpos : 0 < Nat.card N := Nat.card_pos
+    exact Nat.eq_of_mul_eq_mul_left hpos (h1.trans h2.symm)
+  exact eq_of_normal_of_coprime_index_of_card_eq (hidx ▸ hcop) hcard
+
+/-! ### Transporting `H₁ ≅ H₂` across an abstract isomorphism of semidirect products -/
+
+/-- **The complement of a coprime-order semidirect factor is well-defined up to isomorphism.**
+If `Nat.card N` is coprime to `Nat.card H₂`, any isomorphism between `N ⋊[φ₁] H₁` and
+`N ⋊[φ₂] H₂` forces `H₁ ≅ H₂`. (Only the target's coprimality is needed: the image of `N`'s copy
+in the first group is forced, by uniqueness in the second group, to be `N`'s copy there.) -/
+theorem semidirectProduct_congr_range {N H1 H2 : Type*} [Group N] [Group H1] [Group H2]
+    [Finite N] [Finite H1] [Finite H2] {φ1 : H1 →* MulAut N} {φ2 : H2 →* MulAut N}
+    (hcop2 : Nat.Coprime (Nat.card N) (Nat.card H2))
+    (f : SemidirectProduct N H1 φ1 ≃* SemidirectProduct N H2 φ2) :
+    Nonempty (H1 ≃* H2) := by
+  haveI hfin1 : Finite (SemidirectProduct N H1 φ1) := by
+    have : Nat.card (SemidirectProduct N H1 φ1) ≠ 0 := by
+      rw [Nat.card_congr SemidirectProduct.equivProd, Nat.card_prod]
+      exact Nat.mul_ne_zero Nat.card_pos.ne' Nat.card_pos.ne'
+    exact Nat.finite_of_card_ne_zero this
+  haveI hfin2 : Finite (SemidirectProduct N H2 φ2) :=
+    Finite.of_equiv _ f.toEquiv
+  set N1 : Subgroup (SemidirectProduct N H1 φ1) :=
+    (SemidirectProduct.inl : N →* SemidirectProduct N H1 φ1).range with hN1def
+  set N2 : Subgroup (SemidirectProduct N H2 φ2) :=
+    (SemidirectProduct.inl : N →* SemidirectProduct N H2 φ2).range with hN2def
+  haveI hN1normal : N1.Normal := by
+    rw [hN1def, SemidirectProduct.range_inl_eq_ker_rightHom]; infer_instance
+  haveI hN2normal : N2.Normal := by
+    rw [hN2def, SemidirectProduct.range_inl_eq_ker_rightHom]; infer_instance
+  have hcardN1 : Nat.card N1 = Nat.card N :=
+    Nat.card_congr (Equiv.ofInjective _ SemidirectProduct.inl_injective).symm
+  have hcardN2 : Nat.card N2 = Nat.card N :=
+    Nat.card_congr (Equiv.ofInjective _ SemidirectProduct.inl_injective).symm
+  have hidx2 : N2.index = Nat.card H2 := by
+    have h1 := N2.card_mul_index
+    have h2 : Nat.card (SemidirectProduct N H2 φ2) = Nat.card N * Nat.card H2 := by
+      rw [Nat.card_congr SemidirectProduct.equivProd, Nat.card_prod]
+    rw [hcardN2, h2] at h1
+    exact Nat.eq_of_mul_eq_mul_left Nat.card_pos h1
+  have hcop2' : Nat.Coprime (Nat.card N2) N2.index := by rw [hcardN2, hidx2]; exact hcop2
+  have hK : Nat.card (N1.map f.toMonoidHom) = Nat.card N2 := by
+    rw [hcardN2, ← hcardN1]
+    exact Nat.card_congr (Equiv.Set.image f.toMonoidHom N1.carrier f.injective).symm
+  haveI hmapNormal : (N1.map f.toMonoidHom).Normal :=
+    Subgroup.Normal.map hN1normal f.toMonoidHom f.surjective
+  have heq : N1.map f.toMonoidHom = N2 :=
+    eq_of_normal_of_coprime_index_of_card_eq hcop2' hK
+  have hquot0 : (SemidirectProduct N H1 φ1) ⧸ N1 ≃*
+      (SemidirectProduct N H2 φ2) ⧸ (N1.map f.toMonoidHom) :=
+    QuotientGroup.congr N1 (N1.map f.toMonoidHom) f rfl
+  have hquot : (SemidirectProduct N H1 φ1) ⧸ N1 ≃* (SemidirectProduct N H2 φ2) ⧸ N2 :=
+    hquot0.trans (QuotientGroup.quotientMulEquivOfEq heq)
+  have hker1 : (SemidirectProduct.rightHom : SemidirectProduct N H1 φ1 →* H1).ker = N1 :=
+    (hN1def.trans SemidirectProduct.range_inl_eq_ker_rightHom).symm
+  have hker2 : (SemidirectProduct.rightHom : SemidirectProduct N H2 φ2 →* H2).ker = N2 :=
+    (hN2def.trans SemidirectProduct.range_inl_eq_ker_rightHom).symm
+  have hquotH1 : H1 ≃* (SemidirectProduct N H1 φ1) ⧸ N1 :=
+    (QuotientGroup.quotientKerEquivOfSurjective SemidirectProduct.rightHom
+      SemidirectProduct.rightHom_surjective).symm.trans
+      (QuotientGroup.quotientMulEquivOfEq hker1)
+  have hquotH2 : (SemidirectProduct N H2 φ2) ⧸ N2 ≃* H2 :=
+    (QuotientGroup.quotientMulEquivOfEq hker2).symm.trans
+      (QuotientGroup.quotientKerEquivOfSurjective SemidirectProduct.rightHom
+        SemidirectProduct.rightHom_surjective)
+  exact ⟨hquotH1.trans (hquot.trans hquotH2)⟩
+
 end Smallgroups.UsefulTheorems
