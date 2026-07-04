@@ -224,6 +224,40 @@ theorem order81_exists_normal_subgroup_card_27 {G : Type*} [Group G]
     norm_num
   simpa using exists_normal_subgroup_card_p_cube_of_card_p4 (p := 3) (G := G) hcard'
 
+/-- If a subgroup of order `27` contains a central subgroup of order `9`, then it is abelian. -/
+theorem order81_isMulCommutative_of_center_subgroup_card_9_card_27 {G : Type*} [Group G]
+    {H K : Subgroup G} (hHK : H ≤ K)
+    (hHcentral : H.subgroupOf K ≤ Subgroup.center K)
+    (hHcard : Nat.card H = 9) (hKcard : Nat.card K = 27) :
+    IsMulCommutative K := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  simpa using isMulCommutative_of_center_subgroup_card_p_sq_card_p_cube
+    (p := 3) (G := G) hHK hHcentral (by simpa using hHcard) (by simpa using hKcard)
+
+/-- If the center has order `9`, then any order-`27` subgroup containing the center is
+abelian. -/
+theorem order81_isMulCommutative_of_center_le_subgroup_card_27 {G : Type*} [Group G]
+    {K : Subgroup G} (hcenter_le : Subgroup.center G ≤ K)
+    (hcenter_card : Nat.card (Subgroup.center G) = 9)
+    (hKcard : Nat.card K = 27) :
+    IsMulCommutative K := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  simpa using isMulCommutative_of_center_le_subgroup_card_p_cube
+    (p := 3) (G := G) hcenter_le (by simpa using hcenter_card) (by simpa using hKcard)
+
+/-- If an order-`81` group has center of order `9`, then it has an abelian subgroup of
+order `27`. -/
+theorem order81_exists_abelian_subgroup_card_27_of_center_card_9 {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) (hcenter_card : Nat.card (Subgroup.center G) = 9) :
+    ∃ K : Subgroup G, Nat.card K = 27 ∧ IsMulCommutative K := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  have hcard' : Nat.card G = 3 ^ 4 := by
+    rw [hcard]
+    norm_num
+  simpa using exists_abelian_subgroup_card_p_cube_of_center_card_p_sq
+    (p := 3) (G := G) hcard' (by simpa using hcenter_card)
+
 /-! ## Two immediate non-abelian representatives -/
 
 /-- The non-abelian group of order `27` and exponent `9`, reused in order `81` products. -/
