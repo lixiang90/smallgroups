@@ -20,8 +20,8 @@ For the non-abelian part, this file records the first split supplied by the exis
 `OrderP4_NonAbel` development: the center has order `3` or `9`, and hence is one of
 `C_3`, `C_9`, or `C_3 × C_3`.
 
-This is intentionally not yet a full classification of groups of order `81`: the ten
-non-abelian representatives and their distinctness still need a separate development.
+This is intentionally not yet a full classification of groups of order `81`: it records the
+fifteen representatives and their pairwise distinctness, but not the exhaustiveness theorem.
 -/
 
 namespace Smallgroups.UsefulTheorems
@@ -1933,5 +1933,63 @@ theorem order81_known_reps_pairwise : PairwiseNonMulEquiv order81_known_reps := 
   · exact absurd h (order81_abelian_nonabelian_disjoint i j)
   · exact absurd ⟨h.some.symm⟩ (order81_abelian_nonabelian_disjoint j i)
   · exact congrArg Sum.inr (order81_nonabelian_reps_pairwise i j h)
+
+/-- A concrete reindexing of the five abelian and ten non-abelian representatives by `Fin 15`. -/
+def order81_fin15Equiv : Fin 15 ≃ Fin 5 ⊕ (Fin 9 ⊕ Fin 1) where
+  toFun
+    | 0 => Sum.inl 0
+    | 1 => Sum.inl 1
+    | 2 => Sum.inl 2
+    | 3 => Sum.inl 3
+    | 4 => Sum.inl 4
+    | 5 => Sum.inr (Sum.inl 0)
+    | 6 => Sum.inr (Sum.inl 1)
+    | 7 => Sum.inr (Sum.inl 2)
+    | 8 => Sum.inr (Sum.inl 3)
+    | 9 => Sum.inr (Sum.inl 4)
+    | 10 => Sum.inr (Sum.inl 5)
+    | 11 => Sum.inr (Sum.inl 6)
+    | 12 => Sum.inr (Sum.inl 7)
+    | 13 => Sum.inr (Sum.inl 8)
+    | 14 => Sum.inr (Sum.inr 0)
+  invFun
+    | Sum.inl 0 => 0
+    | Sum.inl 1 => 1
+    | Sum.inl 2 => 2
+    | Sum.inl 3 => 3
+    | Sum.inl 4 => 4
+    | Sum.inr (Sum.inl 0) => 5
+    | Sum.inr (Sum.inl 1) => 6
+    | Sum.inr (Sum.inl 2) => 7
+    | Sum.inr (Sum.inl 3) => 8
+    | Sum.inr (Sum.inl 4) => 9
+    | Sum.inr (Sum.inl 5) => 10
+    | Sum.inr (Sum.inl 6) => 11
+    | Sum.inr (Sum.inl 7) => 12
+    | Sum.inr (Sum.inl 8) => 13
+    | Sum.inr (Sum.inr 0) => 14
+  left_inv i := by fin_cases i <;> rfl
+  right_inv i := by
+    rcases i with i | i
+    · fin_cases i <;> rfl
+    · rcases i with i | i
+      · fin_cases i <;> rfl
+      · fin_cases i
+        rfl
+
+/-- The fifteen currently formalized representatives of order `81`, indexed by `Fin 15`. -/
+abbrev order81_reps : Fin 15 → Type :=
+  fun i => order81_known_reps (order81_fin15Equiv i)
+
+noncomputable instance instGroupOrder81Reps (i : Fin 15) : Group (order81_reps i) :=
+  inferInstanceAs (Group (order81_known_reps (order81_fin15Equiv i)))
+
+/-- Every representative in the `Fin 15` list has order `81`. -/
+theorem card_order81_reps (i : Fin 15) : Nat.card (order81_reps i) = 81 :=
+  card_order81_known_reps (order81_fin15Equiv i)
+
+/-- The `Fin 15` list of representatives is pairwise non-isomorphic. -/
+theorem order81_reps_pairwise : PairwiseNonMulEquiv order81_reps :=
+  PairwiseNonMulEquiv.reindex order81_fin15Equiv order81_known_reps_pairwise
 
 end Smallgroups.UsefulTheorems
