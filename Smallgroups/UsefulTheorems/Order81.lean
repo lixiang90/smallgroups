@@ -1114,6 +1114,150 @@ theorem order81_direct_nonabelian_reps_pairwise :
 abbrev order81_C9C3 : Type :=
   Multiplicative (ZMod 9) × Multiplicative (ZMod 3)
 
+/-- The generator of the cube subgroup of `C_9 × C_3`. -/
+abbrev order81_C9C3_cubeGen : order81_C9C3 :=
+  (Multiplicative.ofAdd (3 : ZMod 9), 1)
+
+/-- An order-`9` element whose cube is `order81_C9C3_cubeGen`. -/
+abbrev order81_C9C3_cubeSource : order81_C9C3 :=
+  (Multiplicative.ofAdd (1 : ZMod 9), 1)
+
+/-- The cubes in `C_9 × C_3` are exactly among `1`, `c`, and `c ^ 2`, where
+`c = order81_C9C3_cubeGen`. -/
+theorem order81_C9C3_cube_cases (x : order81_C9C3) :
+    x ^ 3 = 1 ∨ x ^ 3 = order81_C9C3_cubeGen ∨
+      x ^ 3 = order81_C9C3_cubeGen ^ 2 := by
+  rcases x with ⟨a, b⟩
+  fin_cases a <;> fin_cases b <;> decide +kernel
+
+@[simp] theorem order81_C9C3_cubeSource_cube :
+    order81_C9C3_cubeSource ^ 3 = order81_C9C3_cubeGen := by
+  decide +kernel
+
+theorem order81_C9C3_cubeGen_ne_one : order81_C9C3_cubeGen ≠ 1 := by
+  decide +kernel
+
+theorem order81_C9C3_cubeGen_sq_ne_cubeGen :
+    order81_C9C3_cubeGen ^ 2 ≠ order81_C9C3_cubeGen := by
+  decide +kernel
+
+theorem order81_C9C3_cubeGen_sq_sq :
+    (order81_C9C3_cubeGen ^ 2) ^ 2 = order81_C9C3_cubeGen := by
+  decide +kernel
+
+/-- Any automorphism of `C_9 × C_3` whose cube is trivial fixes the cube subgroup
+generator. -/
+theorem order81_C9C3_aut_fix_cubeGen_of_pow_three (σ : MulAut order81_C9C3)
+    (hσ : σ ^ 3 = 1) :
+    σ order81_C9C3_cubeGen = order81_C9C3_cubeGen := by
+  have hcases : σ order81_C9C3_cubeGen = 1 ∨
+      σ order81_C9C3_cubeGen = order81_C9C3_cubeGen ∨
+        σ order81_C9C3_cubeGen = order81_C9C3_cubeGen ^ 2 := by
+    rw [← order81_C9C3_cubeSource_cube, map_pow]
+    exact order81_C9C3_cube_cases (σ order81_C9C3_cubeSource)
+  rcases hcases with h1 | hc | hc2
+  · exfalso
+    exact order81_C9C3_cubeGen_ne_one (σ.injective (by simpa using h1))
+  · exact hc
+  · exfalso
+    have happly := congrArg (fun τ : MulAut order81_C9C3 => τ order81_C9C3_cubeGen) hσ
+    have hsig3 : (σ ^ 3) order81_C9C3_cubeGen = order81_C9C3_cubeGen := by
+      simpa using happly
+    have hsig3calc : (σ ^ 3) order81_C9C3_cubeGen = order81_C9C3_cubeGen ^ 2 := by
+      calc
+        (σ ^ 3) order81_C9C3_cubeGen =
+            σ (σ (σ order81_C9C3_cubeGen)) := by simp [pow_succ]
+        _ = σ (σ (order81_C9C3_cubeGen ^ 2)) := by rw [hc2]
+        _ = σ ((σ order81_C9C3_cubeGen) ^ 2) := by rw [map_pow]
+        _ = σ ((order81_C9C3_cubeGen ^ 2) ^ 2) := by rw [hc2]
+        _ = σ order81_C9C3_cubeGen := by rw [order81_C9C3_cubeGen_sq_sq]
+        _ = order81_C9C3_cubeGen ^ 2 := hc2
+    exact order81_C9C3_cubeGen_sq_ne_cubeGen (by rw [← hsig3calc, hsig3])
+
+/-- Any automorphism of `C_9 × C_3` whose cube is trivial fixes all cubes. -/
+theorem order81_C9C3_aut_pow_three_apply_cube (σ : MulAut order81_C9C3)
+    (hσ : σ ^ 3 = 1) (x : order81_C9C3) :
+    σ (x ^ 3) = x ^ 3 := by
+  have hfixc := order81_C9C3_aut_fix_cubeGen_of_pow_three σ hσ
+  rcases order81_C9C3_cube_cases x with h1 | hc | hc2
+  · rw [h1, map_one]
+  · rw [hc, hfixc]
+  · rw [hc2, map_pow, hfixc]
+
+/-- Any automorphism of a `C_9 × C_3` subgroup whose cube is trivial fixes all cubes. -/
+theorem order81_p2p_kernel_aut_pow_three_apply_cube {G : Type*} [Group G]
+    {K : Subgroup G}
+    (hKp2p : Nonempty (K ≃* order81_C9C3))
+    (σ : MulAut K) (hσ : σ ^ 3 = 1) (x : K) :
+    σ (x ^ 3) = x ^ 3 := by
+  rcases hKp2p with ⟨e⟩
+  let τ : MulAut order81_C9C3 := e.symm.trans (σ.trans e)
+  have hτ : τ ^ 3 = 1 := by
+    apply MulEquiv.ext
+    intro y
+    calc
+      (τ ^ 3) y = τ (τ (τ y)) := by simp [pow_succ]
+      _ = e (σ (σ (σ (e.symm y)))) := by simp [τ]
+      _ = y := by
+        have hpow0 : (σ ^ 3) (e.symm y) = e.symm y := by rw [hσ]; rfl
+        have hpow : σ (σ (σ (e.symm y))) = e.symm y := by
+          simpa [pow_succ] using hpow0
+        simpa using congrArg e hpow
+  have hfix := order81_C9C3_aut_pow_three_apply_cube τ hτ (e x)
+  apply e.injective
+  calc
+    e (σ (x ^ 3)) = τ ((e x) ^ 3) := by simp [τ]
+    _ = (e x) ^ 3 := hfix
+    _ = e (x ^ 3) := by simp
+
+/-- In an order-`81` group, conjugation fixes the cubes in any `C_9 × C_3` abelian
+normal subgroup of order `27`. -/
+theorem order81_conjNormal_apply_cube_of_p2p_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKp2p : Nonempty (K ≃* order81_C9C3)) (g : G) (x : K) :
+    (MulAut.conjNormal (H := K) g) (x ^ 3) = x ^ 3 := by
+  exact order81_p2p_kernel_aut_pow_three_apply_cube hKp2p
+    (MulAut.conjNormal (H := K) g)
+    (order81_conjNormal_cube_eq_one_of_abelian_normal_subgroup_card_27
+      hcard hKcard hKcomm g) x
+
+/-- In an order-`81` group, any element commutes with the cubes of elements in a
+`C_9 × C_3` abelian normal subgroup of order `27`. -/
+theorem order81_commute_cube_of_mem_p2p_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKp2p : Nonempty (K ≃* order81_C9C3)) (g : G)
+    {x : G} (hx : x ∈ K) :
+    Commute g (x ^ 3) := by
+  have hfix := order81_conjNormal_apply_cube_of_p2p_kernel
+    hcard hKcard hKcomm hKp2p g (⟨x, hx⟩ : K)
+  have hval : g * (x ^ 3) * g⁻¹ = x ^ 3 := by
+    simpa using congrArg Subtype.val hfix
+  have hmul := congrArg (fun t : G => t * g) hval
+  have hcomm : g * (x ^ 3) = (x ^ 3) * g := by
+    simpa [mul_assoc] using hmul
+  exact hcomm
+
+/-- A `C_9 × C_3` kernel contains a central element of order `3` in the ambient
+order-`81` group. -/
+theorem order81_exists_central_orderOf_eq_3_mem_of_p2p_kernel {G : Type*} [Group G]
+    {K : Subgroup G} [K.Normal]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27) (hKcomm : IsMulCommutative K)
+    (hKp2p : Nonempty (K ≃* order81_C9C3)) :
+    ∃ z : G, z ∈ K ∧ orderOf z = 3 ∧ ∀ g : G, Commute g z := by
+  haveI : Finite K := Nat.finite_of_card_ne_zero (by rw [hKcard]; norm_num)
+  obtain ⟨k, hkord⟩ := order81_exists_orderOf_eq_9_of_p2p_kernel hKp2p
+  refine ⟨(k ^ 3).1, (k ^ 3).2, ?_, ?_⟩
+  · rw [← Subgroup.orderOf_mk (k ^ 3).1 (k ^ 3).2]
+    change orderOf (k ^ 3) = 3
+    rw [orderOf_pow, hkord]
+    norm_num
+  · intro g
+    have hcomm := order81_commute_cube_of_mem_p2p_kernel
+      hcard hKcard hKcomm hKp2p g k.2
+    simpa using hcomm
+
 /-- Reduction modulo `3`, as a ring hom `ZMod 9 →+* ZMod 3`. -/
 noncomputable abbrev order81_zmod9To3 : ZMod 9 →+* ZMod 3 :=
   ZMod.castHom (by norm_num : 3 ∣ 9) (ZMod 3)
