@@ -460,6 +460,33 @@ theorem order81_exists_normal_abelian_subgroup_card_27_with_kernel_classificatio
   exact ⟨K, hKnormal, hKcard, hKcomm,
     order81_abelian_subgroup_card_27_classification hKcard hKcomm⟩
 
+/-- A subgroup isomorphic to `C_27` contains an element of order `27`. -/
+theorem order81_exists_orderOf_eq_27_of_cyclic_kernel {G : Type*} [Group G]
+    {K : Subgroup G} (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3))) :
+    ∃ k : K, orderOf k = 27 := by
+  rcases hKcyc with ⟨e⟩
+  let x : Multiplicative (P3Group.CyclicP3 3) :=
+    Multiplicative.ofAdd (1 : P3Group.CyclicP3 3)
+  refine ⟨e.symm x, ?_⟩
+  calc
+    orderOf (e.symm x) = orderOf (e (e.symm x)) :=
+      (MulEquiv.orderOf_eq e (e.symm x)).symm
+    _ = orderOf x := by rw [MulEquiv.apply_symm_apply]
+    _ = 27 := by
+      change orderOf (Multiplicative.ofAdd (1 : ZMod (3 ^ 3))) = 27
+      rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+      norm_num
+
+/-- If the normal abelian kernel is cyclic of order `27`, then the ambient group contains
+an element of order `27` lying in that kernel. -/
+theorem order81_exists_orderOf_eq_27_mem_of_cyclic_kernel {G : Type*} [Group G]
+    {K : Subgroup G} (hKcyc : Nonempty (K ≃* Multiplicative (P3Group.CyclicP3 3))) :
+    ∃ x : G, x ∈ K ∧ orderOf x = 27 := by
+  obtain ⟨k, hkord⟩ := order81_exists_orderOf_eq_27_of_cyclic_kernel hKcyc
+  refine ⟨k.1, k.2, ?_⟩
+  rw [← Subgroup.orderOf_mk k.1 k.2]
+  exact hkord
+
 /-- If `K` is a normal subgroup of order `27` in a group of order `81`, then the quotient
 has prime order `3`, hence is cyclic. -/
 theorem order81_quotient_cyclic_of_normal_subgroup_card_27 {G : Type*} [Group G]
