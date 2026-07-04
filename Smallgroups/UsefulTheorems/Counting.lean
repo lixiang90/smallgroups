@@ -327,6 +327,27 @@ theorem isClassif_six {N : ℕ} (A B C D E F : Type)
         | exact absurd hiso ‹_›
         | exact absurd (Nonempty.intro hiso.some.symm) ‹_›
 
+/-- The seven-element representative family. -/
+def rep7 (A B C D E F G : Type) : Fin 7 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+  | 5 => F
+  | 6 => G
+
+instance instGroupRep7 (A B C D E F G : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F] [Group G] :
+    ∀ i, Group (rep7 A B C D E F G i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+  | 5 => ‹Group F›
+  | 6 => ‹Group G›
+
 /-- The twelve-element representative family. -/
 def rep12 (A B C D E F G H I J K L : Type) : Fin 12 → Type
   | 0 => A
