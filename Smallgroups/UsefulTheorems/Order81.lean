@@ -308,6 +308,30 @@ theorem order81_exists_central_order_three_quotient_classification_cases
   · rcases hquat with ⟨h32, _⟩
     norm_num at h32
 
+/-- Every group of order `81` is either one of the five abelian representatives, or has a
+central subgroup of order `3` whose quotient is one of the five groups of order `27`. -/
+theorem order81_abelian_or_central_quotient_classification_cases
+    {G : Type*} [Group G] (hcard : Nat.card G = 81) :
+    (∃ i, Nonempty (G ≃* order81_abelian_reps i)) ∨
+    (∃ (Z : Subgroup G) (hZnormal : Z.Normal),
+      Z ≤ center G ∧ Nat.card Z = 3 ∧
+        letI : Z.Normal := hZnormal
+        Nat.card (G ⧸ Z) = 27 ∧
+          (Nonempty ((G ⧸ Z) ≃* Multiplicative (P3Group.CyclicP3 3)) ∨
+            Nonempty ((G ⧸ Z) ≃*
+              (Multiplicative (ZMod (3 ^ 2)) × Multiplicative (ZMod 3))) ∨
+            Nonempty ((G ⧸ Z) ≃*
+              (Multiplicative (ZMod 3) × Multiplicative (ZMod 3) ×
+                Multiplicative (ZMod 3))) ∨
+            Nonempty ((G ⧸ Z) ≃* P3Group.HeisenbergGroup 3) ∨
+            Nonempty ((G ⧸ Z) ≃* P3Group.SemidirectP2P 3))) := by
+  by_cases hcomm : ∀ a b : G, a * b = b * a
+  · left
+    letI : CommGroup G := { mul_comm := hcomm }
+    exact order81_abelian_complete G hcard
+  · right
+    exact order81_exists_central_order_three_quotient_classification_cases hcard hcomm
+
 /-- In a non-abelian group of order `81`, the center is `C_3`, `C_9`, or `C_3 × C_3`. -/
 theorem order81_center_classification_of_nonabelian {G : Type*} [Group G]
     (hcard : Nat.card G = 81) (hnonab : ¬ (∀ a b : G, a * b = b * a)) :
