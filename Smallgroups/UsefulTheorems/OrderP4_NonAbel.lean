@@ -6,6 +6,8 @@ Authors: Smallgroups contributors
 import Smallgroups.UsefulTheorems.CenterInvariant
 import Smallgroups.UsefulTheorems.PrimeOrderClassification
 import Smallgroups.UsefulTheorems.PrimeSqClassification
+import Mathlib.GroupTheory.IndexNormal
+import Mathlib.GroupTheory.Sylow
 
 /-!
 # Center cardinality of non-abelian groups of order `p^4`
@@ -31,6 +33,30 @@ namespace Smallgroups.UsefulTheorems
 open Subgroup
 
 variable {p : ℕ} [Fact p.Prime]
+
+/-- Every group of order `p^4` has a normal subgroup of order `p^3`. -/
+theorem exists_normal_subgroup_card_p_cube_of_card_p4 {G : Type*} [Group G] [Finite G]
+    (hcard : Nat.card G = p ^ 4) :
+    ∃ H : Subgroup G, H.Normal ∧ Nat.card H = p ^ 3 := by
+  have hp : p.Prime := Fact.out
+  have hG : IsPGroup p G := IsPGroup.of_card (p := p) (n := 4) hcard
+  obtain ⟨H, hHcard⟩ := Sylow.exists_subgroup_card_pow_prime_of_le_card
+    (G := G) (p := p) (n := 3) hp hG (by
+      rw [hcard]
+      exact Nat.pow_le_pow_right hp.pos (by norm_num : 3 ≤ 4))
+  have hindex : H.index = p := by
+    have hmul := H.card_mul_index
+    rw [hHcard, hcard] at hmul
+    have hmul' : p ^ 3 * H.index = p ^ 3 * p := by
+      calc
+        p ^ 3 * H.index = p ^ 4 := hmul
+        _ = p ^ 3 * p := by ring
+    exact mul_left_cancel₀ (pow_ne_zero 3 hp.ne_zero) hmul'
+  have hnormal : H.Normal := by
+    apply Subgroup.normal_of_index_eq_minFac_card
+    rw [hindex, hcard]
+    exact (hp.pow_minFac (by norm_num : 4 ≠ 0)).symm
+  exact ⟨H, hnormal, hHcard⟩
 
 /-- In a non-abelian group of order `p^4`, the center has order `p` or `p^2`. -/
 theorem center_card_eq_p_or_p_sq_of_nonabelian_p4 {G : Type*} [Group G] [Finite G]

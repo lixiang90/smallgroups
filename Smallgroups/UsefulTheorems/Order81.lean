@@ -213,6 +213,17 @@ theorem order81_center_classification_of_nonabelian {G : Type*} [Group G]
     norm_num
   simpa using center_classification_of_nonabelian_p4 (p := 3) hcard' hnonab
 
+/-- Every group of order `81` has a normal subgroup of order `27`. -/
+theorem order81_exists_normal_subgroup_card_27 {G : Type*} [Group G]
+    (hcard : Nat.card G = 81) :
+    ∃ H : Subgroup G, H.Normal ∧ Nat.card H = 27 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  haveI : Finite G := Nat.finite_of_card_ne_zero (by rw [hcard]; norm_num)
+  have hcard' : Nat.card G = 3 ^ 4 := by
+    rw [hcard]
+    norm_num
+  simpa using exists_normal_subgroup_card_p_cube_of_card_p4 (p := 3) (G := G) hcard'
+
 /-! ## Two immediate non-abelian representatives -/
 
 /-- The non-abelian group of order `27` and exponent `9`, reused in order `81` products. -/
