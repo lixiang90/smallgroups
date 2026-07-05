@@ -4574,6 +4574,67 @@ end Order81C9C3NonSplit
 abbrev order81_c9c3_nonSplit_rep : Type :=
   Order81C9C3NonSplit
 
+/-- The quotient map from the non-split representative to the displayed `C_3` coordinate. -/
+noncomputable def order81_c9c3_nonSplit_tHom : order81_c9c3_nonSplit_rep →* CyclicRep 3 where
+  toFun x := Multiplicative.ofAdd x.t
+  map_one' := rfl
+  map_mul' x y := by
+    change Multiplicative.ofAdd ((x * y).t) = Multiplicative.ofAdd x.t *
+      Multiplicative.ofAdd y.t
+    simp
+
+/-- The displayed `C_9 × C_3` kernel inside the non-split representative. -/
+noncomputable def order81_c9c3_nonSplit_kernel : Subgroup order81_c9c3_nonSplit_rep :=
+  order81_c9c3_nonSplit_tHom.ker
+
+theorem order81_c9c3_nonSplit_kernel_normal :
+    order81_c9c3_nonSplit_kernel.Normal :=
+  MonoidHom.normal_ker order81_c9c3_nonSplit_tHom
+
+/-- The displayed kernel in the non-split representative is `C_9 × C_3`. -/
+noncomputable def order81_c9c3_nonSplit_kernel_mulEquiv_c9c3 :
+    order81_c9c3_nonSplit_kernel ≃* order81_C9C3 where
+  toFun x := (Multiplicative.ofAdd x.1.n.1, Multiplicative.ofAdd x.1.n.2)
+  invFun n := ⟨⟨(Multiplicative.toAdd n.1, Multiplicative.toAdd n.2), 0⟩, by
+    simp [order81_c9c3_nonSplit_kernel, order81_c9c3_nonSplit_tHom]⟩
+  left_inv x := by
+    rcases x with ⟨⟨⟨a, b⟩, t⟩, hx⟩
+    simp only [toAdd_ofAdd, Subtype.mk.injEq, Order81C9C3NonSplit.mk.injEq,
+      true_and] at hx ⊢
+    exact hx.symm
+  right_inv n := by
+    rcases n with ⟨a, b⟩
+    simp
+  map_mul' x y := by
+    rcases x with ⟨⟨⟨a, b⟩, tx⟩, hx⟩
+    rcases y with ⟨⟨⟨c, d⟩, ty⟩, hy⟩
+    simp [order81_c9c3_nonSplit_kernel, order81_c9c3_nonSplit_tHom] at hx hy
+    subst tx
+    subst ty
+    ext <;> simp [order81_c9c3_nonSplitAct, order81_c9c3_nonSplitCarry]
+
+/-- In the non-split representative, every element whose cube is trivial lies in the
+displayed kernel. -/
+theorem order81_c9c3_nonSplit_pow_three_eq_one_mem_kernel
+    (x : order81_c9c3_nonSplit_rep) (hx : x ^ 3 = 1) :
+    x ∈ order81_c9c3_nonSplit_kernel := by
+  change x ∈ order81_c9c3_nonSplit_tHom.ker
+  rw [MonoidHom.mem_ker]
+  change Multiplicative.ofAdd x.t = 1
+  apply Multiplicative.ofAdd.injective
+  change x.t = 0
+  have hdec : ∀ y : order81_c9c3_nonSplit_rep, y ^ 3 = 1 → y.t = 0 := by
+    decide +kernel
+  exact hdec x hx
+
+/-- Equivalently, the non-split representative has no order-`3` complement outside its
+displayed `C_9 × C_3` kernel. -/
+theorem order81_c9c3_nonSplit_no_order_three_outside_kernel :
+    ¬ ∃ x : order81_c9c3_nonSplit_rep,
+      x ∉ order81_c9c3_nonSplit_kernel ∧ x ^ 3 = 1 := by
+  rintro ⟨x, hxK, hx3⟩
+  exact hxK (order81_c9c3_nonSplit_pow_three_eq_one_mem_kernel x hx3)
+
 theorem card_order81_c9c3_nonSplit_rep :
     Nat.card order81_c9c3_nonSplit_rep = 81 := by
   rw [Nat.card_congr Order81C9C3NonSplit.equivProd]
