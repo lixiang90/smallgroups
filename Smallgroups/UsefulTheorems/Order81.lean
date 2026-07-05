@@ -4613,6 +4613,16 @@ noncomputable def order81_c9c3_nonSplit_kernel_mulEquiv_c9c3 :
     subst ty
     ext <;> simp [order81_c9c3_nonSplitAct, order81_c9c3_nonSplitCarry]
 
+theorem card_order81_c9c3_nonSplit_kernel :
+    Nat.card order81_c9c3_nonSplit_kernel = 27 := by
+  rw [Nat.card_congr order81_c9c3_nonSplit_kernel_mulEquiv_c9c3.toEquiv,
+    card_order81_C9C3]
+
+theorem order81_c9c3_nonSplit_kernel_commutative :
+    IsMulCommutative order81_c9c3_nonSplit_kernel :=
+  order81_isMulCommutative_of_mulEquiv_C9C3
+    ⟨order81_c9c3_nonSplit_kernel_mulEquiv_c9c3⟩
+
 /-- In the non-split representative, every element whose cube is trivial lies in the
 displayed kernel. -/
 theorem order81_c9c3_nonSplit_pow_three_eq_one_mem_kernel
