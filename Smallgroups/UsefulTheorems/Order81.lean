@@ -4682,6 +4682,20 @@ theorem order81_c9c3_nonSplit_coord_kernel_mem (x : order81_c9c3_nonSplit_rep) :
   rw [MonoidHom.mem_ker]
   rfl
 
+theorem order81_c9c3_nonSplit_mem_kernel_iff_t_eq_zero
+    (x : order81_c9c3_nonSplit_rep) :
+    x ∈ order81_c9c3_nonSplit_kernel ↔ x.t = 0 := by
+  change x ∈ order81_c9c3_nonSplit_tHom.ker ↔ x.t = 0
+  rw [MonoidHom.mem_ker]
+  change Multiplicative.ofAdd x.t = 1 ↔ x.t = 0
+  constructor
+  · intro h
+    apply Multiplicative.ofAdd.injective
+    simpa using h
+  · intro h
+    rw [h]
+    rfl
+
 /-- Coordinate normal form for the non-split representative. -/
 theorem order81_c9c3_nonSplit_coord_normal_form (x : order81_c9c3_nonSplit_rep) :
     x = (⟨x.n, 0⟩ : order81_c9c3_nonSplit_rep) *
@@ -4697,6 +4711,24 @@ theorem order81_c9c3_nonSplit_coord_normal_form_mem (x : order81_c9c3_nonSplit_r
       x = k * order81_c9c3_nonSplit_qgen ^ x.t.val :=
   ⟨⟨x.n, 0⟩, order81_c9c3_nonSplit_coord_kernel_mem x,
     order81_c9c3_nonSplit_coord_normal_form x⟩
+
+/-- The coordinate normal form is unique. -/
+theorem order81_c9c3_nonSplit_coord_normal_form_unique
+    {k l : order81_c9c3_nonSplit_rep} (hk : k ∈ order81_c9c3_nonSplit_kernel)
+    (hl : l ∈ order81_c9c3_nonSplit_kernel) {i j : ZMod 3}
+    (h : k * order81_c9c3_nonSplit_qgen ^ i.val =
+      l * order81_c9c3_nonSplit_qgen ^ j.val) :
+    i = j ∧ k = l := by
+  have hkt : k.t = 0 := (order81_c9c3_nonSplit_mem_kernel_iff_t_eq_zero k).mp hk
+  have hlt : l.t = 0 := (order81_c9c3_nonSplit_mem_kernel_iff_t_eq_zero l).mp hl
+  have hij : i = j := by
+    have ht := congrArg Order81C9C3NonSplit.t h
+    rw [order81_c9c3_nonSplit_qgen_pow_val, order81_c9c3_nonSplit_qgen_pow_val] at ht
+    simpa [hkt, hlt] using ht
+  refine ⟨hij, ?_⟩
+  subst j
+  have hcancel := congrArg (fun x => x * (order81_c9c3_nonSplit_qgen ^ i.val)⁻¹) h
+  simpa [mul_assoc] using hcancel
 
 theorem card_order81_c9c3_nonSplit_rep :
     Nat.card order81_c9c3_nonSplit_rep = 81 := by
