@@ -2091,6 +2091,201 @@ theorem order81_c9c3_paramAut_pow_three (r s t : ZMod 3) :
     order81_c9c3_paramAut r s t ^ 3 = 1 := by
   ext x <;> fin_cases r <;> fin_cases s <;> fin_cases t <;> fin_cases x <;> rfl
 
+theorem order81_c9c3_liftAddHom_mul (s b : ZMod 3) :
+    order81_c9c3_liftAddHom (s * b) = b.val • order81_c9c3_liftAddHom s := by
+  fin_cases s <;> fin_cases b <;> decide +kernel
+
+theorem order81_c9c3_liftAddHom_mod (s : ZMod 3) :
+    order81_zmod9To3 (order81_c9c3_liftAddHom s) = 0 := by
+  fin_cases s <;> decide +kernel
+
+theorem order81_c9c3_liftAddHom_mod_mul_add (u : ZMod 9) (s z : ZMod 3) :
+    order81_zmod9To3 (u * order81_c9c3_liftAddHom s +
+      order81_c9c3_liftAddHom (s * z)) = 0 := by
+  rw [map_add, map_mul, order81_c9c3_liftAddHom_mod, order81_c9c3_liftAddHom_mod]
+  simp
+
+theorem order81_c9c3_liftAddHom_of_three_mul_eq_zero
+    (a : ZMod 9) (ha : (3 : ZMod 9) * a = 0) :
+    ∃ b : ZMod 3, order81_c9c3_liftAddHom b = a := by
+  fin_cases a
+  · exact ⟨0, rfl⟩
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (1 : ZMod 9) = 0)) ha
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (2 : ZMod 9) = 0)) ha
+  · refine ⟨1, ?_⟩
+    change (3 : ZMod 9) * (1 : ZMod 9) = (3 : ZMod 9)
+    norm_num
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (4 : ZMod 9) = 0)) ha
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (5 : ZMod 9) = 0)) ha
+  · refine ⟨2, ?_⟩
+    change (3 : ZMod 9) * (2 : ZMod 9) = (6 : ZMod 9)
+    norm_num
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (7 : ZMod 9) = 0)) ha
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (8 : ZMod 9) = 0)) ha
+
+theorem order81_C9C3_gen_decomp (a : ZMod 9) (b : ZMod 3) :
+    ((Multiplicative.ofAdd a, Multiplicative.ofAdd b) : order81_C9C3) =
+      ((Multiplicative.ofAdd (1 : ZMod 9), 1) : order81_C9C3) ^ a.val *
+        ((1, Multiplicative.ofAdd (1 : ZMod 3)) : order81_C9C3) ^ b.val := by
+  ext <;> simp
+
+theorem order81_C9C3_aut_coord (σ : MulAut order81_C9C3) :
+    ∃ u : ZMod 9, ∃ s t z : ZMod 3, ∀ a : ZMod 9, ∀ b : ZMod 3,
+      σ ((Multiplicative.ofAdd a, Multiplicative.ofAdd b) : order81_C9C3) =
+        (Multiplicative.ofAdd (u * a + order81_c9c3_liftAddHom (s * b)),
+          Multiplicative.ofAdd (t * order81_zmod9To3 a + z * b)) := by
+  let e1 : order81_C9C3 := (Multiplicative.ofAdd (1 : ZMod 9), 1)
+  let e2 : order81_C9C3 := (1, Multiplicative.ofAdd (1 : ZMod 3))
+  let u : ZMod 9 := Multiplicative.toAdd (σ e1).1
+  let t : ZMod 3 := Multiplicative.toAdd (σ e1).2
+  let a2 : ZMod 9 := Multiplicative.toAdd (σ e2).1
+  have ha2 : (3 : ZMod 9) * a2 = 0 := by
+    have hp : (σ e2) ^ 3 = 1 := by
+      rw [← map_pow σ e2 3]
+      have : e2 ^ 3 = 1 := by decide +kernel
+      rw [this]
+      simp
+    have hfst := congrArg (fun x : order81_C9C3 => Multiplicative.toAdd x.1) hp
+    simpa [a2] using hfst
+  obtain ⟨s, hs⟩ := order81_c9c3_liftAddHom_of_three_mul_eq_zero a2 ha2
+  let z : ZMod 3 := Multiplicative.toAdd (σ e2).2
+  refine ⟨u, s, t, z, ?_⟩
+  intro a b
+  have he1 : σ e1 =
+      ((Multiplicative.ofAdd u, Multiplicative.ofAdd t) : order81_C9C3) := by
+    ext <;> simp [u, t]
+  have he2 : σ e2 =
+      ((Multiplicative.ofAdd (order81_c9c3_liftAddHom s), Multiplicative.ofAdd z) :
+        order81_C9C3) := by
+    ext <;> simp [a2, z, hs]
+  rw [order81_C9C3_gen_decomp a b, map_mul, map_pow, map_pow, he1, he2]
+  ext
+  · simp only [Prod.pow_mk, Prod.mk_mul_mk, toAdd_mul, toAdd_pow, toAdd_ofAdd,
+      nsmul_eq_mul, ZMod.natCast_val, ZMod.cast_id', id_eq, ofAdd_add]
+    rw [order81_c9c3_liftAddHom_mul, nsmul_eq_mul, mul_comm a u]
+    fin_cases b <;> norm_num
+  · simp only [Prod.pow_mk, Prod.mk_mul_mk, toAdd_mul, toAdd_pow, toAdd_ofAdd,
+      nsmul_eq_mul, ZMod.natCast_val, ZMod.cast_id', id_eq, ZMod.castHom_apply,
+      ofAdd_add]
+    rw [mul_comm (a.cast : ZMod 3) t, mul_comm b z]
+
+theorem order81_C9C3_param_unit_of_three_mul_eq_three
+    (u : ZMod 9) (hu : (3 : ZMod 9) * u = 3) :
+    ∃ r : ZMod 3, u = (1 : ZMod 9) + (3 : ZMod 9) * (r.val : ZMod 9) := by
+  fin_cases u
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (0 : ZMod 9) = 3)) hu
+  · refine ⟨0, ?_⟩
+    change (1 : ZMod 9) = (1 : ZMod 9) + (3 : ZMod 9) * (0 : ZMod 9)
+    norm_num
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (2 : ZMod 9) = 3)) hu
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (3 : ZMod 9) = 3)) hu
+  · refine ⟨1, ?_⟩
+    change (4 : ZMod 9) = (1 : ZMod 9) + (3 : ZMod 9) * (1 : ZMod 9)
+    norm_num
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (5 : ZMod 9) = 3)) hu
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (6 : ZMod 9) = 3)) hu
+  · refine ⟨2, ?_⟩
+    change (7 : ZMod 9) = (1 : ZMod 9) + (3 : ZMod 9) * (2 : ZMod 9)
+    norm_num
+  · exfalso
+    exact (by decide : ¬ ((3 : ZMod 9) * (8 : ZMod 9) = 3)) hu
+
+theorem order81_C9C3_zmod3_cube_eq_one (z : ZMod 3) (hz : z ^ 3 = 1) : z = 1 := by
+  fin_cases z
+  · exfalso
+    exact (by decide : ¬ ((0 : ZMod 3) ^ 3 = 1)) hz
+  · rfl
+  · exfalso
+    exact (by decide : ¬ ((2 : ZMod 3) ^ 3 = 1)) hz
+
+theorem order81_C9C3_aut_coord_u_condition (σ : MulAut order81_C9C3)
+    (u : ZMod 9) (s t z : ZMod 3)
+    (hcoord : ∀ a : ZMod 9, ∀ b : ZMod 3,
+      σ ((Multiplicative.ofAdd a, Multiplicative.ofAdd b) : order81_C9C3) =
+        (Multiplicative.ofAdd (u * a + order81_c9c3_liftAddHom (s * b)),
+          Multiplicative.ofAdd (t * order81_zmod9To3 a + z * b)))
+    (hσ : σ ^ 3 = 1) :
+    (3 : ZMod 9) * u = 3 := by
+  have hfix := order81_C9C3_aut_fix_cubeGen_of_pow_three σ hσ
+  have hcoord30 := hcoord (3 : ZMod 9) 0
+  change σ ((Multiplicative.ofAdd (3 : ZMod 9), Multiplicative.ofAdd (0 : ZMod 3)) :
+      order81_C9C3) =
+    ((Multiplicative.ofAdd (3 : ZMod 9), Multiplicative.ofAdd (0 : ZMod 3)) :
+      order81_C9C3) at hfix
+  rw [hcoord30] at hfix
+  have hfst := congrArg (fun x : order81_C9C3 => Multiplicative.toAdd x.1) hfix
+  simpa [order81_c9c3_liftAddHom, mul_comm] using hfst
+
+theorem order81_C9C3_aut_coord_z_condition (σ : MulAut order81_C9C3)
+    (u : ZMod 9) (s t z : ZMod 3)
+    (hcoord : ∀ a : ZMod 9, ∀ b : ZMod 3,
+      σ ((Multiplicative.ofAdd a, Multiplicative.ofAdd b) : order81_C9C3) =
+        (Multiplicative.ofAdd (u * a + order81_c9c3_liftAddHom (s * b)),
+          Multiplicative.ofAdd (t * order81_zmod9To3 a + z * b)))
+    (hσ : σ ^ 3 = 1) :
+    z ^ 3 = 1 := by
+  have hpow : (σ ^ 3) ((1, Multiplicative.ofAdd (1 : ZMod 3)) : order81_C9C3) =
+      ((1, Multiplicative.ofAdd (1 : ZMod 3)) : order81_C9C3) := by
+    rw [hσ]
+    rfl
+  change σ (σ (σ ((Multiplicative.ofAdd (0 : ZMod 9), Multiplicative.ofAdd (1 : ZMod 3)) :
+      order81_C9C3))) =
+    ((Multiplicative.ofAdd (0 : ZMod 9), Multiplicative.ofAdd (1 : ZMod 3)) :
+      order81_C9C3) at hpow
+  rw [hcoord 0 1] at hpow
+  have hpow1 :
+      σ (σ ((Multiplicative.ofAdd (order81_c9c3_liftAddHom s), Multiplicative.ofAdd z) :
+        order81_C9C3)) =
+        ((Multiplicative.ofAdd (0 : ZMod 9), Multiplicative.ofAdd (1 : ZMod 3)) :
+          order81_C9C3) := by
+    simpa [order81_zmod9To3] using hpow
+  rw [hcoord (order81_c9c3_liftAddHom s) z] at hpow1
+  rw [order81_c9c3_liftAddHom_mod s] at hpow1
+  have hpow2 :
+      σ ((Multiplicative.ofAdd (u * order81_c9c3_liftAddHom s) *
+            Multiplicative.ofAdd (order81_c9c3_liftAddHom (s * z)),
+          Multiplicative.ofAdd (z * z)) : order81_C9C3) =
+        ((1, Multiplicative.ofAdd (1 : ZMod 3)) : order81_C9C3) := by
+    simpa using hpow1
+  rw [← ofAdd_add] at hpow2
+  rw [hcoord (u * order81_c9c3_liftAddHom s + order81_c9c3_liftAddHom (s * z))
+    (z * z)] at hpow2
+  rw [order81_c9c3_liftAddHom_mod_mul_add u s z] at hpow2
+  have hsnd := congrArg (fun x : order81_C9C3 => Multiplicative.toAdd x.2) hpow2
+  simpa [pow_succ, mul_assoc] using hsnd
+
+theorem order81_C9C3_aut_eq_paramAut_of_pow_three
+    (σ : MulAut order81_C9C3) (hσ : σ ^ 3 = 1) :
+    ∃ r s t : ZMod 3, σ = order81_c9c3_paramAut r s t := by
+  obtain ⟨u, s, t, z, hcoord⟩ := order81_C9C3_aut_coord σ
+  have hu := order81_C9C3_aut_coord_u_condition σ u s t z hcoord hσ
+  obtain ⟨r, hr⟩ := order81_C9C3_param_unit_of_three_mul_eq_three u hu
+  have hzpow := order81_C9C3_aut_coord_z_condition σ u s t z hcoord hσ
+  have hz := order81_C9C3_zmod3_cube_eq_one z hzpow
+  refine ⟨r, s, t, ?_⟩
+  ext x
+  all_goals
+    rcases x with ⟨a, b⟩
+    let aa : ZMod 9 := Multiplicative.toAdd a
+    let bb : ZMod 3 := Multiplicative.toAdd b
+    have hx : ((a, b) : order81_C9C3) =
+        (Multiplicative.ofAdd aa, Multiplicative.ofAdd bb) := by
+      ext <;> simp [aa, bb]
+    rw [hx, hcoord aa bb, order81_c9c3_paramAut_apply]
+  · simp [hr]
+  · simp [hz, add_comm]
+
 /-- The `C_3` action on `C_9 × C_3` generated by the parameter automorphism. -/
 noncomputable abbrev order81_c9c3_paramAction (r s t : ZMod 3) :
     CyclicRep 3 →* MulAut order81_C9C3 :=
