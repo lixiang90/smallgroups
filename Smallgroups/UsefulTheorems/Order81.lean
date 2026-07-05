@@ -4591,6 +4591,9 @@ theorem order81_c9c3_nonSplit_kernel_normal :
     order81_c9c3_nonSplit_kernel.Normal :=
   MonoidHom.normal_ker order81_c9c3_nonSplit_tHom
 
+instance instNormalOrder81C9C3NonSplitKernel : order81_c9c3_nonSplit_kernel.Normal :=
+  order81_c9c3_nonSplit_kernel_normal
+
 /-- The displayed kernel in the non-split representative is `C_9 × C_3`. -/
 noncomputable def order81_c9c3_nonSplit_kernel_mulEquiv_c9c3 :
     order81_c9c3_nonSplit_kernel ≃* order81_C9C3 where
@@ -4671,6 +4674,28 @@ theorem card_order81_c9c3_nonSplit_rep :
     Nat.card order81_c9c3_nonSplit_rep = 81 := by
   rw [Nat.card_congr Order81C9C3NonSplit.equivProd]
   simp [order81_C9C3Add, Fintype.card_prod]
+
+theorem order81_c9c3_nonSplit_qgen_quotient_zpowers_eq_top :
+    Subgroup.zpowers ((QuotientGroup.mk' order81_c9c3_nonSplit_kernel)
+      order81_c9c3_nonSplit_qgen) = ⊤ :=
+  order81_quotient_zpowers_eq_top_of_not_mem_card_27
+    card_order81_c9c3_nonSplit_rep card_order81_c9c3_nonSplit_kernel
+    order81_c9c3_nonSplit_qgen_not_mem_kernel
+
+theorem order81_c9c3_nonSplit_kernel_sup_zpowers_qgen_eq_top :
+    order81_c9c3_nonSplit_kernel ⊔ Subgroup.zpowers order81_c9c3_nonSplit_qgen = ⊤ :=
+  order81_normal_layer_sup_zpowers_eq_top_of_not_mem_card_27
+    card_order81_c9c3_nonSplit_rep card_order81_c9c3_nonSplit_kernel
+    order81_c9c3_nonSplit_qgen_not_mem_kernel
+
+/-- Every element of the non-split representative has a normal form
+`k * order81_c9c3_nonSplit_qgen^n` with `k` in the displayed kernel. -/
+theorem order81_c9c3_nonSplit_normal_form (x : order81_c9c3_nonSplit_rep) :
+    ∃ k ∈ order81_c9c3_nonSplit_kernel, ∃ n : ℤ,
+      x = k * order81_c9c3_nonSplit_qgen ^ n :=
+  order81_normal_layer_exists_mul_zpow_of_not_mem_card_27
+    card_order81_c9c3_nonSplit_rep card_order81_c9c3_nonSplit_kernel
+    order81_c9c3_nonSplit_qgen_not_mem_kernel
 
 theorem order81_c9c3_nonSplit_rep_nonabelian :
     ¬ ∀ x y : order81_c9c3_nonSplit_rep, x * y = y * x := by
