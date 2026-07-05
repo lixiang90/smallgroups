@@ -1318,6 +1318,40 @@ theorem K9_iso_60_62 : Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) ord
     SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9 (unitAutHom.comp K9_chi_62)) :=
   semidirectProduct_of_comp_eq K9_shearOuter_equiv K9_chi_60_comp_shearOuter
 
+/-- The `inl`/`inr`-MIXING automorphism `σ₃ : A ↦ AH, B ↦ B, H ↦ H` of `K₉` (with
+`A = inl(1,0)`, `B = inl(0,1)`, `H = inr(1)`): well-defined since `AH` still has order `4`
+(`(AH)² = A²B`) and `H(AH)H⁻¹ = AB·H = (AH)·B = σ₃(A·B)`. On coordinates it is
+`(a, b, h) ↦ (a, b + ⌊a/2⌋, h + (a mod 2))`. No `SemidirectProduct.lift`-style automorphism
+(preserving the `inl`/`inr` split) can reach it — this is exactly the automorphism that resolves
+the previously-open `chi_02` vs `chi_t2` tie: they MERGE (`chi_02 ∘ σ₃ = chi_t2`). -/
+noncomputable def K9_sigma3 : order16_wild_G9 →* order16_wild_G9 :=
+  MonoidHom.mk'
+    (fun p =>
+      ⟨(p.left.1,
+        p.left.2 * Multiplicative.ofAdd
+          (if Multiplicative.toAdd p.left.1 = 2 ∨ Multiplicative.toAdd p.left.1 = 3
+            then (1 : ZMod 2) else 0)),
+        p.right * Multiplicative.ofAdd
+          (ZMod.castHom (by norm_num) (ZMod 2) (Multiplicative.toAdd p.left.1))⟩)
+    (by decide)
+
+theorem K9_sigma3_bijective : Function.Bijective K9_sigma3 := by
+  rw [Fintype.bijective_iff_injective_and_card]
+  refine ⟨?_, rfl⟩
+  rw [injective_iff_map_eq_one]
+  decide
+
+noncomputable def K9_sigma3_equiv : order16_wild_G9 ≃* order16_wild_G9 :=
+  MulEquiv.ofBijective K9_sigma3 K9_sigma3_bijective
+
+theorem K9_chi_02_comp_sigma3 : K9_chi_02.comp K9_sigma3_equiv.toMonoidHom = K9_chi_t2 := by
+  apply MonoidHom.ext; decide
+
+theorem K9_iso_02_t2 : Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9
+    (unitAutHom.comp K9_chi_02) ≃*
+    SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9 (unitAutHom.comp K9_chi_t2)) :=
+  semidirectProduct_of_comp_eq K9_sigma3_equiv K9_chi_02_comp_sigma3
+
 theorem order16_wild_G9_chi_00_ker_card :
     Fintype.card {k : order16_wild_G9 // K9_chi_00 k = 1} = 16 := by decide
 theorem order16_wild_G9_chi_02_ker_card :
@@ -1339,8 +1373,8 @@ theorem K9_chi_t2_sq_count :
     Nat.card {k : order16_wild_G9 // K9_chi_t2 k = 1 ∧ k ^ 2 = 1 ∧ k ≠ 1} = 3 := by
   rw [Nat.card_eq_fintype_card]; decide
 
-/-- **`K₉` contributes `4` or `5` isomorphism classes** (see note below on the one open
-`chi_02`-vs-`chi_t2` question): representatives `K9_chi_00`, `K9_chi_02`, `K9_chi_t0`, `K9_chi_t2`,
+/-- **`K₉` contributes exactly `4` isomorphism classes**: representatives `K9_chi_00`,
+`K9_chi_02` (`= chi_t2`, merged via the mixing automorphism `K9_sigma3`), `K9_chi_t0`, and
 `K9_chi_40` (`= chi_42 = chi_60 = chi_62`, merged via `K9_cube` and `K9_shearOuter`). -/
 theorem order80_classify_K9_reduced (φ' : order16_wild_G9 →* MulAut (Multiplicative (ZMod 5))) :
     Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9 φ' ≃*
@@ -1352,9 +1386,6 @@ theorem order80_classify_K9_reduced (φ' : order16_wild_G9 →* MulAut (Multipli
     Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9
           (unitAutHom.comp K9_chi_t0)) ∨
-    Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9 φ' ≃*
-        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9
-          (unitAutHom.comp K9_chi_t2)) ∨
     Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9
           (unitAutHom.comp K9_chi_40)) := by
@@ -1375,27 +1406,29 @@ theorem order80_classify_K9_reduced (φ' : order16_wild_G9 →* MulAut (Multipli
   · have hχ : χ = K9_chi_t2 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inl ⟨e⟩
+    subst hχ; exact Or.inr <| Or.inl ⟨e.trans K9_iso_02_t2.some.symm⟩
   · have hχ : χ = K9_chi_40 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨e⟩
+    subst hχ; exact Or.inr <| Or.inr <| Or.inr ⟨e⟩
   · have hχ : χ = K9_chi_42 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨e.trans K9_iso_40_42.some.symm⟩
+    subst hχ; exact Or.inr <| Or.inr <| Or.inr ⟨e.trans K9_iso_40_42.some.symm⟩
   · have hχ : χ = K9_chi_60 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨e.trans K9_iso_40_60.some.symm⟩
+    subst hχ; exact Or.inr <| Or.inr <| Or.inr ⟨e.trans K9_iso_40_60.some.symm⟩
   · have hχ : χ = K9_chi_62 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr
+    subst hχ; exact Or.inr <| Or.inr <| Or.inr
       ⟨e.trans K9_iso_60_62.some.symm |>.trans K9_iso_40_60.some.symm⟩
 
-/-- `K₉`'s classes are pairwise distinct EXCEPT for the open `chi_02`-vs-`chi_t2` question
-(see the note above): all other `9` of the `10` pairs among `{00,02,t0,t2,40}` are resolved. -/
+/-- `K₉`'s `4` classes `{00, 02, t0, 40}` are pairwise distinct: `00` vs the rest and `*` vs `40`
+via kernel cardinality (`16, 8, 8, 4`), `02` vs `t0` via order-`2`-count (`3` vs `7`). (The
+theorems mentioning `chi_t2` below are retained for completeness even though `chi_t2` is no
+longer a distinct representative — it merged with `chi_02` via `K9_sigma3`.) -/
 theorem K9_ne_00_02 : IsEmpty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9
     (unitAutHom.comp K9_chi_00) ≃*
     SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9 (unitAutHom.comp K9_chi_02)) :=
@@ -1449,21 +1482,11 @@ theorem K9_ne_t0_t2 : IsEmpty (SemidirectProduct (Multiplicative (ZMod 5)) order
   order80_ne_of_ker_sq_count order16_wild_G9_coprime (by
     rw [K9_chi_t0_sq_count, K9_chi_t2_sq_count]; decide)
 
-/-! `chi_02` and `chi_t2` tie on kernel cardinality (`8`) AND order-`2`-count (`3`): both kernels
-are abstractly `≅ C₄ × C₂` (the unique order-`8` group with exactly `3` involutions). A structural
-difference DOES exist — `ker(02)`'s order-`4` elements all square to `inl(2,0)`, while
-`ker(t2)`'s square to `inl(2,1)` (a different, non-conjugate element) — but this is not yet
-packaged as a reusable `Aut(K)`-orbit invariant here (would need a "commutes with `n0` AND squares
-to a named target" transport lemma analogous to `order80_card_centralizer_ord_eq`). Every
-`SemidirectProduct.lift`-style automorphism of `K₉` tried (`cube`, `shearOuter` for every valid
-choice of shift, and their composites) fixes both `chi_02` and `chi_t2` individually, and the
-naive `b ↔ h` swap fails to even be a homomorphism (the twisted multiplication doesn't commute
-with it) — strong circumstantial evidence they are genuinely distinct, but NOT a complete proof.
-This is the one open gap in the `K₉` classification: `K₉` has *at most* `5` classes
-(`00, 02, t0, t2, {40=42=60=62}`), of which `00` is distinct from all others (cardinality `16`),
-`t0`/`02`/`t2` are pairwise almost-distinguished (`t0 ≠ 02` and `t0 ≠ t2` proved via
-order-`2`-count; `02` vs `t2` remains open), and the `4`-element family `{40,42,60,62}` is
-distinct from everything else via cardinality (`4`). -/
+/-! **The former `chi_02`-vs-`chi_t2` gap is now CLOSED — they merge.** The tie on kernel
+cardinality (`8`) and order-`2`-count (`3`) was, as usual, a signal of a missed automorphism:
+the `inl`/`inr`-MIXING map `K9_sigma3 : A ↦ AH` (invisible to every `SemidirectProduct.lift`-style
+search, which preserves the `inl`/`inr` split) satisfies `chi_02 ∘ σ₃ = chi_t2`. Hence `K₉`
+contributes exactly `4` classes: `{00}, {02 = t2}, {t0}, {40 = 42 = 60 = 62}`. -/
 
 /-! ## `K₁₀ = K₈g ⋊[ψ₆] C₂ = Q₈ ⋊ C₂` -/
 
@@ -1589,6 +1612,89 @@ theorem K10_iso_p0_p2 : Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) or
     SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 (unitAutHom.comp K10_chi_p2)) :=
   semidirectProduct_of_comp_eq K10_shearOuter_equiv K10_chi_p0_comp_shearOuter
 
+/-- An `inl`/`inr`-MIXING automorphism of `K₁₀` (the Pauli group `C₄ ∘ D₈`, center `⟨AB⟩ ≅ C₄`):
+`σ₁ : A ↦ ABH, B ↦ H, H ↦ B` (with `A = inl(1,0)`, `B = inl(0,1)`, `H = inr(1)`). `B` and `H` are
+both non-central involutions, and `ABH` has order `4`, so this is a valid automorphism. On
+coordinates: `(a, b, h) ↦ (a + 2h(ā+b), ā+h, ā+b)` with `ā = a mod 2`. It merges `chi_02` with
+`chi_p0` (both have central-character value `+1` at the center generator `AB`, so they lie in one
+`Aut`-orbit `{02, p0, p2}`). -/
+noncomputable def K10_sigma1 : order16_wild_G10 →* order16_wild_G10 :=
+  MonoidHom.mk'
+    (fun p =>
+      ⟨(p.left.1 * Multiplicative.ofAdd
+          (if Multiplicative.toAdd p.right = 1 ∧
+              ZMod.castHom (by norm_num) (ZMod 2) (Multiplicative.toAdd p.left.1) +
+                Multiplicative.toAdd p.left.2 = 1
+            then (2 : ZMod 4) else 0),
+        Multiplicative.ofAdd
+          (ZMod.castHom (by norm_num) (ZMod 2) (Multiplicative.toAdd p.left.1) +
+            Multiplicative.toAdd p.right)),
+        Multiplicative.ofAdd
+          (ZMod.castHom (by norm_num) (ZMod 2) (Multiplicative.toAdd p.left.1) +
+            Multiplicative.toAdd p.left.2)⟩)
+    (by decide)
+
+theorem K10_sigma1_bijective : Function.Bijective K10_sigma1 := by
+  rw [Fintype.bijective_iff_injective_and_card]
+  refine ⟨?_, rfl⟩
+  rw [injective_iff_map_eq_one]
+  decide
+
+noncomputable def K10_sigma1_equiv : order16_wild_G10 ≃* order16_wild_G10 :=
+  MulEquiv.ofBijective K10_sigma1 K10_sigma1_bijective
+
+theorem K10_chi_02_comp_sigma1 : K10_chi_02.comp K10_sigma1_equiv.toMonoidHom = K10_chi_p0 := by
+  apply MonoidHom.ext; decide
+
+theorem K10_iso_02_p0 : Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10
+    (unitAutHom.comp K10_chi_02) ≃*
+    SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 (unitAutHom.comp K10_chi_p0)) :=
+  semidirectProduct_of_comp_eq K10_sigma1_equiv K10_chi_02_comp_sigma1
+
+/-- A second `inl`/`inr`-MIXING automorphism of `K₁₀`: `σ₂ : A ↦ BH, B ↦ AH, H ↦ B` (`BH` has
+order `4` with `(BH)² = A²`; `AH` is an involution since `ψ₆` inverts `A`). On coordinates:
+`(a, b, h) ↦ (a − ā + (−1)^ā·b + 2h(ā+b), ā+h, ā+b)`. It merges `chi_f0` with `chi_s0`
+(completing the `Aut`-orbit `{f0, f2, s0}` of central-value `−1` characters whose kernels are the
+`D₈`s inside the Pauli group; the fourth central-value-`−1` character `chi_s2` has kernel `Q₈`
+and is an `Aut(K₁₀)`-fixed point, hence a genuinely separate class). -/
+noncomputable def K10_sigma2 : order16_wild_G10 →* order16_wild_G10 :=
+  MonoidHom.mk'
+    (fun p =>
+      ⟨(Multiplicative.ofAdd
+          ((if Multiplicative.toAdd p.left.1 = 2 ∨ Multiplicative.toAdd p.left.1 = 3
+              then (2 : ZMod 4) else 0) +
+            (if Multiplicative.toAdd p.left.2 = 1
+              then (if Multiplicative.toAdd p.left.1 = 1 ∨ Multiplicative.toAdd p.left.1 = 3
+                then (3 : ZMod 4) else 1) else 0) +
+            (if Multiplicative.toAdd p.right = 1 ∧
+                ZMod.castHom (by norm_num) (ZMod 2) (Multiplicative.toAdd p.left.1) +
+                  Multiplicative.toAdd p.left.2 = 1
+              then (2 : ZMod 4) else 0)),
+        Multiplicative.ofAdd
+          (ZMod.castHom (by norm_num) (ZMod 2) (Multiplicative.toAdd p.left.1) +
+            Multiplicative.toAdd p.right)),
+        Multiplicative.ofAdd
+          (ZMod.castHom (by norm_num) (ZMod 2) (Multiplicative.toAdd p.left.1) +
+            Multiplicative.toAdd p.left.2)⟩)
+    (by decide)
+
+theorem K10_sigma2_bijective : Function.Bijective K10_sigma2 := by
+  rw [Fintype.bijective_iff_injective_and_card]
+  refine ⟨?_, rfl⟩
+  rw [injective_iff_map_eq_one]
+  decide
+
+noncomputable def K10_sigma2_equiv : order16_wild_G10 ≃* order16_wild_G10 :=
+  MulEquiv.ofBijective K10_sigma2 K10_sigma2_bijective
+
+theorem K10_chi_f0_comp_sigma2 : K10_chi_f0.comp K10_sigma2_equiv.toMonoidHom = K10_chi_s0 := by
+  apply MonoidHom.ext; decide
+
+theorem K10_iso_f0_s0 : Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10
+    (unitAutHom.comp K10_chi_f0) ≃*
+    SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 (unitAutHom.comp K10_chi_s0)) :=
+  semidirectProduct_of_comp_eq K10_sigma2_equiv K10_chi_f0_comp_sigma2
+
 theorem K10_chi_s2_ker_card : Fintype.card {k : order16_wild_G10 // K10_chi_s2 k = 1} = 8 := by
   decide
 theorem K10_chi_p0_ker_card : Fintype.card {k : order16_wild_G10 // K10_chi_p0 k = 1} = 8 := by
@@ -1610,12 +1716,12 @@ theorem K10_chi_s0_sq_count :
     Nat.card {k : order16_wild_G10 // K10_chi_s0 k = 1 ∧ k ^ 2 = 1 ∧ k ≠ 1} = 5 := by
   rw [Nat.card_eq_fintype_card]; decide
 
-/-- **`K₁₀ = Q₈ ⋊ C₂` contributes exactly `6` isomorphism classes**: `f0 = f2` and `p0 = p2` merge
-via `K10_shearOuter`, but (unlike `K₈`) `s0` and `s2` do NOT merge with `p0`/`p2` here — no
-automorphism of `K₈g` compatible with `ψ₆` connects them (both `K8g_shear2` and the `a`-shear fail
-or fix these characters; only `K10_shearOuter`, which fixes `s0`/`s2`, was found). Representatives:
-`K10_chi_00`, `K10_chi_02`, `K10_chi_f0` (`= chi_f2`), `K10_chi_s0`, `K10_chi_s2`, `K10_chi_p0`
-(`= chi_p2`). -/
+/-- **`K₁₀` (the Pauli group `C₄ ∘ D₈`) contributes exactly `4` isomorphism classes**. The
+`Aut(K₁₀)`-orbits of the `8` raw characters, organised by the (invariant) value at the central
+generator `AB`: value `+1` gives `{00}` and `{02 = p0 = p2}` (merged via `K10_sigma1` and
+`K10_shearOuter`); value `−1` gives `{f0 = f2 = s0}` (merged via `K10_shearOuter` and
+`K10_sigma2`; kernels `≅ D₈`) and the fixed point `{s2}` (kernel `≅ Q₈`). Representatives:
+`K10_chi_00`, `K10_chi_02`, `K10_chi_f0`, `K10_chi_s2`. -/
 theorem order80_classify_K10_reduced (φ' : order16_wild_G10 →* MulAut (Multiplicative (ZMod 5))) :
     Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10
@@ -1628,13 +1734,7 @@ theorem order80_classify_K10_reduced (φ' : order16_wild_G10 →* MulAut (Multip
           (unitAutHom.comp K10_chi_f0)) ∨
     Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10
-          (unitAutHom.comp K10_chi_s0)) ∨
-    Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 φ' ≃*
-        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10
-          (unitAutHom.comp K10_chi_s2)) ∨
-    Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 φ' ≃*
-        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10
-          (unitAutHom.comp K10_chi_p0)) := by
+          (unitAutHom.comp K10_chi_s2)) := by
   obtain ⟨χ, hinl, hinr, ⟨e⟩⟩ := order80_classify_G10 φ'
   rcases hinl with h1 | h1 | h1 | h1 <;> rcases hinr with h2 | h2
   · have hχ : χ = K10_chi_00 := SemidirectProduct.hom_ext
@@ -1656,23 +1756,26 @@ theorem order80_classify_K10_reduced (φ' : order16_wild_G10 →* MulAut (Multip
   · have hχ : χ = K10_chi_s0 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inl ⟨e⟩
+    subst hχ; exact Or.inr <| Or.inr <| Or.inl ⟨e.trans K10_iso_f0_s0.some.symm⟩
   · have hχ : χ = K10_chi_s2 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl ⟨e⟩
+    subst hχ; exact Or.inr <| Or.inr <| Or.inr ⟨e⟩
   · have hχ : χ = K10_chi_p0 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨e⟩
+    subst hχ; exact Or.inr <| Or.inl ⟨e.trans K10_iso_02_p0.some.symm⟩
   · have hχ : χ = K10_chi_p2 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨e.trans K10_iso_p0_p2.some.symm⟩
+    subst hχ; exact Or.inr <| Or.inl
+      ⟨e.trans K10_iso_p0_p2.some.symm |>.trans K10_iso_02_p0.some.symm⟩
 
-/-- `K₁₀`'s `6` classes are pairwise distinct: `00` via cardinality (`16`); `02,f0,s0,s2,p0` all
-share cardinality `8` but are pairwise separated by order-`2`-count (`3,1,1,1,1`) EXCEPT the
-`f0,s0,s2,p0` group which all tie at `1` — these four are further separated below. -/
+/-- `K₁₀`'s `4` classes `{00, 02, f0, s2}` are pairwise distinct: `00` via cardinality (`16` vs
+`8`); `02`, `f0`, `s2` all share kernel cardinality `8` but have kernels `C₄×C₂`, `D₈`, `Q₈`
+respectively, separated by order-`2`-count (`3, 5, 1`). (Theorems mentioning `s0`/`p0` are
+retained even though those characters merged into the `f0`/`02` classes via
+`K10_sigma2`/`K10_sigma1`.) -/
 theorem K10_ne_00_02 : IsEmpty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10
     (unitAutHom.comp K10_chi_00) ≃*
     SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 (unitAutHom.comp K10_chi_02)) :=
@@ -1739,13 +1842,13 @@ theorem K10_ne_s0_p0 : IsEmpty (SemidirectProduct (Multiplicative (ZMod 5)) orde
   order80_ne_of_ker_sq_count order16_wild_G10_coprime (by
     rw [K10_chi_s0_sq_count, K10_chi_p0_sq_count]; decide)
 
-/-! **Open gaps in `K₁₀`'s distinctness** (documented honestly, analogous to `K₉`'s): `chi_02`
-vs `chi_p0` tie on both kernel cardinality (`8`) and order-`2`-count (`3`); `chi_f0` vs `chi_s0`
-tie on both kernel cardinality (`8`) and order-`2`-count (`5`). No automorphism found (`K10_cube`
-analogue, `K10_shearOuter` with any valid shift) connects either pair, but this is not a complete
-non-isomorphism proof. `K₁₀` therefore has *at most* `6` classes, with `4` of the `6`
-(`00, {f0=f2}∨{s0}, s2, {p0=p2}∨{02}`) fully pairwise-resolved against everything outside their
-tied pair. -/
+/-! **The former `K₁₀` gaps are now CLOSED — both tied pairs merge.** `chi_02 ∘ K10_sigma1 =
+chi_p0` and `chi_f0 ∘ K10_sigma2 = chi_s0`, via `inl`/`inr`-MIXING automorphisms (swapping the
+non-central involutions `B` and `H` of the Pauli group, invisible to `SemidirectProduct.lift`-style
+searches). Hence `K₁₀` contributes exactly `4` classes:
+`{00}, {02 = p0 = p2}, {f0 = f2 = s0}, {s2}` — matching the abstract orbit analysis: the value of
+a character at the central generator `AB ∈ Z(K₁₀) ≅ C₄` is an `Aut`-invariant splitting the `8`
+characters `4 + 4`, and on the `−1` side the character with `Q₈` kernel (`s2`) is a fixed point. -/
 
 /-! ## `K₁₂ = C₄ ⋊ C₄` (`order16_N3`, inversion action `x ↦ x³`) -/
 
@@ -1879,6 +1982,60 @@ theorem K12_iso_21_23 : Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) or
     SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 (unitAutHom.comp K12_chi_23)) :=
   semidirectProduct_of_comp_eq K12_outerCube_equiv K12_chi_21_comp_outerCube
 
+/-- The shear `σ₁ : a ↦ a, b ↦ ab` of `K₁₂ = C₄ ⋊ C₄` (valid since `(ab)² = b²`, so `ab` has
+order `4` and still inverts `a` under conjugation). On coordinates: `(i, j) ↦ (i + (j mod 2), j)`.
+Merges `chi_20` with `chi_22`. -/
+noncomputable def K12_sigma1 : order16_wild_G12 →* order16_wild_G12 :=
+  MonoidHom.mk'
+    (fun p =>
+      ⟨p.left * Multiplicative.ofAdd
+          (if Multiplicative.toAdd p.right = 1 ∨ Multiplicative.toAdd p.right = 3
+            then (1 : ZMod 4) else 0),
+        p.right⟩)
+    (by decide)
+
+theorem K12_sigma1_bijective : Function.Bijective K12_sigma1 := by
+  rw [Fintype.bijective_iff_injective_and_card]
+  refine ⟨?_, rfl⟩
+  rw [injective_iff_map_eq_one]
+  decide
+
+noncomputable def K12_sigma1_equiv : order16_wild_G12 ≃* order16_wild_G12 :=
+  MulEquiv.ofBijective K12_sigma1 K12_sigma1_bijective
+
+theorem K12_chi_20_comp_sigma1 : K12_chi_20.comp K12_sigma1_equiv.toMonoidHom = K12_chi_22 := by
+  apply MonoidHom.ext; decide
+
+theorem K12_iso_20_22 : Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
+    (unitAutHom.comp K12_chi_20) ≃*
+    SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 (unitAutHom.comp K12_chi_22)) :=
+  semidirectProduct_of_comp_eq K12_sigma1_equiv K12_chi_20_comp_sigma1
+
+/-- The shear `σ₂ : a ↦ ab², b ↦ b` of `K₁₂` (`b²` is central and `(ab²)² = a²b⁴ = a²`, so `ab²`
+has order `4` and is still inverted by `b`). On coordinates: `(i, j) ↦ (i, j + 2i)`. Merges
+`chi_01` with `chi_21`. -/
+noncomputable def K12_sigma2 : order16_wild_G12 →* order16_wild_G12 :=
+  MonoidHom.mk'
+    (fun p => ⟨p.left, p.right * Multiplicative.ofAdd (2 * Multiplicative.toAdd p.left)⟩)
+    (by decide)
+
+theorem K12_sigma2_bijective : Function.Bijective K12_sigma2 := by
+  rw [Fintype.bijective_iff_injective_and_card]
+  refine ⟨?_, rfl⟩
+  rw [injective_iff_map_eq_one]
+  decide
+
+noncomputable def K12_sigma2_equiv : order16_wild_G12 ≃* order16_wild_G12 :=
+  MulEquiv.ofBijective K12_sigma2 K12_sigma2_bijective
+
+theorem K12_chi_01_comp_sigma2 : K12_chi_01.comp K12_sigma2_equiv.toMonoidHom = K12_chi_21 := by
+  apply MonoidHom.ext; decide
+
+theorem K12_iso_01_21 : Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
+    (unitAutHom.comp K12_chi_01) ≃*
+    SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 (unitAutHom.comp K12_chi_21)) :=
+  semidirectProduct_of_comp_eq K12_sigma2_equiv K12_chi_01_comp_sigma2
+
 theorem K12_chi_03_ker_card : Fintype.card {k : order16_wild_G12 // K12_chi_03 k = 1} = 4 := by
   decide
 theorem K12_chi_21_ker_card : Fintype.card {k : order16_wild_G12 // K12_chi_21 k = 1} = 4 := by
@@ -1896,12 +2053,11 @@ theorem K12_chi_22_sq_count :
     Nat.card {k : order16_wild_G12 // K12_chi_22 k = 1 ∧ k ^ 2 = 1 ∧ k ≠ 1} = 3 := by
   rw [Nat.card_eq_fintype_card]; decide
 
-/-- **`K₁₂ = C₄ ⋊ C₄` contributes exactly `6` isomorphism classes**: `chi_01 = chi_03` and
-`chi_21 = chi_23` merge via `K12_outerCube` (cubing the OUTER generator); the remaining `6`
-representatives `K12_chi_00, K12_chi_01, K12_chi_02, K12_chi_20, K12_chi_21, K12_chi_22` are
-pairwise distinct via kernel cardinality (`16,4,8,8,4,8`) EXCEPT for the `02/20/22` triple (all
-card `8`), which are further separated below via order-`2`-count (`3,1,1`) — `20` and `22` tie
-with each other, an open gap analogous to `K₉`/`K₁₀`'s. -/
+/-- **`K₁₂ = C₄ ⋊ C₄` contributes exactly `4` isomorphism classes**: the `Aut(K₁₂)`-orbits of the
+`8` raw characters are `{00}`, `{02}` (an `Aut`-fixed point: every automorphism sends `a` into
+`⟨a, b²⟩` and `b` to `a^i b^{±1}`, so the value at `b` mod `⟨χ(a)⟩ = 1` is invariant),
+`{20 = 22}` (merged via `K12_sigma1`), and `{01 = 03 = 21 = 23}` (merged via `K12_outerCube` and
+`K12_sigma2`). Representatives: `K12_chi_00, K12_chi_01, K12_chi_02, K12_chi_20`. -/
 theorem order80_classify_K12_reduced (φ' : order16_wild_G12 →* MulAut (Multiplicative (ZMod 5))) :
     Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
@@ -1914,13 +2070,7 @@ theorem order80_classify_K12_reduced (φ' : order16_wild_G12 →* MulAut (Multip
           (unitAutHom.comp K12_chi_02)) ∨
     Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
-          (unitAutHom.comp K12_chi_20)) ∨
-    Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 φ' ≃*
-        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
-          (unitAutHom.comp K12_chi_21)) ∨
-    Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 φ' ≃*
-        SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
-          (unitAutHom.comp K12_chi_22)) := by
+          (unitAutHom.comp K12_chi_20)) := by
   obtain ⟨χ, hinl, hinr, ⟨e⟩⟩ := order80_classify_G12 φ'
   have hsq := K12_chi_inl_sq_one χ
   rcases hinl with h1 | h1 | h1 | h1 <;> [skip; (rw [h1] at hsq; exact absurd hsq (by decide));
@@ -1945,19 +2095,20 @@ theorem order80_classify_K12_reduced (φ' : order16_wild_G12 →* MulAut (Multip
   · have hχ : χ = K12_chi_20 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inl ⟨e⟩
+    subst hχ; exact Or.inr <| Or.inr <| Or.inr ⟨e⟩
   · have hχ : χ = K12_chi_21 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl ⟨e⟩
+    subst hχ; exact Or.inr <| Or.inl ⟨e.trans K12_iso_01_21.some.symm⟩
   · have hχ : χ = K12_chi_22 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr ⟨e⟩
+    subst hχ; exact Or.inr <| Or.inr <| Or.inr ⟨e.trans K12_iso_20_22.some.symm⟩
   · have hχ : χ = K12_chi_23 := SemidirectProduct.hom_ext
       (h1.trans (semidirectProduct_lift_comp_inl _ _ _).symm)
       (h2.trans (semidirectProduct_lift_comp_inr _ _ _).symm)
-    subst hχ; exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl ⟨e.trans K12_iso_21_23.some.symm⟩
+    subst hχ; exact Or.inr <| Or.inl
+      ⟨e.trans K12_iso_21_23.some.symm |>.trans K12_iso_01_21.some.symm⟩
 
 theorem K12_ne_00_01 : IsEmpty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
     (unitAutHom.comp K12_chi_00) ≃*
@@ -2008,8 +2159,8 @@ theorem K12_chi_21_sq_count :
     Nat.card {k : order16_wild_G12 // K12_chi_21 k = 1 ∧ k ^ 2 = 1 ∧ k ≠ 1} = 1 := by
   rw [Nat.card_eq_fintype_card]; decide
 
-/-! **Open gap**: `chi_01` vs `chi_21` tie on both kernel cardinality (`4`) and order-`2`-count
-(`1`); no automorphism found to merge them, nor a finer invariant here to separate them. -/
+/-! (The former "`chi_01` vs `chi_21`" tie is resolved: they MERGE via `K12_sigma2` above; the
+retained `sq_count` lemmas are harmless.) -/
 
 theorem K12_ne_01_22 : IsEmpty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
     (unitAutHom.comp K12_chi_01) ≃*
@@ -2035,8 +2186,44 @@ theorem K12_ne_21_22 : IsEmpty (SemidirectProduct (Multiplicative (ZMod 5)) orde
   order80_ne_of_ker_card order16_wild_G12_coprime (by
     rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card, K12_chi_21_ker_card,
       K12_chi_22_ker_card]; decide)
-/-! **Open gaps**: `chi_02`, `chi_20`, and `chi_22` all tie pairwise on BOTH kernel cardinality
-(`8`) and order-`2`-count (`3`) — analogous to the `K₉`/`K₁₀` gaps: no automorphism found to merge
-any pair among them, nor a finer invariant within the scope of this file to separate them. -/
+/-! **The former `02/20/22` triple-tie is resolved**: `chi_20 = chi_22` MERGE via `K12_sigma1`
+above, while `chi_02` vs `chi_20` are GENUINELY DISTINCT — but every invariant used so far
+(kernel cardinality `8` = `8`, order-`2`-count `3` = `3`, and in fact the entire element-order
+profile, center size, and class number of the two order-`80` groups) ties. The separating
+invariant is the **square-root-fiber profile**: in `C₅ ⋊[02] K₁₂` all `40` elements `(n, k)` with
+`k` outside `ker(chi_02) = ⟨a, b²⟩` have square exactly `(0, b²)` (the character value `−1` makes
+the `C₅`-part cancel: `(n, k)² = (n − n, k²)`), so the element `(0, b²)` has `40` square roots;
+in `C₅ ⋊[20] K₁₂` the `40` outside-kernel elements split their squares between `(0, a²)` (`20`
+roots) and `(0, b²)` (`20 + 4 = 24` roots), so no element has more than `24` square roots. -/
+
+/-- **A new reusable invariant**: if some element of `G₁` has exactly `n` square roots but no
+element of `G₂` does, then `G₁ ≇ G₂`. (Fully generic — the square-root fiber over `e z` is the
+`e`-image of the fiber over `z`.) Both hypotheses are `decide`-friendly for concrete finite
+groups. -/
+theorem isEmpty_mulEquiv_of_sq_fiber_count {G₁ G₂ : Type*} [Group G₁] [Group G₂]
+    [Fintype G₁] [Fintype G₂] [DecidableEq G₁] [DecidableEq G₂] {n : ℕ}
+    (h1 : ∃ z : G₁, Fintype.card {x : G₁ // x * x = z} = n)
+    (h2 : ∀ z : G₂, Fintype.card {x : G₂ // x * x = z} ≠ n) :
+    IsEmpty (G₁ ≃* G₂) := by
+  constructor
+  intro e
+  obtain ⟨z, hz⟩ := h1
+  refine h2 (e z) ?_
+  rw [← hz]
+  symm
+  apply Fintype.card_congr
+  refine Equiv.subtypeEquiv e.toEquiv fun x => ?_
+  rw [show e.toEquiv x = e x from rfl, ← map_mul]
+  exact ⟨fun hh => by rw [hh], fun hh => e.injective hh⟩
+
+set_option maxHeartbeats 1600000 in
+-- the `∀ z` hypothesis makes `decide` count square roots of all `80` elements of an order-`80`
+-- group (`6400` semidirect-product multiplications), well beyond the default budget
+theorem K12_ne_02_20 : IsEmpty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
+    (unitAutHom.comp K12_chi_02) ≃*
+    SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 (unitAutHom.comp K12_chi_20)) :=
+  isEmpty_mulEquiv_of_sq_fiber_count (n := 40)
+    ⟨⟨1, ⟨1, Multiplicative.ofAdd (2 : ZMod 4)⟩⟩, by decide⟩
+    (by decide)
 
 end Smallgroups.UsefulTheorems
