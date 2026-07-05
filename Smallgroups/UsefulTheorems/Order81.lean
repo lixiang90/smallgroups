@@ -4730,6 +4730,17 @@ theorem order81_c9c3_nonSplit_coord_normal_form_unique
   have hcancel := congrArg (fun x => x * (order81_c9c3_nonSplit_qgen ^ i.val)⁻¹) h
   simpa [mul_assoc] using hcancel
 
+/-- Multiplication in coordinate normal form for the non-split representative. -/
+theorem order81_c9c3_nonSplit_coord_normal_form_mul
+    (n m : order81_C9C3Add) (i j : ZMod 3) :
+    ((⟨n, 0⟩ : order81_c9c3_nonSplit_rep) * order81_c9c3_nonSplit_qgen ^ i.val) *
+        ((⟨m, 0⟩ : order81_c9c3_nonSplit_rep) * order81_c9c3_nonSplit_qgen ^ j.val) =
+      (⟨n + order81_c9c3_nonSplitAct i m + order81_c9c3_nonSplitCarry i j, 0⟩ :
+          order81_c9c3_nonSplit_rep) * order81_c9c3_nonSplit_qgen ^ (i + j).val := by
+  rw [order81_c9c3_nonSplit_qgen_pow_val, order81_c9c3_nonSplit_qgen_pow_val,
+    order81_c9c3_nonSplit_qgen_pow_val]
+  apply Order81C9C3NonSplit.ext <;> simp
+
 theorem card_order81_c9c3_nonSplit_rep :
     Nat.card order81_c9c3_nonSplit_rep = 81 := by
   rw [Nat.card_congr Order81C9C3NonSplit.equivProd]
