@@ -3020,6 +3020,44 @@ theorem order81_C9C3_c3_semidirect_cases (φ : CyclicRep 3 →* MulAut order81_C
     rcases hsix with ⟨f⟩
     exact ⟨e.trans f⟩
 
+/-- If the kernel is isomorphic to `C_9 × C_3`, every split extension by `C_3`
+is one of the standard split `C_9 × C_3` representatives, or the direct product. -/
+theorem order81_c9c3_kernel_c3_semidirect_cases {K : Type*} [Group K]
+    (hKiso : Nonempty (K ≃* order81_C9C3)) (φ : CyclicRep 3 →* MulAut K) :
+    Nonempty (K ⋊[φ] CyclicRep 3 ≃* order81_C9C3 × CyclicRep 3) ∨
+      Nonempty (K ⋊[φ] CyclicRep 3 ≃* order81_semidirectP2P_prod_cyclic) ∨
+        Nonempty (K ⋊[φ] CyclicRep 3 ≃* order81_c9c3_shear_rep) ∨
+          Nonempty (K ⋊[φ] CyclicRep 3 ≃* order81_c9c3_lift_rep) ∨
+            Nonempty (K ⋊[φ] CyclicRep 3 ≃* order81_c9c3_doubleShear_rep) ∨
+              Nonempty (K ⋊[φ] CyclicRep 3 ≃* order81_c9c3_sixShear_rep) := by
+  rcases hKiso with ⟨eK⟩
+  let ψ : CyclicRep 3 →* MulAut order81_C9C3 := (MulAut.congr eK).toMonoidHom.comp φ
+  let e : K ⋊[φ] CyclicRep 3 ≃* order81_C9C3 ⋊[ψ] CyclicRep 3 := by
+    change K ⋊[φ] CyclicRep 3 ≃*
+      order81_C9C3 ⋊[(MulAut.congr eK).toMonoidHom.comp
+        (φ.comp (MulEquiv.refl (CyclicRep 3)).symm.toMonoidHom)] CyclicRep 3
+    exact SemidirectProduct.congr' eK (MulEquiv.refl (CyclicRep 3))
+  rcases order81_C9C3_c3_semidirect_cases ψ with
+    hprod | hp2p | hshear | hlift | hdouble | hsix
+  · left
+    rcases hprod with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; left
+    rcases hp2p with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; right; left
+    rcases hshear with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; right; right; left
+    rcases hlift with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; right; right; right; left
+    rcases hdouble with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; right; right; right; right
+    rcases hsix with ⟨f⟩
+    exact ⟨e.trans f⟩
+
 /-- The six-shear semidirect product is non-abelian. -/
 theorem order81_c9c3_sixShear_rep_nonabelian :
     ¬ ∀ x y : order81_c9c3_sixShear_rep, x * y = y * x := by
