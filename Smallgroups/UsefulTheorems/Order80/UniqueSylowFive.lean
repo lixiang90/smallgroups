@@ -154,10 +154,11 @@ theorem c2Action_phi4_gen : c2Action_phi4 (Multiplicative.ofAdd (1 : ZMod 2)) = 
 theorem order80_classify_G2 (φ' : order16_wild_G2 →* MulAut (Multiplicative (ZMod 5))) :
     ∃ χ : order16_wild_G2 →* (ZMod 5)ˣ,
       (χ.comp SemidirectProduct.inl = 1 ∨ χ.comp SemidirectProduct.inl = order40_chiC8_two) ∧
+      (χ.comp SemidirectProduct.inr = 1 ∨ χ.comp SemidirectProduct.inr = order40_c2UnitHom) ∧
       Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G2 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G2 (unitAutHom.comp χ)) := by
   obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
-  refine ⟨ψ, ?_, ⟨semidirectProductCongr_eq hψ⟩⟩
+  refine ⟨ψ, ?_, c2_unit_character_cases _, ⟨semidirectProductCongr_eq hψ⟩⟩
   set χA := ψ.comp SemidirectProduct.inl with hχA
   set g : C8g := Multiplicative.ofAdd (1 : ZMod 8) with hg
   set s : Multiplicative (ZMod 2) := Multiplicative.ofAdd (1 : ZMod 2) with hs
@@ -180,23 +181,29 @@ theorem order80_classify_G2 (φ' : order16_wild_G2 →* MulAut (Multiplicative (
     exact absurd hsq (by decide)
 
 /-- **Exhaustiveness for `K = M₁₆` (`G₃`, action `φ₃ : x ↦ x⁵`).**  No constraint arises: all
-four characters on the `C₈`-part occur. -/
+four characters on the `C₈`-part occur, independently of the two characters on the `C₂`-part. -/
 theorem order80_classify_G3 (φ' : order16_wild_G3 →* MulAut (Multiplicative (ZMod 5))) :
     ∃ χ : order16_wild_G3 →* (ZMod 5)ˣ,
+      (χ.comp SemidirectProduct.inl = 1 ∨ χ.comp SemidirectProduct.inl = order40_chiC8_four ∨
+        χ.comp SemidirectProduct.inl = order40_chiC8_two ∨
+        χ.comp SemidirectProduct.inl = order40_chiC8_four_inv) ∧
+      (χ.comp SemidirectProduct.inr = 1 ∨ χ.comp SemidirectProduct.inr = order40_c2UnitHom) ∧
       Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G3 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G3 (unitAutHom.comp χ)) := by
   obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
-  exact ⟨ψ, ⟨semidirectProductCongr_eq hψ⟩⟩
+  exact ⟨ψ, order40_c8_unit_character_cases _, c2_unit_character_cases _,
+    ⟨semidirectProductCongr_eq hψ⟩⟩
 
 /-- **Exhaustiveness for `K = D₁₆` (`G₄`, action `φ₄ : x ↦ x⁷`, inversion).**  The character on
 the `C₈`-part must square to `1`. -/
 theorem order80_classify_G4 (φ' : order16_wild_G4 →* MulAut (Multiplicative (ZMod 5))) :
     ∃ χ : order16_wild_G4 →* (ZMod 5)ˣ,
       (χ.comp SemidirectProduct.inl = 1 ∨ χ.comp SemidirectProduct.inl = order40_chiC8_two) ∧
+      (χ.comp SemidirectProduct.inr = 1 ∨ χ.comp SemidirectProduct.inr = order40_c2UnitHom) ∧
       Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G4 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G4 (unitAutHom.comp χ)) := by
   obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
-  refine ⟨ψ, ?_, ⟨semidirectProductCongr_eq hψ⟩⟩
+  refine ⟨ψ, ?_, c2_unit_character_cases _, ⟨semidirectProductCongr_eq hψ⟩⟩
   set χA := ψ.comp SemidirectProduct.inl with hχA
   set g : C8g := Multiplicative.ofAdd (1 : ZMod 8) with hg
   set s : Multiplicative (ZMod 2) := Multiplicative.ofAdd (1 : ZMod 2) with hs
@@ -249,10 +256,11 @@ theorem order80_classify_G8 (φ' : order16_wild_G8 →* MulAut (Multiplicative (
         χ.comp SemidirectProduct.inl = order40_chiC4C2_fst_two ∨
         χ.comp SemidirectProduct.inl = order40_chiC4C2_snd_two ∨
         χ.comp SemidirectProduct.inl = order40_chiC4C2_prod_two) ∧
+      (χ.comp SemidirectProduct.inr = 1 ∨ χ.comp SemidirectProduct.inr = order40_c2UnitHom) ∧
       Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G8 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G8 (unitAutHom.comp χ)) := by
   obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
-  refine ⟨ψ, ?_, ⟨semidirectProductCongr_eq hψ⟩⟩
+  refine ⟨ψ, ?_, c2_unit_character_cases _, ⟨semidirectProductCongr_eq hψ⟩⟩
   have hkey : (ψ.comp SemidirectProduct.inl) k8g4 ^ 2 = 1 := by
     have h1 := hom_semidirectProduct_inl_invariant ψ
       (Multiplicative.ofAdd (1 : ZMod 2)) k8g4
@@ -282,10 +290,11 @@ theorem order80_classify_G9 (φ' : order16_wild_G9 →* MulAut (Multiplicative (
         χ.comp SemidirectProduct.inl = order40_chiC4C2_fst_two ∨
         χ.comp SemidirectProduct.inl = order40_chiC4C2_fst_four ∨
         χ.comp SemidirectProduct.inl = order40_chiC4C2_fst_four_inv) ∧
+      (χ.comp SemidirectProduct.inr = 1 ∨ χ.comp SemidirectProduct.inr = order40_c2UnitHom) ∧
       Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9 (unitAutHom.comp χ)) := by
   obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
-  refine ⟨ψ, ?_, ⟨semidirectProductCongr_eq hψ⟩⟩
+  refine ⟨ψ, ?_, c2_unit_character_cases _, ⟨semidirectProductCongr_eq hψ⟩⟩
   have hkey : (ψ.comp SemidirectProduct.inl) k8g2 = 1 := by
     have h1 := hom_semidirectProduct_inl_invariant ψ
       (Multiplicative.ofAdd (1 : ZMod 2)) k8g4
@@ -315,10 +324,11 @@ theorem order80_classify_G10 (φ' : order16_wild_G10 →* MulAut (Multiplicative
         χ.comp SemidirectProduct.inl = order40_chiC4C2_fst_two ∨
         χ.comp SemidirectProduct.inl = order40_chiC4C2_snd_two ∨
         χ.comp SemidirectProduct.inl = order40_chiC4C2_prod_two) ∧
+      (χ.comp SemidirectProduct.inr = 1 ∨ χ.comp SemidirectProduct.inr = order40_c2UnitHom) ∧
       Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10 (unitAutHom.comp χ)) := by
   obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
-  refine ⟨ψ, ?_, ⟨semidirectProductCongr_eq hψ⟩⟩
+  refine ⟨ψ, ?_, c2_unit_character_cases _, ⟨semidirectProductCongr_eq hψ⟩⟩
   have hkey : (ψ.comp SemidirectProduct.inl) k8g4 ^ 2 = 1 := by
     have h1 := hom_semidirectProduct_inl_invariant ψ
       (Multiplicative.ofAdd (1 : ZMod 2)) k8g4
@@ -479,10 +489,14 @@ theorem order80_classify_G12 (φ' : order16_wild_G12 →* MulAut (Multiplicative
         χ.comp SemidirectProduct.inl = powHom (p := 5) (q := 4) order40_u4 (by decide) ∨
         χ.comp SemidirectProduct.inl = powHom (p := 5) (q := 4) (order40_u4 ^ 2) (by decide) ∨
         χ.comp SemidirectProduct.inl = powHom (p := 5) (q := 4) (order40_u4 ^ 3) (by decide)) ∧
+      (χ.comp SemidirectProduct.inr = 1 ∨
+        χ.comp SemidirectProduct.inr = powHom (p := 5) (q := 4) order40_u4 (by decide) ∨
+        χ.comp SemidirectProduct.inr = powHom (p := 5) (q := 4) (order40_u4 ^ 2) (by decide) ∨
+        χ.comp SemidirectProduct.inr = powHom (p := 5) (q := 4) (order40_u4 ^ 3) (by decide)) ∧
       Nonempty (SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 φ' ≃*
         SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12 (unitAutHom.comp χ)) := by
   obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
-  refine ⟨ψ, ?_, ⟨semidirectProductCongr_eq hψ⟩⟩
+  refine ⟨ψ, ?_, c4_unit_character_cases _, ⟨semidirectProductCongr_eq hψ⟩⟩
   set χA := ψ.comp SemidirectProduct.inl with hχA
   set g : Multiplicative (ZMod 4) := Multiplicative.ofAdd (1 : ZMod 4) with hg
   have hkey : χA g ^ 3 = χA g := by
@@ -706,5 +720,127 @@ theorem order80_classify_G5 (φ' : QuaternionGroup 4 →* MulAut (Multiplicative
         SemidirectProduct (Multiplicative (ZMod 5)) (QuaternionGroup 4) (unitAutHom.comp χ)) := by
   obtain ⟨ψ, hψ⟩ := exists_unitAutHom_comp_eq φ'
   exact ⟨ψ, order80_q16_unit_character_cases ψ, ⟨semidirectProductCongr_eq hψ⟩⟩
+
+/-! ### Bundling all `14` `K`-types
+
+Combines `order80_semidirectProduct_of_sylow_five_normal`, the prime-order classification of `N`,
+`order16_wild_classification` (`K` is one of the `14` isomorphism types), and each
+`order80_classify_G*` above into a single exhaustiveness statement: `G` (order `80`, unique
+Sylow-`5`) is isomorphic to a semidirect product `C₅ ⋊[unitAutHom.comp χ] K'` for one of the `14`
+concrete `K'` models used in the individual `order80_classify_G*` theorems (for the three
+abstract-`partitionGroup` types `G₀`, `G₆`, `G₁₃`, this means the concrete models
+`order16_wild_C2pow4`, `Multiplicative (ZMod 16)`, `Multiplicative (ZMod 4) × Multiplicative
+(ZMod 4)` rather than the abstract `order16_A5`/`order16_A1`/`order16_A3`). -/
+
+theorem order80_classification_of_sylow_five_normal [Finite G] (hG : Nat.card G = 80)
+    (hSyl : Nat.card (Sylow 5 G) = 1) :
+    (∃ χ : order16_wild_C2pow4 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_C2pow4
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G1 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G1
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G2 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G2
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G3 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G3
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G4 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G4
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : QuaternionGroup 4 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) (QuaternionGroup 4)
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : Multiplicative (ZMod 16) →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) (Multiplicative (ZMod 16))
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G7 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G7
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G8 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G8
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G9 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G9
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G10 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G10
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G11 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G11
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : order16_wild_G12 →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5)) order16_wild_G12
+          (unitAutHom.comp χ))) ∨
+    (∃ χ : (Multiplicative (ZMod 4) × Multiplicative (ZMod 4)) →* (ZMod 5)ˣ,
+        Nonempty (G ≃* SemidirectProduct (Multiplicative (ZMod 5))
+          (Multiplicative (ZMod 4) × Multiplicative (ZMod 4)) (unitAutHom.comp χ))) := by
+  obtain ⟨N, K, φ, _, hcardN, hcardK, ⟨e⟩⟩ :=
+    order80_semidirectProduct_of_sylow_five_normal hG hSyl
+  obtain ⟨eN⟩ := prime_classification (p := 5) (by norm_num) hcardN
+  obtain ⟨i, ⟨eK⟩⟩ := order16_wild_classification (G := K) hcardK
+  fin_cases i
+  · obtain ⟨eC⟩ := order16_A5_iso_concrete
+    obtain ⟨χ, -, -, -, -, eG2⟩ := order80_classify_G0
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp (eK.trans eC).symm.toMonoidHom))
+    exact Or.inl ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN (eK.trans eC))).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G1
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inl
+      ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G2
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inl
+      ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G3
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inl
+      ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G4
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl
+      ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, eG2⟩ := order80_classify_G5
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl
+      ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨eC⟩ := order16_A1_iso_concrete
+    obtain ⟨χ, -, eG2⟩ := order80_classify_C16
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp (eK.trans eC).symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl
+      ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN (eK.trans eC))).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G7
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl
+      ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G8
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inl
+      ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G9
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <|
+      Or.inl ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G10
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <|
+      Or.inr <| Or.inl ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G11
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <|
+      Or.inr <| Or.inr <| Or.inl
+        ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨χ, -, -, eG2⟩ := order80_classify_G12
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp eK.symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <|
+      Or.inr <| Or.inr <| Or.inr <| Or.inl
+        ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN eK)).trans eG2.some⟩⟩
+  · obtain ⟨eC⟩ := order16_A3_iso_concrete
+    obtain ⟨χ, -, -, eG2⟩ := order80_classify_G13
+      (MonoidHom.comp (MulAut.congr eN) (φ.comp (eK.trans eC).symm.toMonoidHom))
+    exact Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <| Or.inr <|
+      Or.inr <| Or.inr <| Or.inr <| Or.inr
+        ⟨χ, ⟨(e.trans (SemidirectProduct.congr' eN (eK.trans eC))).trans eG2.some⟩⟩
 
 end Smallgroups.UsefulTheorems
