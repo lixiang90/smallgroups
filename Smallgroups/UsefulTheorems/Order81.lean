@@ -2973,6 +2973,53 @@ theorem order81_c9c3_param_semidirect_cases (r s t : ZMod 3) :
       (order81_c9c3_param_equiv_of_shear 0 2 2 1 (by decide)
         order81_c9c3_param122_equiv_doubleShear)
 
+/-- Every `C_3` action on `C_9 × C_3` is one of the parameter actions. -/
+theorem order81_C9C3_c3_action_eq_paramAction
+    (φ : CyclicRep 3 →* MulAut order81_C9C3) :
+    ∃ r s t : ZMod 3, φ = order81_c9c3_paramAction r s t := by
+  let g : CyclicRep 3 := Multiplicative.ofAdd (1 : ZMod 3)
+  have hg3 : g ^ 3 = 1 := by decide
+  have hφg3 : (φ g) ^ 3 = 1 := by
+    rw [← map_pow, hg3, map_one]
+  obtain ⟨r, s, t, hφg⟩ := order81_C9C3_aut_eq_paramAut_of_pow_three (φ g) hφg3
+  refine ⟨r, s, t, ?_⟩
+  apply order81_cyclicRep3_hom_ext
+  rw [order81_actionOfOrderThree_ofAdd_one]
+  exact hφg
+
+/-- Every split `C_9 × C_3` extension by `C_3` is one of the five split
+`C_9 × C_3` representatives, or the direct product. -/
+theorem order81_C9C3_c3_semidirect_cases (φ : CyclicRep 3 →* MulAut order81_C9C3) :
+    Nonempty (order81_C9C3 ⋊[φ] CyclicRep 3 ≃* order81_C9C3 × CyclicRep 3) ∨
+      Nonempty (order81_C9C3 ⋊[φ] CyclicRep 3 ≃* order81_semidirectP2P_prod_cyclic) ∨
+        Nonempty (order81_C9C3 ⋊[φ] CyclicRep 3 ≃* order81_c9c3_shear_rep) ∨
+          Nonempty (order81_C9C3 ⋊[φ] CyclicRep 3 ≃* order81_c9c3_lift_rep) ∨
+            Nonempty (order81_C9C3 ⋊[φ] CyclicRep 3 ≃* order81_c9c3_doubleShear_rep) ∨
+              Nonempty (order81_C9C3 ⋊[φ] CyclicRep 3 ≃* order81_c9c3_sixShear_rep) := by
+  obtain ⟨r, s, t, hφ⟩ := order81_C9C3_c3_action_eq_paramAction φ
+  let e : order81_C9C3 ⋊[φ] CyclicRep 3 ≃* order81_c9c3_param_rep r s t :=
+    semidirectProductCongr_eq hφ
+  rcases order81_c9c3_param_semidirect_cases r s t with
+    hprod | hp2p | hshear | hlift | hdouble | hsix
+  · left
+    rcases hprod with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; left
+    rcases hp2p with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; right; left
+    rcases hshear with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; right; right; left
+    rcases hlift with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; right; right; right; left
+    rcases hdouble with ⟨f⟩
+    exact ⟨e.trans f⟩
+  · right; right; right; right; right
+    rcases hsix with ⟨f⟩
+    exact ⟨e.trans f⟩
+
 /-- The six-shear semidirect product is non-abelian. -/
 theorem order81_c9c3_sixShear_rep_nonabelian :
     ¬ ∀ x y : order81_c9c3_sixShear_rep, x * y = y * x := by
