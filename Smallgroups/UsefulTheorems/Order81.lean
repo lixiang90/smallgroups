@@ -4663,12 +4663,40 @@ theorem order81_c9c3_nonSplit_qgen_cube :
       (⟨order81_c9c3_nonSplitTwist, 0⟩ : order81_c9c3_nonSplit_rep) := by
   decide +kernel
 
+@[simp] theorem order81_c9c3_nonSplit_qgen_pow_val (i : ZMod 3) :
+    order81_c9c3_nonSplit_qgen ^ i.val = (⟨0, i⟩ : order81_c9c3_nonSplit_rep) := by
+  fin_cases i <;> rfl
+
 /-- The quotient generator acts on the displayed kernel by the six-shear automorphism. -/
 theorem order81_c9c3_nonSplit_qgen_conj_kernel (n : order81_C9C3Add) :
     order81_c9c3_nonSplit_qgen * (⟨n, 0⟩ : order81_c9c3_nonSplit_rep) *
         order81_c9c3_nonSplit_qgen⁻¹ =
       (⟨order81_c9c3_sixShearAddEquiv n, 0⟩ : order81_c9c3_nonSplit_rep) := by
   fin_cases n <;> rfl
+
+/-- The first coordinate of an element, with quotient coordinate reset to zero, lies in the
+displayed kernel. -/
+theorem order81_c9c3_nonSplit_coord_kernel_mem (x : order81_c9c3_nonSplit_rep) :
+    (⟨x.n, 0⟩ : order81_c9c3_nonSplit_rep) ∈ order81_c9c3_nonSplit_kernel := by
+  change (⟨x.n, 0⟩ : order81_c9c3_nonSplit_rep) ∈ order81_c9c3_nonSplit_tHom.ker
+  rw [MonoidHom.mem_ker]
+  rfl
+
+/-- Coordinate normal form for the non-split representative. -/
+theorem order81_c9c3_nonSplit_coord_normal_form (x : order81_c9c3_nonSplit_rep) :
+    x = (⟨x.n, 0⟩ : order81_c9c3_nonSplit_rep) *
+      order81_c9c3_nonSplit_qgen ^ x.t.val := by
+  cases x with
+  | mk n t =>
+      rw [order81_c9c3_nonSplit_qgen_pow_val]
+      apply Order81C9C3NonSplit.ext <;> simp
+
+/-- Coordinate normal form with the kernel membership packaged for direct use. -/
+theorem order81_c9c3_nonSplit_coord_normal_form_mem (x : order81_c9c3_nonSplit_rep) :
+    ∃ k ∈ order81_c9c3_nonSplit_kernel,
+      x = k * order81_c9c3_nonSplit_qgen ^ x.t.val :=
+  ⟨⟨x.n, 0⟩, order81_c9c3_nonSplit_coord_kernel_mem x,
+    order81_c9c3_nonSplit_coord_normal_form x⟩
 
 theorem card_order81_c9c3_nonSplit_rep :
     Nat.card order81_c9c3_nonSplit_rep = 81 := by
