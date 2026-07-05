@@ -4682,6 +4682,23 @@ theorem order81_c9c3_nonSplit_coord_kernel_mem (x : order81_c9c3_nonSplit_rep) :
   rw [MonoidHom.mem_ker]
   rfl
 
+@[simp] theorem order81_c9c3_nonSplit_kernel_mulEquiv_c9c3_apply_coord
+    (n : order81_C9C3Add) :
+    order81_c9c3_nonSplit_kernel_mulEquiv_c9c3
+      ⟨(⟨n, 0⟩ : order81_c9c3_nonSplit_rep),
+        order81_c9c3_nonSplit_coord_kernel_mem (⟨n, 0⟩ : order81_c9c3_nonSplit_rep)⟩ =
+      (Multiplicative.ofAdd n.1, Multiplicative.ofAdd n.2) := by
+  rfl
+
+@[simp] theorem order81_c9c3_nonSplit_kernel_mulEquiv_c9c3_symm_apply_coord
+    (a : ZMod 9) (b : ZMod 3) :
+    order81_c9c3_nonSplit_kernel_mulEquiv_c9c3.symm
+      ((Multiplicative.ofAdd a, Multiplicative.ofAdd b) : order81_C9C3) =
+      ⟨(⟨(a, b), 0⟩ : order81_c9c3_nonSplit_rep), by
+        simpa using order81_c9c3_nonSplit_coord_kernel_mem
+          (⟨(a, b), 0⟩ : order81_c9c3_nonSplit_rep)⟩ := by
+  rfl
+
 theorem order81_c9c3_nonSplit_mem_kernel_iff_t_eq_zero
     (x : order81_c9c3_nonSplit_rep) :
     x ∈ order81_c9c3_nonSplit_kernel ↔ x.t = 0 := by
