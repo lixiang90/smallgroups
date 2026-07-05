@@ -3626,6 +3626,42 @@ theorem order81_split_extension_mulEquiv_cyclicRep3_of_order_three_generator
     ext x
     simp [φ])
 
+/-- If a group of order `81` has a normal `C_9 × C_3` kernel and an outside
+order-`3` quotient generator, then it is one of the split `C_9 × C_3` cases. -/
+theorem order81_split_c9c3_kernel_cases_of_order_three_generator
+    {G : Type*} [Group G] {K : Subgroup G} [K.Normal] [Finite G]
+    (hcard : Nat.card G = 81) (hKcard : Nat.card K = 27)
+    (hKiso : Nonempty (K ≃* order81_C9C3)) {g : G} (hgK : g ∉ K)
+    (hg3 : g ^ 3 = 1) :
+    Nonempty (G ≃* order81_C9C3 × CyclicRep 3) ∨
+      Nonempty (G ≃* order81_semidirectP2P_prod_cyclic) ∨
+        Nonempty (G ≃* order81_c9c3_shear_rep) ∨
+          Nonempty (G ≃* order81_c9c3_lift_rep) ∨
+            Nonempty (G ≃* order81_c9c3_doubleShear_rep) ∨
+              Nonempty (G ≃* order81_c9c3_sixShear_rep) := by
+  obtain ⟨φ, ⟨eG⟩⟩ :=
+    order81_split_extension_mulEquiv_cyclicRep3_of_order_three_generator hcard hKcard hgK hg3
+  rcases order81_c9c3_kernel_c3_semidirect_cases hKiso φ with
+    hprod | hp2p | hshear | hlift | hdouble | hsix
+  · left
+    rcases hprod with ⟨f⟩
+    exact ⟨eG.trans f⟩
+  · right; left
+    rcases hp2p with ⟨f⟩
+    exact ⟨eG.trans f⟩
+  · right; right; left
+    rcases hshear with ⟨f⟩
+    exact ⟨eG.trans f⟩
+  · right; right; right; left
+    rcases hlift with ⟨f⟩
+    exact ⟨eG.trans f⟩
+  · right; right; right; right; left
+    rcases hdouble with ⟨f⟩
+    exact ⟨eG.trans f⟩
+  · right; right; right; right; right
+    rcases hsix with ⟨f⟩
+    exact ⟨eG.trans f⟩
+
 /-- The parametrisation `(a, b) ↦ x^a y^b` is injective when `x` has order `9`
 inside `K` and `y` is an order-`3` element outside `K`. -/
 theorem order81_c9c3_param_injective {G : Type*} [Group G] {K : Subgroup G} {x y : G}
