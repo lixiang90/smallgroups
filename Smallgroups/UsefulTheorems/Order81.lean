@@ -4635,6 +4635,28 @@ theorem order81_c9c3_nonSplit_no_order_three_outside_kernel :
   rintro ⟨x, hxK, hx3⟩
   exact hxK (order81_c9c3_nonSplit_pow_three_eq_one_mem_kernel x hx3)
 
+/-- The displayed quotient generator in the non-split representative. -/
+abbrev order81_c9c3_nonSplit_qgen : order81_c9c3_nonSplit_rep :=
+  ⟨0, 1⟩
+
+theorem order81_c9c3_nonSplit_qgen_not_mem_kernel :
+    order81_c9c3_nonSplit_qgen ∉ order81_c9c3_nonSplit_kernel := by
+  change order81_c9c3_nonSplit_qgen ∉ order81_c9c3_nonSplit_tHom.ker
+  rw [MonoidHom.mem_ker]
+  decide
+
+theorem order81_c9c3_nonSplit_qgen_cube :
+    order81_c9c3_nonSplit_qgen ^ 3 =
+      (⟨order81_c9c3_nonSplitTwist, 0⟩ : order81_c9c3_nonSplit_rep) := by
+  decide +kernel
+
+/-- The quotient generator acts on the displayed kernel by the six-shear automorphism. -/
+theorem order81_c9c3_nonSplit_qgen_conj_kernel (n : order81_C9C3Add) :
+    order81_c9c3_nonSplit_qgen * (⟨n, 0⟩ : order81_c9c3_nonSplit_rep) *
+        order81_c9c3_nonSplit_qgen⁻¹ =
+      (⟨order81_c9c3_sixShearAddEquiv n, 0⟩ : order81_c9c3_nonSplit_rep) := by
+  fin_cases n <;> rfl
+
 theorem card_order81_c9c3_nonSplit_rep :
     Nat.card order81_c9c3_nonSplit_rep = 81 := by
   rw [Nat.card_congr Order81C9C3NonSplit.equivProd]
