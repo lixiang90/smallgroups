@@ -40,7 +40,9 @@ theorems:
 | `2⁴` (Wild) | 16 | 14 | 5 abelian types + 9 `C₈`/`K₈`-extension types | `Order16_Wild` |
 | `3·8` | 24 | 15 | twelve `C₃ ⋊ H` cases, two normal Sylow-`2` cases, and `S₄` | `Order24` |
 | `12·7` | 84 | 15 | `C₇ ⋊ H` with &#124;H&#124; = 12 — 15 actions over the 5 order-12 types | `Order84` |
+| `5·12` | 60 | 13 | 12 solvable `ℤ/5 ⋊[φ] K` (`K` of order 12) + `A₅` | `Order60.Classification` |
 | `2·3²·5` | 90 | 10 | `N ⋊ C₂` with &#124;N&#124; = 45 — 10 involutions over the 2 order-45 types | `Order90` |
+| `2⁴·5` | 80 | 52 | 51 `C₅ ⋊[χ] K` (normal Sylow-5, `K` one of 14 order-16 types) + `(C₂)⁴ ⋊ C₅` | `Order80` |
 
 ## Layout
 
@@ -282,6 +284,23 @@ theorems:
     over `C₃ × C₃ × C₅`. `order90_complete`, `order90_reps_pairwise`, `order90_isClassif`.
     Instantiated at **90** in `Classifications_81_to_90/Order90`.
 
+  * `Order60/A5.lean` + `Order60/Semiproduct.lean` + `Order60/Classification.lean` — the
+    **complete classification** of groups of order `60 = 5 · 12` into **thirteen** classes.
+    Sylow-`5` counting gives `n₅ = 1` or `n₅ = 6`: `n₅ = 6` forces `G ≅ A₅` (via the faithful
+    action on the six Sylow subgroups, `A5.lean`); `n₅ = 1` (`Semiproduct.lean`) makes the
+    Sylow-`5` subgroup normal, so Schur–Zassenhaus splits `G ≅ ℤ/5 ⋊[φ] K` with `K` one of
+    the five order-`12` types from `Order4P_12`. Since `Aut(ℤ/5) ≅ (ZMod 5)ˣ` is abelian, two
+    actions give isomorphic semidirect products iff they lie in the same `Aut(K)`-orbit; pinning
+    the action by case analysis on each `K` gives twelve solvable classes:
+    – five direct products `ℤ/5 × K` (trivial action); for `K = ℤ/12` and `Dic₃`, two nontrivial
+    actions (inversion and faithful order-4) yield four more; for `K = ℤ/2 × ℤ/6`, one
+    order-2 action; for `K = ℤ/2 × D₆`, two distinct order-2 actions (through the `ℤ/2` factor
+    and the dihedral sign). The thirteen representatives are separated by center cardinality
+    (`60,60,10,10,5,6,3,6,2,1,1,2,1`) and, for the tied pairs, by order-`4` element witnesses
+    or simplicity (`A₅`). `Classification.lean` assembles the two branches into
+    `sixty_classification` (exhaustiveness) and `sixty_isClassif` (bundled `IsClassif 60`).
+    Instantiated at **60** in `Classifications_51_to_60/Order60`.
+
   * `Order100.lean` — the **complete classification** of groups of order `100 = 2² · 5²` into
     **sixteen** classes. The Sylow-`5` subgroup (order `25`) is unique and normal
     (`card_sylow_5_eq_one_of_card_100`, `sylow_5_normal_of_card_100`), so `G ≅ P ⋊[φ] H` with
@@ -376,6 +395,31 @@ theorems:
     invariants), and `order88_isClassif`. Instantiated at **88** in
     `Classifications_81_to_90/Order88`.
 
+
+  * `Order80/` — the **complete classification** of groups of order `80 = 2⁴ · 5` into
+    **fifty-two** classes, via the Sylow-`5` dichotomy (`Order80/Sylow.lean`:
+    `n₅ = 1` or `n₅ = 16`).
+    - **`n₅ = 1` (51 classes, `UniqueSylowFive*.lean`).** The Sylow-`5` subgroup is normal, so
+      Schur–Zassenhaus splits `G ≅ C₅ ⋊[χ] K` with `K` one of the fourteen order-`16` groups
+      from `Order16_Wild`; classifying the characters `χ : K →* (ZMod 5)ˣ` up to `Aut K`
+      per `K`-type (`UniqueSylowFive_K1to7.lean`, `UniqueSylowFive_K0_K8to13.lean` — including
+      several non-obvious merges found via automorphisms mixing the semidirect factors, and one
+      genuine tie broken by a square-root-fiber-count invariant) gives
+      `2+5+4+5+3+3+3+4+4+4+4+3+4+3 = 51` classes, bundled by
+      `UniqueSylowFive_Summary.lean` (`order80_normal_reps`, `order80_normal_classification`).
+    - **`n₅ = 16` (1 class, `SixteenSylowFive.lean`).** Counting forces the Sylow-`2` subgroup
+      normal, so `G ≅ P ⋊[φ] C₅` with `|P| = 16`; the action of a `C₅`-generator is
+      fixed-point-free when nontrivial (`order80_sixteen_sylow_fpf`, `fpf_of_ne_one`), and
+      mod-`5` orbit counting (`mulAut_five_card_modEq`, via
+      `IsPGroup.card_modEq_card_fixedPoints`) rules out `13` of the `14` order-`16` types by
+      their involution (or, for `SD₁₆`, order-`8`-element) count — leaving `P = (C₂)⁴` as the
+      only possibility. All nontrivial actions `φ : C₅ → Aut(C₂)⁴` are shown isomorphic via an
+      explicit orbit-basis normal form (the companion automorphism of `x⁴+x³+x²+x+1`), giving
+      the single class `order80_nonnormal_rep = (C₂)⁴ ⋊ C₅`.
+    - `Classification.lean` bundles both branches (disjoint by the Sylow-`5`-count
+      isomorphism invariant) into `order80_reps : Fin 52 → Type`, `order80_classification`,
+      `order80_reps_pairwise`, `order80_classCount`, and `order80_isClassif : IsClassif 80 _`.
+      Instantiated at **80** in `Classifications_71_to_80/Order80`.
 
 * `Smallgroups/Classifications/` — one file per order, grouped into decade subfolders
   `Classifications_1_to_10`, `Classifications_11_to_20`, …, `Classifications_91_to_100`.

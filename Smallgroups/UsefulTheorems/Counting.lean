@@ -8,6 +8,7 @@ import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Fintype.Card
 import Mathlib.Tactic.FinCases
 import Smallgroups.UsefulTheorems.CenterInvariant
+import Smallgroups.UsefulTheorems.SemidirectProductClassify
 
 /-!
 # Counting isomorphism classes
@@ -466,6 +467,63 @@ theorem isClassif_twelve {N : ℕ} (A B C D E F G H I J K L : Type)
       ⟨6, h⟩, ⟨7, h⟩, ⟨8, h⟩, ⟨9, h⟩, ⟨10, h⟩, ⟨11, h⟩]
   distinct i j hiso := hdistinct i j hiso
 
+/-- The thirteen-element representative family. -/
+def rep13 (A B C D E F G H I J K L M : Type) : Fin 13 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+  | 5 => F
+  | 6 => G
+  | 7 => H
+  | 8 => I
+  | 9 => J
+  | 10 => K
+  | 11 => L
+  | 12 => M
+
+instance instGroupRep13 (A B C D E F G H I J K L M : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F]
+    [Group G] [Group H] [Group I] [Group J] [Group K] [Group L] [Group M] :
+    ∀ i, Group (rep13 A B C D E F G H I J K L M i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+  | 5 => ‹Group F›
+  | 6 => ‹Group G›
+  | 7 => ‹Group H›
+  | 8 => ‹Group I›
+  | 9 => ‹Group J›
+  | 10 => ‹Group K›
+  | 11 => ‹Group L›
+  | 12 => ‹Group M›
+
+/-- Thirteen representatives of order `N` that together exhaust the groups of order `N` and are
+pairwise non-isomorphic give a thirteen-class classification. -/
+theorem isClassif_thirteen {N : ℕ} (A B C D E F G H I J K L M : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F]
+    [Group G] [Group H] [Group I] [Group J] [Group K] [Group L] [Group M]
+    (hA : Nat.card A = N) (hB : Nat.card B = N) (hC : Nat.card C = N)
+    (hD : Nat.card D = N) (hE : Nat.card E = N) (hF : Nat.card F = N)
+    (hG : Nat.card G = N) (hH : Nat.card H = N) (hI : Nat.card I = N)
+    (hJ : Nat.card J = N) (hK : Nat.card K = N) (hL : Nat.card L = N) (hM : Nat.card M = N)
+    (hcomplete : ∀ (X : Type) [Group X], Nat.card X = N →
+      Nonempty (X ≃* A) ∨ Nonempty (X ≃* B) ∨ Nonempty (X ≃* C) ∨
+        Nonempty (X ≃* D) ∨ Nonempty (X ≃* E) ∨ Nonempty (X ≃* F) ∨
+        Nonempty (X ≃* G) ∨ Nonempty (X ≃* H) ∨ Nonempty (X ≃* I) ∨
+        Nonempty (X ≃* J) ∨ Nonempty (X ≃* K) ∨ Nonempty (X ≃* L) ∨ Nonempty (X ≃* M))
+    (hdistinct : PairwiseNonMulEquiv (rep13 A B C D E F G H I J K L M)) :
+    IsClassif N (rep13 A B C D E F G H I J K L M) where
+  card i := by fin_cases i <;> assumption
+  complete X _ hX := by
+    rcases hcomplete X hX with h | h | h | h | h | h | h | h | h | h | h | h | h
+    exacts [⟨0, h⟩, ⟨1, h⟩, ⟨2, h⟩, ⟨3, h⟩, ⟨4, h⟩, ⟨5, h⟩,
+      ⟨6, h⟩, ⟨7, h⟩, ⟨8, h⟩, ⟨9, h⟩, ⟨10, h⟩, ⟨11, h⟩, ⟨12, h⟩]
+  distinct i j hiso := hdistinct i j hiso
+
 /-- **Abelian and non-abelian families are disjoint.** Supplies the disjointness hypothesis of
 `PairwiseNonMulEquiv.sum` when every `A i` is commutative and every `B j` is not. -/
 theorem pairwise_disjoint_of_comm_noncomm {ι κ : Type*} {A : ι → Type} {B : κ → Type}
@@ -532,21 +590,19 @@ generic `of_invariant` and `sigma` theorems gives ready-to-use distinctness tool
 * a center-size map `cs : ι → ℕ` with proofs that each `rep i` has center of size `cs i`, and
 * within-fiber distinctness for indices that share the same center size. -/
 
-open Subgroup in
 /-- **Partition by center cardinality.** Specialises `of_invariant` with `|Z(−)|` as the
 invariant. Most pairs are separated by having different center sizes; only pairs sharing a center
 size need an explicit non-isomorphism proof (the `hfiber` hypothesis). -/
 theorem PairwiseNonMulEquiv.of_center_card {ι : Type*} {rep : ι → Type}
     [∀ i, Group (rep i)]
     (cs : ι → ℕ)
-    (hc : ∀ i, Nat.card (center (rep i)) = cs i)
+    (hc : ∀ i, Nat.card (Subgroup.center (rep i)) = cs i)
     (hfiber : ∀ i j, cs i = cs j → Nonempty (rep i ≃* rep j) → i = j) :
     PairwiseNonMulEquiv rep :=
   PairwiseNonMulEquiv.of_invariant cs
     (fun i j ⟨e⟩ => by rw [← hc i, ← hc j]; exact card_center_eq_of_mulEquiv e)
     hfiber
 
-open Subgroup in
 /-- **Multi-way sum by center cardinality.** Specialises `sigma` using `|Z(−)|` to prove
 cross-family disjointness. Each family is internally pairwise non-isomorphic, and families at
 different `α`-indices have provably different center sizes, so no cross-family pair can be
@@ -555,7 +611,7 @@ theorem PairwiseNonMulEquiv.sigma_of_center_card {α : Type*} {ι : α → Type*
     {rep : (a : α) → ι a → Type}
     [∀ a i, Group (rep a i)]
     (cs : (a : α) → ι a → ℕ)
-    (hc : ∀ a i, Nat.card (center (rep a i)) = cs a i)
+    (hc : ∀ a i, Nat.card (Subgroup.center (rep a i)) = cs a i)
     (hparts : ∀ a, PairwiseNonMulEquiv (rep a))
     (hdisj : ∀ a₁ a₂, a₁ ≠ a₂ → ∀ i j, cs a₁ i ≠ cs a₂ j) :
     PairwiseNonMulEquiv (fun (s : Σ a, ι a) => rep s.1 s.2) :=
@@ -563,5 +619,32 @@ theorem PairwiseNonMulEquiv.sigma_of_center_card {α : Type*} {ι : α → Type*
     (fun a₁ a₂ hne i j =>
       pairwise_disjoint_of_card_center_ne
         (cs a₁) (cs a₂) (fun k => hc a₁ k) (fun k => hc a₂ k) (hdisj a₁ a₂ hne) i j)
+
+/-! ### Semidirect-product specialisation
+
+When every representative in a family is a semidirect product `N ⋊[φᵢ] Hᵢ` of the *same* `N`
+(with `Nat.card N` coprime to each `Nat.card Hᵢ` — the hypothesis that makes `N`'s copy
+characteristic in every case, via `Subgroup.characteristic_of_coprime_index`), the representatives
+inherit distinctness from the `Hᵢ`: different `H`'s force different total groups. This reduces
+distinctness of the semidirect products to distinctness of the (typically much smaller)
+complements. -/
+
+/-- **Partition-based distinctness for coprime-order semidirect products.** If each `rep i` is a
+semidirect product `N ⋊[φ i] (H i)` of a *fixed* `N`, with `Nat.card N` coprime to `Nat.card (H i)`
+for every `i`, then pairwise non-isomorphism of the `H i` implies pairwise non-isomorphism of the
+`rep i`. -/
+theorem PairwiseNonMulEquiv.of_semidirectProduct {ι : Type*} {N : Type*} [Group N] [Finite N]
+    {H : ι → Type} [∀ i, Group (H i)] [∀ i, Finite (H i)] {φ : ∀ i, H i →* MulAut N}
+    {rep : ι → Type} [∀ i, Group (rep i)]
+    (e : ∀ i, Nonempty (rep i ≃* SemidirectProduct N (H i) (φ i)))
+    (hcop : ∀ i, Nat.Coprime (Nat.card N) (Nat.card (H i)))
+    (hH : PairwiseNonMulEquiv H) :
+    PairwiseNonMulEquiv rep := by
+  intro i j ⟨eij⟩
+  obtain ⟨ei⟩ := e i
+  obtain ⟨ej⟩ := e j
+  have f : SemidirectProduct N (H i) (φ i) ≃* SemidirectProduct N (H j) (φ j) :=
+    ei.symm.trans (eij.trans ej)
+  exact hH i j (semidirectProduct_congr_range (hcop j) f)
 
 end Smallgroups.UsefulTheorems

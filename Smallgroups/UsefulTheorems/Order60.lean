@@ -4,3 +4,5 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order60.A5
+import Smallgroups.UsefulTheorems.Order60.Semiproduct
+import Smallgroups.UsefulTheorems.Order60.Classification
