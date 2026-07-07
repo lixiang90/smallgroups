@@ -254,6 +254,20 @@ that the groups are disjoint, then concatenate. -/
 def PairwiseNonMulEquiv {ι : Type*} (rep : ι → Type) [∀ i, Group (rep i)] : Prop :=
   ∀ i j, Nonempty (rep i ≃* rep j) → i = j
 
+/-- A complete classification must have at least as many representatives as any pairwise
+non-isomorphic family of known groups of the same order. -/
+theorem IsClassif.card_ge_of_pairwise {m : ℕ} {known : Fin m → Type} [∀ i, Group (known i)]
+    (h : IsClassif N rep) (hcard : ∀ i, Nat.card (known i) = N)
+    (hdistinct : PairwiseNonMulEquiv known) : m ≤ k := by
+  let f : Fin m → Fin k := fun i => (h.complete (known i) (hcard i)).choose
+  have hfiso : ∀ i, Nonempty (known i ≃* rep (f i)) := fun i =>
+    (h.complete (known i) (hcard i)).choose_spec
+  have hinj : Function.Injective f := by
+    intro i j hf
+    exact hdistinct i j
+      ⟨(hfiso i).some.trans ((MulEquiv.cast hf).trans (hfiso j).some.symm)⟩
+  simpa using Fintype.card_le_of_injective f hinj
+
 /-- The `Sum.elim` of two families of groups is again a family of groups. -/
 instance instGroupSumElim {ι κ : Type*} {A : ι → Type} {B : κ → Type}
     [∀ i, Group (A i)] [∀ j, Group (B j)] : ∀ s : ι ⊕ κ, Group (Sum.elim A B s)
@@ -327,6 +341,76 @@ theorem isClassif_six {N : ℕ} (A B C D E F : Type)
         | rfl
         | exact absurd hiso ‹_›
         | exact absurd (Nonempty.intro hiso.some.symm) ‹_›
+
+/-- The seven-element representative family. -/
+def rep7 (A B C D E F G : Type) : Fin 7 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+  | 5 => F
+  | 6 => G
+
+instance instGroupRep7 (A B C D E F G : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F] [Group G] :
+    ∀ i, Group (rep7 A B C D E F G i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+  | 5 => ‹Group F›
+  | 6 => ‹Group G›
+
+/-- The eight-element representative family. -/
+def rep8 (A B C D E F G H : Type) : Fin 8 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+  | 5 => F
+  | 6 => G
+  | 7 => H
+
+instance instGroupRep8 (A B C D E F G H : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F] [Group G] [Group H] :
+    ∀ i, Group (rep8 A B C D E F G H i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+  | 5 => ‹Group F›
+  | 6 => ‹Group G›
+  | 7 => ‹Group H›
+
+/-- The nine-element representative family. -/
+def rep9 (A B C D E F G H I : Type) : Fin 9 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+  | 5 => F
+  | 6 => G
+  | 7 => H
+  | 8 => I
+
+instance instGroupRep9 (A B C D E F G H I : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F] [Group G] [Group H]
+    [Group I] :
+    ∀ i, Group (rep9 A B C D E F G H I i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+  | 5 => ‹Group F›
+  | 6 => ‹Group G›
+  | 7 => ‹Group H›
+  | 8 => ‹Group I›
 
 /-- The twelve-element representative family. -/
 def rep12 (A B C D E F G H I J K L : Type) : Fin 12 → Type

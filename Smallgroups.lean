@@ -47,4 +47,5 @@ import Smallgroups.UsefulTheorems.Order100
 import Smallgroups.UsefulTheorems.Isoclinism
 import Smallgroups.UsefulTheorems.OrderP4_Abel
 import Smallgroups.UsefulTheorems.OrderP4_NonAbel
+import Smallgroups.UsefulTheorems.Order81
 import Smallgroups.UsefulTheorems.PGroupGeneration
