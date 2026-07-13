@@ -277,4 +277,62 @@ theorem exists_pLowerCentralSeries_eq_bot [Finite G] {p : ℕ} (hp : p.Prime)
     (hG : IsPGroup p G) : ∃ n, pLowerCentralSeries p G n = ⊥ :=
   ⟨Nat.card G, pLowerCentralSeries_eq_bot hp hG⟩
 
+/-! ### Compatibility with direct products
+
+Needed to identify the Frattini subgroup of a product `A × B` (e.g. `Qᵢ × C₂` order-32
+descendants) with the product of the Frattini subgroups, in `PGroupGeneration/Frattini.lean`. -/
+
+/-- The join of two "rectangular" subgroups of a direct product is again rectangular:
+`(H₁ ×ˢ K₁) ⊔ (H₂ ×ˢ K₂) = (H₁ ⊔ H₂) ×ˢ (K₁ ⊔ K₂)`. -/
+private theorem prod_sup_prod {A B : Type*} [Group A] [Group B]
+    (H₁ H₂ : Subgroup A) (K₁ K₂ : Subgroup B) :
+    (H₁.prod K₁) ⊔ (H₂.prod K₂) = (H₁ ⊔ H₂).prod (K₁ ⊔ K₂) := by
+  apply le_antisymm
+  · exact sup_le (Subgroup.prod_mono le_sup_left le_sup_left)
+      (Subgroup.prod_mono le_sup_right le_sup_right)
+  · rintro ⟨a, b⟩ ⟨ha, hb⟩
+    have hA : H₁ ⊔ H₂ ≤ ((H₁.prod K₁) ⊔ (H₂.prod K₂)).comap (MonoidHom.inl A B) := by
+      apply sup_le
+      · intro x hx; exact le_sup_left (a := H₁.prod K₁) (b := H₂.prod K₂) ⟨hx, K₁.one_mem⟩
+      · intro x hx; exact le_sup_right (a := H₁.prod K₁) (b := H₂.prod K₂) ⟨hx, K₂.one_mem⟩
+    have hB : K₁ ⊔ K₂ ≤ ((H₁.prod K₁) ⊔ (H₂.prod K₂)).comap (MonoidHom.inr A B) := by
+      apply sup_le
+      · intro x hx; exact le_sup_left (a := H₁.prod K₁) (b := H₂.prod K₂) ⟨H₁.one_mem, hx⟩
+      · intro x hx; exact le_sup_right (a := H₁.prod K₁) (b := H₂.prod K₂) ⟨H₂.one_mem, hx⟩
+    have ha' : ((a, (1 : B)) : A × B) ∈ (H₁.prod K₁) ⊔ (H₂.prod K₂) := hA ha
+    have hb' : (((1 : A), b) : A × B) ∈ (H₁.prod K₁) ⊔ (H₂.prod K₂) := hB hb
+    have heq : ((a, (1 : B)) : A × B) * ((1 : A), b) = (a, b) := by simp
+    rw [← heq]
+    exact mul_mem ha' hb'
+
+/-- `pPowSubgroup` distributes over direct products. -/
+private theorem pPowSubgroup_prod (p : ℕ) {A B : Type*} [Group A] [Group B]
+    (H : Subgroup A) (K : Subgroup B) :
+    pPowSubgroup p (H.prod K) = (pPowSubgroup p H).prod (pPowSubgroup p K) := by
+  have himg : (· ^ p) '' (↑(H.prod K) : Set (A × B))
+      = ((· ^ p) '' (H : Set A)) ×ˢ ((· ^ p) '' (K : Set B)) := by
+    ext ⟨a, b⟩
+    simp only [Set.mem_image, Subgroup.coe_prod, Set.mem_prod, Prod.exists]
+    constructor
+    · rintro ⟨x, y, ⟨hx, hy⟩, hxy⟩
+      rw [Prod.pow_mk] at hxy
+      injection hxy with hax hby
+      exact ⟨⟨x, hx, hax⟩, ⟨y, hy, hby⟩⟩
+    · rintro ⟨⟨x, hx, hxa⟩, ⟨y, hy, hyb⟩⟩
+      exact ⟨x, y, ⟨hx, hy⟩, by rw [Prod.pow_mk, hxa, hyb]⟩
+  unfold pPowSubgroup
+  rw [himg]
+  exact Subgroup.closure_prod ⟨1, H.one_mem, one_pow p⟩ ⟨1, K.one_mem, one_pow p⟩
+
+/-- The lower exponent-`p` central series of a direct product is the product of the
+individual series. -/
+theorem pLowerCentralSeries_prod {A B : Type*} [Group A] [Group B] (p n : ℕ) :
+    pLowerCentralSeries p (A × B) n
+      = (pLowerCentralSeries p A n).prod (pLowerCentralSeries p B n) := by
+  induction n with
+  | zero => simp [pLowerCentralSeries_zero]
+  | succ n ih =>
+    rw [pLowerCentralSeries_succ, pLowerCentralSeries_succ, pLowerCentralSeries_succ, ih,
+      pPowSubgroup_prod, ← Subgroup.top_prod_top, Subgroup.commutator_prod_prod, prod_sup_prod]
+
 end Smallgroups.UsefulTheorems

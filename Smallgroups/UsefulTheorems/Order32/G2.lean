@@ -391,8 +391,9 @@ private lemma c2_two_cases_tw3 (a : Multiplicative (ZMod 2)) :
   have := show ∀ a : Multiplicative (ZMod 2), a = 1 ∨ a = Multiplicative.ofAdd 1 from by decide
   exact this a
 
-/-- The `C₂`-action on `C₈ × C₂` given by `twistAut3`. -/
-private noncomputable def c8c2tw_phi3 : Multiplicative (ZMod 2) →* MulAut C8C2g where
+/-- The `C₂`-action on `C₈ × C₂` given by `twistAut3`. Not `private`: `Distinctness.lean`
+needs to name it to show `order32_c8c2tw_u3 ≃* order32_c8c2tw_u7`. -/
+noncomputable def c8c2tw_phi3 : Multiplicative (ZMod 2) →* MulAut C8C2g where
   toFun g := if g = 1 then 1 else twistAut3
   map_one' := by simp
   map_mul' a b := by

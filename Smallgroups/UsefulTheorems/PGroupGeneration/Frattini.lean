@@ -286,4 +286,44 @@ theorem pow_mem_frattini [Finite G] {p : ℕ} (hp : p.Prime) (hG : IsPGroup p G)
   rw [frattini_eq_pLowerCentralSeries_one hp hG]
   exact pow_mem_pLowerCentralSeries_succ (Subgroup.mem_top g)
 
+/-! ### Cheap isomorphism invariants: the Frattini subgroup
+
+The pieces promised by the module doc above but not previously delivered: `frattini G`
+transports exactly along a `MulEquiv` (so `Nat.card (frattini G)` — the "Frattini rank"
+data — is a genuine isomorphism invariant), and distributes over direct products. Used
+to separate concrete finite `p`-groups that agree on cheaper invariants (element-order
+counts, center size) but differ in minimal generator count. -/
+
+/-- The Frattini subgroup transports exactly along a `MulEquiv`: `(frattini G).map e =
+frattini H`. An isomorphism of subgroup lattices (`MulEquiv.mapSubgroup`) sends the
+radical of one lattice to the radical of the other (`OrderIso.map_radical`), and
+`frattini` is literally `Order.radical (Subgroup G)`. -/
+theorem frattini_map_eq_of_mulEquiv {H : Type*} [Group H] (e : G ≃* H) :
+    (frattini G).map e.toMonoidHom = frattini H :=
+  (MulEquiv.mapSubgroup e).map_radical
+
+/-- `Nat.card (frattini G)` — the Frattini rank data — is invariant under `MulEquiv`. -/
+theorem frattini_card_eq_of_mulEquiv {H : Type*} [Group H] (e : G ≃* H) :
+    Nat.card (frattini G) = Nat.card (frattini H) := by
+  rw [← frattini_map_eq_of_mulEquiv e]
+  exact Nat.card_congr (Subgroup.equivMapOfInjective _ e.toMonoidHom e.injective).toEquiv
+
+/-- A direct product of finite `p`-groups is again a finite `p`-group. -/
+private theorem isPGroup_prod {A B : Type*} [Group A] [Group B] [Finite A] [Finite B]
+    {p : ℕ} (hp : p.Prime) (hA : IsPGroup p A) (hB : IsPGroup p B) :
+    IsPGroup p (A × B) := by
+  haveI := Fact.mk hp
+  obtain ⟨k, hk⟩ := IsPGroup.iff_card.mp hA
+  obtain ⟨m, hm⟩ := IsPGroup.iff_card.mp hB
+  exact IsPGroup.iff_card.mpr ⟨k + m, by rw [Nat.card_prod, hk, hm, pow_add]⟩
+
+/-- The Frattini subgroup of a direct product of finite `p`-groups is the product of the
+individual Frattini subgroups. -/
+theorem frattini_prod {A B : Type*} [Group A] [Group B] [Finite A] [Finite B] {p : ℕ}
+    (hp : p.Prime) (hA : IsPGroup p A) (hB : IsPGroup p B) :
+    frattini (A × B) = (frattini A).prod (frattini B) := by
+  rw [frattini_eq_pLowerCentralSeries_one hp (isPGroup_prod hp hA hB),
+    frattini_eq_pLowerCentralSeries_one hp hA, frattini_eq_pLowerCentralSeries_one hp hB,
+    pLowerCentralSeries_prod]
+
 end Smallgroups.UsefulTheorems

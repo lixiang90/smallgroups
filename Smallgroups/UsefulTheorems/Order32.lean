@@ -19,6 +19,7 @@ import Smallgroups.UsefulTheorems.Order32.G9
 import Smallgroups.UsefulTheorems.Order32.G10
 import Smallgroups.UsefulTheorems.Order32.G5
 import Smallgroups.UsefulTheorems.Order32.G11
+import Smallgroups.UsefulTheorems.Order32.Distinctness
 
 /-!
 # Classification of groups of order 32 via the p-group generation algorithm
@@ -51,4 +52,14 @@ parent-by-parent in the `Order32/G*.lean` files:
   `G5.lean`, `G11.lean` — the remaining non-abelian parents (`C₄⋊C₄`, the three
   `C₈⋊C₂` groups, the three `K₈⋊C₂` groups, `Q₁₆`, `Q₈×C₂`), trivial-cocycle branches
   (plus, in `G2.lean`, the first "doubled generator" branch).
+
+## Distinctness
+
+`Order32/Distinctness.lean` proves `order32_partial_distinct`: 23 of the concrete
+representatives constructed above (7 abelian types, 9 `Qᵢ × C₂` types, and 7 of the 13
+genuinely-new non-abelian types) are pairwise non-isomorphic. This is a **partial**
+result — 6 representatives are documented but excluded pending further invariants (two
+tied pairs among the genuinely-new groups, and two genuinely-new groups that tie with
+`Qᵢ × C₂` representatives); see that file's module doc for the exact gaps. This is NOT
+yet `IsClassif 32`.
 -/
