@@ -43,6 +43,7 @@ theorems:
 | `5·12` | 60 | 13 | 12 solvable `ℤ/5 ⋊[φ] K` (`K` of order 12) + `A₅` | `Order60.Classification` |
 | `2·3²·5` | 90 | 10 | `N ⋊ C₂` with &#124;N&#124; = 45 — 10 involutions over the 2 order-45 types | `Order90` |
 | `2⁴·5` | 80 | 52 | 51 `C₅ ⋊[χ] K` (normal Sylow-5, `K` one of 14 order-16 types) + `(C₂)⁴ ⋊ C₅` | `Order80` |
+| `3⁴` | 81 | 15 | 5 abelian types + 10 non-abelian types over a `ℤ/9×ℤ/3` or `(ℤ/3)³` kernel | `Order81` |
 
 ## Layout
 
@@ -420,6 +421,37 @@ theorems:
       isomorphism invariant) into `order80_reps : Fin 52 → Type`, `order80_classification`,
       `order80_reps_pairwise`, `order80_classCount`, and `order80_isClassif : IsClassif 80 _`.
       Instantiated at **80** in `Classifications_71_to_80/Order80`.
+
+
+  * `Order81.lean` / `Order81_CaseB.lean` — the **complete classification** of groups of
+    order `81 = 3⁴` into **fifteen** classes: five abelian (via the general `ℤ/pᵃ`-abelian
+    engine, one per partition of `4`) and ten non-abelian.
+    - **Structural reduction (`Order81.lean`).** Every non-abelian group of order `81` has
+      a normal abelian subgroup of order `27`, of type `ℤ/9 × ℤ/3` or elementary abelian
+      `(ℤ/3)³`, with a non-trivial `ℤ/3`-action induced by conjugation from an outside
+      element. The `(ℤ/3)³` case is closed via the full `GL(3,3)`-conjugacy classification
+      of order-dividing-`3` automorphisms (identity / Jordan block / rank-`1` unipotent)
+      together with a "kernel-switching" argument (a non-split rank-`1` extension over one
+      elementary-abelian kernel is a *split* extension over a different one), giving
+      `order81_e27_jordan_rep` and `order81_heisenberg_prod_cyclic`. The `ℤ/9 × ℤ/3` case is
+      closed via a `27`-way case-bash over the parameter space of order-dividing-`3`
+      automorphisms (`order81_c9c3_shear_rep`, `order81_c9c3_lift_rep`,
+      `order81_c9c3_doubleShear_rep`, `order81_c9c3_sixShear_rep`,
+      `order81_semidirectP2P_prod_cyclic`) plus cyclic-kernel cohomology triviality for the
+      case with an element of order `27` (`order81_c27_semidirect_rep`). This leaves one
+      gap: a non-split `ℤ/9 × ℤ/3`-kernel extension with no element of order `27`.
+    - **The final case (`Order81_CaseB.lean`).** Given the setting above, the outside
+      element's transported conjugation action is a parameter automorphism; ruling out an
+      always-splitting family (`doubleShear`-conjugate actions, eliminated by contradiction)
+      and reducing every surviving action to the standard `sixShear` form (via an explicit
+      `liftAut`-conjugation together with an action-squaring move, plus an
+      inversion-automorphism trick resolving a residual twist ambiguity) yields
+      `Nonempty (G ≃* order81_c9_semidirect_c9_rep) ∨ Nonempty (G ≃* order81_c9c3_nonSplit_rep)`
+      (`order81_caseB_dispatch`), built from scratch via a coset-decomposition uniqueness
+      lemma and an explicit generator-relation isomorphism.
+    - `order81_complete`, `order81_reps : Fin 15 → Type`, `order81_reps_pairwise`, and
+      `order81_isClassif : IsClassif 81 order81_reps` assemble both branches. Instantiated
+      at **81** in `Classifications_81_to_90/Order81`.
 
 * `Smallgroups/Classifications/` — one file per order, grouped into decade subfolders
   `Classifications_1_to_10`, `Classifications_11_to_20`, …, `Classifications_91_to_100`.
