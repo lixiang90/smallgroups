@@ -14,6 +14,7 @@ import Mathlib.GroupTheory.SpecificGroups.Dihedral
 import Mathlib.GroupTheory.SpecificGroups.Quaternion
 import Mathlib.Dynamics.PeriodicPts.Defs
 import Mathlib.Tactic.IntervalCases
+import Mathlib.GroupTheory.PGroup
 
 /-!
 # Groups of order 72: the Sylow-2-normal branch (`H ⋊ P`, `H` order `8`, `P` order `9`)
@@ -189,7 +190,7 @@ theorem card_mulAut_abelianP2P_two_no_order_three :
     }
   apply DFunLike.ext
   intro x
-  show f x = x
+  change f x = x
   rcases h2gen x with h | h | h | h | h | h | h | h <;>
     simp [h, map_pow, map_mul, hfe1, hfe2]
 
@@ -292,7 +293,7 @@ theorem card_mulAut_dihedralGroup_four_no_order_three :
       exact d4d1ne1 (mul_right_cancel (a := d4d1) (b := d4d2) (by rw [one_mul]; exact h3'))
   apply DFunLike.ext
   intro x
-  show f x = x
+  change f x = x
   rcases d4gen x with h | h | h | h | h | h | h | h <;>
     simp [h, map_pow, map_mul, hfe1, hfe2]
 
@@ -353,7 +354,7 @@ open QuaternionGroup in
 theorem q8Cyc_pow3 : q8Cyc ^ 3 = 1 := by
   apply DFunLike.ext
   intro x
-  show q8Cyc (q8Cyc (q8Cyc x)) = x
+  change q8Cyc (q8Cyc (q8Cyc x)) = x
   simp only [q8Cyc_apply]
   revert x
   decide
@@ -394,7 +395,7 @@ theorem e8Rot_apply (x : E8) : e8Rot x = e8RotFun x := rfl
 theorem e8Rot_pow3 : e8Rot ^ 3 = 1 := by
   apply DFunLike.ext
   intro x
-  show e8Rot (e8Rot (e8Rot x)) = x
+  change e8Rot (e8Rot (e8Rot x)) = x
   simp only [e8Rot_apply]
   revert x
   decide
@@ -444,7 +445,7 @@ private theorem q8_pow_apply_eq_iterate (f : MulAut (QuaternionGroup 2)) (n : �
   | zero => simp
   | succ k ih =>
     rw [pow_succ']
-    show f ((f ^ k) x) = _
+    change f ((f ^ k) x) = _
     rw [ih, Function.iterate_succ_apply']
 
 private theorem q8_minimalPeriod_le_six (f : MulAut (QuaternionGroup 2)) (x : QuaternionGroup 2)
@@ -458,7 +459,8 @@ private theorem q8_minimalPeriod_le_six (f : MulAut (QuaternionGroup 2)) (x : Qu
       exact q8Order4Set_preserved f _ ih
   have hmaps : Set.MapsTo (fun k => f^[k] x) (Finset.range (Function.minimalPeriod f x) : Set ℕ)
       (q8Order4Set : Set (QuaternionGroup 2)) := fun k _ => hall k
-  have hinj := Function.iterate_injOn_Iio_minimalPeriod (f := (f : QuaternionGroup 2 → QuaternionGroup 2))
+  have hinj := Function.iterate_injOn_Iio_minimalPeriod (f :=
+  (f : QuaternionGroup 2 → QuaternionGroup 2))
     (x := x)
   have hinj' : ((Finset.range (Function.minimalPeriod f x) : Set ℕ)).InjOn
       (fun k => f^[k] x) := by rwa [Finset.coe_range]
@@ -468,7 +470,7 @@ private theorem q8_minimalPeriod_le_six (f : MulAut (QuaternionGroup 2)) (x : Qu
 private theorem q8_fixed_by_pow3_of_order4 (f : MulAut (QuaternionGroup 2)) (hf9 : f ^ 9 = 1)
     (x : QuaternionGroup 2) (hx : x ∈ q8Order4Set) : (f ^ 3) x = x := by
   have hperiodic9 : Function.IsPeriodicPt (⇑f) 9 x := by
-    show f^[9] x = x
+    change f^[9] x = x
     rw [← q8_pow_apply_eq_iterate, hf9]
     rfl
   have hdvd9 : Function.minimalPeriod (⇑f) x ∣ 9 := hperiodic9.minimalPeriod_dvd
@@ -498,7 +500,7 @@ theorem q8_pow9_imp_pow3 (f : MulAut (QuaternionGroup 2)) (hf9 : f ^ 9 = 1) : f 
   have h2 : (f ^ 3) (xa 0) = xa 0 := q8_fixed_by_pow3_of_order4 f hf9 (xa 0) (by decide)
   apply DFunLike.ext
   intro x
-  show (f ^ 3) x = x
+  change (f ^ 3) x = x
   rcases x with i | i
   · rw [q8_a_eq_a_one_pow i, map_pow, h1, ← q8_a_eq_a_one_pow]
   · rw [q8_xa_eq_xa_zero_mul i, map_mul, h2, q8_a_eq_a_one_pow i, map_pow, h1,
@@ -529,7 +531,7 @@ private theorem e8_pow_apply_eq_iterate (f : MulAut E8) (n : ℕ) (x : E8) :
   | zero => simp
   | succ k ih =>
     rw [pow_succ']
-    show f ((f ^ k) x) = _
+    change f ((f ^ k) x) = _
     rw [ih, Function.iterate_succ_apply']
 
 private theorem e8_minimalPeriod_le_seven (f : MulAut E8) (x : E8) (hx : x ∈ e8NonId) :
@@ -552,7 +554,7 @@ private theorem e8_minimalPeriod_le_seven (f : MulAut E8) (x : E8) (hx : x ∈ e
 private theorem e8_fixed_by_pow3_of_nonId (f : MulAut E8) (hf9 : f ^ 9 = 1) (x : E8)
     (hx : x ∈ e8NonId) : (f ^ 3) x = x := by
   have hperiodic9 : Function.IsPeriodicPt (⇑f) 9 x := by
-    show f^[9] x = x
+    change f^[9] x = x
     rw [← e8_pow_apply_eq_iterate, hf9]
     rfl
   have hdvd9 : Function.minimalPeriod (⇑f) x ∣ 9 := hperiodic9.minimalPeriod_dvd
@@ -578,7 +580,7 @@ theorem e8_pow9_imp_pow3 (f : MulAut E8) (hf9 : f ^ 9 = 1) : f ^ 3 = 1 := by
   have h3 : (f ^ 3) e8g3 = e8g3 := e8_fixed_by_pow3_of_nonId f hf9 e8g3 (by decide)
   apply DFunLike.ext
   intro x
-  show (f ^ 3) x = x
+  change (f ^ 3) x = x
   rcases e8gen x with h | h | h | h | h | h | h | h <;>
     simp [h, map_mul, h1, h2, h3]
 
@@ -662,7 +664,7 @@ theorem q8_order3_fa1_ne_a1 (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1)
     have hfxa3 : f (xa 3) = xa 3 := by rw [q8_xa3_eq, map_mul, map_pow, h, heq]
     apply DFunLike.ext
     intro x
-    show f x = x
+    change f x = x
     rcases q8gen x with hx | hx | hx | hx | hx | hx | hx | hx <;>
       (rw [hx]; first | exact map_one f | exact heq | exact hfa2 | exact hfa3 | exact h | exact hfxa1 | exact hfxa2 | exact hfxa3)
   · rw [q8_xa1_eq] at h
@@ -847,7 +849,7 @@ theorem q8_order3_conj_to_cyc (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1)
     set g := q8BuildAut gA gX hHom hInj with hgdef
     apply DFunLike.ext
     intro x
-    show g (f (g⁻¹ x)) = q8Cyc x
+    change g (f (g⁻¹ x)) = q8Cyc x
     rw [q8Cyc_eq_ext]
     have e1 : g (f (g⁻¹ x)) = q8ext gA gX (f (g⁻¹ x)) := q8BuildAut_apply gA gX hHom hInj _
     have e2 : q8ext gA gX (g⁻¹ x) = g (g⁻¹ x) := (q8BuildAut_apply gA gX hHom hInj _).symm
@@ -878,5 +880,108 @@ theorem q8_order3_conj_to_cyc (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1)
   · -- (xa3, a3) = q8Cyc²: conjugator (a1, xa1)
     refine ⟨a 1, xa 1, by decide, by decide, ?_⟩
     intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
+
+/-! ### `E8` order-`3` conjugacy classification: every nontrivial order-`3` automorphism of
+`(ZMod 2)³` has a UNIQUE nontrivial fixed point.
+
+Unlike `Q8` (only `8` order-`3` automorphisms, handled by hand), `E8` has `56`, too many to
+case-split explicitly. Instead: `Fix(f) := {x | f x = x}` is a subgroup of `E8`, so
+`Nat.card (Fix f) ∣ 8` (Lagrange). The cyclic group `⟨f⟩` (order `3`, since `f³=1 ∧ f≠1`) acts
+on the `8`-element set `E8`, so `Nat.card E8 ≡ Nat.card (Fix f) [MOD 3]`
+(`IsPGroup.card_modEq_card_fixedPoints`), i.e. `Nat.card (Fix f) ≡ 2 [MOD 3]`. Combined with
+`Nat.card (Fix f) ∣ 8` and `f ≠ 1` (so `Nat.card (Fix f) ≠ 8`), the only divisor of `8` that is
+`≡ 2 mod 3` and `≠ 8` is `2` — giving a UNIQUE nontrivial fixed point. -/
+
+private def e8Fix (f : MulAut E8) : Subgroup E8 where
+  carrier := {x | f x = x}
+  mul_mem' {a b} ha hb := by
+    simp only [Set.mem_setOf_eq] at ha hb ⊢
+    rw [map_mul, ha, hb]
+  one_mem' := map_one f
+  inv_mem' {a} ha := by
+    simp only [Set.mem_setOf_eq] at ha ⊢
+    rw [map_inv, ha]
+
+private theorem e8Fix_card_dvd (f : MulAut E8) : Nat.card (e8Fix f) ∣ 8 := by
+  have h := Subgroup.card_subgroup_dvd_card (e8Fix f)
+  have hE8 : Nat.card E8 = 8 := Nat.card_eq_fintype_card.trans (by decide)
+  rwa [hE8] at h
+
+private theorem e8_orderOf_three (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
+    orderOf f = 3 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  exact orderOf_eq_prime hf3 hfne1
+
+private def e8Gf (f : MulAut E8) : Subgroup (MulAut E8) := Subgroup.zpowers f
+
+private theorem e8Gf_card (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
+    Nat.card (e8Gf f) = 3 := by
+  rw [e8Gf, Nat.card_zpowers, e8_orderOf_three f hf3 hfne1]
+
+private theorem e8Gf_isPGroup (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
+    IsPGroup 3 (e8Gf f) :=
+  IsPGroup.of_card (n := 1) (by rw [e8Gf_card f hf3 hfne1, pow_one])
+
+private theorem e8Gf_mem_iff (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1)
+    (m : MulAut E8) : m ∈ e8Gf f ↔ m = 1 ∨ m = f ∨ m = f ^ 2 := by
+  classical
+  rw [e8Gf, mem_zpowers_iff_mem_range_orderOf, e8_orderOf_three f hf3 hfne1]
+  simp only [Finset.mem_image, Finset.mem_range]
+  constructor
+  · rintro ⟨k, hk3, rfl⟩
+    interval_cases k
+    · exact Or.inl (by rfl)
+    · exact Or.inr (Or.inl (by rfl))
+    · exact Or.inr (Or.inr (by rfl))
+  · rintro (rfl | rfl | rfl)
+    · exact ⟨0, by norm_num, by rfl⟩
+    · exact ⟨1, by norm_num, by rfl⟩
+    · exact ⟨2, by norm_num, by rfl⟩
+
+private theorem e8Fix_eq_fixedPoints (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
+    (MulAction.fixedPoints (e8Gf f) E8) = (e8Fix f : Set E8) := by
+  ext x
+  simp only [MulAction.fixedPoints, Set.mem_setOf_eq, e8Fix, Subgroup.coe_set_mk]
+  constructor
+  · intro h
+    have hgen : (f : MulAut E8) ∈ e8Gf f := Subgroup.mem_zpowers f
+    have := h ⟨f, hgen⟩
+    rwa [MulAction.subgroup_smul_def, MulAut.smul_def] at this
+  · intro hx m
+    rw [MulAction.subgroup_smul_def, MulAut.smul_def]
+    rcases (e8Gf_mem_iff f hf3 hfne1 m).mp m.2 with hm | hm | hm
+    · show (m : MulAut E8) x = x
+      rw [hm]; rfl
+    · show (m : MulAut E8) x = x
+      rw [hm]; exact hx
+    · show (m : MulAut E8) x = x
+      rw [hm, e8_pow_apply_eq_iterate]
+      show f (f x) = x
+      rw [hx, hx]
+
+private theorem e8Fix_card_two (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
+    Nat.card (e8Fix f) = 2 := by
+  have hcong : Nat.card E8 ≡ Nat.card (MulAction.fixedPoints (e8Gf f) E8) [MOD 3] :=
+    (e8Gf_isPGroup f hf3 hfne1).card_modEq_card_fixedPoints E8
+  rw [e8Fix_eq_fixedPoints f hf3 hfne1] at hcong
+  have hE8card : Nat.card E8 = 8 := Nat.card_eq_fintype_card.trans (by decide)
+  rw [hE8card] at hcong
+  have hmod : Nat.card (e8Fix f) % 3 = 2 := by
+    have h : (8 : ℕ) % 3 = Nat.card (e8Fix f) % 3 := hcong
+    omega
+  have hdvd := e8Fix_card_dvd f
+  have hne8 : Nat.card (e8Fix f) ≠ 8 := by
+    intro hc
+    apply hfne1
+    have htop : e8Fix f = ⊤ := by
+      apply Subgroup.eq_top_of_card_eq
+      rw [hc]
+      exact (Nat.card_eq_fintype_card.trans (by decide) : Nat.card E8 = 8).symm
+    apply DFunLike.ext
+    intro x
+    have hxmem : x ∈ e8Fix f := htop ▸ Subgroup.mem_top x
+    exact hxmem
+  have hle : Nat.card (e8Fix f) ≤ 8 := Nat.le_of_dvd (by norm_num) hdvd
+  interval_cases h : Nat.card (e8Fix f) <;> omega
 
 end Smallgroups.UsefulTheorems
