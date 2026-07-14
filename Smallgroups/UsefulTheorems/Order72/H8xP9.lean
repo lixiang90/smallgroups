@@ -665,8 +665,16 @@ theorem q8_order3_fa1_ne_a1 (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1)
     apply DFunLike.ext
     intro x
     change f x = x
-    rcases q8gen x with hx | hx | hx | hx | hx | hx | hx | hx <;>
-      (rw [hx]; first | exact map_one f | exact heq | exact hfa2 | exact hfa3 | exact h | exact hfxa1 | exact hfxa2 | exact hfxa3)
+    rcases q8gen x with hx | hx | hx | hx | hx | hx | hx | hx <;> rw [hx] <;>
+      first
+        | exact map_one f
+        | exact heq
+        | exact hfa2
+        | exact hfa3
+        | exact h
+        | exact hfxa1
+        | exact hfxa2
+        | exact hfxa3
   · rw [q8_xa1_eq] at h
     have hf2 : f (f (xa 0)) = xa 0 * a 1 ^ 2 := by
       rw [h, map_mul, h, heq]; exact q8calc1
