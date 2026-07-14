@@ -950,13 +950,13 @@ private theorem e8Fix_eq_fixedPoints (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : 
   · intro hx m
     rw [MulAction.subgroup_smul_def, MulAut.smul_def]
     rcases (e8Gf_mem_iff f hf3 hfne1 m).mp m.2 with hm | hm | hm
-    · show (m : MulAut E8) x = x
+    · change (m : MulAut E8) x = x
       rw [hm]; rfl
-    · show (m : MulAut E8) x = x
+    · change (m : MulAut E8) x = x
       rw [hm]; exact hx
-    · show (m : MulAut E8) x = x
+    · change (m : MulAut E8) x = x
       rw [hm, e8_pow_apply_eq_iterate]
-      show f (f x) = x
+      change f (f x) = x
       rw [hx, hx]
 
 private theorem e8Fix_card_two (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
