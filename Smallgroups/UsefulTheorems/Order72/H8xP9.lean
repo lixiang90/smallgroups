@@ -695,4 +695,119 @@ theorem q8_order3_fa1_ne_a1 (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1)
       rw [mul_one]; exact hcontra
     exact absurd (mul_left_cancel heq2) (by decide)
 
+open QuaternionGroup in
+/-- Every nontrivial order-`3` automorphism of `Q8` sends `a 1` to one of the four
+`X`-type order-`4` elements. -/
+theorem q8_order3_fa1_mem (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
+    f (a 1) = xa 0 ∨ f (a 1) = xa 1 ∨ f (a 1) = xa 2 ∨ f (a 1) = xa 3 := by
+  have h4 : (f (a 1)) ^ 4 = 1 := by
+    have h1 : (a 1 : QuaternionGroup 2) ^ 4 = 1 := by decide
+    rw [← map_pow, h1, map_one]
+  have hsqne1 : (f (a 1)) ^ 2 ≠ 1 := by
+    have hne : (a 1 : QuaternionGroup 2) ^ 2 ≠ 1 := by decide
+    rw [← map_pow]
+    intro hc
+    exact hne (f.injective (by rw [hc, map_one]))
+  rcases q8order4_mem (f (a 1)) h4 hsqne1 with h | h | h | h | h | h
+  · exact absurd h (q8_order3_fa1_ne_a1 f hf3 hfne1)
+  · exact absurd h (q8_order3_fa1_ne_a3 f hf3)
+  · exact Or.inl h
+  · exact Or.inr (Or.inl h)
+  · exact Or.inr (Or.inr (Or.inl h))
+  · exact Or.inr (Or.inr (Or.inr h))
+
+/-! ### The "generation formula": every automorphism of `Q8` is determined by where it sends
+the two generators `a 1` and `xa 0`, via `f (a k) = f (a 1) ^ k` and
+`f (xa k) = f (xa 0) * f (a 1) ^ k`. This reduces "classify `f` up to conjugacy" to a
+finite search over the (small) set of valid `(f (a 1), f (xa 0))` pairs — no automorphism-group
+enumeration needed. -/
+
+open QuaternionGroup in
+private theorem q8_ak_eq : ∀ k : ZMod 4, (a k : QuaternionGroup 2) = (a 1) ^ k.val := by decide
+
+open QuaternionGroup in
+private theorem q8_xak_eq : ∀ k : ZMod 4, (xa k : QuaternionGroup 2) = xa 0 * (a 1) ^ k.val := by
+  decide
+
+open QuaternionGroup in
+theorem q8_f_ak (f : MulAut (QuaternionGroup 2)) (k : ZMod 4) :
+    f (a k) = (f (a 1)) ^ k.val := by rw [q8_ak_eq, map_pow]
+
+open QuaternionGroup in
+theorem q8_f_xak (f : MulAut (QuaternionGroup 2)) (k : ZMod 4) :
+    f (xa k) = f (xa 0) * (f (a 1)) ^ k.val := by rw [q8_xak_eq, map_mul, map_pow]
+
+open QuaternionGroup in
+/-- The purely computational model of a `Q8`-endomorphism determined by where it sends the two
+generators: `q8ext A' X'` is the function that would result from extending `a 1 ↦ A'`,
+`xa 0 ↦ X'` via the generation relations. -/
+private def q8ext (A' X' : QuaternionGroup 2) : QuaternionGroup 2 → QuaternionGroup 2
+  | .a k => A' ^ k.val
+  | .xa k => X' * A' ^ k.val
+
+open QuaternionGroup in
+/-- Every automorphism agrees with the `q8ext` model built from its own values on the two
+generators. -/
+private theorem q8_f_eq_ext (f : MulAut (QuaternionGroup 2)) (x : QuaternionGroup 2) :
+    f x = q8ext (f (a 1)) (f (xa 0)) x := by
+  cases x with
+  | a k => exact q8_f_ak f k
+  | xa k => exact q8_f_xak f k
+
+open QuaternionGroup in
+/-- Small closed-form computation (`4 × 6 = 24` concrete pairs, nothing like a full
+automorphism-group search) pinning `f (xa 0)` once `f (a 1)` and the order-`3` condition are
+known. -/
+private theorem q8_pin_decide : ∀ A' X' : QuaternionGroup 2,
+    (A' = xa 0 ∨ A' = xa 1 ∨ A' = xa 2 ∨ A' = xa 3) →
+    (X' = a 1 ∨ X' = a 3 ∨ X' = xa 0 ∨ X' = xa 1 ∨ X' = xa 2 ∨ X' = xa 3) →
+    (q8ext A' X' (q8ext A' X' (q8ext A' X' (a 1))) = a 1 ∧
+     q8ext A' X' (q8ext A' X' (q8ext A' X' (xa 0))) = xa 0) →
+    (A' = xa 0 ∧ (X' = xa 1 ∨ X' = xa 3)) ∨
+    (A' = xa 1 ∧ (X' = a 1 ∨ X' = a 3)) ∨
+    (A' = xa 2 ∧ (X' = xa 1 ∨ X' = xa 3)) ∨
+    (A' = xa 3 ∧ (X' = a 1 ∨ X' = a 3)) := by decide
+
+open QuaternionGroup in
+/-- Full pin: for a nontrivial order-`3` automorphism of `Q8`, `(f (a 1), f (xa 0))` is one of
+exactly eight pairs (matching the eight order-`3` elements of `Aut(Q8) ≅ S₄`). -/
+theorem q8_order3_pin (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
+    (f (a 1) = xa 0 ∧ (f (xa 0) = xa 1 ∨ f (xa 0) = xa 3)) ∨
+    (f (a 1) = xa 1 ∧ (f (xa 0) = a 1 ∨ f (xa 0) = a 3)) ∨
+    (f (a 1) = xa 2 ∧ (f (xa 0) = xa 1 ∨ f (xa 0) = xa 3)) ∨
+    (f (a 1) = xa 3 ∧ (f (xa 0) = a 1 ∨ f (xa 0) = a 3)) := by
+  have hmem := q8_order3_fa1_mem f hf3 hfne1
+  have hx4 : (f (xa 0)) ^ 4 = 1 := by
+    have h1 : (xa 0 : QuaternionGroup 2) ^ 4 = 1 := by decide
+    rw [← map_pow, h1, map_one]
+  have hxsqne1 : (f (xa 0)) ^ 2 ≠ 1 := by
+    have hne : (xa 0 : QuaternionGroup 2) ^ 2 ≠ 1 := by decide
+    rw [← map_pow]
+    intro hc
+    exact hne (f.injective (by rw [hc, map_one]))
+  have hxmem := q8order4_mem (f (xa 0)) hx4 hxsqne1
+  have stepx1 : q8ext (f (a 1)) (f (xa 0)) (xa 0) = f (xa 0) := (q8_f_eq_ext f (xa 0)).symm
+  have stepx2 : q8ext (f (a 1)) (f (xa 0)) (f (xa 0)) = f (f (xa 0)) :=
+    (q8_f_eq_ext f (f (xa 0))).symm
+  have stepx3 : q8ext (f (a 1)) (f (xa 0)) (f (f (xa 0))) = f (f (f (xa 0))) :=
+    (q8_f_eq_ext f (f (f (xa 0)))).symm
+  have stepa1 : q8ext (f (a 1)) (f (xa 0)) (a 1) = f (a 1) := (q8_f_eq_ext f (a 1)).symm
+  have stepa2 : q8ext (f (a 1)) (f (xa 0)) (f (a 1)) = f (f (a 1)) :=
+    (q8_f_eq_ext f (f (a 1))).symm
+  have stepa3 : q8ext (f (a 1)) (f (xa 0)) (f (f (a 1))) = f (f (f (a 1))) :=
+    (q8_f_eq_ext f (f (f (a 1)))).symm
+  have happx : f (f (f (xa 0))) = xa 0 := by
+    have h : (f ^ 3) (xa 0) = xa 0 := by rw [hf3]; rfl
+    exact h
+  have happa : f (f (f (a 1))) = a 1 := by
+    have h : (f ^ 3) (a 1) = a 1 := by rw [hf3]; rfl
+    exact h
+  have h3x : q8ext (f (a 1)) (f (xa 0)) (q8ext (f (a 1)) (f (xa 0))
+      (q8ext (f (a 1)) (f (xa 0)) (xa 0))) = xa 0 := by
+    rw [stepx1, stepx2, stepx3]; exact happx
+  have h3a : q8ext (f (a 1)) (f (xa 0)) (q8ext (f (a 1)) (f (xa 0))
+      (q8ext (f (a 1)) (f (xa 0)) (a 1))) = a 1 := by
+    rw [stepa1, stepa2, stepa3]; exact happa
+  exact q8_pin_decide (f (a 1)) (f (xa 0)) hmem hxmem ⟨h3a, h3x⟩
+
 end Smallgroups.UsefulTheorems
