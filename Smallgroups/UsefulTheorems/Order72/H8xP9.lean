@@ -745,6 +745,20 @@ private def q8ext (A' X' : QuaternionGroup 2) : QuaternionGroup 2 → Quaternion
   | .a k => A' ^ k.val
   | .xa k => X' * A' ^ k.val
 
+/-- Build the `MulAut` corresponding to a valid `(A', X')` pair: `q8ext A' X'` is already a
+homomorphism (`hHom`, checked by a small `decide`) and injective (`hInj`, ditto), hence
+bijective on the finite `Q8` — this packages it as a genuine automorphism, reusable for every
+conjugator we need below (avoiding a bespoke `toFun`/`invFun` table each time, unlike `q8Cyc`).
+-/
+private noncomputable def q8BuildAut (A' X' : QuaternionGroup 2)
+    (hHom : ∀ x y, q8ext A' X' (x * y) = q8ext A' X' x * q8ext A' X' y)
+    (hInj : Function.Injective (q8ext A' X')) : MulAut (QuaternionGroup 2) :=
+  MulEquiv.ofBijective (MonoidHom.mk' (q8ext A' X') hHom)
+    (Finite.injective_iff_bijective.mp hInj)
+
+private theorem q8BuildAut_apply (A' X' : QuaternionGroup 2) (hHom hInj) (x : QuaternionGroup 2) :
+    q8BuildAut A' X' hHom hInj x = q8ext A' X' x := rfl
+
 open QuaternionGroup in
 /-- Every automorphism agrees with the `q8ext` model built from its own values on the two
 generators. -/
@@ -809,5 +823,60 @@ theorem q8_order3_pin (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1) (hfne1 
       (q8ext (f (a 1)) (f (xa 0)) (a 1))) = a 1 := by
     rw [stepa1, stepa2, stepa3]; exact happa
   exact q8_pin_decide (f (a 1)) (f (xa 0)) hmem hxmem ⟨h3a, h3x⟩
+
+open QuaternionGroup in
+private theorem q8Cyc_eq_ext (x : QuaternionGroup 2) : q8Cyc x = q8ext (xa 0) (xa 3) x := by
+  have h := q8_f_eq_ext q8Cyc x
+  rwa [show q8Cyc (a 1) = xa 0 from rfl, show q8Cyc (xa 0) = xa 3 from rfl] at h
+
+open QuaternionGroup in
+/-- Every nontrivial order-`3` automorphism of `Q8` is `Aut(Q8)`-conjugate to `q8Cyc`. Combined
+with `q8Cyc_pow3`/`q8Cyc_ne_one`, this completes the order-`3` conjugacy classification for
+`Q8`: exhaustiveness at the "genuinely new action" case of the Sylow-2-normal branch. -/
+theorem q8_order3_conj_to_cyc (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1)
+    (hfne1 : f ≠ 1) : ∃ g : MulAut (QuaternionGroup 2), g * f * g⁻¹ = q8Cyc := by
+  have hpin := q8_order3_pin f hf3 hfne1
+  -- Given a valid conjugator `(gA, gX)` for the pinned pair `(f (a 1), f (xa 0))`, package it
+  -- into the conclusion.
+  suffices h : ∃ gA gX : QuaternionGroup 2,
+      ∃ hHom : ∀ x y, q8ext gA gX (x * y) = q8ext gA gX x * q8ext gA gX y,
+      ∃ hInj : Function.Injective (q8ext gA gX),
+      ∀ x, q8ext gA gX (f x) = q8ext (xa 0) (xa 3) (q8ext gA gX x) by
+    obtain ⟨gA, gX, hHom, hInj, hconj⟩ := h
+    refine ⟨q8BuildAut gA gX hHom hInj, ?_⟩
+    set g := q8BuildAut gA gX hHom hInj with hgdef
+    apply DFunLike.ext
+    intro x
+    show g (f (g⁻¹ x)) = q8Cyc x
+    rw [q8Cyc_eq_ext]
+    have e1 : g (f (g⁻¹ x)) = q8ext gA gX (f (g⁻¹ x)) := q8BuildAut_apply gA gX hHom hInj _
+    have e2 : q8ext gA gX (g⁻¹ x) = g (g⁻¹ x) := (q8BuildAut_apply gA gX hHom hInj _).symm
+    have hgg : g (g⁻¹ x) = x := by simp
+    rw [e1, hconj (g⁻¹ x), e2, hgg]
+  rcases hpin with ⟨hA, hX | hX⟩ | ⟨hA, hX | hX⟩ | ⟨hA, hX | hX⟩ | ⟨hA, hX | hX⟩
+  · -- (xa0, xa1): conjugator (xa1, a3)
+    refine ⟨xa 1, a 3, by decide, by decide, ?_⟩
+    intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
+  · -- (xa0, xa3) = q8Cyc itself: trivial conjugator (identity)
+    refine ⟨a 1, xa 0, by decide, by decide, ?_⟩
+    intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
+  · -- (xa1, a1): conjugator (xa0, a1)
+    refine ⟨xa 0, a 1, by decide, by decide, ?_⟩
+    intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
+  · -- (xa1, a3): conjugator (xa1, xa0)
+    refine ⟨xa 1, xa 0, by decide, by decide, ?_⟩
+    intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
+  · -- (xa2, xa1): conjugator (xa1, a1)
+    refine ⟨xa 1, a 1, by decide, by decide, ?_⟩
+    intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
+  · -- (xa2, xa3): conjugator (xa0, xa1)
+    refine ⟨xa 0, xa 1, by decide, by decide, ?_⟩
+    intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
+  · -- (xa3, a1): conjugator (xa1, xa2)
+    refine ⟨xa 1, xa 2, by decide, by decide, ?_⟩
+    intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
+  · -- (xa3, a3) = q8Cyc²: conjugator (a1, xa1)
+    refine ⟨a 1, xa 1, by decide, by decide, ?_⟩
+    intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
 
 end Smallgroups.UsefulTheorems
