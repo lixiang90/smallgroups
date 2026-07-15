@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.P3Group
 import Smallgroups.UsefulTheorems.PrimeSqClassification
+import Smallgroups.UsefulTheorems.PGroupGeneration.Reconstruction
 import Smallgroups.UsefulTheorems.SchurZassenhaus
 import Smallgroups.UsefulTheorems.SemidirectProductClassify
 import Smallgroups.UsefulTheorems.Order72.Sylow
@@ -34,7 +35,9 @@ contribute the direct product `H × P`:
 
 The remaining two `H`-types, `QuaternionGroup 2` (`Aut ≅ S₄`, order `24`) and
 `ElementaryP3 2 ≃ (ZMod 2)³` (`Aut ≅ GL(3,2)`, order `168`), genuinely admit order-`3`
-automorphisms and need dedicated (not-yet-built) case analysis — tracked separately.
+automorphisms.  This file now builds standard representatives (`q8Cyc`, `e8Rot`) and proves the
+needed order-`3` conjugacy classification for both targets, together with action-level helpers
+for homomorphisms from a group of order `9`.
 
 For `AbelianP2P 2` and `DihedralGroup 4`, `Nat.card (MulAut H)` isn't cheaply computable
 (no totient-style formula, and brute-force search over `Equiv.Perm H` is too expensive), so
@@ -103,6 +106,28 @@ theorem mulAut_hom_trivial_of_no_order_three {H K : Type*} [Group H] [Group K] [
   · have h1 : (φ k) ^ 3 = 1 :=
       hno3 ((φ k) ^ 3) (by rw [← pow_mul]; norm_num at hφ ⊢; exact hφ)
     exact hno3 (φ k) h1
+
+/-- A nontrivial homomorphism has a nontrivial value.  This small helper keeps later
+`Aut`-valued action arguments from invoking recursive `ext` search. -/
+private theorem exists_apply_ne_one_of_monoidHom_ne_one {K A : Type*} [Group K] [Group A]
+    (φ : K →* A) (hφ : φ ≠ 1) : ∃ k : K, φ k ≠ 1 := by
+  by_contra h
+  apply hφ
+  apply MonoidHom.ext
+  intro k
+  by_contra hk
+  exact h ⟨k, hk⟩
+
+/-- The cyclic-source homomorphism sending the additive generator of `ZMod n` to an element
+whose `n`-th power is trivial. -/
+private noncomputable def zmodActionHom {A : Type*} [Group A] (n : ℕ) [NeZero n]
+    (a : A) (ha : a ^ n = 1) : CyclicRep n →* A :=
+  zmodZPowHom n a ha
+
+@[simp] private theorem zmodActionHom_gen {A : Type*} [Group A] (n : ℕ) [NeZero n]
+    (a : A) (ha : a ^ n = 1) :
+    zmodActionHom n a ha (Multiplicative.ofAdd (1 : ZMod n)) = a := by
+  simpa [zmodActionHom] using zmodZPowHom_intCast n a ha (1 : ℤ)
 
 /-! ### `AbelianP2P 2 ≃ ℤ/4 × ℤ/2` has no order-`3` automorphism.
 
@@ -306,9 +331,9 @@ one concrete order-`3` automorphism for each — the classical constructions (cy
 permuting `i, j, k` for `Q8`; the companion matrix of the irreducible `x² + x + 1` over
 `𝔽₂`, fixing one coordinate and rotating the other two, for `(ZMod 2)³`) — each verified by
 a *small* `decide` (an `8 × 8` multiplicativity check, nothing like the rejected
-`Equiv.Perm`-search scale). Classifying every `φ : P →* MulAut H` up to the
-`Aut P × Aut H` orbit moves (i.e. showing every nontrivial one is equivalent to a power of
-these) is the remaining, larger piece of this branch — not yet built. -/
+`Equiv.Perm`-search scale).  The later sections prove that every nontrivial order-`3`
+automorphism is conjugate to the corresponding representative and package that fact for
+homomorphisms `φ : P →* MulAut H` with `Nat.card P = 9`. -/
 
 open QuaternionGroup in
 /-- The cyclic order-`3` automorphism of `Q8` permuting `i ↦ j ↦ k ↦ i` (and correspondingly
@@ -366,6 +391,32 @@ theorem q8Cyc_ne_one : q8Cyc ≠ 1 := by
   rw [q8Cyc_apply] at heq
   simp [q8CycFun] at heq
 
+/-- Standard nontrivial action of `C9` on `Q8`, factoring through its quotient of order `3`. -/
+noncomputable def q8CycActionC9 : CyclicRep 9 →* MulAut (QuaternionGroup 2) :=
+  zmodActionHom 9 q8Cyc (by
+    rw [show (9 : ℕ) = 3 * 3 by norm_num, pow_mul, q8Cyc_pow3, one_pow])
+
+/-- Standard nontrivial action of `C3 × C3` on `Q8`, nontrivial on the first factor. -/
+noncomputable def q8CycActionE9 : ElemAbelianRep 3 →* MulAut (QuaternionGroup 2) :=
+  (zmodActionHom 3 q8Cyc q8Cyc_pow3).comp (MonoidHom.fst (CyclicRep 3) (CyclicRep 3))
+
+open QuaternionGroup in
+@[simp] theorem q8CycActionC9_gen :
+    q8CycActionC9 (Multiplicative.ofAdd (1 : ZMod 9)) = q8Cyc := by
+  rw [q8CycActionC9, zmodActionHom_gen]
+
+open QuaternionGroup in
+@[simp] theorem q8CycActionE9_fst_gen :
+    q8CycActionE9 (Multiplicative.ofAdd (1 : ZMod 3), 1) = q8Cyc := by
+  rw [q8CycActionE9]
+  simp [zmodActionHom_gen]
+
+open QuaternionGroup in
+@[simp] theorem q8CycActionE9_snd_gen :
+    q8CycActionE9 (1, Multiplicative.ofAdd (1 : ZMod 3)) = 1 := by
+  rw [q8CycActionE9]
+  simp
+
 /-- `ElementaryP3 2 ≃ (ZMod 2)³`, realised concretely as a product of three copies of
 `Multiplicative (ZMod 2)` (matching how `P3Group.IsP3Group` states the elementary abelian
 case). -/
@@ -407,11 +458,84 @@ theorem e8Rot_ne_one : e8Rot ≠ 1 := by
   rw [e8Rot_apply] at heq
   simp [e8RotFun] at heq
 
+/-- Standard nontrivial action of `C9` on `E8`, factoring through its quotient of order `3`. -/
+noncomputable def e8RotActionC9 : CyclicRep 9 →* MulAut E8 :=
+  zmodActionHom 9 e8Rot (by
+    rw [show (9 : ℕ) = 3 * 3 by norm_num, pow_mul, e8Rot_pow3, one_pow])
+
+/-- Standard nontrivial action of `C3 × C3` on `E8`, nontrivial on the first factor. -/
+noncomputable def e8RotActionE9 : ElemAbelianRep 3 →* MulAut E8 :=
+  (zmodActionHom 3 e8Rot e8Rot_pow3).comp (MonoidHom.fst (CyclicRep 3) (CyclicRep 3))
+
+@[simp] theorem e8RotActionC9_gen :
+    e8RotActionC9 (Multiplicative.ofAdd (1 : ZMod 9)) = e8Rot := by
+  rw [e8RotActionC9, zmodActionHom_gen]
+
+@[simp] theorem e8RotActionE9_fst_gen :
+    e8RotActionE9 (Multiplicative.ofAdd (1 : ZMod 3), 1) = e8Rot := by
+  rw [e8RotActionE9]
+  simp [zmodActionHom_gen]
+
+@[simp] theorem e8RotActionE9_snd_gen :
+    e8RotActionE9 (1, Multiplicative.ofAdd (1 : ZMod 3)) = 1 := by
+  rw [e8RotActionE9]
+  simp
+
+/-! ### Standard nontrivial semidirect-product representatives in the Sylow-`2`-normal branch. -/
+
+/-- The representative `Q8 ⋊ C9` where `C9` acts through the standard order-`3`
+automorphism `q8Cyc`. -/
+abbrev order72_Q8_C9_cyc : Type :=
+  SemidirectProduct (QuaternionGroup 2) (CyclicRep 9) q8CycActionC9
+
+/-- The representative `Q8 ⋊ (C3 × C3)` where the first `C3` factor acts by `q8Cyc`. -/
+abbrev order72_Q8_E9_cyc : Type :=
+  SemidirectProduct (QuaternionGroup 2) (ElemAbelianRep 3) q8CycActionE9
+
+/-- The representative `E8 ⋊ C9` where `C9` acts through the standard order-`3`
+automorphism `e8Rot`. -/
+abbrev order72_E8_C9_rot : Type :=
+  SemidirectProduct E8 (CyclicRep 9) e8RotActionC9
+
+/-- The representative `E8 ⋊ (C3 × C3)` where the first `C3` factor acts by `e8Rot`. -/
+abbrev order72_E8_E9_rot : Type :=
+  SemidirectProduct E8 (ElemAbelianRep 3) e8RotActionE9
+
+theorem card_order72_Q8 : Nat.card (QuaternionGroup 2) = 8 :=
+  Nat.card_eq_fintype_card.trans (by decide)
+
+theorem card_order72_E8 : Nat.card E8 = 8 :=
+  Nat.card_eq_fintype_card.trans (by decide)
+
+theorem card_order72_C9 : Nat.card (CyclicRep 9) = 9 :=
+  card_cyclicRep (by norm_num)
+
+theorem card_order72_E9 : Nat.card (ElemAbelianRep 3) = 9 := by
+  rw [card_elemAbelianRep (by norm_num : (3 : ℕ) ≠ 0)]
+  norm_num
+
+theorem card_order72_semidirect {H K : Type*} [Group H] [Group K]
+    (φ : K →* MulAut H) (hH : Nat.card H = 8) (hK : Nat.card K = 9) :
+    Nat.card (SemidirectProduct H K φ) = 72 := by
+  rw [SemidirectProduct.card, hH, hK]
+
+theorem card_order72_Q8_C9_cyc : Nat.card order72_Q8_C9_cyc = 72 :=
+  card_order72_semidirect q8CycActionC9 card_order72_Q8 card_order72_C9
+
+theorem card_order72_Q8_E9_cyc : Nat.card order72_Q8_E9_cyc = 72 :=
+  card_order72_semidirect q8CycActionE9 card_order72_Q8 card_order72_E9
+
+theorem card_order72_E8_C9_rot : Nat.card order72_E8_C9_rot = 72 :=
+  card_order72_semidirect e8RotActionC9 card_order72_E8 card_order72_C9
+
+theorem card_order72_E8_E9_rot : Nat.card order72_E8_E9_rot = 72 :=
+  card_order72_semidirect e8RotActionE9 card_order72_E8 card_order72_E9
+
 /-! ### No order-`9` automorphism of `Q8`: `f⁹ = 1 → f³ = 1`.
 
 This rules out the image of `φ : P →* MulAut Q8` (`P` order `9`) ever hitting an order-`9`
-element, leaving only order `1` or `3` — the remaining piece (that every order-`3` `f` is
-`Aut(Q8)`-conjugate to a power of `q8Cyc`) is not yet built.
+element, leaving only order `1` or `3`; the order-`3` values are classified below by
+conjugacy to `q8Cyc`.
 
 The argument avoids computing `Nat.card (MulAut Q8)` (which would need constructing
 `Aut(Q8) ≅ S₄` from scratch): the `6`-element set of order-`4` elements of `Q8` is preserved
@@ -889,6 +1013,49 @@ theorem q8_order3_conj_to_cyc (f : MulAut (QuaternionGroup 2)) (hf3 : f ^ 3 = 1)
     refine ⟨a 1, xa 1, by decide, by decide, ?_⟩
     intro x; rw [q8_f_eq_ext f x, hA, hX]; revert x; decide
 
+/-- A nontrivial action of a group of order `9` on `Q8` contains an element whose image is
+`Aut(Q8)`-conjugate to the standard `q8Cyc`. -/
+theorem q8_hom_nontrivial_elem_conj_to_cyc {K : Type*} [Group K] [Finite K]
+    (hK : Nat.card K = 9) (φ : K →* MulAut (QuaternionGroup 2)) (hφ : φ ≠ 1) :
+    ∃ k : K, φ k ≠ 1 ∧ ∃ g : MulAut (QuaternionGroup 2), g * φ k * g⁻¹ = q8Cyc := by
+  have hnontriv : ∃ k : K, φ k ≠ 1 := exists_apply_ne_one_of_monoidHom_ne_one φ hφ
+  obtain ⟨k, hkne⟩ := hnontriv
+  have hk9 : k ^ 9 = 1 := by
+    exact orderOf_dvd_iff_pow_eq_one.mp (hK ▸ orderOf_dvd_natCard k)
+  have hφ9 : (φ k) ^ 9 = 1 := by
+    rw [← map_pow, hk9, map_one]
+  have hφ3 : (φ k) ^ 3 = 1 := q8_pow9_imp_pow3 (φ k) hφ9
+  exact ⟨k, hkne, q8_order3_conj_to_cyc (φ k) hφ3 hkne⟩
+
+/-- Every value of an action of a group of order `9` on `Q8` has cube equal to the identity. -/
+theorem q8_hom_apply_pow3_of_card9 {K : Type*} [Group K] [Finite K]
+    (hK : Nat.card K = 9) (φ : K →* MulAut (QuaternionGroup 2)) (k : K) :
+    (φ k) ^ 3 = 1 := by
+  have hk9 : k ^ 9 = 1 :=
+    orderOf_dvd_iff_pow_eq_one.mp (hK ▸ orderOf_dvd_natCard k)
+  have hφ9 : (φ k) ^ 9 = 1 := by
+    rw [← map_pow, hk9, map_one]
+  exact q8_pow9_imp_pow3 (φ k) hφ9
+
+/-- Pointwise form for order-`9` actions on `Q8`: each element acts trivially or by an
+automorphism conjugate to `q8Cyc`. -/
+theorem q8_hom_apply_eq_one_or_conj_to_cyc {K : Type*} [Group K] [Finite K]
+    (hK : Nat.card K = 9) (φ : K →* MulAut (QuaternionGroup 2)) (k : K) :
+    φ k = 1 ∨ ∃ g : MulAut (QuaternionGroup 2), g * φ k * g⁻¹ = q8Cyc := by
+  by_cases hk : φ k = 1
+  · exact Or.inl hk
+  · exact Or.inr (q8_order3_conj_to_cyc (φ k) (q8_hom_apply_pow3_of_card9 hK φ k) hk)
+
+/-- Orbit-move form of `q8_hom_nontrivial_elem_conj_to_cyc`: after conjugating the whole
+action by an automorphism of `Q8`, some element of the order-`9` source acts exactly as
+`q8Cyc`. -/
+theorem q8_hom_nontrivial_conj_has_cyc_value {K : Type*} [Group K] [Finite K]
+    (hK : Nat.card K = 9) (φ : K →* MulAut (QuaternionGroup 2)) (hφ : φ ≠ 1) :
+    ∃ k : K, ∃ g : MulAut (QuaternionGroup 2),
+      ((MulAut.conj g).toMonoidHom.comp φ) k = q8Cyc := by
+  obtain ⟨k, _hkne, g, hg⟩ := q8_hom_nontrivial_elem_conj_to_cyc hK φ hφ
+  exact ⟨k, g, by simpa [MonoidHom.comp_apply, MulAut.conj_apply] using hg⟩
+
 /-! ### `E8` order-`3` conjugacy classification: every nontrivial order-`3` automorphism of
 `(ZMod 2)³` has a UNIQUE nontrivial fixed point.
 
@@ -991,5 +1158,670 @@ private theorem e8Fix_card_two (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 
     exact hxmem
   have hle : Nat.card (e8Fix f) ≤ 8 := Nat.le_of_dvd (by norm_num) hdvd
   interval_cases h : Nat.card (e8Fix f) <;> omega
+
+/-- A nontrivial order-`3` automorphism of `E8` fixes exactly one non-identity element. -/
+theorem e8_order3_existsUnique_nontrivial_fixed (f : MulAut E8) (hf3 : f ^ 3 = 1)
+    (hfne1 : f ≠ 1) : ∃! x : E8, x ≠ 1 ∧ f x = x := by
+  let oneFix : e8Fix f := ⟨1, map_one f⟩
+  obtain ⟨y, hyne, hyuniq⟩ :=
+    (Nat.card_eq_two_iff' oneFix).1 (e8Fix_card_two f hf3 hfne1)
+  refine ⟨y.1, ?_, ?_⟩
+  · constructor
+    · intro hy1
+      apply hyne
+      exact Subtype.ext hy1
+    · exact y.2
+  · intro z hz
+    have hzFix : z ∈ e8Fix f := hz.2
+    have hz_ne_oneFix : (⟨z, hzFix⟩ : e8Fix f) ≠ oneFix := by
+      intro h
+      exact hz.1 (congrArg Subtype.val h)
+    exact congrArg Subtype.val (hyuniq ⟨z, hzFix⟩ hz_ne_oneFix)
+
+/-- Once the unique non-identity fixed point `z` is chosen, the whole fixed-point set is
+`{1, z}`. -/
+theorem e8_order3_fixed_iff (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1)
+    {z : E8} (hz : z ≠ 1 ∧ f z = z) (x : E8) : f x = x ↔ x = 1 ∨ x = z := by
+  constructor
+  · intro hx
+    by_cases hx1 : x = 1
+    · exact Or.inl hx1
+    · right
+      obtain ⟨u, hu, huniq⟩ := e8_order3_existsUnique_nontrivial_fixed f hf3 hfne1
+      exact (huniq x ⟨hx1, hx⟩).trans (huniq z hz).symm
+  · rintro (rfl | rfl)
+    · exact map_one f
+    · exact hz.2
+
+/-- The standard rotation `e8Rot` fixes exactly `1` and the first basis vector. -/
+theorem e8Rot_fixed_iff (x : E8) :
+    e8Rot x = x ↔ x = 1 ∨ x = (Multiplicative.ofAdd (1 : ZMod 2), 1, 1) := by
+  rw [e8Rot_apply]
+  revert x
+  decide
+
+/-- The first basis vector is the unique non-identity fixed point of `e8Rot`. -/
+theorem e8Rot_unique_nontrivial_fixed :
+    ∃! x : E8, x ≠ 1 ∧ e8Rot x = x :=
+  e8_order3_existsUnique_nontrivial_fixed e8Rot e8Rot_pow3 e8Rot_ne_one
+
+/-- Any non-identity vector of `E8` can be sent to the first basis vector by an automorphism.
+This is the normalization step for the fixed line of a nontrivial order-`3` automorphism. -/
+theorem e8_exists_aut_send_nontrivial_to_first (z : E8) (hz : z ≠ 1) :
+    ∃ g : MulAut E8, g z = (Multiplicative.ofAdd (1 : ZMod 2), 1, 1) := by
+  rcases e8gen z with h | h | h | h | h | h | h | h
+  · exact absurd h hz
+  · refine ⟨1, ?_⟩
+    rw [h]
+    decide
+  · refine ⟨{
+      toFun := fun ⟨p, q, r⟩ => (q, p, r)
+      invFun := fun ⟨p, q, r⟩ => (q, p, r)
+      left_inv := by decide
+      right_inv := by decide
+      map_mul' := by decide }, ?_⟩
+    rw [h]
+    decide
+  · refine ⟨{
+      toFun := fun ⟨p, q, r⟩ => (r, q, p)
+      invFun := fun ⟨p, q, r⟩ => (r, q, p)
+      left_inv := by decide
+      right_inv := by decide
+      map_mul' := by decide }, ?_⟩
+    rw [h]
+    decide
+  · refine ⟨{
+      toFun := fun ⟨p, q, r⟩ => (p, p * q, r)
+      invFun := fun ⟨p, q, r⟩ => (p, p * q, r)
+      left_inv := by decide
+      right_inv := by decide
+      map_mul' := by decide }, ?_⟩
+    rw [h]
+    decide
+  · refine ⟨{
+      toFun := fun ⟨p, q, r⟩ => (p, q, p * r)
+      invFun := fun ⟨p, q, r⟩ => (p, q, p * r)
+      left_inv := by decide
+      right_inv := by decide
+      map_mul' := by decide }, ?_⟩
+    rw [h]
+    decide
+  · refine ⟨{
+      toFun := fun ⟨p, q, r⟩ => (q, p, q * r)
+      invFun := fun ⟨p, q, r⟩ => (q, p, p * r)
+      left_inv := by decide
+      right_inv := by decide
+      map_mul' := by decide }, ?_⟩
+    rw [h]
+    decide
+  · refine ⟨{
+      toFun := fun ⟨p, q, r⟩ => (p, p * q, p * r)
+      invFun := fun ⟨p, q, r⟩ => (p, p * q, p * r)
+      left_inv := by decide
+      right_inv := by decide
+      map_mul' := by decide }, ?_⟩
+    rw [h]
+    decide
+
+/-- Normalize the fixed line of a nontrivial order-`3` automorphism of `E8`: after conjugating,
+the automorphism fixes the first basis vector. -/
+theorem e8_order3_conj_fixes_first (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
+    ∃ h : MulAut E8, h ^ 3 = 1 ∧ h ≠ 1 ∧
+      h (Multiplicative.ofAdd (1 : ZMod 2), 1, 1) =
+        (Multiplicative.ofAdd (1 : ZMod 2), 1, 1) ∧
+      ∃ g : MulAut E8, h = g * f * g⁻¹ := by
+  obtain ⟨z, hz, -⟩ := e8_order3_existsUnique_nontrivial_fixed f hf3 hfne1
+  obtain ⟨g, hg⟩ := e8_exists_aut_send_nontrivial_to_first z hz.1
+  refine ⟨g * f * g⁻¹, ?_, ?_, ?_, ⟨g, rfl⟩⟩
+  · calc
+      (g * f * g⁻¹) ^ 3 = g * f ^ 3 * g⁻¹ := by
+        rw [pow_three (g * f * g⁻¹), pow_three f]
+        group
+      _ = 1 := by rw [hf3]; group
+  · intro htriv
+    apply hfne1
+    calc
+      f = g⁻¹ * (g * f * g⁻¹) * g := by group
+      _ = 1 := by rw [htriv]; group
+  · change g (f (g⁻¹ (Multiplicative.ofAdd (1 : ZMod 2), 1, 1))) =
+      (Multiplicative.ofAdd (1 : ZMod 2), 1, 1)
+    rw [← hg]
+    have hginv : g⁻¹ (g z) = z := by simp
+    rw [hginv, hz.2, hg]
+
+/-- A stronger normalization statement: after conjugating a nontrivial order-`3`
+automorphism of `E8`, its fixed points are exactly `1` and the first basis vector. -/
+theorem e8_order3_conj_fixed_line_first (f : MulAut E8) (hf3 : f ^ 3 = 1)
+    (hfne1 : f ≠ 1) :
+    ∃ h : MulAut E8, h ^ 3 = 1 ∧ h ≠ 1 ∧
+      (∀ x : E8, h x = x ↔
+        x = 1 ∨ x = (Multiplicative.ofAdd (1 : ZMod 2), 1, 1)) ∧
+      ∃ g : MulAut E8, h = g * f * g⁻¹ := by
+  obtain ⟨sigma, hsigma3, hsigma_ne1, hsigma_fix, g, hg⟩ :=
+    e8_order3_conj_fixes_first f hf3 hfne1
+  refine ⟨sigma, hsigma3, hsigma_ne1, ?_, g, hg⟩
+  intro x
+  exact e8_order3_fixed_iff sigma hsigma3 hsigma_ne1 ⟨by decide, hsigma_fix⟩ x
+
+/-- Two automorphisms of `E8` are equal once they agree on the three standard generators. -/
+theorem e8_mulAut_ext (f g : MulAut E8)
+    (h1 : f e8g1 = g e8g1) (h2 : f e8g2 = g e8g2) (h3 : f e8g3 = g e8g3) :
+    f = g := by
+  apply DFunLike.ext
+  intro x
+  change f x = g x
+  rcases e8gen x with hx | hx | hx | hx | hx | hx | hx | hx <;>
+    simp [hx, map_mul, h1, h2, h3]
+
+/-- The linear extension that fixes `e8g1` and sends `e8g2 ↦ A`, `e8g3 ↦ B`, written
+as an explicit function on the eight elements of `E8`. -/
+private def e8fixedExt (A B : E8) (x : E8) : E8 :=
+  if x = 1 then 1
+  else if x = e8g1 then e8g1
+  else if x = e8g2 then A
+  else if x = e8g3 then B
+  else if x = e8g1 * e8g2 then e8g1 * A
+  else if x = e8g1 * e8g3 then e8g1 * B
+  else if x = e8g2 * e8g3 then A * B
+  else e8g1 * A * B
+
+@[simp] private theorem e8fixedExt_one (A B : E8) : e8fixedExt A B 1 = 1 := by
+  simp [e8fixedExt]
+
+@[simp] private theorem e8fixedExt_g1 (A B : E8) : e8fixedExt A B e8g1 = e8g1 := by
+  rw [e8fixedExt]
+  split
+  · rename_i h
+    exfalso
+    revert h
+    decide
+  · simp
+
+@[simp] private theorem e8fixedExt_g2 (A B : E8) : e8fixedExt A B e8g2 = A := by
+  rw [e8fixedExt]
+  split
+  · rename_i h
+    exfalso
+    revert h
+    decide
+  · split
+    · rename_i h
+      exfalso
+      revert h
+      decide
+    · simp
+
+@[simp] private theorem e8fixedExt_g3 (A B : E8) : e8fixedExt A B e8g3 = B := by
+  rw [e8fixedExt]
+  split
+  · rename_i h
+    exfalso
+    revert h
+    decide
+  · split
+    · rename_i h
+      exfalso
+      revert h
+      decide
+    · split
+      · rename_i h
+        exfalso
+        revert h
+        decide
+      · simp
+
+@[simp] private theorem e8fixedExt_g1g2 (A B : E8) :
+    e8fixedExt A B (e8g1 * e8g2) = e8g1 * A := by
+  rw [e8fixedExt]
+  repeat' first
+    | split
+      · rename_i h
+        exfalso
+        revert h
+        decide
+    | simp
+
+@[simp] private theorem e8fixedExt_g1g3 (A B : E8) :
+    e8fixedExt A B (e8g1 * e8g3) = e8g1 * B := by
+  rw [e8fixedExt]
+  repeat' first
+    | split
+      · rename_i h
+        exfalso
+        revert h
+        decide
+    | simp
+
+@[simp] private theorem e8fixedExt_g2g3 (A B : E8) :
+    e8fixedExt A B (e8g2 * e8g3) = A * B := by
+  rw [e8fixedExt]
+  repeat' first
+    | split
+      · rename_i h
+        exfalso
+        revert h
+        decide
+    | simp
+
+@[simp] private theorem e8fixedExt_g1g2g3 (A B : E8) :
+    e8fixedExt A B (e8g1 * e8g2 * e8g3) = e8g1 * A * B := by
+  rw [e8fixedExt]
+  repeat' first
+    | split
+      · rename_i h
+        exfalso
+        revert h
+        decide
+    | simp
+
+private theorem e8_fixedExt_agrees (f : MulAut E8) (hf1 : f e8g1 = e8g1) (x : E8) :
+    f x = e8fixedExt (f e8g2) (f e8g3) x := by
+  rcases e8gen x with hx | hx | hx | hx | hx | hx | hx | hx <;>
+    subst x <;> simp [map_mul, hf1]
+
+/-- In the normalized fixed-line case, the order-`3` and fixed-point hypotheses for an
+automorphism of `E8` reduce to the corresponding two-generator data of `e8fixedExt`. -/
+theorem e8_order3_fixed_line_ext_data (f : MulAut E8) (hf3 : f ^ 3 = 1)
+    (hfix : ∀ x : E8, f x = x ↔ x = 1 ∨ x = e8g1) :
+    e8fixedExt (f e8g2) (f e8g3)
+        (e8fixedExt (f e8g2) (f e8g3) (e8fixedExt (f e8g2) (f e8g3) e8g2)) = e8g2 ∧
+      e8fixedExt (f e8g2) (f e8g3)
+        (e8fixedExt (f e8g2) (f e8g3) (e8fixedExt (f e8g2) (f e8g3) e8g3)) = e8g3 ∧
+      ∀ x : E8, e8fixedExt (f e8g2) (f e8g3) x = x ↔ x = 1 ∨ x = e8g1 := by
+  have hf1 : f e8g1 = e8g1 := (hfix e8g1).mpr (Or.inr rfl)
+  have hagree := e8_fixedExt_agrees f hf1
+  refine ⟨?_, ?_, ?_⟩
+  · have h : f (f (f e8g2)) = e8g2 := by
+      have happ : (f ^ 3) e8g2 = e8g2 := by rw [hf3]; rfl
+      exact happ
+    rw [hagree e8g2, hagree (e8fixedExt (f e8g2) (f e8g3) e8g2),
+      hagree (e8fixedExt (f e8g2) (f e8g3)
+        (e8fixedExt (f e8g2) (f e8g3) e8g2))] at h
+    exact h
+  · have h : f (f (f e8g3)) = e8g3 := by
+      have happ : (f ^ 3) e8g3 = e8g3 := by rw [hf3]; rfl
+      exact happ
+    rw [hagree e8g3, hagree (e8fixedExt (f e8g2) (f e8g3) e8g3),
+      hagree (e8fixedExt (f e8g2) (f e8g3)
+        (e8fixedExt (f e8g2) (f e8g3) e8g3))] at h
+    exact h
+  · intro x
+    rw [← hagree x]
+    exact hfix x
+
+@[simp] theorem e8Rot_e8g1 : e8Rot e8g1 = e8g1 := by
+  decide
+
+@[simp] theorem e8Rot_e8g2 : e8Rot e8g2 = e8g3 := by
+  decide
+
+@[simp] theorem e8Rot_e8g3 : e8Rot e8g3 = e8g2 * e8g3 := by
+  decide
+
+@[simp] theorem e8Rot_sq_e8g1 : (e8Rot ^ 2) e8g1 = e8g1 := by
+  decide
+
+@[simp] theorem e8Rot_sq_e8g2 : (e8Rot ^ 2) e8g2 = e8g2 * e8g3 := by
+  decide
+
+@[simp] theorem e8Rot_sq_e8g3 : (e8Rot ^ 2) e8g3 = e8g2 := by
+  decide
+
+/-! The next three automorphisms fix `e8g1` and induce the identity on the quotient by
+`⟨e8g1⟩`.  They are the elementary shears used to remove the four possible `e8g1`-twists in
+the normalized fixed-line case. -/
+
+def e8Shear2 : MulAut E8 where
+  toFun := fun ⟨p, q, r⟩ => (p * q, q, r)
+  invFun := fun ⟨p, q, r⟩ => (p * q, q, r)
+  left_inv := by decide
+  right_inv := by decide
+  map_mul' := by decide
+
+def e8Shear3 : MulAut E8 where
+  toFun := fun ⟨p, q, r⟩ => (p * r, q, r)
+  invFun := fun ⟨p, q, r⟩ => (p * r, q, r)
+  left_inv := by decide
+  right_inv := by decide
+  map_mul' := by decide
+
+def e8Shear23 : MulAut E8 where
+  toFun := fun ⟨p, q, r⟩ => (p * q * r, q, r)
+  invFun := fun ⟨p, q, r⟩ => (p * q * r, q, r)
+  left_inv := by decide
+  right_inv := by decide
+  map_mul' := by decide
+
+/-- The automorphism fixing `e8g1` and swapping `e8g2` with `e8g3`.  It conjugates
+`e8Rot` to `e8Rot ^ 2`, so the two nontrivial rotations of the normalized quotient belong to
+the same conjugacy class. -/
+def e8Swap23 : MulAut E8 where
+  toFun := fun ⟨p, q, r⟩ => (p, r, q)
+  invFun := fun ⟨p, q, r⟩ => (p, r, q)
+  left_inv := by decide
+  right_inv := by decide
+  map_mul' := by decide
+
+theorem e8Shear2_inv : e8Shear2⁻¹ = e8Shear2 := by
+  apply DFunLike.ext
+  intro x
+  change e8Shear2⁻¹ x = e8Shear2 x
+  revert x
+  decide
+
+theorem e8Shear3_inv : e8Shear3⁻¹ = e8Shear3 := by
+  apply DFunLike.ext
+  intro x
+  change e8Shear3⁻¹ x = e8Shear3 x
+  revert x
+  decide
+
+theorem e8Shear23_inv : e8Shear23⁻¹ = e8Shear23 := by
+  apply DFunLike.ext
+  intro x
+  change e8Shear23⁻¹ x = e8Shear23 x
+  revert x
+  decide
+
+theorem e8Swap23_inv : e8Swap23⁻¹ = e8Swap23 := by
+  apply DFunLike.ext
+  intro x
+  change e8Swap23⁻¹ x = e8Swap23 x
+  revert x
+  decide
+
+@[simp] theorem e8Swap23_e8g1 : e8Swap23 e8g1 = e8g1 := by
+  decide
+
+@[simp] theorem e8Swap23_e8g2 : e8Swap23 e8g2 = e8g3 := by
+  decide
+
+@[simp] theorem e8Swap23_e8g3 : e8Swap23 e8g3 = e8g2 := by
+  decide
+
+@[simp] theorem e8Shear2_conj_rot_e8g1 :
+    (e8Shear2 * e8Rot * e8Shear2⁻¹) e8g1 = e8g1 := by
+  decide
+
+@[simp] theorem e8Shear2_conj_rot_e8g2 :
+    (e8Shear2 * e8Rot * e8Shear2⁻¹) e8g2 = e8g1 * e8g3 := by
+  decide
+
+@[simp] theorem e8Shear2_conj_rot_e8g3 :
+    (e8Shear2 * e8Rot * e8Shear2⁻¹) e8g3 = e8g1 * e8g2 * e8g3 := by
+  decide
+
+@[simp] theorem e8Shear3_conj_rot_e8g1 :
+    (e8Shear3 * e8Rot * e8Shear3⁻¹) e8g1 = e8g1 := by
+  decide
+
+@[simp] theorem e8Shear3_conj_rot_e8g2 :
+    (e8Shear3 * e8Rot * e8Shear3⁻¹) e8g2 = e8g1 * e8g3 := by
+  decide
+
+@[simp] theorem e8Shear3_conj_rot_e8g3 :
+    (e8Shear3 * e8Rot * e8Shear3⁻¹) e8g3 = e8g2 * e8g3 := by
+  decide
+
+@[simp] theorem e8Shear23_conj_rot_e8g1 :
+    (e8Shear23 * e8Rot * e8Shear23⁻¹) e8g1 = e8g1 := by
+  decide
+
+@[simp] theorem e8Shear23_conj_rot_e8g2 :
+    (e8Shear23 * e8Rot * e8Shear23⁻¹) e8g2 = e8g3 := by
+  decide
+
+@[simp] theorem e8Shear23_conj_rot_e8g3 :
+    (e8Shear23 * e8Rot * e8Shear23⁻¹) e8g3 = e8g1 * e8g2 * e8g3 := by
+  decide
+
+@[simp] theorem e8Shear2_conj_rot_sq_e8g1 :
+    (e8Shear2 * e8Rot ^ 2 * e8Shear2⁻¹) e8g1 = e8g1 := by
+  decide
+
+@[simp] theorem e8Shear2_conj_rot_sq_e8g2 :
+    (e8Shear2 * e8Rot ^ 2 * e8Shear2⁻¹) e8g2 = e8g2 * e8g3 := by
+  decide
+
+@[simp] theorem e8Shear2_conj_rot_sq_e8g3 :
+    (e8Shear2 * e8Rot ^ 2 * e8Shear2⁻¹) e8g3 = e8g1 * e8g2 := by
+  decide
+
+@[simp] theorem e8Shear3_conj_rot_sq_e8g1 :
+    (e8Shear3 * e8Rot ^ 2 * e8Shear3⁻¹) e8g1 = e8g1 := by
+  decide
+
+@[simp] theorem e8Shear3_conj_rot_sq_e8g2 :
+    (e8Shear3 * e8Rot ^ 2 * e8Shear3⁻¹) e8g2 = e8g1 * e8g2 * e8g3 := by
+  decide
+
+@[simp] theorem e8Shear3_conj_rot_sq_e8g3 :
+    (e8Shear3 * e8Rot ^ 2 * e8Shear3⁻¹) e8g3 = e8g1 * e8g2 := by
+  decide
+
+@[simp] theorem e8Shear23_conj_rot_sq_e8g1 :
+    (e8Shear23 * e8Rot ^ 2 * e8Shear23⁻¹) e8g1 = e8g1 := by
+  decide
+
+@[simp] theorem e8Shear23_conj_rot_sq_e8g2 :
+    (e8Shear23 * e8Rot ^ 2 * e8Shear23⁻¹) e8g2 = e8g1 * e8g2 * e8g3 := by
+  decide
+
+@[simp] theorem e8Shear23_conj_rot_sq_e8g3 :
+    (e8Shear23 * e8Rot ^ 2 * e8Shear23⁻¹) e8g3 = e8g2 := by
+  decide
+
+/-- Swapping the two quotient generators conjugates `e8Rot` to its square. -/
+theorem e8Swap23_conj_rot : e8Swap23 * e8Rot * e8Swap23⁻¹ = e8Rot ^ 2 := by
+  apply e8_mulAut_ext
+  · decide
+  · decide
+  · decide
+
+/-- Swapping the two quotient generators also conjugates `e8Rot ^ 2` back to `e8Rot`. -/
+theorem e8Swap23_conj_rot_sq : e8Swap23 * e8Rot ^ 2 * e8Swap23⁻¹ = e8Rot := by
+  apply e8_mulAut_ext
+  · decide
+  · decide
+  · decide
+
+theorem e8Rot_sq_is_conj_to_rot : ∃ g : MulAut E8, g * e8Rot ^ 2 * g⁻¹ = e8Rot :=
+  ⟨e8Swap23, e8Swap23_conj_rot_sq⟩
+
+/-- A wrapper useful after recognizing a normalized action as `e8Rot ^ 2`: it is still
+conjugate to the standard representative `e8Rot`. -/
+theorem e8_conj_to_rot_of_eq_rot_sq (f : MulAut E8) (hf : f = e8Rot ^ 2) :
+    ∃ g : MulAut E8, g * f * g⁻¹ = e8Rot := by
+  subst f
+  exact e8Rot_sq_is_conj_to_rot
+
+/-- Generator-value recognition for the standard rotation. -/
+theorem e8_eq_rot_of_generators (f : MulAut E8) (h1 : f e8g1 = e8g1)
+    (h2 : f e8g2 = e8g3) (h3 : f e8g3 = e8g2 * e8g3) : f = e8Rot := by
+  exact e8_mulAut_ext f e8Rot h1 (by simpa using h2) (by simpa using h3)
+
+/-- Generator-value recognition for the square of the standard rotation. -/
+theorem e8_eq_rot_sq_of_generators (f : MulAut E8) (h1 : f e8g1 = e8g1)
+    (h2 : f e8g2 = e8g2 * e8g3) (h3 : f e8g3 = e8g2) : f = e8Rot ^ 2 := by
+  exact e8_mulAut_ext f (e8Rot ^ 2) h1 (by simpa using h2) (by simpa using h3)
+
+/-- Once the normalized fixed-line analysis has reduced a nontrivial order-`3` automorphism
+to one of the eight possible generator-value patterns, it is conjugate to the standard
+rotation `e8Rot`.  The first four patterns are the four `e8g1`-twisted lifts of `e8Rot`; the
+last four are the corresponding lifts of `e8Rot ^ 2`, which are conjugate back by
+`e8Swap23`. -/
+theorem e8_conj_to_rot_of_fixed_line_generator_cases (f : MulAut E8)
+    (h1 : f e8g1 = e8g1)
+    (hcases :
+      (f e8g2 = e8g3 ∧ f e8g3 = e8g2 * e8g3) ∨
+      (f e8g2 = e8g1 * e8g3 ∧ f e8g3 = e8g2 * e8g3) ∨
+      (f e8g2 = e8g3 ∧ f e8g3 = e8g1 * e8g2 * e8g3) ∨
+      (f e8g2 = e8g1 * e8g3 ∧ f e8g3 = e8g1 * e8g2 * e8g3) ∨
+      (f e8g2 = e8g2 * e8g3 ∧ f e8g3 = e8g2) ∨
+      (f e8g2 = e8g2 * e8g3 ∧ f e8g3 = e8g1 * e8g2) ∨
+      (f e8g2 = e8g1 * e8g2 * e8g3 ∧ f e8g3 = e8g2) ∨
+      (f e8g2 = e8g1 * e8g2 * e8g3 ∧ f e8g3 = e8g1 * e8g2)) :
+    ∃ g : MulAut E8, g * f * g⁻¹ = e8Rot := by
+  rcases hcases with h | h | h | h | h | h | h | h
+  · have hf : f = e8Rot := e8_eq_rot_of_generators f h1 h.1 h.2
+    subst f
+    exact ⟨1, by simp⟩
+  · have hf : f = e8Shear3 * e8Rot * e8Shear3⁻¹ := by
+      exact e8_mulAut_ext f (e8Shear3 * e8Rot * e8Shear3⁻¹) h1
+        (by rw [e8Shear3_conj_rot_e8g2]; exact h.1)
+        (by rw [e8Shear3_conj_rot_e8g3]; exact h.2)
+    refine ⟨e8Shear3⁻¹, ?_⟩
+    rw [hf]
+    group
+  · have hf : f = e8Shear23 * e8Rot * e8Shear23⁻¹ := by
+      exact e8_mulAut_ext f (e8Shear23 * e8Rot * e8Shear23⁻¹) h1
+        (by rw [e8Shear23_conj_rot_e8g2]; exact h.1)
+        (by rw [e8Shear23_conj_rot_e8g3]; exact h.2)
+    refine ⟨e8Shear23⁻¹, ?_⟩
+    rw [hf]
+    group
+  · have hf : f = e8Shear2 * e8Rot * e8Shear2⁻¹ := by
+      exact e8_mulAut_ext f (e8Shear2 * e8Rot * e8Shear2⁻¹) h1
+        (by rw [e8Shear2_conj_rot_e8g2]; exact h.1)
+        (by rw [e8Shear2_conj_rot_e8g3]; exact h.2)
+    refine ⟨e8Shear2⁻¹, ?_⟩
+    rw [hf]
+    group
+  · have hf : f = e8Rot ^ 2 := e8_eq_rot_sq_of_generators f h1 h.1 h.2
+    exact e8_conj_to_rot_of_eq_rot_sq f hf
+  · have hf : f = e8Shear2 * e8Rot ^ 2 * e8Shear2⁻¹ := by
+      exact e8_mulAut_ext f (e8Shear2 * e8Rot ^ 2 * e8Shear2⁻¹) h1
+        (by rw [e8Shear2_conj_rot_sq_e8g2]; exact h.1)
+        (by rw [e8Shear2_conj_rot_sq_e8g3]; exact h.2)
+    refine ⟨e8Swap23 * e8Shear2⁻¹, ?_⟩
+    rw [hf]
+    calc
+      (e8Swap23 * e8Shear2⁻¹) * (e8Shear2 * e8Rot ^ 2 * e8Shear2⁻¹) *
+          (e8Swap23 * e8Shear2⁻¹)⁻¹ = e8Swap23 * e8Rot ^ 2 * e8Swap23⁻¹ := by group
+      _ = e8Rot := e8Swap23_conj_rot_sq
+  · have hf : f = e8Shear23 * e8Rot ^ 2 * e8Shear23⁻¹ := by
+      exact e8_mulAut_ext f (e8Shear23 * e8Rot ^ 2 * e8Shear23⁻¹) h1
+        (by rw [e8Shear23_conj_rot_sq_e8g2]; exact h.1)
+        (by rw [e8Shear23_conj_rot_sq_e8g3]; exact h.2)
+    refine ⟨e8Swap23 * e8Shear23⁻¹, ?_⟩
+    rw [hf]
+    calc
+      (e8Swap23 * e8Shear23⁻¹) * (e8Shear23 * e8Rot ^ 2 * e8Shear23⁻¹) *
+          (e8Swap23 * e8Shear23⁻¹)⁻¹ = e8Swap23 * e8Rot ^ 2 * e8Swap23⁻¹ := by group
+      _ = e8Rot := e8Swap23_conj_rot_sq
+  · have hf : f = e8Shear3 * e8Rot ^ 2 * e8Shear3⁻¹ := by
+      exact e8_mulAut_ext f (e8Shear3 * e8Rot ^ 2 * e8Shear3⁻¹) h1
+        (by rw [e8Shear3_conj_rot_sq_e8g2]; exact h.1)
+        (by rw [e8Shear3_conj_rot_sq_e8g3]; exact h.2)
+    refine ⟨e8Swap23 * e8Shear3⁻¹, ?_⟩
+    rw [hf]
+    calc
+      (e8Swap23 * e8Shear3⁻¹) * (e8Shear3 * e8Rot ^ 2 * e8Shear3⁻¹) *
+          (e8Swap23 * e8Shear3⁻¹)⁻¹ = e8Swap23 * e8Rot ^ 2 * e8Swap23⁻¹ := by group
+      _ = e8Rot := e8Swap23_conj_rot_sq
+
+set_option linter.unusedTactic false in
+set_option linter.unreachableTactic false in
+/-- The finite core of the normalized fixed-line classification: if a putative extension
+fixes exactly `{1, e8g1}` and has cube equal to the identity on the two remaining generators,
+then its generator values are one of the eight lift patterns handled by
+`e8_conj_to_rot_of_fixed_line_generator_cases`. -/
+theorem e8_fixedExt_generator_cases (A B : E8)
+    (h3₂ : e8fixedExt A B (e8fixedExt A B (e8fixedExt A B e8g2)) = e8g2)
+    (h3₃ : e8fixedExt A B (e8fixedExt A B (e8fixedExt A B e8g3)) = e8g3)
+    (hfix : ∀ x : E8, e8fixedExt A B x = x ↔ x = 1 ∨ x = e8g1) :
+    (A = e8g3 ∧ B = e8g2 * e8g3) ∨
+    (A = e8g1 * e8g3 ∧ B = e8g2 * e8g3) ∨
+    (A = e8g3 ∧ B = e8g1 * e8g2 * e8g3) ∨
+    (A = e8g1 * e8g3 ∧ B = e8g1 * e8g2 * e8g3) ∨
+    (A = e8g2 * e8g3 ∧ B = e8g2) ∨
+    (A = e8g2 * e8g3 ∧ B = e8g1 * e8g2) ∨
+    (A = e8g1 * e8g2 * e8g3 ∧ B = e8g2) ∨
+    (A = e8g1 * e8g2 * e8g3 ∧ B = e8g1 * e8g2) := by
+  rcases e8gen A with hA | hA | hA | hA | hA | hA | hA | hA <;>
+  rcases e8gen B with hB | hB | hB | hB | hB | hB | hB | hB <;>
+    subst A <;> subst B <;>
+    first
+      | exact Or.inl ⟨rfl, rfl⟩
+      | exact Or.inr (Or.inl ⟨rfl, rfl⟩)
+      | exact Or.inr (Or.inr (Or.inl ⟨rfl, rfl⟩))
+      | exact Or.inr (Or.inr (Or.inr (Or.inl ⟨rfl, rfl⟩)))
+      | exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨rfl, rfl⟩))))
+      | exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨rfl, rfl⟩)))))
+      | exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨rfl, rfl⟩))))))
+      | exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr ⟨rfl, rfl⟩))))))
+      | exfalso
+        first
+          | exact (show ¬ _ from by decide) h3₂
+          | exact (show ¬ _ from by decide) h3₃
+          | exact (show ¬ _ from by decide) ((hfix e8g2).mp (by simp))
+          | exact (show ¬ _ from by decide) ((hfix e8g3).mp (by simp))
+          | exact (show ¬ _ from by decide) ((hfix (e8g1 * e8g2)).mp (by simp))
+          | exact (show ¬ _ from by decide) ((hfix (e8g1 * e8g3)).mp (by simp))
+          | exact (show ¬ _ from by decide) ((hfix (e8g2 * e8g3)).mp (by simp))
+          | exact (show ¬ _ from by decide) ((hfix (e8g1 * e8g2 * e8g3)).mp (by simp))
+
+/-- A normalized nontrivial order-`3` automorphism of `E8` whose fixed line is
+`{1, e8g1}` is conjugate to the standard rotation `e8Rot`. -/
+theorem e8_order3_fixed_line_conj_to_rot (f : MulAut E8) (hf3 : f ^ 3 = 1)
+    (hfix : ∀ x : E8, f x = x ↔ x = 1 ∨ x = e8g1) :
+    ∃ g : MulAut E8, g * f * g⁻¹ = e8Rot := by
+  have hf1 : f e8g1 = e8g1 := (hfix e8g1).mpr (Or.inr rfl)
+  rcases e8_order3_fixed_line_ext_data f hf3 hfix with ⟨h3₂, h3₃, hfixExt⟩
+  have hcases := e8_fixedExt_generator_cases (f e8g2) (f e8g3) h3₂ h3₃ hfixExt
+  exact e8_conj_to_rot_of_fixed_line_generator_cases f hf1 hcases
+
+/-- Every nontrivial order-`3` automorphism of `E8` is conjugate to the standard rotation. -/
+theorem e8_order3_conj_to_rot (f : MulAut E8) (hf3 : f ^ 3 = 1) (hfne1 : f ≠ 1) :
+    ∃ g : MulAut E8, g * f * g⁻¹ = e8Rot := by
+  obtain ⟨h, hh3, _hhne, hfix, g0, hg0⟩ := e8_order3_conj_fixed_line_first f hf3 hfne1
+  obtain ⟨g1, hg1⟩ := e8_order3_fixed_line_conj_to_rot h hh3 hfix
+  refine ⟨g1 * g0, ?_⟩
+  calc
+    (g1 * g0) * f * (g1 * g0)⁻¹ = g1 * (g0 * f * g0⁻¹) * g1⁻¹ := by group
+    _ = g1 * h * g1⁻¹ := by rw [← hg0]
+    _ = e8Rot := hg1
+
+/-- A nontrivial action of a group of order `9` on `E8` contains an element whose image is
+`Aut(E8)`-conjugate to the standard `e8Rot`. -/
+theorem e8_hom_nontrivial_elem_conj_to_rot {K : Type*} [Group K] [Finite K]
+    (hK : Nat.card K = 9) (φ : K →* MulAut E8) (hφ : φ ≠ 1) :
+    ∃ k : K, φ k ≠ 1 ∧ ∃ g : MulAut E8, g * φ k * g⁻¹ = e8Rot := by
+  have hnontriv : ∃ k : K, φ k ≠ 1 := exists_apply_ne_one_of_monoidHom_ne_one φ hφ
+  obtain ⟨k, hkne⟩ := hnontriv
+  have hk9 : k ^ 9 = 1 := by
+    exact orderOf_dvd_iff_pow_eq_one.mp (hK ▸ orderOf_dvd_natCard k)
+  have hφ9 : (φ k) ^ 9 = 1 := by
+    rw [← map_pow, hk9, map_one]
+  have hφ3 : (φ k) ^ 3 = 1 := e8_pow9_imp_pow3 (φ k) hφ9
+  exact ⟨k, hkne, e8_order3_conj_to_rot (φ k) hφ3 hkne⟩
+
+/-- Every value of an action of a group of order `9` on `E8` has cube equal to the identity. -/
+theorem e8_hom_apply_pow3_of_card9 {K : Type*} [Group K] [Finite K]
+    (hK : Nat.card K = 9) (φ : K →* MulAut E8) (k : K) :
+    (φ k) ^ 3 = 1 := by
+  have hk9 : k ^ 9 = 1 :=
+    orderOf_dvd_iff_pow_eq_one.mp (hK ▸ orderOf_dvd_natCard k)
+  have hφ9 : (φ k) ^ 9 = 1 := by
+    rw [← map_pow, hk9, map_one]
+  exact e8_pow9_imp_pow3 (φ k) hφ9
+
+/-- Pointwise form for order-`9` actions on `E8`: each element acts trivially or by an
+automorphism conjugate to `e8Rot`. -/
+theorem e8_hom_apply_eq_one_or_conj_to_rot {K : Type*} [Group K] [Finite K]
+    (hK : Nat.card K = 9) (φ : K →* MulAut E8) (k : K) :
+    φ k = 1 ∨ ∃ g : MulAut E8, g * φ k * g⁻¹ = e8Rot := by
+  by_cases hk : φ k = 1
+  · exact Or.inl hk
+  · exact Or.inr (e8_order3_conj_to_rot (φ k) (e8_hom_apply_pow3_of_card9 hK φ k) hk)
+
+/-- Orbit-move form of `e8_hom_nontrivial_elem_conj_to_rot`: after conjugating the whole
+action by an automorphism of `E8`, some element of the order-`9` source acts exactly as
+`e8Rot`. -/
+theorem e8_hom_nontrivial_conj_has_rot_value {K : Type*} [Group K] [Finite K]
+    (hK : Nat.card K = 9) (φ : K →* MulAut E8) (hφ : φ ≠ 1) :
+    ∃ k : K, ∃ g : MulAut E8, ((MulAut.conj g).toMonoidHom.comp φ) k = e8Rot := by
+  obtain ⟨k, _hkne, g, hg⟩ := e8_hom_nontrivial_elem_conj_to_rot hK φ hφ
+  exact ⟨k, g, by simpa [MonoidHom.comp_apply, MulAut.conj_apply] using hg⟩
 
 end Smallgroups.UsefulTheorems
