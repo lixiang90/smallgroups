@@ -5,6 +5,9 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order72.Residual
 import Smallgroups.UsefulTheorems.Order72.H8xP9
+import Smallgroups.UsefulTheorems.Order72.DistinctnessDirect
+import Smallgroups.UsefulTheorems.Order72.DistinctnessC9
+import Smallgroups.UsefulTheorems.Order72.DistinctnessSylow2
 
 /-!
 ## Open assumption
@@ -590,105 +593,41 @@ theorem order72_cross_branch_disjoint_of_invariant_tables
       rw [← hspec b₁ i, ← hspec b₂ j]
       exact h))
 
-/-! ### Direct-product branch distinctness -/
-
-noncomputable abbrev order72_direct_reps : Fin 10 → Type
-  | 0 => CyclicRep 9 × Multiplicative (ZMod 8)
-  | 1 => CyclicRep 9 × H2
-  | 2 => CyclicRep 9 × E8
-  | 3 => CyclicRep 9 × DihedralGroup 4
-  | 4 => CyclicRep 9 × QuaternionGroup 2
-  | 5 => ElemAbelianRep 3 × Multiplicative (ZMod 8)
-  | 6 => ElemAbelianRep 3 × H2
-  | 7 => ElemAbelianRep 3 × E8
-  | 8 => ElemAbelianRep 3 × DihedralGroup 4
-  | 9 => ElemAbelianRep 3 × QuaternionGroup 2
-
-noncomputable instance order72_direct_reps_group : (i : Fin 10) → Group (order72_direct_reps i)
-  | 0 => inferInstance
-  | 1 => inferInstance
-  | 2 => inferInstance
-  | 3 => inferInstance
-  | 4 => inferInstance
-  | 5 => inferInstance
-  | 6 => inferInstance
-  | 7 => inferInstance
-  | 8 => inferInstance
-  | 9 => inferInstance
-  | ⟨n + 10, h⟩ => by omega
+/-! ### Direct-product branch distinctness bridge -/
 
 theorem order72_branch_direct_reps_eq (i : Fin 10) :
     order72_branch_reps .direct i = order72_direct_reps i := by
   fin_cases i <;> rfl
 
-noncomputable def order72_direct_invariant (i : Fin 10) : Nat × Nat × Nat × Nat :=
-  (Nat.card (Subgroup.center (order72_direct_reps i)),
-    order72_pow_eq_one_card (order72_direct_reps i) 2,
-    order72_pow_eq_one_card (order72_direct_reps i) 3,
-    order72_pow_eq_one_card (order72_direct_reps i) 4)
-
-theorem order72_direct_invariant_eq_of_mulEquiv {i j : Fin 10}
-    (hiso : Nonempty (order72_direct_reps i ≃* order72_direct_reps j)) :
-    order72_direct_invariant i = order72_direct_invariant j := by
-  obtain ⟨e⟩ := hiso
-  simp only [order72_direct_invariant]
-  exact Prod.ext (card_center_eq_of_mulEquiv e)
-    (Prod.ext (order72_pow_eq_one_card_eq_of_mulEquiv 2 e)
-      (Prod.ext (order72_pow_eq_one_card_eq_of_mulEquiv 3 e)
-        (order72_pow_eq_one_card_eq_of_mulEquiv 4 e)))
-
-def order72_direct_invariant_table : Fin 10 → Nat × Nat × Nat × Nat
-  | 0 => (72, 2, 3, 4)
-  | 1 => (72, 4, 3, 8)
-  | 2 => (72, 8, 3, 8)
-  | 3 => (18, 6, 3, 8)
-  | 4 => (18, 2, 3, 8)
-  | 5 => (72, 2, 9, 4)
-  | 6 => (72, 4, 9, 8)
-  | 7 => (72, 8, 9, 8)
-  | 8 => (18, 6, 9, 8)
-  | 9 => (18, 2, 9, 8)
-
-set_option maxHeartbeats 1000000 in
--- Finite kernel computation over the ten concrete direct products.
-theorem order72_direct_invariant_spec (i : Fin 10) :
-    order72_direct_invariant i = order72_direct_invariant_table i := by
-  classical
-  fin_cases i <;>
-    simp only [order72_direct_invariant, order72_direct_invariant_table,
-      order72_direct_reps, order72_pow_eq_one_card,
-      Nat.card_eq_fintype_card]
-  all_goals
-    apply Prod.ext
-    · norm_num
-      decide +kernel
-    · apply Prod.ext
-      · norm_num
-        decide +kernel
-      · apply Prod.ext
-        · norm_num
-          decide +kernel
-        · norm_num
-          decide +kernel
-
-theorem order72_direct_invariant_table_injective :
-    Function.Injective order72_direct_invariant_table := by
-  intro i j h
-  fin_cases i <;> fin_cases j <;>
-    simp [order72_direct_invariant_table] at h ⊢
-
 theorem order72_direct_branch_pairwise :
     PairwiseNonMulEquiv (order72_branch_reps .direct) := by
-  have hdirect : PairwiseNonMulEquiv order72_direct_reps := by
-    exact PairwiseNonMulEquiv.of_invariant order72_direct_invariant
-      (fun _ _ h => order72_direct_invariant_eq_of_mulEquiv h)
-      (fun i j h _ =>
-        order72_direct_invariant_table_injective (by
-          rw [← order72_direct_invariant_spec i, ← order72_direct_invariant_spec j]
-          exact h))
   intro i j hiso
   fin_cases i <;> fin_cases j <;>
-    exact hdirect _ _ hiso
+    exact order72_direct_reps_pairwise _ _ hiso
+
+/-! ### `C9`-kernel semidirect branch distinctness bridge -/
+
+theorem order72_branch_c9_reps_eq (i : Fin 7) :
+    order72_branch_reps .c9 i = order72_c9_reps i := by
+  fin_cases i <;> rfl
+
+theorem order72_c9_branch_pairwise :
+    PairwiseNonMulEquiv (order72_branch_reps .c9) := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j <;>
+    exact order72_c9_reps_pairwise _ _ hiso
+
+/-! ### Sylow-2-normal semidirect branch distinctness bridge -/
+
+theorem order72_branch_sylow2_reps_eq (i : Fin 4) :
+    order72_branch_reps .sylow2 i = order72_sylow2_reps i := by
+  fin_cases i <;> rfl
+
+theorem order72_sylow2_branch_pairwise :
+    PairwiseNonMulEquiv (order72_branch_reps .sylow2) := by
+  intro i j hiso
+  fin_cases i <;> fin_cases j <;>
+    exact order72_sylow2_reps_pairwise _ _ hiso
 
 /-- Once pairwise non-isomorphism of the displayed representatives is known, they form a complete
 classification of groups of order `72`. -/
@@ -726,6 +665,42 @@ theorem order72_reps_pairwise_of_branch_data
   order72_reps_pairwise_of_sigma
     (order72_sigma_reps_pairwise_of_branches hparts hdisj)
 
+theorem order72_reps_pairwise_of_remaining_branch_data
+    (hc9 : PairwiseNonMulEquiv (order72_branch_reps .c9))
+    (he9 : PairwiseNonMulEquiv (order72_branch_reps .e9))
+    (hsylow2 : PairwiseNonMulEquiv (order72_branch_reps .sylow2))
+    (hresidual : PairwiseNonMulEquiv (order72_branch_reps .residual))
+    (hdisj : ∀ b₁ b₂, b₁ ≠ b₂ → ∀ i j,
+      ¬ Nonempty (order72_branch_reps b₁ i ≃* order72_branch_reps b₂ j)) :
+    PairwiseNonMulEquiv order72_reps := by
+  refine order72_reps_pairwise_of_branch_data ?_ hdisj
+  intro b
+  cases b
+  · exact order72_direct_branch_pairwise
+  · exact hc9
+  · exact he9
+  · exact hsylow2
+  · exact hresidual
+
+theorem order72_reps_pairwise_of_c9_e9_residual_branch_data
+    (hc9 : PairwiseNonMulEquiv (order72_branch_reps .c9))
+    (he9 : PairwiseNonMulEquiv (order72_branch_reps .e9))
+    (hresidual : PairwiseNonMulEquiv (order72_branch_reps .residual))
+    (hdisj : ∀ b₁ b₂, b₁ ≠ b₂ → ∀ i j,
+      ¬ Nonempty (order72_branch_reps b₁ i ≃* order72_branch_reps b₂ j)) :
+    PairwiseNonMulEquiv order72_reps :=
+  order72_reps_pairwise_of_remaining_branch_data hc9 he9
+    order72_sylow2_branch_pairwise hresidual hdisj
+
+theorem order72_reps_pairwise_of_e9_residual_branch_data
+    (he9 : PairwiseNonMulEquiv (order72_branch_reps .e9))
+    (hresidual : PairwiseNonMulEquiv (order72_branch_reps .residual))
+    (hdisj : ∀ b₁ b₂, b₁ ≠ b₂ → ∀ i j,
+      ¬ Nonempty (order72_branch_reps b₁ i ≃* order72_branch_reps b₂ j)) :
+    PairwiseNonMulEquiv order72_reps :=
+  order72_reps_pairwise_of_c9_e9_residual_branch_data
+    order72_c9_branch_pairwise he9 hresidual hdisj
+
 theorem order72_reps_pairwise_of_branch_invariants
     (hinj : ∀ b, Function.Injective (order72_branch_invariant b))
     (hsep : ∀ b₁ b₂, b₁ ≠ b₂ → ∀ i j,
@@ -753,6 +728,36 @@ theorem order72_isClassif_of_branch_data
     IsClassif 72 order72_reps :=
   order72_isClassif_of_pairwise
     (order72_reps_pairwise_of_branch_data hparts hdisj)
+
+theorem order72_isClassif_of_remaining_branch_data
+    (hc9 : PairwiseNonMulEquiv (order72_branch_reps .c9))
+    (he9 : PairwiseNonMulEquiv (order72_branch_reps .e9))
+    (hsylow2 : PairwiseNonMulEquiv (order72_branch_reps .sylow2))
+    (hresidual : PairwiseNonMulEquiv (order72_branch_reps .residual))
+    (hdisj : ∀ b₁ b₂, b₁ ≠ b₂ → ∀ i j,
+      ¬ Nonempty (order72_branch_reps b₁ i ≃* order72_branch_reps b₂ j)) :
+    IsClassif 72 order72_reps :=
+  order72_isClassif_of_pairwise
+    (order72_reps_pairwise_of_remaining_branch_data hc9 he9 hsylow2 hresidual hdisj)
+
+theorem order72_isClassif_of_c9_e9_residual_branch_data
+    (hc9 : PairwiseNonMulEquiv (order72_branch_reps .c9))
+    (he9 : PairwiseNonMulEquiv (order72_branch_reps .e9))
+    (hresidual : PairwiseNonMulEquiv (order72_branch_reps .residual))
+    (hdisj : ∀ b₁ b₂, b₁ ≠ b₂ → ∀ i j,
+      ¬ Nonempty (order72_branch_reps b₁ i ≃* order72_branch_reps b₂ j)) :
+    IsClassif 72 order72_reps :=
+  order72_isClassif_of_pairwise
+    (order72_reps_pairwise_of_c9_e9_residual_branch_data hc9 he9 hresidual hdisj)
+
+theorem order72_isClassif_of_e9_residual_branch_data
+    (he9 : PairwiseNonMulEquiv (order72_branch_reps .e9))
+    (hresidual : PairwiseNonMulEquiv (order72_branch_reps .residual))
+    (hdisj : ∀ b₁ b₂, b₁ ≠ b₂ → ∀ i j,
+      ¬ Nonempty (order72_branch_reps b₁ i ≃* order72_branch_reps b₂ j)) :
+    IsClassif 72 order72_reps :=
+  order72_isClassif_of_pairwise
+    (order72_reps_pairwise_of_e9_residual_branch_data he9 hresidual hdisj)
 
 theorem order72_isClassif_of_invariant_injective
     (hinj : Function.Injective order72_reps_invariant) :

@@ -239,4 +239,56 @@ theorem semidirectProduct_congr_range {N H1 H2 : Type*} [Group N] [Group H1] [Gr
         SemidirectProduct.rightHom_surjective)
   exact ⟨hquotH1.trans (hquot.trans hquotH2)⟩
 
+/-- **The normal semidirect factor is well-defined up to isomorphism.** If the normal factors
+have the same cardinality and the target normal factor has coprime index, any isomorphism between
+the semidirect products forces the normal factors to be isomorphic. -/
+theorem semidirectProduct_congr_domain {N1 N2 H1 H2 : Type*}
+    [Group N1] [Group N2] [Group H1] [Group H2]
+    [Finite N1] [Finite N2] [Finite H1] [Finite H2]
+    {φ1 : H1 →* MulAut N1} {φ2 : H2 →* MulAut N2}
+    (hcard : Nat.card N1 = Nat.card N2)
+    (hcop2 : Nat.Coprime (Nat.card N2) (Nat.card H2))
+    (f : SemidirectProduct N1 H1 φ1 ≃* SemidirectProduct N2 H2 φ2) :
+    Nonempty (N1 ≃* N2) := by
+  haveI hfin1 : Finite (SemidirectProduct N1 H1 φ1) := by
+    have : Nat.card (SemidirectProduct N1 H1 φ1) ≠ 0 := by
+      rw [Nat.card_congr SemidirectProduct.equivProd, Nat.card_prod]
+      exact Nat.mul_ne_zero Nat.card_pos.ne' Nat.card_pos.ne'
+    exact Nat.finite_of_card_ne_zero this
+  haveI hfin2 : Finite (SemidirectProduct N2 H2 φ2) :=
+    Finite.of_equiv _ f.toEquiv
+  set K1 : Subgroup (SemidirectProduct N1 H1 φ1) :=
+    (SemidirectProduct.inl : N1 →* SemidirectProduct N1 H1 φ1).range with hK1def
+  set K2 : Subgroup (SemidirectProduct N2 H2 φ2) :=
+    (SemidirectProduct.inl : N2 →* SemidirectProduct N2 H2 φ2).range with hK2def
+  haveI hK1normal : K1.Normal := by
+    rw [hK1def, SemidirectProduct.range_inl_eq_ker_rightHom]; infer_instance
+  haveI hK2normal : K2.Normal := by
+    rw [hK2def, SemidirectProduct.range_inl_eq_ker_rightHom]; infer_instance
+  have hcardK1 : Nat.card K1 = Nat.card N1 :=
+    Nat.card_congr (Equiv.ofInjective _ SemidirectProduct.inl_injective).symm
+  have hcardK2 : Nat.card K2 = Nat.card N2 :=
+    Nat.card_congr (Equiv.ofInjective _ SemidirectProduct.inl_injective).symm
+  have hidx2 : K2.index = Nat.card H2 := by
+    have h1 := K2.card_mul_index
+    have h2 : Nat.card (SemidirectProduct N2 H2 φ2) = Nat.card N2 * Nat.card H2 := by
+      rw [Nat.card_congr SemidirectProduct.equivProd, Nat.card_prod]
+    rw [hcardK2, h2] at h1
+    exact Nat.eq_of_mul_eq_mul_left Nat.card_pos h1
+  have hcop2' : Nat.Coprime (Nat.card K2) K2.index := by
+    rw [hcardK2, hidx2]
+    exact hcop2
+  have hK : Nat.card (K1.map f.toMonoidHom) = Nat.card K2 := by
+    rw [hcardK2, ← hcard, ← hcardK1]
+    exact Nat.card_congr (Equiv.Set.image f.toMonoidHom K1.carrier f.injective).symm
+  haveI hmapNormal : (K1.map f.toMonoidHom).Normal :=
+    Subgroup.Normal.map hK1normal f.toMonoidHom f.surjective
+  have heq : K1.map f.toMonoidHom = K2 :=
+    eq_of_normal_of_coprime_index_of_card_eq hcop2' hK
+  let eK1 : N1 ≃* K1 :=
+    MonoidHom.ofInjective (SemidirectProduct.inl_injective (φ := φ1))
+  let eK2 : N2 ≃* K2 :=
+    MonoidHom.ofInjective (SemidirectProduct.inl_injective (φ := φ2))
+  exact ⟨eK1.trans ((f.subgroupMap K1).trans ((MulEquiv.subgroupCongr heq).trans eK2.symm))⟩
+
 end Smallgroups.UsefulTheorems
