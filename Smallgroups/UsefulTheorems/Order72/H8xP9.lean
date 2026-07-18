@@ -195,11 +195,11 @@ private theorem exists_apply_ne_one_of_monoidHom_ne_one {K A : Type*} [Group K] 
 
 /-- The cyclic-source homomorphism sending the additive generator of `ZMod n` to an element
 whose `n`-th power is trivial. -/
-private noncomputable def zmodActionHom {A : Type*} [Group A] (n : ℕ) [NeZero n]
+noncomputable def zmodActionHom {A : Type*} [Group A] (n : ℕ) [NeZero n]
     (a : A) (ha : a ^ n = 1) : CyclicRep n →* A :=
   zmodZPowHom n a ha
 
-@[simp] private theorem zmodActionHom_gen {A : Type*} [Group A] (n : ℕ) [NeZero n]
+@[simp] theorem zmodActionHom_gen {A : Type*} [Group A] (n : ℕ) [NeZero n]
     (a : A) (ha : a ^ n = 1) :
     zmodActionHom n a ha (Multiplicative.ofAdd (1 : ZMod n)) = a := by
   simpa [zmodActionHom] using zmodZPowHom_intCast n a ha (1 : ℤ)
@@ -320,19 +320,19 @@ theorem order72_E9_aut_ext {σ τ : MulAut (ElemAbelianRep 3)}
   intro x
   exact congrArg (fun f : ElemAbelianRep 3 →* ElemAbelianRep 3 => f x) hhom
 
-private def order72_E9_coord (x : ElemAbelianRep 3) : Nat × Nat :=
+def order72_E9_coord (x : ElemAbelianRep 3) : Nat × Nat :=
   ((Multiplicative.toAdd x.1).val, (Multiplicative.toAdd x.2).val)
 
-private theorem order72_E9_coord_injective : Function.Injective order72_E9_coord := by
+theorem order72_E9_coord_injective : Function.Injective order72_E9_coord := by
   intro x y h
   revert x y
   decide
 
-private def order72_E9_autCode (σ : MulAut (ElemAbelianRep 3)) :
+def order72_E9_autCode (σ : MulAut (ElemAbelianRep 3)) :
     (Nat × Nat) × (Nat × Nat) :=
   (order72_E9_coord (σ order72_E9_g1), order72_E9_coord (σ order72_E9_g2))
 
-private theorem order72_E9_autCode_injective : Function.Injective order72_E9_autCode := by
+theorem order72_E9_autCode_injective : Function.Injective order72_E9_autCode := by
   intro σ τ h
   apply order72_E9_aut_ext
   · exact order72_E9_coord_injective (congrArg Prod.fst h)
@@ -370,6 +370,14 @@ noncomputable def order72_E9_shearPlus : ElemAbelianRep 3 ≃* ElemAbelianRep 3 
   right_inv x := by ext <;> simp [mul_assoc]
   map_mul' x y := by ext <;> simp [mul_left_comm, mul_comm]
 
+/-- The lower shear `(x, y) ↦ (x, xy)` of `C3 × C3`. -/
+noncomputable def order72_E9_shearLower : ElemAbelianRep 3 ≃* ElemAbelianRep 3 where
+  toFun x := (x.1, x.1 * x.2)
+  invFun x := (x.1, x.1⁻¹ * x.2)
+  left_inv x := by ext <;> simp
+  right_inv x := by ext <;> simp
+  map_mul' x y := by ext <;> simp [mul_left_comm, mul_comm]
+
 theorem order72_E9_scaleFirst2_g1 :
     order72_E9_scaleFirst2 order72_E9_g1 = order72_E9_g1 ^ 2 := by
   decide
@@ -395,6 +403,14 @@ theorem order72_E9_shearPlus_g2 :
     order72_E9_shearPlus order72_E9_g2 = order72_E9_g1 * order72_E9_g2 := by
   ext <;> simp [order72_E9_shearPlus, order72_E9_g1, order72_E9_g2]
 
+theorem order72_E9_shearLower_g1 :
+    order72_E9_shearLower order72_E9_g1 = order72_E9_g1 * order72_E9_g2 := by
+  ext <;> simp [order72_E9_shearLower, order72_E9_g1, order72_E9_g2]
+
+theorem order72_E9_shearLower_g2 :
+    order72_E9_shearLower order72_E9_g2 = order72_E9_g2 := by
+  ext <;> simp [order72_E9_shearLower, order72_E9_g2]
+
 theorem order72_E9_shearMinus_g1 : order72_E9_shearPlus.symm order72_E9_g1 = order72_E9_g1 := by
   ext <;> simp [order72_E9_shearPlus, order72_E9_g1]
 
@@ -404,6 +420,15 @@ theorem order72_E9_shearMinus_g2 :
   · change -(1 : ZMod 3) = 2
     decide
   · rfl
+
+/-- The change of basis with columns `g₁g₂²` and `g₁g₂`, used to conjugate the
+standard reflection to the coordinate swap. -/
+noncomputable def order72_E9_swapReflectBasis : ElemAbelianRep 3 ≃* ElemAbelianRep 3 where
+  toFun x := (x.1 * x.2, x.1 ^ 2 * x.2)
+  invFun x := (x.1 ^ 2 * x.2, x.1 ^ 2 * x.2 ^ 2)
+  left_inv x := by decide +revert
+  right_inv x := by decide +revert
+  map_mul' x y := by ext <;> simp [mul_left_comm, mul_comm, pow_succ]
 
 /-- The central involution `-I` on `C3 × C3`. -/
 noncomputable def order72_E9_negAut : MulAut (ElemAbelianRep 3) :=
@@ -464,6 +489,176 @@ theorem order72_E9_order4Aut_pow4 : order72_E9_order4Aut ^ 4 = 1 := by
 
 theorem order72_E9_order8Aut_pow8 : order72_E9_order8Aut ^ 8 = 1 := by
   apply order72_E9_aut_ext <;> decide
+
+private noncomputable def order72_E9_reflectLowerShear : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj order72_E9_shearLower) order72_E9_reflectAut
+
+theorem order72_E9_reflectLowerShear_code :
+    order72_E9_autCode order72_E9_reflectLowerShear = ((2, 1), (0, 1)) := by
+  decide
+
+theorem order72_E9_reflectLowerShear_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj order72_E9_shearLower.symm) order72_E9_reflectLowerShear) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+private noncomputable def order72_E9_reflectLowerShearSq : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj (order72_E9_shearLower ^ 2)) order72_E9_reflectAut
+
+theorem order72_E9_reflectLowerShearSq_code :
+    order72_E9_autCode order72_E9_reflectLowerShearSq = ((2, 2), (0, 1)) := by
+  decide
+
+theorem order72_E9_reflectLowerShearSq_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj ((order72_E9_shearLower ^ 2).symm))
+          order72_E9_reflectLowerShearSq) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+private noncomputable def order72_E9_reflectSecond : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj order72_E9_swap) order72_E9_reflectAut
+
+theorem order72_E9_reflectSecond_code :
+    order72_E9_autCode order72_E9_reflectSecond = ((1, 0), (0, 2)) := by
+  decide
+
+theorem order72_E9_reflectSecond_conj_code :
+    order72_E9_autCode ((MulAut.conj order72_E9_swap) order72_E9_reflectSecond) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+private noncomputable def order72_E9_reflectSecondShearInv : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj order72_E9_shearLower.symm) order72_E9_reflectSecond
+
+theorem order72_E9_reflectSecondShearInv_code :
+    order72_E9_autCode order72_E9_reflectSecondShearInv = ((1, 1), (0, 2)) := by
+  decide
+
+theorem order72_E9_reflectSecondShearInv_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj (order72_E9_shearLower.trans order72_E9_swap))
+          order72_E9_reflectSecondShearInv) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+private noncomputable def order72_E9_reflectSecondShear : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj order72_E9_shearLower) order72_E9_reflectSecond
+
+theorem order72_E9_reflectSecondShear_code :
+    order72_E9_autCode order72_E9_reflectSecondShear = ((1, 2), (0, 2)) := by
+  decide
+
+theorem order72_E9_reflectSecondShear_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj (order72_E9_shearLower.symm.trans order72_E9_swap))
+          order72_E9_reflectSecondShear) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+private noncomputable def order72_E9_reflectSwap : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj order72_E9_swapReflectBasis) order72_E9_reflectAut
+
+theorem order72_E9_reflectSwap_code :
+    order72_E9_autCode order72_E9_reflectSwap = ((0, 1), (1, 0)) := by
+  decide
+
+theorem order72_E9_reflectSwap_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj order72_E9_swapReflectBasis.symm) order72_E9_reflectSwap) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+private noncomputable def order72_E9_reflectSwapLowerShear : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj order72_E9_shearLower) order72_E9_reflectSwap
+
+theorem order72_E9_reflectSwapLowerShear_code :
+    order72_E9_autCode order72_E9_reflectSwapLowerShear = ((2, 0), (1, 1)) := by
+  decide
+
+theorem order72_E9_reflectSwapLowerShear_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj (order72_E9_shearLower.symm.trans order72_E9_swapReflectBasis.symm))
+          order72_E9_reflectSwapLowerShear) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+private noncomputable def order72_E9_reflectSwapLowerShearSq : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj (order72_E9_shearLower ^ 2)) order72_E9_reflectSwap
+
+theorem order72_E9_reflectSwapLowerShearSq_code :
+    order72_E9_autCode order72_E9_reflectSwapLowerShearSq = ((1, 0), (1, 2)) := by
+  decide
+
+theorem order72_E9_reflectSwapLowerShearSq_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj (((order72_E9_shearLower ^ 2).symm).trans
+          order72_E9_swapReflectBasis.symm)) order72_E9_reflectSwapLowerShearSq) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+private noncomputable def order72_E9_reflectUpperShear : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj order72_E9_shearPlus) order72_E9_reflectAut
+
+theorem order72_E9_reflectUpperShear_code :
+    order72_E9_autCode order72_E9_reflectUpperShear = ((2, 0), (2, 1)) := by
+  decide
+
+theorem order72_E9_reflectUpperShear_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj order72_E9_shearPlus.symm) order72_E9_reflectUpperShear) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+private noncomputable def order72_E9_reflectSecondUpperShearInv :
+    MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj order72_E9_shearPlus.symm) order72_E9_reflectSecond
+
+theorem order72_E9_reflectSecondUpperShearInv_code :
+    order72_E9_autCode order72_E9_reflectSecondUpperShearInv = ((1, 0), (2, 2)) := by
+  decide
+
+theorem order72_E9_reflectSecondUpperShearInv_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj (order72_E9_shearPlus.trans order72_E9_swap))
+          order72_E9_reflectSecondUpperShearInv) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+/-- The change of basis with columns `g₁g₂` and `g₁g₂²`, used to conjugate the
+standard reflection to the negative coordinate swap. -/
+noncomputable def order72_E9_negSwapReflectBasis : ElemAbelianRep 3 ≃* ElemAbelianRep 3 where
+  toFun x := (x.1 * x.2, x.1 * x.2 ^ 2)
+  invFun x := (x.1 ^ 2 * x.2 ^ 2, x.1 ^ 2 * x.2)
+  left_inv x := by decide +revert
+  right_inv x := by decide +revert
+  map_mul' x y := by ext <;> simp [mul_left_comm, mul_comm, pow_succ]
+
+private noncomputable def order72_E9_reflectNegSwap : MulAut (ElemAbelianRep 3) :=
+  (MulAut.conj order72_E9_negSwapReflectBasis) order72_E9_reflectAut
+
+theorem order72_E9_reflectNegSwap_code :
+    order72_E9_autCode order72_E9_reflectNegSwap = ((0, 2), (2, 0)) := by
+  decide
+
+theorem order72_E9_reflectNegSwap_conj_code :
+    order72_E9_autCode
+        ((MulAut.conj order72_E9_negSwapReflectBasis.symm) order72_E9_reflectNegSwap) =
+      order72_E9_autCode order72_E9_reflectAut := by
+  decide
+
+theorem order72_E9_standard_odd_aut_codes :
+    order72_E9_autCode (1 : MulAut (ElemAbelianRep 3)) = ((1, 0), (0, 1)) ∧
+      order72_E9_autCode order72_E9_negAut = ((2, 0), (0, 2)) ∧
+      order72_E9_autCode order72_E9_reflectAut = ((2, 0), (0, 1)) ∧
+      order72_E9_autCode order72_E9_order4Aut = ((0, 1), (2, 0)) ∧
+      order72_E9_autCode (order72_E9_order4Aut ^ 3) = ((0, 2), (1, 0)) ∧
+      order72_E9_autCode order72_E9_order8Aut = ((1, 1), (1, 0)) ∧
+      order72_E9_autCode (order72_E9_order8Aut ^ 3) = ((0, 2), (2, 1)) ∧
+      order72_E9_autCode (order72_E9_order8Aut ^ 5) = ((2, 2), (2, 0)) ∧
+      order72_E9_autCode (order72_E9_order8Aut ^ 7) = ((0, 1), (1, 2)) := by
+  decide
 
 noncomputable def order72_e9C8NegAction :
     Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3) :=
@@ -718,6 +913,747 @@ theorem order72_e9_c8_semidirect_cases_of_standard_odd_gen
   · exact Or.inr (Or.inr (Or.inr (Or.inr
       (order72_e9_c8_semidirect_case_of_gen_eq_order8_pow7 φ h))))
 
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_one
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      order72_E9_autCode 1) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      ElemAbelianRep 3 × Multiplicative (ZMod 8)) :=
+  order72_e9_c8_semidirect_case_of_gen_eq_one φ (order72_E9_autCode_injective hφ)
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_neg
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      order72_E9_autCode order72_E9_negAut) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_neg) :=
+  order72_e9_c8_semidirect_case_of_gen_eq_neg φ (order72_E9_autCode_injective hφ)
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_reflect
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      order72_E9_autCode order72_E9_reflectAut) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) :=
+  order72_e9_c8_semidirect_case_of_gen_eq_reflect φ (order72_E9_autCode_injective hφ)
+
+private theorem order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (θ : MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode
+        ((MulAut.conj θ) (φ (Multiplicative.ofAdd (1 : ZMod 8)))) =
+      order72_E9_autCode order72_E9_reflectAut) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  let φ' : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3) :=
+    (MulAut.conj θ).toMonoidHom.comp φ
+  have hgen : φ' (Multiplicative.ofAdd (1 : ZMod 8)) = order72_E9_reflectAut :=
+    order72_E9_autCode_injective hφ
+  obtain ⟨e⟩ := order72_e9_c8_semidirect_case_of_gen_eq_reflect φ' hgen
+  exact ⟨(semidirectProductCongrConj (φ := φ) θ).trans e⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_2101
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((2, 1), (0, 1))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    order72_E9_shearLower.symm
+  rw [order72_E9_autCode_injective (hφ.trans order72_E9_reflectLowerShear_code.symm)]
+  exact order72_E9_reflectLowerShear_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_2101 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((2, 1), (0, 1))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_2101 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_2201
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((2, 2), (0, 1))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    ((order72_E9_shearLower ^ 2).symm)
+  rw [order72_E9_autCode_injective (hφ.trans order72_E9_reflectLowerShearSq_code.symm)]
+  exact order72_E9_reflectLowerShearSq_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_2201 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((2, 2), (0, 1))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_2201 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1002
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 0), (0, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ order72_E9_swap
+  rw [order72_E9_autCode_injective (hφ.trans order72_E9_reflectSecond_code.symm)]
+  exact order72_E9_reflectSecond_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_1002 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 0), (0, 2))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_1002 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1102
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 1), (0, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    (order72_E9_shearLower.trans order72_E9_swap)
+  rw [order72_E9_autCode_injective (hφ.trans order72_E9_reflectSecondShearInv_code.symm)]
+  exact order72_E9_reflectSecondShearInv_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_1102 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 1), (0, 2))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_1102 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1202
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 2), (0, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    (order72_E9_shearLower.symm.trans order72_E9_swap)
+  rw [order72_E9_autCode_injective (hφ.trans order72_E9_reflectSecondShear_code.symm)]
+  exact order72_E9_reflectSecondShear_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_1202 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 2), (0, 2))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_1202 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_0110
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((0, 1), (1, 0))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    order72_E9_swapReflectBasis.symm
+  rw [order72_E9_autCode_injective (hφ.trans order72_E9_reflectSwap_code.symm)]
+  exact order72_E9_reflectSwap_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_0110 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((0, 1), (1, 0))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_0110 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_2011
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((2, 0), (1, 1))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    (order72_E9_shearLower.symm.trans order72_E9_swapReflectBasis.symm)
+  rw [order72_E9_autCode_injective
+    (hφ.trans order72_E9_reflectSwapLowerShear_code.symm)]
+  exact order72_E9_reflectSwapLowerShear_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_2011 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((2, 0), (1, 1))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_2011 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1012
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 0), (1, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    (((order72_E9_shearLower ^ 2).symm).trans order72_E9_swapReflectBasis.symm)
+  rw [order72_E9_autCode_injective
+    (hφ.trans order72_E9_reflectSwapLowerShearSq_code.symm)]
+  exact order72_E9_reflectSwapLowerShearSq_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_1012 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 0), (1, 2))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_1012 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_0220
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((0, 2), (2, 0))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    order72_E9_negSwapReflectBasis.symm
+  rw [order72_E9_autCode_injective (hφ.trans order72_E9_reflectNegSwap_code.symm)]
+  exact order72_E9_reflectNegSwap_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_0220 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((0, 2), (2, 0))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_0220 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_2021
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((2, 0), (2, 1))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    order72_E9_shearPlus.symm
+  rw [order72_E9_autCode_injective (hφ.trans order72_E9_reflectUpperShear_code.symm)]
+  exact order72_E9_reflectUpperShear_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_2021 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((2, 0), (2, 1))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_2021 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1022
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 0), (2, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_reflect) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_reflect φ
+    (order72_E9_shearPlus.trans order72_E9_swap)
+  rw [order72_E9_autCode_injective
+    (hφ.trans order72_E9_reflectSecondUpperShearInv_code.symm)]
+  exact order72_E9_reflectSecondUpperShearInv_conj_code
+
+theorem order72_e9_c8_branch_case_of_gen_code_eq_1022 {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ)
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      ((1, 0), (2, 2))) :
+    Nonempty (G ≃* order72_E9_C8_reflect) := by
+  obtain ⟨eh⟩ := order72_e9_c8_semidirect_case_of_gen_code_eq_1022 φ hφ
+  exact ⟨e.trans eh⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_order4
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      order72_E9_autCode order72_E9_order4Aut) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order4) :=
+  order72_e9_c8_semidirect_case_of_gen_eq_order4 φ (order72_E9_autCode_injective hφ)
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_order4_pow3
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      order72_E9_autCode (order72_E9_order4Aut ^ 3)) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order4) :=
+  order72_e9_c8_semidirect_case_of_gen_eq_order4_pow3 φ
+    (order72_E9_autCode_injective hφ)
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_order8
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      order72_E9_autCode order72_E9_order8Aut) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) :=
+  order72_e9_c8_semidirect_case_of_gen_eq_order8 φ (order72_E9_autCode_injective hφ)
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_order8_pow3
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      order72_E9_autCode (order72_E9_order8Aut ^ 3)) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) :=
+  order72_e9_c8_semidirect_case_of_gen_eq_order8_pow3 φ
+    (order72_E9_autCode_injective hφ)
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_order8_pow5
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      order72_E9_autCode (order72_E9_order8Aut ^ 5)) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) :=
+  order72_e9_c8_semidirect_case_of_gen_eq_order8_pow5 φ
+    (order72_E9_autCode_injective hφ)
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_order8_pow7
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) =
+      order72_E9_autCode (order72_E9_order8Aut ^ 7)) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) :=
+  order72_e9_c8_semidirect_case_of_gen_eq_order8_pow7 φ
+    (order72_E9_autCode_injective hφ)
+
+/-! ### The remaining `GL(2,3)` codes: order-`4` and order-`8` generator images.
+
+The twelve remaining elements of `GL(2,3)` whose order divides `8` are the four order-`4`
+elements `[[1,1],[1,2]]`, `[[2,2],[2,1]]`, `[[1,2],[2,2]]`, `[[2,1],[1,1]]` (all conjugate to
+`order72_E9_order4Aut`) and the eight order-`8` elements with trace `±1` (conjugate to
+`order72_E9_order8Aut` resp. `order72_E9_order8Aut ^ 5`).  For each code we give an explicit
+conjugator built from the elementary automorphisms (`shearPlus`, `scaleSecond2`), verified by
+`decide`, and conclude that the corresponding semidirect product is the standard
+`order4`/`order8` representative. -/
+
+private theorem order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order4
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (θ : MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode
+        ((MulAut.conj θ) (φ (Multiplicative.ofAdd (1 : ZMod 8)))) =
+      order72_E9_autCode order72_E9_order4Aut) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order4) := by
+  let φ' : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3) :=
+    (MulAut.conj θ).toMonoidHom.comp φ
+  have hgen : φ' (Multiplicative.ofAdd (1 : ZMod 8)) = order72_E9_order4Aut :=
+    order72_E9_autCode_injective hφ
+  obtain ⟨e⟩ := order72_e9_c8_semidirect_case_of_gen_eq_order4 φ' hgen
+  exact ⟨(semidirectProductCongrConj (φ := φ) θ).trans e⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (θ : MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode
+        ((MulAut.conj θ) (φ (Multiplicative.ofAdd (1 : ZMod 8)))) =
+      order72_E9_autCode order72_E9_order8Aut) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  let φ' : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3) :=
+    (MulAut.conj θ).toMonoidHom.comp φ
+  have hgen : φ' (Multiplicative.ofAdd (1 : ZMod 8)) = order72_E9_order8Aut :=
+    order72_E9_autCode_injective hφ
+  obtain ⟨e⟩ := order72_e9_c8_semidirect_case_of_gen_eq_order8 φ' hgen
+  exact ⟨(semidirectProductCongrConj (φ := φ) θ).trans e⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8_pow5
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (θ : MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode
+        ((MulAut.conj θ) (φ (Multiplicative.ofAdd (1 : ZMod 8)))) =
+      order72_E9_autCode (order72_E9_order8Aut ^ 5)) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  let φ' : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3) :=
+    (MulAut.conj θ).toMonoidHom.comp φ
+  have hgen : φ' (Multiplicative.ofAdd (1 : ZMod 8)) = order72_E9_order8Aut ^ 5 :=
+    order72_E9_autCode_injective hφ
+  obtain ⟨e⟩ := order72_e9_c8_semidirect_case_of_gen_eq_order8_pow5 φ' hgen
+  exact ⟨(semidirectProductCongrConj (φ := φ) θ).trans e⟩
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1112
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((1, 1), (1, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order4) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order4 φ order72_E9_shearPlus.symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj order72_E9_shearPlus) order72_E9_order4Aut) = ((1, 1), (1, 2)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_2221
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((2, 2), (2, 1))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order4) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order4 φ
+    ((order72_E9_shearPlus ^ 2).trans order72_E9_scaleSecond2).symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj ((order72_E9_shearPlus ^ 2).trans order72_E9_scaleSecond2))
+        order72_E9_order4Aut) = ((2, 2), (2, 1)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1222
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((1, 2), (2, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order4) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order4 φ
+    (order72_E9_shearPlus.trans order72_E9_scaleSecond2).symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj (order72_E9_shearPlus.trans order72_E9_scaleSecond2))
+        order72_E9_order4Aut) = ((1, 2), (2, 2)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_2111
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((2, 1), (1, 1))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order4) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order4 φ
+    (order72_E9_shearPlus ^ 2).symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj (order72_E9_shearPlus ^ 2)) order72_E9_order4Aut) = ((2, 1), (1, 1)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_0111
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((0, 1), (1, 1))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8 φ
+    (order72_E9_shearPlus ^ 2).symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj (order72_E9_shearPlus ^ 2)) order72_E9_order8Aut) = ((0, 1), (1, 1)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1220
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((1, 2), (2, 0))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8 φ
+    order72_E9_scaleSecond2.symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj order72_E9_scaleSecond2) order72_E9_order8Aut) = ((1, 2), (2, 0)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_2122
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((2, 1), (2, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8 φ order72_E9_shearPlus.symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj order72_E9_shearPlus) order72_E9_order8Aut) = ((2, 1), (2, 2)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_2212
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((2, 2), (1, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8 φ
+    (order72_E9_shearPlus.trans order72_E9_scaleSecond2).symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj (order72_E9_shearPlus.trans order72_E9_scaleSecond2))
+        order72_E9_order8Aut) = ((2, 2), (1, 2)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_0222
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((0, 2), (2, 2))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8_pow5 φ
+    (order72_E9_shearPlus ^ 2).symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj (order72_E9_shearPlus ^ 2)) (order72_E9_order8Aut ^ 5)) =
+        ((0, 2), (2, 2)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_2110
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((2, 1), (1, 0))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8_pow5 φ
+    order72_E9_scaleSecond2.symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj order72_E9_scaleSecond2) (order72_E9_order8Aut ^ 5)) =
+        ((2, 1), (1, 0)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1121
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((1, 1), (2, 1))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8_pow5 φ
+    (order72_E9_shearPlus.trans order72_E9_scaleSecond2).symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj (order72_E9_shearPlus.trans order72_E9_scaleSecond2))
+        (order72_E9_order8Aut ^ 5)) = ((1, 1), (2, 1)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+private theorem order72_e9_c8_semidirect_case_of_gen_code_eq_1211
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3))
+    (hφ : order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = ((1, 2), (1, 1))) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+      order72_E9_C8_order8) := by
+  apply order72_e9_c8_semidirect_case_of_gen_conj_code_eq_order8_pow5 φ
+    order72_E9_shearPlus.symm
+  have hθ : order72_E9_autCode
+      ((MulAut.conj order72_E9_shearPlus) (order72_E9_order8Aut ^ 5)) = ((1, 2), (1, 1)) := by
+    decide
+  rw [order72_E9_autCode_injective (hφ.trans hθ.symm)]
+  decide
+
+/-- The nine elements of `C3 × C3` as monomials in the standard generators. -/
+theorem order72_E9_total_cases (k : ElemAbelianRep 3) :
+    k = 1 ∨ k = order72_E9_g1 ∨ k = order72_E9_g1 ^ 2 ∨
+      k = order72_E9_g2 ∨ k = order72_E9_g1 * order72_E9_g2 ∨
+        k = order72_E9_g1 ^ 2 * order72_E9_g2 ∨ k = order72_E9_g2 ^ 2 ∨
+          k = order72_E9_g1 * order72_E9_g2 ^ 2 ∨
+            k = order72_E9_g1 ^ 2 * order72_E9_g2 ^ 2 := by
+  revert k
+  decide
+
+/-- The code of a generator image, computed from its two values. -/
+private theorem order72_e9_c8_code_of_gen_values
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    {x y : ElemAbelianRep 3} {c : (Nat × Nat) × (Nat × Nat)}
+    (h1 : φ (Multiplicative.ofAdd (1 : ZMod 8)) order72_E9_g1 = x)
+    (h2 : φ (Multiplicative.ofAdd (1 : ZMod 8)) order72_E9_g2 = y)
+    (hc : (order72_E9_coord x, order72_E9_coord y) = c) :
+    order72_E9_autCode (φ (Multiplicative.ofAdd (1 : ZMod 8))) = c := by
+  change (order72_E9_coord (φ (Multiplicative.ofAdd (1 : ZMod 8)) order72_E9_g1),
+      order72_E9_coord (φ (Multiplicative.ofAdd (1 : ZMod 8)) order72_E9_g2)) = c
+  rw [h1, h2]
+  exact hc
+
+/-- The unique function `C3 × C3 → C3 × C3` sending the standard generators to `x` and
+`y` (no hom proof needed; used to evaluate iterates of a pinned automorphism). -/
+def order72_E9_homOfValuesFun (x y : ElemAbelianRep 3) :
+    ElemAbelianRep 3 → ElemAbelianRep 3 :=
+  fun p => x ^ (Multiplicative.toAdd p.1).val * y ^ (Multiplicative.toAdd p.2).val
+
+theorem order72_E9_fst_eq_g1_pow (p1 : Multiplicative (ZMod 3)) :
+    ((p1, 1) : ElemAbelianRep 3) = order72_E9_g1 ^ (Multiplicative.toAdd p1).val := by
+  let j : ZMod 3 := Multiplicative.toAdd p1
+  have hx0 : Multiplicative.ofAdd j = p1 := ofAdd_toAdd p1
+  rw [← hx0]
+  ext
+  · simp only [order72_E9_g1, Prod.pow_fst]
+    rw [← ofAdd_nsmul]
+    simp
+  · simp [order72_E9_g1]
+
+theorem order72_E9_snd_eq_g2_pow (p2 : Multiplicative (ZMod 3)) :
+    ((1, p2) : ElemAbelianRep 3) = order72_E9_g2 ^ (Multiplicative.toAdd p2).val := by
+  let j : ZMod 3 := Multiplicative.toAdd p2
+  have hx0 : Multiplicative.ofAdd j = p2 := ofAdd_toAdd p2
+  rw [← hx0]
+  ext
+  · simp [order72_E9_g2]
+  · simp only [order72_E9_g2, Prod.pow_snd]
+    rw [← ofAdd_nsmul]
+    simp
+
+/-- An automorphism pinned to values `x, y` on the generators agrees everywhere with the
+explicit function `order72_E9_homOfValuesFun x y`. -/
+theorem order72_E9_apply_eq_homOfValuesFun
+    (f : MulAut (ElemAbelianRep 3)) {x y : ElemAbelianRep 3}
+    (h1 : f order72_E9_g1 = x) (h2 : f order72_E9_g2 = y) (p : ElemAbelianRep 3) :
+    f p = order72_E9_homOfValuesFun x y p := by
+  obtain ⟨p1, p2⟩ := p
+  have hdecomp : ((p1, p2) : ElemAbelianRep 3) = (p1, 1) * (1, p2) := by ext <;> simp
+  conv_lhs => rw [hdecomp, map_mul, order72_E9_fst_eq_g1_pow, order72_E9_snd_eq_g2_pow,
+    map_pow, map_pow, h1, h2]
+  rfl
+
+/-- Iterates of a pinned automorphism are iterates of the explicit function. -/
+theorem order72_E9_pow_eq_homOfValuesFun_iter
+    (f : MulAut (ElemAbelianRep 3)) {x y : ElemAbelianRep 3}
+    (h1 : f order72_E9_g1 = x) (h2 : f order72_E9_g2 = y) (n : ℕ) (p : ElemAbelianRep 3) :
+    (f ^ n) p = (order72_E9_homOfValuesFun x y)^[n] p := by
+  induction n generalizing p with
+  | zero => rfl
+  | succ k ih =>
+    rw [pow_succ, MulAut.mul_apply, order72_E9_apply_eq_homOfValuesFun f h1 h2,
+      ih, Function.iterate_succ_apply]
+
+/-- **The `E9 ⋊ C8` branch is fully classified**: every action
+`C8 → Aut(C3 × C3) = GL(2,3)` gives one of the five standard semidirect products
+(direct product, central inversion, reflection, order-`4` or order-`8` faithful action).
+The proof enumerates the `9 × 9` pairs of generator images: the `32` pairs that arise from
+automorphisms of order dividing `8` are each reduced to a standard representative (via the
+code-case theorems above), and each of the remaining `49` pairs contradicts
+`φ(gen) ^ 8 = 1`. -/
+theorem order72_e9_c8_semidirect_cases
+    (φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)) :
+    Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+        ElemAbelianRep 3 × Multiplicative (ZMod 8)) ∨
+      Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+        order72_E9_C8_neg) ∨
+      Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+        order72_E9_C8_reflect) ∨
+      Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+        order72_E9_C8_order4) ∨
+      Nonempty (SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ ≃*
+        order72_E9_C8_order8) := by
+  have hf8 := order72_e9_c8_action_gen_pow8 φ
+  rcases order72_E9_total_cases (φ (Multiplicative.ofAdd (1 : ZMod 8)) order72_E9_g1)
+    with h1 | h1 | h1 | h1 | h1 | h1 | h1 | h1 | h1 <;>
+    rcases order72_E9_total_cases (φ (Multiplicative.ofAdd (1 : ZMod 8)) order72_E9_g2)
+    with h2 | h2 | h2 | h2 | h2 | h2 | h2 | h2 | h2 <;>
+    first
+    | exact Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_one φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))
+    | exact Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_neg φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_reflect φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_2101 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_2201 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_1002 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_1102 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_1202 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_0110 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_2011 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_1012 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_0220 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_2021 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inl (order72_e9_c8_semidirect_case_of_gen_code_eq_1022 φ
+        (order72_e9_c8_code_of_gen_values h1 h2 (by decide)))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inl
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_order4 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inl
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_order4_pow3 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inl
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_1112 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inl
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_2221 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inl
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_1222 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inl
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_2111 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_order8 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_order8_pow3 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_order8_pow5 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_order8_pow7 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_0111 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_1220 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_2122 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_2212 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_0222 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_2110 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_1121 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exact Or.inr (Or.inr (Or.inr (Or.inr
+        (order72_e9_c8_semidirect_case_of_gen_code_eq_1211 φ
+          (order72_e9_c8_code_of_gen_values h1 h2 (by decide))))))
+    | exfalso
+      have hg1 : (φ (Multiplicative.ofAdd (1 : ZMod 8)) ^ 8) order72_E9_g1 =
+        order72_E9_g1 := by rw [hf8]; rfl
+      have hg2 : (φ (Multiplicative.ofAdd (1 : ZMod 8)) ^ 8) order72_E9_g2 =
+        order72_E9_g2 := by rw [hf8]; rfl
+      rw [order72_E9_pow_eq_homOfValuesFun_iter _ h1 h2 8 order72_E9_g1] at hg1
+      rw [order72_E9_pow_eq_homOfValuesFun_iter _ h1 h2 8 order72_E9_g2] at hg2
+      first
+      | exact absurd hg1 (by decide)
+      | exact absurd hg2 (by decide)
+
+/-- The `G`-level version of the `E9 ⋊ C8` classification. -/
+theorem order72_e9_c8_branch_cases {G : Type*} [Group G]
+    {φ : Multiplicative (ZMod 8) →* MulAut (ElemAbelianRep 3)}
+    (e : G ≃* SemidirectProduct (ElemAbelianRep 3) (Multiplicative (ZMod 8)) φ) :
+    Nonempty (G ≃* ElemAbelianRep 3 × Multiplicative (ZMod 8)) ∨
+      Nonempty (G ≃* order72_E9_C8_neg) ∨
+      Nonempty (G ≃* order72_E9_C8_reflect) ∨
+      Nonempty (G ≃* order72_E9_C8_order4) ∨
+      Nonempty (G ≃* order72_E9_C8_order8) := by
+  rcases order72_e9_c8_semidirect_cases φ with h | h | h | h | h
+  · obtain ⟨eh⟩ := h
+    exact Or.inl ⟨e.trans eh⟩
+  · obtain ⟨eh⟩ := h
+    exact Or.inr (Or.inl ⟨e.trans eh⟩)
+  · obtain ⟨eh⟩ := h
+    exact Or.inr (Or.inr (Or.inl ⟨e.trans eh⟩))
+  · obtain ⟨eh⟩ := h
+    exact Or.inr (Or.inr (Or.inr (Or.inl ⟨e.trans eh⟩)))
+  · obtain ⟨eh⟩ := h
+    exact Or.inr (Or.inr (Or.inr (Or.inr ⟨e.trans eh⟩)))
+
 /-- The seven nontrivial elements of `C3 × C3`, listed in the standard basis. -/
 theorem order72_E9_nontrivial_cases (k : ElemAbelianRep 3) (hk : k ≠ 1) :
     k = order72_E9_g1 ∨
@@ -788,31 +1724,31 @@ contradicts `f ^ 3 = 1` via a 2-line computation). A parallel argument on `e1` (
 
 abbrev H2 := Multiplicative (ZMod 4) × Multiplicative (ZMod 2)
 
-private def h2e1 : H2 := (Multiplicative.ofAdd (1 : ZMod 4), 1)
-private def h2e2 : H2 := (1, Multiplicative.ofAdd (1 : ZMod 2))
-private def h2z : H2 := (Multiplicative.ofAdd (2 : ZMod 4), 1)
+def h2e1 : H2 := (Multiplicative.ofAdd (1 : ZMod 4), 1)
+def h2e2 : H2 := (1, Multiplicative.ofAdd (1 : ZMod 2))
+def h2z : H2 := (Multiplicative.ofAdd (2 : ZMod 4), 1)
 
-private theorem h2e1sq : h2e1 ^ 2 = h2z := by decide
-private theorem h2e1pow4 : h2e1 ^ 4 = 1 := by decide
-private theorem h2e1sq_ne1 : h2e1 ^ 2 ≠ 1 := by decide
-private theorem h2zsq : h2z ^ 2 = 1 := by decide
-private theorem h2e2sq : h2e2 ^ 2 = 1 := by decide
-private theorem h2zne1 : h2z ≠ 1 := by decide
-private theorem h2e2nez : h2e2 ≠ h2z := by decide
-private theorem h2e2ne1 : h2e2 ≠ 1 := by decide
+theorem h2e1sq : h2e1 ^ 2 = h2z := by decide
+theorem h2e1pow4 : h2e1 ^ 4 = 1 := by decide
+theorem h2e1sq_ne1 : h2e1 ^ 2 ≠ 1 := by decide
+theorem h2zsq : h2z ^ 2 = 1 := by decide
+theorem h2e2sq : h2e2 ^ 2 = 1 := by decide
+theorem h2zne1 : h2z ≠ 1 := by decide
+theorem h2e2nez : h2e2 ≠ h2z := by decide
+theorem h2e2ne1 : h2e2 ≠ 1 := by decide
 
-private theorem h2sq_eq_z : ∀ x : H2, x ^ 4 = 1 → x ^ 2 ≠ 1 → x ^ 2 = h2z := by decide
+theorem h2sq_eq_z : ∀ x : H2, x ^ 4 = 1 → x ^ 2 ≠ 1 → x ^ 2 = h2z := by decide
 
-private theorem h2order2_mem : ∀ x : H2, x ^ 2 = 1 →
+theorem h2order2_mem : ∀ x : H2, x ^ 2 = 1 →
     (x = 1 ∨ x = h2z ∨ x = h2e2 ∨ x = h2e2 * h2z) := by decide
 
-private theorem h2order4_mem : ∀ x : H2, x ^ 4 = 1 → x ^ 2 ≠ 1 →
+theorem h2order4_mem : ∀ x : H2, x ^ 4 = 1 → x ^ 2 ≠ 1 →
     (x = h2e1 ∨ x = h2e1⁻¹ ∨ x = h2e1 * h2e2 ∨ x = h2e1⁻¹ * h2e2) := by decide
 
-private theorem h2gen : ∀ x : H2, x = 1 ∨ x = h2e1 ∨ x = h2e1 ^ 2 ∨ x = h2e1 ^ 3 ∨ x = h2e2 ∨
+theorem h2gen : ∀ x : H2, x = 1 ∨ x = h2e1 ∨ x = h2e1 ^ 2 ∨ x = h2e1 ^ 3 ∨ x = h2e2 ∨
     x = h2e1 * h2e2 ∨ x = h2e1 ^ 2 * h2e2 ∨ x = h2e1 ^ 3 * h2e2 := by decide
 
-private theorem h2_hom_ext {M : Type*} [Group M] {φ ψ : H2 →* M}
+theorem h2_hom_ext {M : Type*} [Group M] {φ ψ : H2 →* M}
     (h1 : φ h2e1 = ψ h2e1) (h2 : φ h2e2 = ψ h2e2) : φ = ψ := by
   apply MonoidHom.ext
   intro x
@@ -5717,6 +6653,170 @@ theorem order72_partial_classification_refined_c9_all_e9_c8_odd_reps_done
   rcases order72_sylow_trichotomy hG with h3 | h2 | hres
   · exact Or.inl
       (order72_partial_rep_cases_c9_all_e9_c8_odd_reps_done_of_sylow_three_normal hG h3)
+  · exact Or.inr (Or.inl (order72_classification_of_sylow_two_normal hG h2))
+  · exact Or.inr (Or.inr hres)
+
+/-! ### The Sylow-`3`-normal branch with `E9 ⋊ C8` fully classified.
+
+With the `9 × 9` generator-image enumeration (`order72_e9_c8_semidirect_cases`), the
+`E9 ⋊ C8` cell contributes exactly five isomorphism classes: the direct product and the
+four standard actions `order72_E9_C8_neg`, `order72_E9_C8_reflect`,
+`order72_E9_C8_order4`, `order72_E9_C8_order8`.  The remaining action problems are
+`E9 ⋊ H` for `H ∈ {H2, E8, D4, Q8}`. -/
+
+/-- The fully classified part of the Sylow-`3`-normal branch after solving the
+`E9 ⋊ C8` cell: the previous solved `C9 ⋊ H` cases together with the five
+`E9 ⋊ C8` representatives. -/
+abbrev order72Sylow3NormalSolvedC9AllE9C8Cases (G : Type*) [Group G] : Prop :=
+  order72Sylow3NormalSolvedC9AllCases G ∨
+    Nonempty (G ≃* ElemAbelianRep 3 × Multiplicative (ZMod 8)) ∨
+      Nonempty (G ≃* order72_E9_C8_neg) ∨
+        Nonempty (G ≃* order72_E9_C8_reflect) ∨
+          Nonempty (G ≃* order72_E9_C8_order4) ∨
+            Nonempty (G ≃* order72_E9_C8_order8)
+
+/-- The remaining action problems of the Sylow-`3`-normal branch: `E9 ⋊ H` with
+`H ∈ {H2, E8, D4, Q8}`. -/
+abbrev order72Sylow3NormalRemainingSemidirectCasesE9H2E8D4Q8 (G : Type*) [Group G] :
+    Prop :=
+  (∃ φ : H2 →* MulAut (ElemAbelianRep 3),
+      Nonempty (G ≃* SemidirectProduct (ElemAbelianRep 3) H2 φ)) ∨
+    (∃ φ : E8 →* MulAut (ElemAbelianRep 3),
+      Nonempty (G ≃* SemidirectProduct (ElemAbelianRep 3) E8 φ)) ∨
+    (∃ φ : DihedralGroup 4 →* MulAut (ElemAbelianRep 3),
+      Nonempty (G ≃* SemidirectProduct (ElemAbelianRep 3) (DihedralGroup 4) φ)) ∨
+    (∃ φ : QuaternionGroup 2 →* MulAut (ElemAbelianRep 3),
+      Nonempty (G ≃* SemidirectProduct (ElemAbelianRep 3) (QuaternionGroup 2) φ))
+
+/-- The Sylow-`3`-normal branch with the `C9 ⋊ H` and `E9 ⋊ C8` cells fully classified:
+the remaining cases are exactly the four `E9 ⋊ H` action problems. -/
+abbrev order72Sylow3NormalPartialRepCasesC9AllE9C8Done (G : Type*) [Group G] : Prop :=
+  order72Sylow3NormalSolvedC9AllE9C8Cases G ∨
+    order72Sylow3NormalRemainingSemidirectCasesE9H2E8D4Q8 G
+
+private theorem order72PartialC9AllE9C8Done_of_odd_reps_done {G : Type*} [Group G] :
+    order72Sylow3NormalPartialRepCasesC9AllE9C8OddRepsDone G →
+      order72Sylow3NormalPartialRepCasesC9AllE9C8Done G := by
+  intro hcases
+  rcases hcases with hsolved | hprod | hneg | href | h4 | h8 | hremaining
+  · left
+    left
+    exact hsolved
+  · left
+    right
+    left
+    exact hprod
+  · left
+    right
+    right
+    left
+    exact hneg
+  · left
+    right
+    right
+    right
+    left
+    exact href
+  · left
+    right
+    right
+    right
+    right
+    left
+    exact h4
+  · left
+    right
+    right
+    right
+    right
+    right
+    exact h8
+  · rcases hremaining with hC8 | hH2 | hE8 | hD4 | hQ8
+    · obtain ⟨φ, ⟨e⟩, _, _, _, _, _, _, _, _, _⟩ := hC8
+      rcases order72_e9_c8_branch_cases e with h0 | h1 | h2 | h3 | h4
+      · left
+        right
+        left
+        exact h0
+      · left
+        right
+        right
+        left
+        exact h1
+      · left
+        right
+        right
+        right
+        left
+        exact h2
+      · left
+        right
+        right
+        right
+        right
+        left
+        exact h3
+      · left
+        right
+        right
+        right
+        right
+        right
+        exact h4
+    · right
+      left
+      exact hH2
+    · right
+      right
+      left
+      exact hE8
+    · right
+      right
+      right
+      left
+      exact hD4
+    · right
+      right
+      right
+      right
+      exact hQ8
+
+theorem order72_sylow3_semidirect_cases_refined_c9_all_e9_c8_done
+    {G : Type*} [Group G] :
+    order72Sylow3NormalSemidirectCases G →
+      order72Sylow3NormalPartialRepCasesC9AllE9C8Done G := by
+  intro hcases
+  exact order72PartialC9AllE9C8Done_of_odd_reps_done
+    (order72_sylow3_semidirect_cases_refined_c9_all_e9_c8_odd_reps_done hcases)
+
+/-- The `n₃ = 1` branch with all `C9 ⋊ H` and `E9 ⋊ C8` cases reduced to explicit
+representatives. -/
+theorem order72_partial_rep_cases_c9_all_e9_c8_done_of_sylow_three_normal
+    {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 72)
+    (hSyl : ∀ P : Sylow 3 G, (↑P : Subgroup G).Normal) :
+    order72Sylow3NormalPartialRepCasesC9AllE9C8Done G :=
+  order72_sylow3_semidirect_cases_refined_c9_all_e9_c8_done
+    (order72_semidirectProduct_standard_cases_of_sylow_three_normal hG hSyl)
+
+/-- The `n₃ = 1` branch with all `C9 ⋊ H` and `E9 ⋊ C8` cases reduced to explicit
+representatives. -/
+theorem order72_partial_rep_cases_c9_all_e9_c8_done_of_card_sylow_three_eq_one
+    {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 72)
+    (hSyl : Nat.card (Sylow 3 G) = 1) :
+    order72Sylow3NormalPartialRepCasesC9AllE9C8Done G := by
+  exact order72_partial_rep_cases_c9_all_e9_c8_done_of_sylow_three_normal hG
+    (fun P => sylow_three_normal_of_card_sylow_three_eq_one hSyl P)
+
+/-- Current top-level reduction: in the Sylow-`3`-normal branch every `C9 ⋊ H` and
+`E9 ⋊ C8` case is now explicit; the remaining semidirect action problems are
+`E9 ⋊ H2`, `E9 ⋊ E8`, `E9 ⋊ D4` and `E9 ⋊ Q8`. -/
+theorem order72_partial_classification_refined_c9_all_e9_c8_done
+    {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 72) :
+    order72Sylow3NormalPartialRepCasesC9AllE9C8Done G ∨
+      order72Sylow2NormalRepCases G ∨
+      (Nat.card (Sylow 3 G) = 4 ∧ Nat.card (Sylow 2 G) ≠ 1) := by
+  rcases order72_sylow_trichotomy hG with h3 | h2 | hres
+  · exact Or.inl (order72_partial_rep_cases_c9_all_e9_c8_done_of_sylow_three_normal hG h3)
   · exact Or.inr (Or.inl (order72_classification_of_sylow_two_normal hG h2))
   · exact Or.inr (Or.inr hres)
 end Smallgroups.UsefulTheorems
