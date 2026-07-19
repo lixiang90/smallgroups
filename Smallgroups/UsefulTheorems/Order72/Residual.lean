@@ -191,6 +191,17 @@ noncomputable def order72_res_C3S4_subgroup : Subgroup (order72_D9 × order72_S4
 /-- The non-split `C₃.S₄` (GAP `#15`), as a group. -/
 abbrev order72_res_C3S4 : Type := order72_res_C3S4_subgroup
 
+/-- Membership in the Goursat subgroup `order72_res_C3S4_subgroup` is decidable (it is an
+equation between permutations of three points). -/
+noncomputable instance instDecidableMemOrder72ResC3S4 (p : order72_D9 × order72_S4) :
+    Decidable (p ∈ order72_res_C3S4_subgroup) :=
+  decidable_of_iff (order72_D9ToS3_perm p.1 = order72_S4ToS3_perm p.2) Iff.rfl
+
+/-- The Goursat subgroup is finite, with a computable enumeration. -/
+noncomputable instance instFintypeOrder72ResC3S4 : Fintype ↥order72_res_C3S4_subgroup :=
+  Subtype.fintype _
+
+
 theorem card_order72_res_S3xA4 : Nat.card order72_res_S3xA4 = 72 := by
   rw [Nat.card_prod, Nat.card_eq_fintype_card, DihedralGroup.card,
     nat_card_alternatingGroup, Nat.card_fin]

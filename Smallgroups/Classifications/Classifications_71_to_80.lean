@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.Classifications.Classifications_71_to_80.Order71
+import Smallgroups.Classifications.Classifications_71_to_80.Order72
 import Smallgroups.Classifications.Classifications_71_to_80.Order73
 import Smallgroups.Classifications.Classifications_71_to_80.Order74
 import Smallgroups.Classifications.Classifications_71_to_80.Order75

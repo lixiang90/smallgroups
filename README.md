@@ -44,6 +44,12 @@ theorems:
 | `2·3²·5` | 90 | 10 | `N ⋊ C₂` with &#124;N&#124; = 45 — 10 involutions over the 2 order-45 types | `Order90` |
 | `2⁴·5` | 80 | 52 | 51 `C₅ ⋊[χ] K` (normal Sylow-5, `K` one of 14 order-16 types) + `(C₂)⁴ ⋊ C₅` | `Order80` |
 | `3⁴` | 81 | 15 | 5 abelian types + 10 non-abelian types over a `ℤ/9×ℤ/3` or `(ℤ/3)³` kernel | `Order81` |
+| `2³·3²` | 72 | 50 | 42 normal-Sylow-`3` semidirects `K ⋊ H`, 14 normal-Sylow-`2` (10 direct products shared), 4 residual (`S₃×A₄`, `C₃×S₄`, `C₃⋊S₄`, `C₃.S₄`) † | `Order72` |
+
+† Order 72: exhaustiveness currently rests on one axiom,
+`order72_residual_kernel_cases_to_repCases` (the conversion of the residual branch's
+kernel/image analysis into the four explicit residual groups); distinctness is fully
+machine-checked.
 
 ## Layout
 

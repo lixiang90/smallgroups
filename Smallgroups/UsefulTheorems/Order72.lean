@@ -14,4 +14,7 @@ import Smallgroups.UsefulTheorems.Order72.Residual
 import Smallgroups.UsefulTheorems.Order72.DistinctnessDirect
 import Smallgroups.UsefulTheorems.Order72.DistinctnessC9
 import Smallgroups.UsefulTheorems.Order72.DistinctnessSylow2
+import Smallgroups.UsefulTheorems.Order72.DistinctnessE9
+import Smallgroups.UsefulTheorems.Order72.DistinctnessResidual
 import Smallgroups.UsefulTheorems.Order72.Classification
+import Smallgroups.UsefulTheorems.Order72.DistinctnessAll
