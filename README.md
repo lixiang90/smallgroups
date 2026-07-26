@@ -494,6 +494,17 @@ theorems:
     from (1) and (2) via the `Counting.lean` framework (`numIsoClasses_eq` shows any complete
     non-redundant representative list has the stated length).
 
+* `Smallgroups/GAP/` + `Smallgroups/GAP_Classifications/` — the **GAP SmallGroups
+  correspondence** (work in progress). The goal is to restate each classification with the
+  representatives ordered by the GAP SmallGroups library numbering: `Smallgroups/GAP/`
+  provides the GAP-numbered representative lists and the engine (mirroring
+  `UsefulTheorems`), while `Smallgroups/GAP_Classifications/` mirrors
+  `Smallgroups/Classifications/` with decade subfolders `GAP_1_to_10`, …, whose
+  `OrderN.lean` files prove the same three theorems (exhaustiveness, distinctness,
+  counting) in namespace `Smallgroups.GAP_Classifications.OrderN`, with index
+  `⟨j - 1, _⟩` corresponding to `SmallGroup(N, j)`. Completed so far: order `1` and all
+  prime orders (`SmallGroup(p, 1) = ℤ/p`, see `GAP/Prime.lean`).
+
 
 ## Building
 

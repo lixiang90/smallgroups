@@ -1,0 +1,9 @@
+/-
+Copyright (c) 2026 Smallgroups contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Smallgroups contributors
+-/
+import Smallgroups.GAP_Classifications.GAP_71_to_80.Order71
+import Smallgroups.GAP_Classifications.GAP_71_to_80.Order73
+import Smallgroups.GAP_Classifications.GAP_71_to_80.Order79
+
