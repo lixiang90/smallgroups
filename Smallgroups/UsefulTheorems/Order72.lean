@@ -11,6 +11,8 @@ import Smallgroups.UsefulTheorems.Order72.P9xH8_E8
 import Smallgroups.UsefulTheorems.Order72.P9xH8_Q8
 import Smallgroups.UsefulTheorems.Order72.P9xH8_D4
 import Smallgroups.UsefulTheorems.Order72.Residual
+import Smallgroups.UsefulTheorems.Order72.ResidualProof
+import Smallgroups.UsefulTheorems.Order72.ResidualFiber
 import Smallgroups.UsefulTheorems.Order72.DistinctnessDirect
 import Smallgroups.UsefulTheorems.Order72.DistinctnessC9
 import Smallgroups.UsefulTheorems.Order72.DistinctnessSylow2

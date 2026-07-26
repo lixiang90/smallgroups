@@ -35,7 +35,6 @@ local instance instDecEqOrder72AllSemidirectProduct
 /-- The values of `order72_reps_invariant` for all fifty representatives, computed by
 kernel reduction. -/
 def order72_global_invariant_table : Fin 50 → Order72Invariant
-
   | 0 => (72, 2, 3, 4, 6, 8, 9, 12, 18, 24)
   | 1 => (72, 4, 3, 8, 12, 8, 9, 24, 36, 24)
   | 2 => (72, 8, 3, 8, 24, 8, 9, 24, 72, 24)
@@ -235,7 +234,7 @@ theorem order72_branch_invariant_spec (b : Order72Branch) (i : order72_branch_in
   order72_global_invariant_spec (order72_branch_to_fin b i)
 
 set_option maxHeartbeats 2000000 in
-/-- The global invariant table is injective (finite check over the `50 × 50` index pairs). -/
+-- The global invariant table is injective (finite check over the `50 × 50` index pairs).
 theorem order72_global_invariant_table_injective :
     Function.Injective order72_global_invariant_table := by
   intro a b h
@@ -297,4 +296,3 @@ theorem order72_isClassif : IsClassif 72 order72_reps :=
   order72_isClassif_of_pairwise order72_reps_pairwise
 
 end Smallgroups.UsefulTheorems
-

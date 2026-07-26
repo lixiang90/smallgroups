@@ -70,8 +70,8 @@ set_option maxHeartbeats 8000000 in
 theorem order72_residual_invariant_spec_zero :
     order72_residual_invariant 0 = order72_residual_invariant_table 0 := by
   simp only [order72_residual_invariant, order72_residual_invariant_table,
-    order72ResidualRep, order72_res_C3S4, order72_res_C3xS4, order72_res_C3sS4,
-    order72_res_S3xA4, order72_direct_pow_eq_one_card, Nat.card_eq_fintype_card]
+    order72ResidualRep, order72_res_C3S4,
+    order72_direct_pow_eq_one_card, Nat.card_eq_fintype_card]
   apply Prod.ext
   · norm_num
     decide +kernel
@@ -107,8 +107,8 @@ set_option maxHeartbeats 2000000 in
 theorem order72_residual_invariant_spec_one :
     order72_residual_invariant 1 = order72_residual_invariant_table 1 := by
   simp only [order72_residual_invariant, order72_residual_invariant_table,
-    order72ResidualRep, order72_res_C3S4, order72_res_C3xS4, order72_res_C3sS4,
-    order72_res_S3xA4, order72_direct_pow_eq_one_card, Nat.card_eq_fintype_card]
+    order72ResidualRep, order72_res_C3xS4,
+    order72_direct_pow_eq_one_card, Nat.card_eq_fintype_card]
   apply Prod.ext
   · norm_num
     decide +kernel
@@ -144,8 +144,8 @@ set_option maxHeartbeats 4000000 in
 theorem order72_residual_invariant_spec_two :
     order72_residual_invariant 2 = order72_residual_invariant_table 2 := by
   simp only [order72_residual_invariant, order72_residual_invariant_table,
-    order72ResidualRep, order72_res_C3S4, order72_res_C3xS4, order72_res_C3sS4,
-    order72_res_S3xA4, order72_direct_pow_eq_one_card, Nat.card_eq_fintype_card]
+    order72ResidualRep, order72_res_C3sS4,
+    order72_direct_pow_eq_one_card, Nat.card_eq_fintype_card]
   apply Prod.ext
   · norm_num
     decide +kernel
@@ -181,8 +181,8 @@ set_option maxHeartbeats 2000000 in
 theorem order72_residual_invariant_spec_three :
     order72_residual_invariant 3 = order72_residual_invariant_table 3 := by
   simp only [order72_residual_invariant, order72_residual_invariant_table,
-    order72ResidualRep, order72_res_C3S4, order72_res_C3xS4, order72_res_C3sS4,
-    order72_res_S3xA4, order72_direct_pow_eq_one_card, Nat.card_eq_fintype_card]
+    order72ResidualRep, order72_res_S3xA4,
+    order72_direct_pow_eq_one_card, Nat.card_eq_fintype_card]
   apply Prod.ext
   · norm_num
     decide +kernel
@@ -239,4 +239,3 @@ theorem order72_residual_reps_pairwise :
         exact h))
 
 end Smallgroups.UsefulTheorems
-

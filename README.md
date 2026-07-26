@@ -44,12 +44,7 @@ theorems:
 | `2·3²·5` | 90 | 10 | `N ⋊ C₂` with &#124;N&#124; = 45 — 10 involutions over the 2 order-45 types | `Order90` |
 | `2⁴·5` | 80 | 52 | 51 `C₅ ⋊[χ] K` (normal Sylow-5, `K` one of 14 order-16 types) + `(C₂)⁴ ⋊ C₅` | `Order80` |
 | `3⁴` | 81 | 15 | 5 abelian types + 10 non-abelian types over a `ℤ/9×ℤ/3` or `(ℤ/3)³` kernel | `Order81` |
-| `2³·3²` | 72 | 50 | 42 normal-Sylow-`3` semidirects `K ⋊ H`, 14 normal-Sylow-`2` (10 direct products shared), 4 residual (`S₃×A₄`, `C₃×S₄`, `C₃⋊S₄`, `C₃.S₄`) † | `Order72` |
-
-† Order 72: exhaustiveness currently rests on one axiom,
-`order72_residual_kernel_cases_to_repCases` (the conversion of the residual branch's
-kernel/image analysis into the four explicit residual groups); distinctness is fully
-machine-checked.
+| `2³·3²` | 72 | 50 | 42 normal-Sylow-`3` semidirects `K ⋊ H`, 14 normal-Sylow-`2` (10 direct products shared), 4 residual (`S₃×A₄`, `C₃×S₄`, `C₃⋊S₄`, `C₃.S₄`) | `Order72` |
 
 ## Layout
 
@@ -458,6 +453,35 @@ machine-checked.
     - `order81_complete`, `order81_reps : Fin 15 → Type`, `order81_reps_pairwise`, and
       `order81_isClassif : IsClassif 81 order81_reps` assemble both branches. Instantiated
       at **81** in `Classifications_81_to_90/Order81`.
+
+  * `Order72/` — the **complete classification** of groups of order `72 = 2³ · 3²` into
+    **fifty** classes, split by Sylow counting into three branches (`Sylow.lean`).
+    - **`n₃ = 1` (42 classes, `P9xH8_*.lean`, `E9AutClassify.lean`, `H8xP9.lean`).** The
+      Sylow-`3` subgroup is normal, of type `C₉` or `C₃ × C₃` (`E9`), and
+      Schur–Zassenhaus splits `G ≅ K ⋊[φ] H` with `H` one of the five order-`8` groups;
+      per kernel the actions are classified up to the `Aut K × Aut H`-orbit (the `E9`
+      kernel needs the full `Aut((C₃)²) ≅ GL(2,3)` conjugacy analysis of
+      `E9AutClassify.lean`).
+    - **`n₂ = 1` (14 classes).** A normal Sylow-`2` subgroup gives `14` further classes,
+      `10` of which are the direct products shared with the `n₃ = 1` branch.
+    - **The residual case `n₃ = 4`, `n₂ ≠ 1` (4 classes, `Residual.lean`,
+      `ResidualProof.lean`, `ResidualFiber.lean`).** `G` acts by conjugation on its four
+      Sylow-`3` subgroups; the kernel `K` of this permutation action has order `3` or
+      `6` (`order72_sylow_3_conj_action_of_card_sylow_3_eq_four`). The order-`6` kernel
+      is `S₃` and yields `S₃ × A₄` by centralising (`ResidualProof.lean`). The order-`3`
+      kernel gives `G ⧸ K ≅ S₄`; the `C₂²` under the Klein group of `S₄` is normal in
+      `G`, the quotient is a nonabelian group of order `18` (`D₉`, `D₃ × C₃`, or
+      `(C₃)² ⋊₋₁ C₂`), and `G` is recovered as the Goursat fiber product over the common
+      `D₃`-quotient (`ResidualFiber.lean`) — twists by `Aut(D₃)` are absorbed by inner
+      automorphisms of `S₄`, since `Aut(D₃) = Inn(D₃)`. The four representatives are the
+      non-split `C₃.S₄` (the fiber product of `D₉ → S₃` and `S₄ → S₃`), `C₃ × S₄`, the
+      sign semidirect `C₃ ⋊[sign] S₄`, and `S₃ × A₄`
+      (`order72_residual_kernel_cases_to_repCases`).
+    - `Classification.lean` assembles the three branches into `order72_reps : Fin 50 → Type`
+      (`order72_complete`); distinctness is proved via an invariant tuple
+      (`Distinctness*.lean`, with the cross-branch separation in `DistinctnessAll.lean`),
+      giving `order72_isClassif : IsClassif 72 order72_reps`. Instantiated at **72** in
+      `Classifications_71_to_80/Order72`.
 
 * `Smallgroups/Classifications/` — one file per order, grouped into decade subfolders
   `Classifications_1_to_10`, `Classifications_11_to_20`, …, `Classifications_91_to_100`.

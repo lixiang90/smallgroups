@@ -4,26 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order72.Residual
+import Smallgroups.UsefulTheorems.Order72.ResidualFiber
 import Smallgroups.UsefulTheorems.Order72.H8xP9
 import Smallgroups.UsefulTheorems.Order72.DistinctnessDirect
 import Smallgroups.UsefulTheorems.Order72.DistinctnessC9
 import Smallgroups.UsefulTheorems.Order72.DistinctnessSylow2
 
 /-!
-## Open assumption
+## Residual branch
 
-The three branches of the order-`72` classification that are already machine-checked are
-the Sylow-`3`-normal branch (`order72Sylow3NormalSolvedAllCases`), the Sylow-`2`-normal
-branch (`order72Sylow2NormalRepCases`), and the reduction of the residual branch to its
-kernel/image analysis (`order72ResidualKernelCases`).  The only remaining step is turning
-that kernel/image endpoint into the four explicit residual representatives
-(`order72ResidualRepCases`).  That conversion is the deep group-theoretic argument
-documented in `Residual.lean`; until it is formalised it is assumed by the following
-axiom, which is the single open assumption of this classification assembly. -/
-
-axiom order72_residual_kernel_cases_to_repCases {G : Type} [Group G] [Finite G]
-    (hG : Nat.card G = 72) (hker : Smallgroups.UsefulTheorems.order72ResidualKernelCases G) :
-    Smallgroups.UsefulTheorems.order72ResidualRepCases G
+The three branches of the order-`72` classification are the Sylow-`3`-normal branch
+(`order72Sylow3NormalSolvedAllCases`), the Sylow-`2`-normal branch
+(`order72Sylow2NormalRepCases`), and the residual branch, whose kernel/image
+analysis is completed in `ResidualProof.lean` and `ResidualFiber.lean`
+(`order72_residual_kernel_cases_to_repCases`). -/
 
 /-!
 # The groups of order 72

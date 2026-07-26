@@ -174,6 +174,18 @@ noncomputable def order72_S4ToS3 : order72_S4 →* DihedralGroup 3 :=
 private noncomputable def order72_D9ToS3_perm : order72_D9 →* Equiv.Perm (Fin 3) :=
   order72_d3_to_perm3.comp order72_D9ToS3
 
+/-- The permutation-valued `D₉ → S₃` quotient, rewritten through the canonical
+isomorphism `S₃ ≅ D₃`.  (Public interface to the private `order72_D9ToS3_perm`.) -/
+theorem order72_D9ToS3_perm_apply (d : order72_D9) :
+    order72_D9ToS3_perm d = order72_perm3_to_d3.symm (order72_D9ToS3 d) := rfl
+
+/-- The permutation-valued `S₄ → S₃` quotient, rewritten through the canonical
+isomorphism `S₃ ≅ D₃`. -/
+theorem order72_S4ToS3_perm_apply (s : order72_S4) :
+    order72_S4ToS3_perm s = order72_perm3_to_d3.symm (order72_S4ToS3 s) := by
+  rw [order72_S4ToS3, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+    MulEquiv.symm_apply_apply]
+
 /-- The non-split `C₃.S₄` (GAP `#15`), as a subgroup of `D₉ × S₄`. -/
 noncomputable def order72_res_C3S4_subgroup : Subgroup (order72_D9 × order72_S4) where
   carrier := { p | order72_D9ToS3_perm p.1 = order72_S4ToS3_perm p.2 }
@@ -190,6 +202,17 @@ noncomputable def order72_res_C3S4_subgroup : Subgroup (order72_D9 × order72_S4
 
 /-- The non-split `C₃.S₄` (GAP `#15`), as a group. -/
 abbrev order72_res_C3S4 : Type := order72_res_C3S4_subgroup
+
+/-- Membership in the `C₃.S₄` Goursat subgroup, rewritten through the canonical
+isomorphism `S₃ ≅ D₃`. -/
+theorem order72_mem_res_C3S4_subgroup_iff (p : order72_D9 × order72_S4) :
+    p ∈ order72_res_C3S4_subgroup ↔
+      order72_perm3_to_d3.symm (order72_D9ToS3 p.1) =
+        order72_perm3_to_d3.symm (order72_S4ToS3 p.2) := by
+  change (order72_D9ToS3_perm p.1 = order72_S4ToS3_perm p.2) ↔
+    order72_perm3_to_d3.symm (order72_D9ToS3 p.1) =
+      order72_perm3_to_d3.symm (order72_S4ToS3 p.2)
+  rw [order72_D9ToS3_perm_apply, order72_S4ToS3_perm_apply]
 
 /-- Membership in the Goursat subgroup `order72_res_C3S4_subgroup` is decidable (it is an
 equation between permutations of three points). -/
