@@ -505,6 +505,24 @@ theorems:
   `⟨j - 1, _⟩` corresponding to `SmallGroup(N, j)`. Completed so far: order `1` and all
   prime orders (`SmallGroup(p, 1) = ℤ/p`, see `GAP/Prime.lean`).
 
+* `Smallgroups/GAP/Polycyclic/` — the **polycyclic (pc) group framework**: concrete,
+  computable finite groups built from GAP-style pc presentations.
+  * `Polycyclic/CyclicExtension.lean` — cyclic extensions `1 → G → CycExt D → C_r → 1`
+    from proof-free data `CycExtData` (a bare function `f`, the power element `a`,
+    the relative order `r`); the group laws hold once `CycExtData.Consistent`
+    (decidable by `decide` for finite `G`) is registered.
+  * `Polycyclic/Basic.lean` — pc presentations `PCLayer`/`PCPres`, the tower
+    construction `pcBuild`/`PCGroup`, the normal-form bijection `pcTuple`,
+    `card_PCGroup : Nat.card (PCGroup p) = ∏ rᵢ`, and the isomorphism-building
+    tools `pcEval`/`mulEquivOfDecide` (homomorphism + bijectivity by `decide`).
+  * `Polycyclic/Imported/` — pc presentations `smallGroup_N_j` imported from the
+    GAP SmallGroups library by `Scripts/translate_pc.py` (driving
+    `Scripts/gap/export_pc.g`), with per-layer consistency instances by `decide`,
+    `Group` instances and order checks; currently orders `1, 2, 8, 16, 27`.
+    `Order8Match.lean`/`Order27Match.lean` certify isomorphisms between the
+    imported groups and the project's existing representatives of orders `8`
+    and `27` (order `16` in progress).
+
 
 ## Building
 
