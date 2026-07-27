@@ -88,6 +88,27 @@ theorem isClassif_one {N : ℕ} (A : Type) [Group A] (hA : Nat.card A = N)
   complete G _ hG := ⟨0, hcomplete G hG⟩
   distinct i j _ := Subsingleton.elim i j
 
+/-- Reindexing a classification by an equivalence of the index set. -/
+theorem IsClassif.of_perm {N k : ℕ} {rep : Fin k → Type} [∀ i, Group (rep i)]
+    (h : IsClassif N rep) (σ : Fin k ≃ Fin k) : IsClassif N (fun i => rep (σ i)) where
+  card i := h.card (σ i)
+  complete G _ hG :=
+    let ⟨i, hi⟩ := h.complete G hG
+    ⟨σ.symm i, (σ.apply_symm_apply i).symm ▸ hi⟩
+  distinct i j hiso := σ.injective (h.distinct (σ i) (σ j) hiso)
+
+/-- Transporting a classification along pointwise isomorphisms of the representatives. -/
+theorem IsClassif.of_equivs {N k : ℕ} {rep rep' : Fin k → Type} [∀ i, Group (rep i)]
+    [∀ i, Group (rep' i)] (h : IsClassif N rep) (e : ∀ i, rep' i ≃* rep i) :
+    IsClassif N rep' where
+  card i := by
+    rw [Nat.card_congr (e i).toEquiv]
+    exact h.card i
+  complete G _ hG :=
+    let ⟨i, hi⟩ := h.complete G hG
+    ⟨i, ⟨hi.some.trans (e i).symm⟩⟩
+  distinct i j hiso := h.distinct i j ⟨((e i).symm.trans hiso.some).trans (e j)⟩
+
 /-- The two-element representative family. -/
 def rep2 (A B : Type) : Fin 2 → Type
   | 0 => A
@@ -500,6 +521,42 @@ instance instGroupRep13 (A B C D E F G H I J K L M : Type)
   | 10 => ‹Group K›
   | 11 => ‹Group L›
   | 12 => ‹Group M›
+
+/-- The fourteen-element representative family. -/
+def rep14 (A B C D E F G H I J K L M N' : Type) : Fin 14 → Type
+  | 0 => A
+  | 1 => B
+  | 2 => C
+  | 3 => D
+  | 4 => E
+  | 5 => F
+  | 6 => G
+  | 7 => H
+  | 8 => I
+  | 9 => J
+  | 10 => K
+  | 11 => L
+  | 12 => M
+  | 13 => N'
+
+instance instGroupRep14 (A B C D E F G H I J K L M N' : Type)
+    [Group A] [Group B] [Group C] [Group D] [Group E] [Group F]
+    [Group G] [Group H] [Group I] [Group J] [Group K] [Group L] [Group M] [Group N'] :
+    ∀ i, Group (rep14 A B C D E F G H I J K L M N' i)
+  | 0 => ‹Group A›
+  | 1 => ‹Group B›
+  | 2 => ‹Group C›
+  | 3 => ‹Group D›
+  | 4 => ‹Group E›
+  | 5 => ‹Group F›
+  | 6 => ‹Group G›
+  | 7 => ‹Group H›
+  | 8 => ‹Group I›
+  | 9 => ‹Group J›
+  | 10 => ‹Group K›
+  | 11 => ‹Group L›
+  | 12 => ‹Group M›
+  | 13 => ‹Group N'›
 
 /-- Thirteen representatives of order `N` that together exhaust the groups of order `N` and are
 pairwise non-isomorphic give a thirteen-class classification. -/

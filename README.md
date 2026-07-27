@@ -502,8 +502,15 @@ theorems:
   `Smallgroups/Classifications/` with decade subfolders `GAP_1_to_10`, …, whose
   `OrderN.lean` files prove the same three theorems (exhaustiveness, distinctness,
   counting) in namespace `Smallgroups.GAP_Classifications.OrderN`, with index
-  `⟨j - 1, _⟩` corresponding to `SmallGroup(N, j)`. Completed so far: order `1` and all
-  prime orders (`SmallGroup(p, 1) = ℤ/p`, see `GAP/Prime.lean`).
+  `⟨j - 1, _⟩` corresponding to `SmallGroup(N, j)`. Completed so far: order `1`, all
+  prime orders (`SmallGroup(p, 1) = ℤ/p`, see `GAP/Prime.lean`), and the prime-power
+  orders `4, 8, 9, 16, 25, 27, 49` (representatives are the imported pc groups, see
+  below).
+
+* `Smallgroups/GAP/SmallGroup.lean` — the **unified accessor** `smallGroup N j` (and
+  `smallPres N j`): the GAP group `SmallGroup(N, j)` as a concrete computable group,
+  with `Group`/`Fintype`/`DecidableEq` instances on the imported range
+  (currently orders `1, 2, 4, 8, 9, 16, 25, 27, 49`).
 
 * `Smallgroups/GAP/Polycyclic/` — the **polycyclic (pc) group framework**: concrete,
   computable finite groups built from GAP-style pc presentations.
@@ -518,10 +525,10 @@ theorems:
   * `Polycyclic/Imported/` — pc presentations `smallGroup_N_j` imported from the
     GAP SmallGroups library by `Scripts/translate_pc.py` (driving
     `Scripts/gap/export_pc.g`), with per-layer consistency instances by `decide`,
-    `Group` instances and order checks; currently orders `1, 2, 8, 16, 27`.
-    `Order8Match.lean`/`Order27Match.lean` certify isomorphisms between the
-    imported groups and the project's existing representatives of orders `8`
-    and `27` (order `16` in progress).
+    `Group` instances and order checks; currently orders `1, 2, 4, 8, 9, 16, 25, 27,
+    49`.  The `OrderNMatch.lean` files certify isomorphisms between the imported
+    groups and the project's existing representatives (orders `4, 8, 9, 16, 25, 27,
+    49` done so far).
 
 
 ## Building

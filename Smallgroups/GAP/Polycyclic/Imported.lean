@@ -5,12 +5,20 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.GAP.Polycyclic.Imported.Order1
 import Smallgroups.GAP.Polycyclic.Imported.Order2
+import Smallgroups.GAP.Polycyclic.Imported.Order4
 import Smallgroups.GAP.Polycyclic.Imported.Order8
+import Smallgroups.GAP.Polycyclic.Imported.Order4Match
 import Smallgroups.GAP.Polycyclic.Imported.Order8Match
+import Smallgroups.GAP.Polycyclic.Imported.Order9Match
+import Smallgroups.GAP.Polycyclic.Imported.Order9
 import Smallgroups.GAP.Polycyclic.Imported.Order16
 import Smallgroups.GAP.Polycyclic.Imported.Order16Match
+import Smallgroups.GAP.Polycyclic.Imported.Order25
 import Smallgroups.GAP.Polycyclic.Imported.Order27
+import Smallgroups.GAP.Polycyclic.Imported.Order25Match
 import Smallgroups.GAP.Polycyclic.Imported.Order27Match
+import Smallgroups.GAP.Polycyclic.Imported.Order49
+import Smallgroups.GAP.Polycyclic.Imported.Order49Match
 
 /-!
 # Imported pc presentations from the GAP SmallGroups library

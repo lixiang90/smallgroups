@@ -6,3 +6,4 @@ Authors: Smallgroups contributors
 import Smallgroups.GAP.Prime
 import Smallgroups.GAP.Polycyclic
 import Smallgroups.GAP.Polycyclic.Imported
+import Smallgroups.GAP.SmallGroup

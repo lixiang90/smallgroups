@@ -6,5 +6,6 @@ Authors: Smallgroups contributors
 import Smallgroups.GAP_Classifications.GAP_11_to_20.Order11
 import Smallgroups.GAP_Classifications.GAP_11_to_20.Order13
 import Smallgroups.GAP_Classifications.GAP_11_to_20.Order17
+import Smallgroups.GAP_Classifications.GAP_11_to_20.Order16
 import Smallgroups.GAP_Classifications.GAP_11_to_20.Order19
 
