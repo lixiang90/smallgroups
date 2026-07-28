@@ -17,9 +17,9 @@ namespace Smallgroups.GAP
 
 open Smallgroups.UsefulTheorems
 
-set_option maxRecDepth 10000
-set_option maxHeartbeats 2000000
-
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+-- The finite homomorphism and bijectivity checks need larger reduction limits.
 /-- `SmallGroup(51, 1) = ℤ/51`, mapping the order-`3` generator to `17`
 and the order-`17` generator to `3`. -/
 noncomputable def order51_1_equiv :

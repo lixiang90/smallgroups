@@ -19,9 +19,6 @@ namespace Smallgroups.GAP
 
 open Smallgroups.UsefulTheorems
 
-set_option maxRecDepth 10000
-set_option maxHeartbeats 2000000
-
 /-- The first GAP group of order `55` is noncommutative. -/
 theorem order55_1_not_comm :
     ¬ ∀ a b : PCGroup smallGroup_55_1, a * b = b * a := by
@@ -48,6 +45,9 @@ noncomputable def order55_1_equiv :
       simpa only [map_mul] using mul_comm (hcyc.some a) (hcyc.some b)
     · exact hnonab)
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+-- The finite homomorphism and bijectivity checks need larger reduction limits.
 /-- `SmallGroup(55, 2) = ℤ/55`, mapping the order-`5` generator to `11`
 and the order-`11` generator to `5`. -/
 noncomputable def order55_2_equiv :

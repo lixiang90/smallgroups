@@ -17,9 +17,9 @@ namespace Smallgroups.GAP
 
 open Smallgroups.UsefulTheorems
 
-set_option maxRecDepth 10000
-set_option maxHeartbeats 2000000
-
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+-- The finite homomorphism and bijectivity checks need larger reduction limits.
 /-- `SmallGroup(22, 1) = DihedralGroup 11`, mapping the order-two generator
 to a reflection and the order-`11` generator to a rotation. -/
 noncomputable def order22_1_equiv :
@@ -28,6 +28,9 @@ noncomputable def order22_1_equiv :
     (pcEval [sg22_1_L1, sg22_1_L2]
       [DihedralGroup.sr 0, DihedralGroup.r 1])
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+-- The finite homomorphism and bijectivity checks need larger reduction limits.
 /-- `SmallGroup(22, 2) = ℤ/22`, mapping the order-two generator to `11` and
 the order-`11` generator to `2`. -/
 noncomputable def order22_2_equiv :

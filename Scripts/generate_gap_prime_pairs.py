@@ -79,6 +79,9 @@ def gap_dir(n: int) -> Path:
 def odd_match(n: int, p: int, q: int, nonabelian: bool) -> str:
     if not nonabelian:
         body = f"""\
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+-- The finite homomorphism and bijectivity checks need larger reduction limits.
 /-- `SmallGroup({n}, 1) = ℤ/{n}`, mapping the order-`{q}` generator to `{p}`
 and the order-`{p}` generator to `{q}`. -/
 noncomputable def order{n}_1_equiv :
@@ -119,6 +122,9 @@ noncomputable def order{n}_1_equiv :
       simpa only [map_mul] using mul_comm (hcyc.some a) (hcyc.some b)
     · exact hnonab)
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+-- The finite homomorphism and bijectivity checks need larger reduction limits.
 /-- `SmallGroup({n}, 2) = ℤ/{n}`, mapping the order-`{q}` generator to `{p}`
 and the order-`{p}` generator to `{q}`. -/
 noncomputable def order{n}_2_equiv :
@@ -146,9 +152,6 @@ namespace Smallgroups.GAP
 
 open Smallgroups.UsefulTheorems
 
-set_option maxRecDepth 10000
-set_option maxHeartbeats 2000000
-
 {body}
 end Smallgroups.GAP
 """
@@ -169,9 +172,9 @@ namespace Smallgroups.GAP
 
 open Smallgroups.UsefulTheorems
 
-set_option maxRecDepth 10000
-set_option maxHeartbeats 2000000
-
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+-- The finite homomorphism and bijectivity checks need larger reduction limits.
 /-- `SmallGroup({n}, 1) = DihedralGroup {p}`, mapping the order-two generator
 to a reflection and the order-`{p}` generator to a rotation. -/
 noncomputable def order{n}_1_equiv :
@@ -180,6 +183,9 @@ noncomputable def order{n}_1_equiv :
     (pcEval [sg{n}_1_L1, sg{n}_1_L2]
       [DihedralGroup.sr 0, DihedralGroup.r 1])
 
+set_option maxRecDepth 10000 in
+set_option maxHeartbeats 2000000 in
+-- The finite homomorphism and bijectivity checks need larger reduction limits.
 /-- `SmallGroup({n}, 2) = ℤ/{n}`, mapping the order-two generator to `{p}` and
 the order-`{p}` generator to `2`. -/
 noncomputable def order{n}_2_equiv :
