@@ -503,14 +503,16 @@ theorems:
   `OrderN.lean` files prove the same three theorems (exhaustiveness, distinctness,
   counting) in namespace `Smallgroups.GAP_Classifications.OrderN`, with index
   `⟨j - 1, _⟩` corresponding to `SmallGroup(N, j)`. Completed so far: order `1`, all
-  prime orders (`SmallGroup(p, 1) = ℤ/p`, see `GAP/Prime.lean`), and the prime-power
-  orders `4, 8, 9, 16, 25, 27, 49` (representatives are the imported pc groups, see
-  below).
+  prime orders (`SmallGroup(p, 1) = ℤ/p`, see `GAP/Prime.lean`), the prime-power
+  orders `4, 8, 9, 16, 25, 27, 49`, every odd squarefree prime-pair order at most
+  `100`, and every order `2p ≤ 100` for odd prime `p` (representatives are imported
+  pc groups, see below).
 
 * `Smallgroups/GAP/SmallGroup.lean` — the **unified accessor** `smallGroup N j` (and
   `smallPres N j`): the GAP group `SmallGroup(N, j)` as a concrete computable group,
   with `Group`/`Fintype`/`DecidableEq` instances on the imported range
-  (currently orders `1, 2, 4, 8, 9, 16, 25, 27, 49`).
+  (currently the prime-power imports above, all odd squarefree prime-pair orders
+  at most `100`, and all orders `2p ≤ 100` for odd prime `p`).
 
 * `Smallgroups/GAP/Polycyclic/` — the **polycyclic (pc) group framework**: concrete,
   computable finite groups built from GAP-style pc presentations.
@@ -525,10 +527,12 @@ theorems:
   * `Polycyclic/Imported/` — pc presentations `smallGroup_N_j` imported from the
     GAP SmallGroups library by `Scripts/translate_pc.py` (driving
     `Scripts/gap/export_pc.g`), with per-layer consistency instances by `decide`,
-    `Group` instances and order checks; currently orders `1, 2, 4, 8, 9, 16, 25, 27,
-    49`.  The `OrderNMatch.lean` files certify isomorphisms between the imported
-    groups and the project's existing representatives (orders `4, 8, 9, 16, 25, 27,
-    49` done so far).
+    `Group` instances and order checks.  The `OrderNMatch.lean` files certify
+    isomorphisms between the imported groups and the project's existing
+    representatives; the imported range now contains the prime-power cases above,
+    all odd squarefree prime-pair orders at most `100`, and all `2p ≤ 100`.
+  * `Scripts/generate_gap_prime_pairs.py` — regenerates the uniform match and GAP
+    classification modules for the odd-`pq` and `2p` families after pc import.
 
 
 ## Building

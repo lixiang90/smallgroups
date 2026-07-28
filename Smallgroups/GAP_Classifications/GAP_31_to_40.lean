@@ -4,5 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.GAP_Classifications.GAP_31_to_40.Order31
+import Smallgroups.GAP_Classifications.GAP_31_to_40.Order33
+import Smallgroups.GAP_Classifications.GAP_31_to_40.Order34
+import Smallgroups.GAP_Classifications.GAP_31_to_40.Order35
 import Smallgroups.GAP_Classifications.GAP_31_to_40.Order37
+import Smallgroups.GAP_Classifications.GAP_31_to_40.Order38
+import Smallgroups.GAP_Classifications.GAP_31_to_40.Order39
 

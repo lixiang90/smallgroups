@@ -5,5 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.GAP_Classifications.GAP_71_to_80.Order71
 import Smallgroups.GAP_Classifications.GAP_71_to_80.Order73
+import Smallgroups.GAP_Classifications.GAP_71_to_80.Order74
+import Smallgroups.GAP_Classifications.GAP_71_to_80.Order77
 import Smallgroups.GAP_Classifications.GAP_71_to_80.Order79
 
