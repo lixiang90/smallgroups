@@ -116,8 +116,7 @@ noncomputable abbrev order72_reps (n : Fin 50) : Type :=
 
 /-- Swaps the factors of a direct-product isomorphism: given Nonempty (G ≃* (H × K))
 returns Nonempty (G ≃* (K × H)). -/
-@[reducible]
-def order72_swapProd {H K : Type*} [Group H] [Group K]
+theorem order72_swapProd {H K : Type*} [Group H] [Group K]
     (h : Nonempty (G ≃* H × K)) : Nonempty (G ≃* K × H) :=
   let ⟨e⟩ := h
   ⟨e.trans MulEquiv.prodComm⟩

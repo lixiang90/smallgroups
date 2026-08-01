@@ -1003,7 +1003,7 @@ theorem zmod5_unit_pow_four (u : (ZMod 5)ˣ) : u ^ 4 = 1 := by revert u; decide
 theorem phi3_eq_pow5 (a : C8g) : phi3 a = a ^ 5 := by
   rw [c8_elt_eq_gen_pow a, map_pow, phi3_gen, ← pow_mul, ← pow_mul, Nat.mul_comm]
 
-noncomputable def K3_lift_compat (f1 : C8g →* (ZMod 5)ˣ) (f2 : Multiplicative (ZMod 2) →*
+theorem K3_lift_compat (f1 : C8g →* (ZMod 5)ˣ) (f2 : Multiplicative (ZMod 2) →*
     (ZMod 5)ˣ) : ∀ b, f1.comp (c2Action_phi3 b).toMonoidHom =
       (MulAut.conj (f2 b)).toMonoidHom.comp f1 := by
   intro b
