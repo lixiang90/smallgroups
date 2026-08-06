@@ -41,6 +41,7 @@ import Smallgroups.UsefulTheorems.Order40
 import Smallgroups.UsefulTheorems.Order54
 import Smallgroups.UsefulTheorems.Order56
 import Smallgroups.UsefulTheorems.Order60
+import Smallgroups.UsefulTheorems.Order48
 import Smallgroups.UsefulTheorems.Order72
 import Smallgroups.UsefulTheorems.Order80
 import Smallgroups.UsefulTheorems.Order63
