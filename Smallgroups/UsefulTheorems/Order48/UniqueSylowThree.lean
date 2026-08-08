@@ -101,6 +101,21 @@ theorem c2_zmod3_character_cases (χ : Multiplicative (ZMod 2) →* (ZMod 3)ˣ) 
   · exact Or.inl (c2_hom_ext (by simp [h]))
   · exact Or.inr (c2_hom_ext (by rw [h, order48_signC2_gen]))
 
+/-- The sign character `C₄ →* (ZMod 3)ˣ`, sending the generator to `-1`. -/
+noncomputable abbrev order48_signC4 : Multiplicative (ZMod 4) →* (ZMod 3)ˣ :=
+  powHom (p := 3) (q := 4) (-1) (by decide)
+
+@[simp]
+theorem order48_signC4_gen : order48_signC4 (Multiplicative.ofAdd (1 : ZMod 4)) = -1 := by
+  decide
+
+/-- Characters `C₄ → (ZMod 3)ˣ` are trivial or `order48_signC4`. -/
+theorem c4_zmod3_character_cases (χ : Multiplicative (ZMod 4) →* (ZMod 3)ˣ) :
+    χ = 1 ∨ χ = order48_signC4 := by
+  rcases zmod3_unit_eq_one_or_neg (χ (Multiplicative.ofAdd (1 : ZMod 4))) with h | h
+  · exact Or.inl (multiplicative_zmod_hom_ext (by simp [h]))
+  · exact Or.inr (multiplicative_zmod_hom_ext (by rw [h, order48_signC4_gen]))
+
 /-- The sign character `C₈ →* (ZMod 3)ˣ`, sending the generator to `-1`. -/
 noncomputable abbrev order48_signC8 : C8g →* (ZMod 3)ˣ :=
   powHom (p := 3) (q := 8) (-1) (by decide)

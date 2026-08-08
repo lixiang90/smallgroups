@@ -128,7 +128,8 @@ noncomputable def C4_powHom {H : Type*} [Group H] (A : H) (hA : A ^ 4 = 1) :
 theorem C4_powHom_gen {H : Type*} [Group H] (A : H) (hA : A ^ 4 = 1) :
     C4_powHom A hA (Multiplicative.ofAdd (1 : ZMod 4)) = A := by
   change A ^ (Multiplicative.toAdd (Multiplicative.ofAdd (1 : ZMod 4))).val = A
-  norm_num [ZMod.val_one]
+  change A ^ 1 = A
+  simp
 
 /-- Homomorphisms out of `C₃` into any monoid are determined by the generator. -/
 theorem c3_hom_ext {M : Type*} [Monoid M] {χ ψ : Multiplicative (ZMod 3) →* M}
@@ -280,8 +281,7 @@ private theorem inr_mul_inl {N G' : Type*} [Group N] [Group G'] {φ : G' →* Mu
     (g : G') (n : N) :
     (SemidirectProduct.inr g : SemidirectProduct N G' φ) * SemidirectProduct.inl n =
       SemidirectProduct.inl (φ g n) * SemidirectProduct.inr g := by
-  rw [SemidirectProduct.inl_aut, ← map_inv]
-  group
+  ext <;> simp
 
 /-! ### The Schur–Zassenhaus reduction: `G ≃* N ⋊[φ] K` with `|N| = 16`, `|K| = 3` -/
 
@@ -536,10 +536,13 @@ private theorem Gc1_ne_one : Gc1 ≠ 1 := by decide
 private theorem Gc1_orderOf : orderOf Gc1 = 4 := by
   have hdvd : orderOf Gc1 ∣ 4 := orderOf_dvd_of_pow_eq_one Gc1_pow4
   have hne1 : orderOf Gc1 ≠ 1 := by
-    rw [orderOf_eq_one_iff]
-    exact Gc1_ne_one
-  have hne2 : orderOf Gc1 ≠ 2 := fun h =>
-    Gc1_sq_ne_one (orderOf_dvd_iff_pow_eq_one.mp (h ▸ dvd_refl 2))
+    intro h
+    exact Gc1_ne_one (orderOf_eq_one_iff.mp h)
+  have hne2 : orderOf Gc1 ≠ 2 := by
+    intro h
+    apply Gc1_sq_ne_one
+    apply orderOf_dvd_iff_pow_eq_one.mp
+    rw [h]
   have hmem : orderOf Gc1 ∈ Nat.divisors 4 := Nat.mem_divisors.mpr ⟨hdvd, by norm_num⟩
   have hdiv : Nat.divisors 4 = {1, 2, 4} := by decide
   rw [hdiv] at hmem
@@ -658,7 +661,10 @@ theorem order48_c2pow4_unique
       simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hs
       rcases hs with rfl | rfl
       · exact Subgroup.mem_comap.mpr hσvW
-      · exact Subgroup.mem_comap.mpr (by rw [hσ2 v]; exact W.mul_mem hσvW hvW)
+      · exact Subgroup.mem_comap.mpr (by
+          change σ (σ v) ∈ W
+          rw [hσ2 v]
+          exact W.mul_mem hσvW hvW)
     intro x hx
     exact Subgroup.mem_comap.mp (hle hx)
   have hWfix : Nat.card {x : order16_wild_C2pow4 // x ∈ W ∧ σ x = x} = 1 := by
@@ -691,16 +697,16 @@ theorem order48_c2pow4_unique
     · refine ⟨(1, Multiplicative.ofAdd 1), ?_⟩
       simp [hT0def, MonoidHom.coprod_apply, C2_powHom_gen]
   have hT0card : Nat.card T0.range ≤ 4 := by
-    have h1 : Nat.card (Set.range (fun x => T0 x)) ≤
-        Nat.card (Multiplicative (ZMod 2) × Multiplicative (ZMod 2)) :=
-      Nat.card_range_le _
+    have h1 : Nat.card T0.range ≤
+        Nat.card (Multiplicative (ZMod 2) × Multiplicative (ZMod 2)) := by
+      apply Nat.card_le_card_of_surjective
+        (fun x : Multiplicative (ZMod 2) × Multiplicative (ZMod 2) =>
+          (⟨T0 x, ⟨x, rfl⟩⟩ : T0.range))
+      rintro ⟨y, x, rfl⟩
+      exact ⟨x, rfl⟩
     have h2 : Nat.card (Multiplicative (ZMod 2) × Multiplicative (ZMod 2)) = 4 := by
       rw [Nat.card_eq_fintype_card]; decide
-    have h3 : Nat.card T0.range = Nat.card (Set.range (fun x => T0 x)) := by
-      apply Nat.card_congr
-      exact Equiv.subtypeEquivRight (fun x => by rw [MonoidHom.mem_range, Set.mem_range])
-    rw [h3, ← h2]
-    exact h1
+    rwa [h2] at h1
   have hWcard : Nat.card {x : order16_wild_C2pow4 // x ∈ W} = 4 := by
     have hdvd' : Nat.card {x : order16_wild_C2pow4 // x ∈ W} ∣ Nat.card T0.range :=
       Subgroup.card_dvd_of_le hWle
@@ -719,8 +725,8 @@ theorem order48_c2pow4_unique
   -- an element outside `W`
   have hw_exists : ∃ w : order16_wild_C2pow4, w ∉ W := by
     by_contra hall
-    push_neg at hall
-    have htop : W = ⊤ := Subgroup.eq_top_iff'.mpr hall
+    push Not at hall
+    have htop : W = ⊤ := eq_top_iff.mpr (fun x _ => hall x)
     have h16 : Nat.card {x : order16_wild_C2pow4 // x ∈ W} = 16 := by
       have h1 : Nat.card {x : order16_wild_C2pow4 // x ∈ W} =
           Nat.card order16_wild_C2pow4 :=
@@ -753,7 +759,7 @@ theorem order48_c2pow4_unique
   -- the range of `T` is `σ`-invariant, hence has order `≡ 1 (mod 3)`
   have hUinv : ∀ x, x ∈ T.range → σ x ∈ T.range := by
     rintro x ⟨y, rfl⟩
-    exact ⟨order48_c2pow4_sigma0 y, hpt y⟩
+    exact ⟨order48_c2pow4_sigma0 y, (hpt y).symm⟩
   have hUfix : Nat.card {x : order16_wild_C2pow4 // x ∈ T.range ∧ σ x = x} = 1 := by
     rw [Nat.card_eq_one_iff_unique]
     constructor
@@ -785,7 +791,7 @@ theorem order48_c2pow4_unique
     have hdne4 : Nat.card {x : order16_wild_C2pow4 // x ∈ T.range} ≠ 4 := by
       intro h4
       have heq : W = T.range := eq_of_le_of_card_eq hWleU (by rw [hWcard, h4])
-      rw [heq] at hwU
+      rw [← heq] at hwU
       exact hwW hwU
     have hdmod : Nat.card {x : order16_wild_C2pow4 // x ∈ T.range} % 3 = 1 := by
       unfold Nat.ModEq at hUmod; omega
@@ -841,7 +847,9 @@ theorem order48_c4c4_unique
     have h : σ (σ x) * (σ x * x) = 1 := by
       rw [← mul_assoc]
       exact hnorm x
-    rw [eq_inv_of_mul_eq_one_right h, mul_inv_rev, mul_comm x⁻¹ (σ x)⁻¹]
+    calc
+      σ (σ x) = (σ x * x)⁻¹ := eq_inv_of_mul_eq_one_left h
+      _ = (σ x)⁻¹ * x⁻¹ := by rw [mul_inv_rev, mul_comm]
   -- the orbit subgroup of the generator `Gc1`
   set W : Subgroup order48_C4C4 := Subgroup.closure {Gc1, σ Gc1} with hWdef
   have hvW : Gc1 ∈ W := Subgroup.subset_closure (Set.mem_insert Gc1 _)
@@ -855,6 +863,7 @@ theorem order48_c4c4_unique
       rcases hs with rfl | rfl
       · exact Subgroup.mem_comap.mpr hσvW
       · exact Subgroup.mem_comap.mpr (by
+          change σ (σ Gc1) ∈ W
           rw [hsq2 Gc1]
           exact W.mul_mem (W.inv_mem hσvW) (W.inv_mem hvW))
     intro x hx
@@ -888,34 +897,23 @@ theorem order48_c4c4_unique
     have hv2W : Gc1 ^ 2 ∈ W := W.pow_mem hvW 2
     have hσv2W : σ (Gc1 ^ 2) ∈ W := hWinv _ hv2W
     rw [← heq] at hσv2W
-    obtain ⟨j, hj⟩ := Subgroup.mem_zpowers_iff.mp hσv2W
     have hsq : (σ (Gc1 ^ 2)) ^ 2 = 1 := by
       have h1 : (Gc1 ^ 2) ^ 2 = Gc1 ^ 4 := by rw [← pow_mul]
       rw [← map_pow, h1, Gc1_pow4, map_one]
     have hne : σ (Gc1 ^ 2) ≠ 1 := by
       intro h
       exact Gc1_sq_ne_one (σ.injective (by rw [h, map_one]))
-    -- reduce the exponent `j` mod `4`
-    have hjsq : Gc1 ^ (j * 2) = 1 := by
-      have h1 : (Gc1 ^ j) ^ 2 = 1 := by rw [← hj]; exact hsq
-      rw [← zpow_natCast, ← zpow_mul] at h1
-      exact h1
-    have hdvd4 : (4 : ℤ) ∣ j * 2 := by
-      have h1 := orderOf_dvd_iff_zpow_eq_one.mp hjsq
-      rwa [Gc1_orderOf] at h1
-    obtain ⟨m, hm⟩ : (2 : ℤ) ∣ j := by omega
-    have hjm : Gc1 ^ j = (Gc1 ^ 2) ^ m := by rw [hm, ← zpow_mul]
-    rw [hjm] at hj
-    have hv2z : (Gc1 ^ 2 : order48_C4C4) ^ (2 : ℤ) = 1 := by
-      rw [← zpow_natCast, ← pow_mul, Gc1_pow4]
-    -- `(Gc1²)^m` is a fixed point squared to `1`, so it is `1` or `Gc1²`
-    have hcontra : (Gc1 ^ 2) ^ m = Gc1 ^ 2 := by
-      rcases Int.even_or_odd m with ⟨k, hk⟩ | ⟨k, hk⟩
-      · exfalso
-        apply hne
-        rw [hj, hk, show (k + k : ℤ) = 2 * k by ring, zpow_mul, hv2z, one_zpow]
-      · rw [hk, zpow_add, zpow_mul, hv2z, one_zpow, one_mul, zpow_one]
-    exact Gc1_sq_ne_one (hfpf _ (hj.trans hcontra))
+    have hy2 : (σ (Gc1 ^ 2)).2 = 1 := by
+      obtain ⟨j, hj⟩ := Subgroup.mem_zpowers_iff.mp hσv2W
+      rw [← hj]
+      simp [Gc1]
+    have hcontra : σ (Gc1 ^ 2) = Gc1 ^ 2 := by
+      apply (show ∀ y : order48_C4C4, y.2 = 1 →
+        y ^ 2 = 1 → y ≠ 1 → y = Gc1 ^ 2 by decide)
+      · exact hy2
+      · exact hsq
+      · exact hne
+    exact Gc1_sq_ne_one (hfpf _ hcontra)
   have hWcard : Nat.card {x : order48_C4C4 // x ∈ W} = 16 := by
     have hdmod : Nat.card {x : order48_C4C4 // x ∈ W} % 3 = 1 := by
       unfold Nat.ModEq at hWmod; omega
@@ -975,23 +973,24 @@ private theorem rep_conj_inr_gen {K : Type*} [Group K] (σ₀ : MulAut K) (hσ�
     h * SemidirectProduct.inr c3gen * h⁻¹ =
       SemidirectProduct.inl (h.left * σ₀ h.left⁻¹) * SemidirectProduct.inr c3gen := by
   have hφ : C3_powHom σ₀ hσ₀3 c3gen = σ₀ := C3_powHom_gen _ _
-  have step2 : SemidirectProduct.inr h.right * SemidirectProduct.inr c3gen *
-      SemidirectProduct.inr h.right⁻¹ = SemidirectProduct.inr c3gen := by
-    rw [← map_mul, ← map_mul]
+  ext
+  · simp only [SemidirectProduct.mul_left, SemidirectProduct.mul_right,
+      SemidirectProduct.left_inr, SemidirectProduct.right_inr,
+      SemidirectProduct.left_inl, SemidirectProduct.inv_left,
+      map_one, mul_one]
+    rw [map_mul, hφ, map_inv]
     congr 1
-    rw [mul_left_comm, mul_inv_cancel_right]
-  rw [← SemidirectProduct.inl_left_mul_inr_right h, mul_inv, ← map_inv, ← map_inv]
-  calc SemidirectProduct.inl h.left * SemidirectProduct.inr h.right * SemidirectProduct.inr c3gen
-        * (SemidirectProduct.inr h.right⁻¹ * SemidirectProduct.inl h.left⁻¹)
-      = SemidirectProduct.inl h.left * (SemidirectProduct.inr h.right *
-          SemidirectProduct.inr c3gen * SemidirectProduct.inr h.right⁻¹) *
-          SemidirectProduct.inl h.left⁻¹ := by group
-    _ = SemidirectProduct.inl h.left * SemidirectProduct.inr c3gen *
-          SemidirectProduct.inl h.left⁻¹ := by rw [step2]
-    _ = SemidirectProduct.inl h.left * (SemidirectProduct.inl (C3_powHom σ₀ hσ₀3 c3gen h.left⁻¹) *
-          SemidirectProduct.inr c3gen) := by rw [mul_assoc, inr_mul_inl]
-    _ = SemidirectProduct.inl (h.left * σ₀ h.left⁻¹) * SemidirectProduct.inr c3gen := by
-        rw [← mul_assoc, ← map_mul, hφ]
+    have ha_inv : C3_powHom σ₀ hσ₀3 h.right⁻¹ =
+        (C3_powHom σ₀ hσ₀3 h.right)⁻¹ := map_inv _ _
+    rw [ha_inv, ← map_inv]
+    change (((C3_powHom σ₀ hσ₀3 h.right) * σ₀ *
+      (C3_powHom σ₀ hσ₀3 h.right)⁻¹) h.left⁻¹) = σ₀ h.left⁻¹
+    have hcomm : Commute (C3_powHom σ₀ hσ₀3 h.right) σ₀ := by
+      rw [c3gen_span h.right, map_pow, hφ]
+      exact Commute.pow_self _ _
+    rw [hcomm.eq, mul_assoc]
+    simp
+  · simp
 
 /-- **The reference semidirect products have sixteen Sylow-`3` subgroups.** If
 `σ₀` is a fixed-point-free automorphism of order dividing `3` of a group `K`
@@ -1022,10 +1021,9 @@ theorem order48_sylow_three_rep_of_fpf {K : Type*} [Group K] [Finite K] (hK : Na
   have hnormQ : Subgroup.normalizer (Q : Set H) = ↑Q := by
     apply le_antisymm
     · intro h hh
-      rw [Subgroup.mem_normalizer_iff] at hh
+      rw [← Sylow.coe_coe, Subgroup.mem_normalizer_iff] at hh
       have hcQ : c ∈ (↑Q : Set H) := by
-        rw [← heqzp]
-        exact Subgroup.mem_zpowers c
+        exact hle (Subgroup.mem_zpowers c)
       have hch := (hh c).mp hcQ
       rw [← heqzp] at hch
       obtain ⟨j, hj⟩ := Subgroup.mem_zpowers_iff.mp hch
@@ -1033,15 +1031,16 @@ theorem order48_sylow_three_rep_of_fpf {K : Type*} [Group K] [Finite K] (hK : Na
       have hleft : h.left * σ₀ h.left⁻¹ = 1 := by
         have h2 := congrArg SemidirectProduct.left hj
         simp only [SemidirectProduct.mul_left, SemidirectProduct.left_inl,
-          SemidirectProduct.left_inr, SemidirectProduct.right_inl, map_one, MulAut.one_apply,
-          mul_one] at h2
+          SemidirectProduct.left_inr, SemidirectProduct.right_inl, map_one, mul_one] at h2
         exact h2.symm
-      have hfix : σ₀ h.left⁻¹ = h.left⁻¹ := eq_inv_of_mul_eq_one_left hleft
+      have hfix : σ₀ h.left⁻¹ = h.left⁻¹ := eq_inv_of_mul_eq_one_right hleft
       have hl1 : h.left = 1 := by
         have h1 := hfpf0 h.left⁻¹ hfix
         rwa [inv_eq_one] at h1
       have h3' : h = SemidirectProduct.inr h.right := by
-        rw [← SemidirectProduct.inl_left_mul_inr_right h, hl1, map_one, one_mul]
+        apply SemidirectProduct.ext
+        · simp [hl1]
+        · rfl
       rw [h3', ← heqzp]
       refine Subgroup.mem_zpowers_iff.mpr ⟨((Multiplicative.toAdd h.right).val : ℤ), ?_⟩
       rw [← map_zpow, zpow_natCast, ← c3gen_span h.right]
@@ -1053,8 +1052,8 @@ theorem order48_sylow_three_rep_of_fpf {K : Type*} [Group K] [Finite K] (hK : Na
     rw [hNcard, hcardH] at hmul
     omega
   haveI : Finite (Sylow 3 H) := Sylow.finite_of_finiteIndex Q
-  rw [← Q.card_eq_index_normalizer]
-  exact hidx
+  change Nat.card (Sylow 3 H) = 16
+  exact Q.card_eq_index_normalizer.trans hidx
 
 theorem order48_c2pow4_rep_card : Nat.card order48_c2pow4_semidirect_c3_rep = 48 := by
   change Nat.card (SemidirectProduct _ _ _) = 48
@@ -1204,6 +1203,7 @@ theorem order48_two_reps_not_iso :
     (by rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]; decide)
     (by rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]; decide) e
   have h1 : orderOf (eN.symm Gc1) = 4 := by
+    change orderOf (eN.symm.toMonoidHom Gc1) = 4
     rw [orderOf_injective eN.symm.toMonoidHom eN.symm.injective]
     exact Gc1_orderOf
   have h2 : (eN.symm Gc1) ^ 2 = 1 := c2pow4_pow_two _
