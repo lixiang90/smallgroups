@@ -230,6 +230,112 @@ theorem order48_ne_of_ker_order {K : Type*} [Group K] [Fintype K]
     order48_centralizer_elt_decomp hK hn' hd hcommute'' heord
   exact h2 _ hker hord
 
+/-- Refine the centralizer invariant by recording the order of its elements. -/
+theorem order48_card_centralizer_ord_eq {K : Type*} [Group K] [Fintype K]
+    (hK : Nat.Coprime 3 (Fintype.card K)) {χ : K →* (ZMod 3)ˣ}
+    {n0 : Multiplicative (ZMod 3)} (hn0 : orderOf n0 = 3)
+    {d : Nat} (hd : ¬ 3 ∣ d) :
+    Nat.card {x : SemidirectProduct (Multiplicative (ZMod 3)) K
+        (order48_action χ) // Commute (SemidirectProduct.inl n0) x ∧
+          orderOf x = d} =
+      Nat.card {k : K // χ k = 1 ∧ orderOf k = d} := by
+  apply Nat.card_congr
+  refine
+    { toFun := fun x => ⟨SemidirectProduct.rightHom x.1,
+        (order48_centralizer_elt_decomp hK hn0 hd x.2.1 x.2.2).2⟩
+      invFun := fun p => ⟨SemidirectProduct.inr p.1, ?_, ?_⟩
+      left_inv := ?_
+      right_inv := ?_ }
+  · rw [order48_inl_gen_commute_iff hn0]
+    simp [MonoidHom.comp_apply, p.2.1]
+  · rw [orderOf_injective _ SemidirectProduct.inr_injective]
+    exact p.2.2
+  · rintro ⟨x, hx, hxord⟩
+    obtain ⟨hleft, _, _⟩ :=
+      order48_centralizer_elt_decomp hK hn0 hd hx hxord
+    apply Subtype.ext
+    have hdecomp := SemidirectProduct.inl_left_mul_inr_right x
+    rw [hleft, map_one, one_mul] at hdecomp
+    exact hdecomp
+  · rintro ⟨k, hk, hkord⟩
+    simp
+
+/-- Different counts of kernel elements of a fixed order distinguish the
+associated semidirect products. -/
+theorem order48_ne_of_ker_ord_count {K : Type*} [Group K] [Fintype K]
+    (hK : Nat.Coprime 3 (Fintype.card K)) {χ χ' : K →* (ZMod 3)ˣ}
+    {d : Nat} (hd : ¬ 3 ∣ d)
+    (hcard : Nat.card {k : K // χ k = 1 ∧ orderOf k = d} ≠
+      Nat.card {k : K // χ' k = 1 ∧ orderOf k = d}) :
+    IsEmpty (SemidirectProduct (Multiplicative (ZMod 3)) K (order48_action χ) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) K (order48_action χ')) := by
+  constructor
+  intro e
+  apply hcard
+  let n0 : Multiplicative (ZMod 3) := Multiplicative.ofAdd (1 : ZMod 3)
+  have hn0 : orderOf n0 = 3 := by
+    simp [n0, orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+  have heord : orderOf (e (SemidirectProduct.inl n0)) = 3 := by
+    rw [MulEquiv.orderOf_eq, orderOf_injective _ SemidirectProduct.inl_injective]
+    exact hn0
+  obtain ⟨n', hne, hn'⟩ := order48_ord3_elt_eq_inl hK heord
+  have hequiv : {x : SemidirectProduct (Multiplicative (ZMod 3)) K
+        (order48_action χ) // Commute (SemidirectProduct.inl n0) x ∧
+          orderOf x = d} ≃
+      {y : SemidirectProduct (Multiplicative (ZMod 3)) K
+        (order48_action χ') // Commute (SemidirectProduct.inl n') y ∧
+          orderOf y = d} :=
+    Equiv.subtypeEquiv e (fun x => by
+      constructor
+      · rintro ⟨hcomm, hord⟩
+        refine ⟨?_, ?_⟩
+        · have hm := hcomm.map e
+          rwa [hne] at hm
+        · simp [hord]
+      · rintro ⟨hcomm, hord⟩
+        refine ⟨?_, ?_⟩
+        · rw [← hne] at hcomm
+          have hm := hcomm.map e.symm
+          simpa using hm
+        · simpa using hord)
+  have hcardeq := Nat.card_congr hequiv
+  rw [order48_card_centralizer_ord_eq hK hn0 hd,
+    order48_card_centralizer_ord_eq hK hn' hd] at hcardeq
+  exact hcardeq
+
+theorem order48_orderOf_eq_two_iff {G : Type*} [Group G] {k : G} :
+    orderOf k = 2 ↔ k ^ 2 = 1 ∧ k ≠ 1 := by
+  constructor
+  · intro h
+    refine ⟨h ▸ pow_orderOf_eq_one k, ?_⟩
+    intro hk
+    rw [hk, orderOf_one] at h
+    norm_num at h
+  · rintro ⟨hsq, hne⟩
+    have hdvd : orderOf k ∣ 2 := orderOf_dvd_of_pow_eq_one hsq
+    rcases (Nat.dvd_prime (by norm_num)).mp hdvd with h | h
+    · exact absurd (orderOf_eq_one_iff.mp h) hne
+    · exact h
+
+/-- Decidable form of the kernel order-`2` count invariant. -/
+theorem order48_ne_of_ker_sq_count {K : Type*} [Group K] [Fintype K]
+    (hK : Nat.Coprime 3 (Fintype.card K)) {χ χ' : K →* (ZMod 3)ˣ}
+    (hcard : Nat.card {k : K // χ k = 1 ∧ k ^ 2 = 1 ∧ k ≠ 1} ≠
+      Nat.card {k : K // χ' k = 1 ∧ k ^ 2 = 1 ∧ k ≠ 1}) :
+    IsEmpty (SemidirectProduct (Multiplicative (ZMod 3)) K (order48_action χ) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) K (order48_action χ')) := by
+  apply order48_ne_of_ker_ord_count hK (d := 2) (by norm_num)
+  let e1 : {k : K // χ k = 1 ∧ orderOf k = 2} ≃
+      {k : K // χ k = 1 ∧ k ^ 2 = 1 ∧ k ≠ 1} :=
+    Equiv.subtypeEquivRight
+      (fun k => and_congr_right_iff.mpr fun _ => order48_orderOf_eq_two_iff)
+  let e2 : {k : K // χ' k = 1 ∧ orderOf k = 2} ≃
+      {k : K // χ' k = 1 ∧ k ^ 2 = 1 ∧ k ≠ 1} :=
+    Equiv.subtypeEquivRight
+      (fun k => and_congr_right_iff.mpr fun _ => order48_orderOf_eq_two_iff)
+  rw [Nat.card_congr e1, Nat.card_congr e2]
+  exact hcard
+
 theorem order48_orderOf_ne_of_half_pow_eq_one {G : Type*} [Group G]
     {x : G} {d : Nat} (hd : 2 ≤ d) (hpow : x ^ (d / 2) = 1) :
     orderOf x ≠ d := by
@@ -330,6 +436,193 @@ theorem order48_K5_ne_1_2 : IsEmpty
             revert hk
             revert k
             decide))
+
+/-! ### The `C₈ ⋊ C₂` complements -/
+
+theorem order48_K2_g_orderOf :
+    orderOf (SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 8)) :
+      order16_wild_G2) = 8 :=
+  order48_orderOf_eq_pow2_of (e := 3) rfl (by norm_num) (by decide) (by decide)
+
+theorem order48_K2_ne_10_01 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G2
+        (order48_action order48_K2_chi_10) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G2
+        (order48_action order48_K2_chi_01)) :=
+  order48_isEmpty_mulEquiv_symm <| order48_ne_of_ker_order
+    (K := order16_wild_G2) (χ := order48_K2_chi_01)
+      (χ' := order48_K2_chi_10) (d := 8) (by decide) (by norm_num)
+      ⟨_, by decide, order48_K2_g_orderOf⟩ (by
+        intro k hk
+        exact order48_orderOf_ne_of_half_pow_eq_one (by norm_num)
+          (show k ^ (8 / 2) = 1 by norm_num; revert hk; revert k; decide))
+
+theorem order48_K2_ne_01_11 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G2
+        (order48_action order48_K2_chi_01) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G2
+        (order48_action order48_K2_chi_11)) :=
+  order48_ne_of_ker_order (K := order16_wild_G2)
+    (χ := order48_K2_chi_01) (χ' := order48_K2_chi_11)
+      (d := 8) (by decide) (by norm_num)
+      ⟨_, by decide, order48_K2_g_orderOf⟩ (by
+        intro k hk
+        exact order48_orderOf_ne_of_half_pow_eq_one (by norm_num)
+          (show k ^ (8 / 2) = 1 by norm_num; revert hk; revert k; decide))
+
+theorem order48_K2_ne_10_11 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G2
+        (order48_action order48_K2_chi_10) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G2
+        (order48_action order48_K2_chi_11)) :=
+  order48_ne_of_ker_sq_count (by decide) (by
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    decide)
+
+theorem order48_K3_g_orderOf :
+    orderOf (SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 8)) :
+      order16_wild_G3) = 8 :=
+  order48_orderOf_eq_pow2_of (e := 3) rfl (by norm_num) (by decide) (by decide)
+
+theorem order48_K3_ne_10_01 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G3
+        (order48_action order48_K3_chi_10) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G3
+        (order48_action order48_K3_chi_01)) :=
+  order48_isEmpty_mulEquiv_symm <| order48_ne_of_ker_order
+    (K := order16_wild_G3) (χ := order48_K3_chi_01)
+      (χ' := order48_K3_chi_10) (d := 8) (by decide) (by norm_num)
+      ⟨_, by decide, order48_K3_g_orderOf⟩ (by
+        intro k hk
+        exact order48_orderOf_ne_of_half_pow_eq_one (by norm_num)
+          (show k ^ (8 / 2) = 1 by norm_num; revert hk; revert k; decide))
+
+theorem order48_K4_g_orderOf :
+    orderOf (SemidirectProduct.inl (Multiplicative.ofAdd (1 : ZMod 8)) :
+      order16_wild_G4) = 8 :=
+  order48_orderOf_eq_pow2_of (e := 3) rfl (by norm_num) (by decide) (by decide)
+
+theorem order48_K4_ne_01_10 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G4
+        (order48_action order48_K4_chi_01) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G4
+        (order48_action order48_K4_chi_10)) :=
+  order48_ne_of_ker_order (K := order16_wild_G4)
+    (χ := order48_K4_chi_01) (χ' := order48_K4_chi_10)
+      (d := 8) (by decide) (by norm_num)
+      ⟨_, by decide, order48_K4_g_orderOf⟩ (by
+        intro k hk
+        exact order48_orderOf_ne_of_half_pow_eq_one (by norm_num)
+          (show k ^ (8 / 2) = 1 by norm_num; revert hk; revert k; decide))
+
+/-! ### Complements `K₈` through `K₁₁` -/
+
+theorem order48_K8_ne_f0_02 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G8
+        (order48_action order48_K8_chi_f0) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G8
+        (order48_action order48_K8_chi_02)) :=
+  order48_ne_of_ker_sq_count (by decide) (by
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    decide)
+
+theorem order48_K8_ne_f0_s0 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G8
+        (order48_action order48_K8_chi_f0) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G8
+        (order48_action order48_K8_chi_s0)) :=
+  order48_ne_of_ker_sq_count (by decide) (by
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    decide)
+
+theorem order48_K8_ne_02_s0 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G8
+        (order48_action order48_K8_chi_02) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G8
+        (order48_action order48_K8_chi_s0)) :=
+  order48_ne_of_ker_sq_count (by decide) (by
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    decide)
+
+theorem order48_K9_ne_02_t0 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G9
+        (order48_action order48_K9_chi_02) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G9
+        (order48_action order48_K9_chi_t0)) :=
+  order48_ne_of_ker_sq_count (by decide) (by
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    decide)
+
+theorem order48_K10_ne_02_f0 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G10
+        (order48_action order48_K10_chi_02) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G10
+        (order48_action order48_K10_chi_f0)) :=
+  order48_ne_of_ker_sq_count (by decide) (by
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    decide)
+
+theorem order48_K10_ne_02_s2 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G10
+        (order48_action order48_K10_chi_02) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G10
+        (order48_action order48_K10_chi_s2)) :=
+  order48_ne_of_ker_sq_count (by decide) (by
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    decide)
+
+theorem order48_K10_ne_f0_s2 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G10
+        (order48_action order48_K10_chi_f0) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G10
+        (order48_action order48_K10_chi_s2)) :=
+  order48_ne_of_ker_sq_count (by decide) (by
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    decide)
+
+theorem order48_K11_ne_10_02 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G11
+        (order48_action order48_K11_chi_10) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G11
+        (order48_action order48_K11_chi_02)) :=
+  order48_ne_of_ker_sq_count (by decide) (by
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    decide)
+
+/-! ### The residual `K₁₂` tie -/
+
+/-- If one finite group has an element with exactly `n` square roots and the
+other has none, the groups are not isomorphic. -/
+theorem order48_isEmpty_mulEquiv_of_sq_fiber_count
+    {G₁ G₂ : Type*} [Group G₁] [Group G₂]
+    [Fintype G₁] [Fintype G₂] [DecidableEq G₁] [DecidableEq G₂] {n : Nat}
+    (h1 : ∃ z : G₁, Fintype.card {x : G₁ // x * x = z} = n)
+    (h2 : ∀ z : G₂, Fintype.card {x : G₂ // x * x = z} ≠ n) :
+    IsEmpty (G₁ ≃* G₂) := by
+  constructor
+  intro e
+  obtain ⟨z, hz⟩ := h1
+  refine h2 (e z) ?_
+  rw [← hz]
+  symm
+  apply Fintype.card_congr
+  refine Equiv.subtypeEquiv e.toEquiv fun x => ?_
+  rw [show e.toEquiv x = e x from rfl, ← map_mul]
+  exact ⟨fun h => by rw [h], fun h => e.injective h⟩
+
+set_option maxHeartbeats 1600000 in
+-- The universal target-fiber check evaluates all square roots in a group of order 48.
+/-- The two nontrivial `K₁₂ = C₄ ⋊ C₄` actions require the square-root
+fiber profile: `chi_02` has an element with `24` square roots, whereas
+`chi_20` has none. -/
+theorem order48_K12_ne_02_20 : IsEmpty
+    (SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G12
+        (order48_action order48_K12_chi_02) ≃*
+      SemidirectProduct (Multiplicative (ZMod 3)) order16_wild_G12
+        (order48_action order48_K12_chi_20)) :=
+  order48_isEmpty_mulEquiv_of_sq_fiber_count (n := 24)
+    ⟨⟨1, ⟨1, Multiplicative.ofAdd (2 : ZMod 4)⟩⟩, by decide⟩
+    (by decide)
 
 theorem order48_card_centralizer_eq {K : Type*} [Group K] [Finite K]
     {χ : K →* (ZMod 3)ˣ} {n0 : Multiplicative (ZMod 3)}
@@ -436,5 +729,101 @@ theorem order48_normal_zero_ne_nonzero (k : Fin 14)
         rw [order48_normal_kernel_card_eq, order48_normal_kernel_card_eq]
         simp [order48_normal_zero, hival])).false
   exact hiso.some
+
+set_option maxHeartbeats 1600000 in
+-- The dependent fourteen-way split elaborates every ordered pair of the 42 representatives.
+/-- Representatives with the same complement and distinct reduced-action
+indices are non-isomorphic. -/
+theorem order48_normal_reps_same_disjoint (k : Fin 14)
+    (i j : Fin (order48_normal_counts k)) (hne : i ≠ j) :
+    ¬ Nonempty (order48_normal_reps k i ≃* order48_normal_reps k j) := by
+  intro hiso
+  by_cases hi : i = order48_normal_zero k
+  · subst i
+    exact order48_normal_zero_ne_nonzero k j (Ne.symm hne) hiso
+  by_cases hj : j = order48_normal_zero k
+  · subst j
+    exact order48_normal_zero_ne_nonzero k i hi ⟨hiso.some.symm⟩
+  fin_cases k <;> fin_cases i <;> fin_cases j
+  all_goals simp [order48_normal_zero] at hi hj hne
+  all_goals
+    first
+    | exact order48_K1_ne_1_2.false hiso.some
+    | exact order48_K1_ne_1_2.false hiso.some.symm
+    | exact order48_K2_ne_10_01.false hiso.some
+    | exact order48_K2_ne_10_01.false hiso.some.symm
+    | exact order48_K2_ne_01_11.false hiso.some
+    | exact order48_K2_ne_01_11.false hiso.some.symm
+    | exact order48_K2_ne_10_11.false hiso.some
+    | exact order48_K2_ne_10_11.false hiso.some.symm
+    | exact order48_K3_ne_10_01.false hiso.some
+    | exact order48_K3_ne_10_01.false hiso.some.symm
+    | exact order48_K4_ne_01_10.false hiso.some
+    | exact order48_K4_ne_01_10.false hiso.some.symm
+    | exact order48_K5_ne_1_2.false hiso.some
+    | exact order48_K5_ne_1_2.false hiso.some.symm
+    | exact order48_K7_ne_1_2.false hiso.some
+    | exact order48_K7_ne_1_2.false hiso.some.symm
+    | exact order48_K8_ne_f0_02.false hiso.some
+    | exact order48_K8_ne_f0_02.false hiso.some.symm
+    | exact order48_K8_ne_f0_s0.false hiso.some
+    | exact order48_K8_ne_f0_s0.false hiso.some.symm
+    | exact order48_K8_ne_02_s0.false hiso.some
+    | exact order48_K8_ne_02_s0.false hiso.some.symm
+    | exact order48_K9_ne_02_t0.false hiso.some
+    | exact order48_K9_ne_02_t0.false hiso.some.symm
+    | exact order48_K10_ne_02_f0.false hiso.some
+    | exact order48_K10_ne_02_f0.false hiso.some.symm
+    | exact order48_K10_ne_02_s2.false hiso.some
+    | exact order48_K10_ne_02_s2.false hiso.some.symm
+    | exact order48_K10_ne_f0_s2.false hiso.some
+    | exact order48_K10_ne_f0_s2.false hiso.some.symm
+    | exact order48_K11_ne_10_02.false hiso.some
+    | exact order48_K11_ne_10_02.false hiso.some.symm
+    | exact order48_K12_ne_02_20.false hiso.some
+    | exact order48_K12_ne_02_20.false hiso.some.symm
+
+/-- For each fixed order-`16` complement, the reduced normal-branch
+representatives are pairwise non-isomorphic. -/
+theorem order48_normal_reps_same_pairwise (k : Fin 14) :
+    PairwiseNonMulEquiv (order48_normal_reps k) := by
+  intro i j hiso
+  by_contra hne
+  exact order48_normal_reps_same_disjoint k i j hne hiso
+
+/-- The dependent family of all `42` unique-Sylow-`3` representatives. -/
+noncomputable def order48_normal_sigma_reps
+    (x : Σ k : Fin 14, Fin (order48_normal_counts k)) : Type :=
+  order48_normal_reps x.1 x.2
+
+noncomputable instance order48_normal_sigma_reps_group
+    (x : Σ k : Fin 14, Fin (order48_normal_counts k)) :
+    Group (order48_normal_sigma_reps x) :=
+  order48_normal_reps_group x.1 x.2
+
+theorem order48_normal_sigma_reps_card
+    (x : Σ k : Fin 14, Fin (order48_normal_counts k)) :
+    Nat.card (order48_normal_sigma_reps x) = 48 :=
+  order48_normal_reps_card x.1 x.2
+
+/-- All `42` representatives in the unique-Sylow-`3` branch are pairwise
+non-isomorphic, including representatives with different complements. -/
+theorem order48_normal_sigma_reps_pairwise :
+    PairwiseNonMulEquiv order48_normal_sigma_reps := by
+  rintro ⟨k₁, i⟩ ⟨k₂, j⟩ hiso
+  by_cases hk : k₁ = k₂
+  · subst k₂
+    have hij := order48_normal_reps_same_pairwise k₁ i j hiso
+    subst j
+    rfl
+  · exact (order48_normal_reps_cross_disjoint k₁ k₂ hk i j hiso).elim
+
+/-- Every order-`48` group in the unique-Sylow-`3` branch is represented by
+the `42`-entry sigma family. -/
+theorem order48_normal_sigma_reps_complete {G : Type*} [Group G] [Finite G]
+    (hG : Nat.card G = 48) (hSyl : Nat.card (Sylow 3 G) = 1) :
+    ∃ x, Nonempty (G ≃* order48_normal_sigma_reps x) := by
+  obtain ⟨k, i, h⟩ := order48_normal_classification hG hSyl
+  exact ⟨⟨k, i⟩, h⟩
 
 end Smallgroups.UsefulTheorems

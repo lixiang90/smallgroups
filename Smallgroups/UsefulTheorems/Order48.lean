@@ -5,6 +5,10 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order48.Sylow
 import Smallgroups.UsefulTheorems.Order48.UniqueSylowThree
+import Smallgroups.UsefulTheorems.Order48.UniqueSylowThree_Abel
+import Smallgroups.UsefulTheorems.Order48.UniqueSylowThree_K2to5
+import Smallgroups.UsefulTheorems.Order48.UniqueSylowThree_K8to12
 import Smallgroups.UsefulTheorems.Order48.UniqueSylowThree_Summary
 import Smallgroups.UsefulTheorems.Order48.DistinctnessNormal
 import Smallgroups.UsefulTheorems.Order48.SixteenSylowThree
+import Smallgroups.UsefulTheorems.Order48.FourSylowThree

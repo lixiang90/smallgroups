@@ -19,8 +19,8 @@ one dependent family and proves:
 * every group of order `48` with a unique Sylow-`3` subgroup is isomorphic to
   one of the `42` representatives.
 
-Distinctness between representatives with the same complement is deliberately
-left to the invariant layer; no GAP numbering is used here.
+Distinctness between representatives with the same complement is supplied by
+`DistinctnessNormal.lean`; no GAP numbering is used here.
 -/
 
 namespace Smallgroups.UsefulTheorems
@@ -335,8 +335,9 @@ theorem order48_normal_classification {G : Type*} [Group G] [Finite G]
     · exact ⟨⟨13, by decide⟩, ⟨1, by decide⟩,
         ⟨(e.trans (SemidirectProduct.congr' eN eKC)).trans h.some⟩⟩
 
-/-- There are `42` entries in the reduced representative family.  This becomes
-a class count once within-complement distinctness is supplied. -/
+/-- There are `42` entries in the reduced representative family.  Together
+with `order48_normal_sigma_reps_pairwise`, this is the class count for the
+unique-Sylow-`3` branch. -/
 theorem order48_normal_repCount :
     Nat.card (Σ k : Fin 14, Fin (order48_normal_counts k)) = 42 := by
   rw [Nat.card_eq_fintype_card]
