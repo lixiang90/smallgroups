@@ -100,6 +100,79 @@ theorem fourP_V_ne_A4 : ¬ Nonempty (fourP_V 3 ≃* fourP_A4) :=
 
 /-! ### Exhaustiveness -/
 
+/-- A group of order `12` with four Sylow `3`-subgroups is isomorphic to
+`A₄`.  This is the non-normal Sylow branch of the order-`12` classification,
+exported separately for use by classifications at larger orders. -/
+theorem fourP_12_equiv_A4_of_card_sylow_three_eq_four
+    {G : Type*} [Group G] [Finite G] (hG : Nat.card G = 12)
+    (hn3 : Nat.card (Sylow 3 G) = 4) : Nonempty (G ≃* fourP_A4) := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  obtain ⟨P0⟩ := (Sylow.nonempty : Nonempty (Sylow 3 G))
+  have hcardP : Nat.card (↑P0 : Subgroup G) = 3 := by
+    rw [Sylow.card_eq_multiplicity, hG, show (12 : ℕ) = 4 * 3 from by norm_num,
+      Nat.factorization_mul (by norm_num) (by norm_num), Finsupp.add_apply,
+      Nat.factorization_eq_zero_of_not_dvd (by norm_num : ¬ (3 : ℕ) ∣ 4),
+      (by norm_num : Nat.Prime 3).factorization_self, zero_add, pow_one]
+  haveI : Fintype (Sylow 3 G) := Fintype.ofFinite _
+  have hfincard : Fintype.card (Sylow 3 G) = 4 := by
+    rwa [← Nat.card_eq_fintype_card]
+  let ε : Sylow 3 G ≃ Fin 4 := by
+    rw [← hfincard]
+    exact Fintype.equivFin _
+  let φ := MulAction.toPermHom G (Sylow 3 G)
+  let ψ : G →* Equiv.Perm (Fin 4) :=
+    (Equiv.permCongrHom ε).toMonoidHom.comp φ
+  have hφ_inj : Function.Injective φ := by
+    rw [← MonoidHom.ker_eq_bot_iff]
+    have h_norm_idx : (normalizer (P0 : Set G)).index = 4 := by
+      rwa [← Sylow.card_eq_index_normalizer P0]
+    have h_norm_card : Nat.card (normalizer (P0 : Set G)) = 3 := by
+      have h := (normalizer (P0 : Set G)).card_mul_index
+      rw [h_norm_idx, hG] at h
+      omega
+    have hP_eq_norm : (↑P0 : Subgroup G) = normalizer (P0 : Set G) :=
+      Subgroup.eq_of_le_of_card_ge Subgroup.le_normalizer
+        (by rw [h_norm_card, hcardP])
+    have hker_le : φ.ker ≤ ↑P0 := by
+      intro g hg
+      rw [hP_eq_norm]
+      have hg_ker := MonoidHom.mem_ker.mp hg
+      rw [← Sylow.stabilizer_eq_normalizer, MulAction.mem_stabilizer_iff]
+      exact Equiv.Perm.ext_iff.mp hg_ker P0
+    by_contra hker
+    have hker_card_dvd : Nat.card φ.ker ∣ Nat.card (↑P0 : Subgroup G) :=
+      Subgroup.card_dvd_of_le hker_le
+    rw [hcardP] at hker_card_dvd
+    have hker_card_gt : 1 < Nat.card φ.ker :=
+      (Subgroup.one_lt_card_iff_ne_bot _).mpr hker
+    have hker_card : Nat.card φ.ker = 3 := by
+      have hle := Nat.le_of_dvd (by omega) hker_card_dvd
+      have hcases : Nat.card φ.ker = 2 ∨ Nat.card φ.ker = 3 := by omega
+      rcases hcases with h | h
+      · exact absurd (h ▸ hker_card_dvd) (by norm_num)
+      · exact h
+    have hker_eq : φ.ker = ↑P0 :=
+      Subgroup.eq_of_le_of_card_ge hker_le (by rw [hcardP, hker_card])
+    haveI : (↑P0 : Subgroup G).Normal := hker_eq ▸ MonoidHom.normal_ker φ
+    haveI := Sylow.unique_of_normal P0 (by assumption)
+    have : Nat.card (Sylow 3 G) = 1 := Nat.card_unique
+    omega
+  have hψ_inj : Function.Injective ψ :=
+    (Equiv.permCongrHom ε).injective.comp hφ_inj
+  have e_range : G ≃* ψ.range := MonoidHom.ofInjective hψ_inj
+  have h_range_card : Nat.card ψ.range = 12 := by
+    rw [← hG, Nat.card_congr e_range.toEquiv]
+  have h_perm_card : Nat.card (Equiv.Perm (Fin 4)) = 24 := by
+    rw [Nat.card_perm, Nat.card_fin]
+    decide
+  have h_idx : ψ.range.index = 2 := by
+    have h := ψ.range.card_mul_index
+    rw [h_range_card, h_perm_card] at h
+    omega
+  have h_alt : ψ.range = alternatingGroup (Fin 4) :=
+    Equiv.Perm.eq_alternatingGroup_of_index_eq_two h_idx
+  exact ⟨e_range.trans (MulEquiv.subgroupCongr h_alt)⟩
+
 /-- **Exhaustiveness.** Every group of order `12` is isomorphic to one of the five types:
 `ℤ/12`, `ℤ/2 × ℤ/6`, `ℤ/3 ⋊_{-1} ℤ/4`, `ℤ/2 × D₆`, or `A₄`. -/
 theorem fourP_12_classification {G : Type*} [Group G] [Finite G]
