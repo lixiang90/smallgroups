@@ -358,4 +358,165 @@ theorem card_order48_four_residualKnownReps (i : Fin 8) :
   · exact card_order48_four_C2xSL23
   · exact card_order48_four_GL23DetTwist
 
+/-! ### Membership in the four-Sylow-three branch -/
+
+private theorem order48_four_pow_eq_one_card_prod
+    (H K : Type*) [Group H] [Group K] (n : ℕ) :
+    pow_eq_one_card (H × K) n =
+      pow_eq_one_card H n * pow_eq_one_card K n := by
+  unfold pow_eq_one_card
+  rw [← Nat.card_prod]
+  refine Nat.card_congr ⟨fun p => (⟨p.1.1, ?_⟩, ⟨p.1.2, ?_⟩),
+    fun p => ⟨(p.1.1, p.2.1), ?_⟩,
+    fun p => by ext <;> rfl, fun p => by ext <;> rfl⟩
+  · have h := p.2
+    rw [Prod.pow_mk] at h
+    exact congrArg Prod.fst h
+  · have h := p.2
+    rw [Prod.pow_mk] at h
+    exact congrArg Prod.snd h
+  · rw [Prod.pow_mk]
+    exact Prod.ext p.1.2 p.2.2
+
+private theorem order48_four_pow_three_C2 :
+    pow_eq_one_card (CyclicRep 2) 3 = 1 := by
+  rw [pow_eq_one_card, Nat.card_eq_fintype_card]
+  decide
+
+private theorem order48_four_pow_three_C4 :
+    pow_eq_one_card (CyclicRep 4) 3 = 1 := by
+  rw [pow_eq_one_card, Nat.card_eq_fintype_card]
+  decide
+
+private theorem order48_four_pow_three_V4 :
+    pow_eq_one_card (ElemAbelianRep 2) 3 = 1 := by
+  rw [pow_eq_one_card, Nat.card_eq_fintype_card]
+  decide
+
+private theorem order48_four_pow_three_A4 :
+    pow_eq_one_card (alternatingGroup (Fin 4)) 3 = 9 := by
+  rw [pow_eq_one_card, Nat.card_eq_fintype_card]
+  decide +kernel
+
+private theorem order48_four_pow_three_SL23 :
+    pow_eq_one_card (Matrix.SpecialLinearGroup (Fin 2) (ZMod 3)) 3 = 9 := by
+  rw [pow_eq_one_card, Nat.card_eq_fintype_card]
+  decide +kernel
+
+private theorem order48_four_pow_three_GL23 :
+    pow_eq_one_card order48_four_GL23 3 = 9 := by
+  rw [pow_eq_one_card, Nat.card_eq_fintype_card]
+  decide +kernel
+
+private theorem order48_four_pow_three_C4fiberS4 :
+    pow_eq_one_card order48_four_C4fiberS4 3 = 9 := by
+  rw [pow_eq_one_card, Nat.card_eq_fintype_card]
+  decide +kernel
+
+private theorem order48_four_pow_three_C4xSL23 :
+    pow_eq_one_card
+      (CyclicRep 4 × Matrix.SpecialLinearGroup (Fin 2) (ZMod 3)) 3 = 9 := by
+  rw [order48_four_pow_eq_one_card_prod, order48_four_pow_three_C4,
+    order48_four_pow_three_SL23]
+
+private theorem order48_four_pow_three_C4centralSL23 :
+    pow_eq_one_card order48_four_C4centralSL23 3 = 9 := by
+  have hz2 : orderOf order48_four_c4SL23Diagonal = 2 := by
+    simpa only [Nat.card_zpowers] using
+      card_order48_four_c4SL23Diagonal_zpowers
+  have hquot := order48_card_pow_three_eq_one_quotient_central_order_two
+    (G := CyclicRep 4 × Matrix.SpecialLinearGroup (Fin 2) (ZMod 3))
+    order48_four_c4SL23Diagonal_mem_center hz2
+  change pow_eq_one_card
+      (CyclicRep 4 × Matrix.SpecialLinearGroup (Fin 2) (ZMod 3)) 3 =
+    pow_eq_one_card order48_four_C4centralSL23 3 at hquot
+  rw [order48_four_pow_three_C4xSL23] at hquot
+  exact hquot.symm
+
+private theorem order48_four_pow_three_C4fiberGL23 :
+    pow_eq_one_card order48_four_C4fiberGL23 3 = 9 := by
+  rw [pow_eq_one_card, Nat.card_eq_fintype_card]
+  decide +kernel
+
+private theorem order48_four_pow_three_GL23DetTwist :
+    pow_eq_one_card order48_four_GL23DetTwist 3 = 9 := by
+  have hz2 : orderOf order48_four_C4fiberGL23Diagonal = 2 := by
+    simpa only [Nat.card_zpowers] using
+      card_order48_four_C4fiberGL23Diagonal_zpowers
+  have hquot := order48_card_pow_three_eq_one_quotient_central_order_two
+    (G := order48_four_C4fiberGL23)
+    order48_four_C4fiberGL23Diagonal_mem_center hz2
+  change pow_eq_one_card order48_four_C4fiberGL23 3 =
+    pow_eq_one_card order48_four_GL23DetTwist 3 at hquot
+  rw [order48_four_pow_three_C4fiberGL23] at hquot
+  exact hquot.symm
+
+theorem card_sylow_three_order48_four_C2xS4 :
+    Nat.card (Sylow 3 order48_four_C2xS4) = 4 := by
+  apply order48_card_sylow_three_eq_four_of_cube_roots card_order48_four_C2xS4
+  change pow_eq_one_card order48_four_C2xS4 3 = 9
+  rw [order48_four_pow_eq_one_card_prod, order48_four_pow_three_C2,
+    card_pow_three_eq_one_order24_RO]
+
+theorem card_sylow_three_order48_four_C4xA4 :
+    Nat.card (Sylow 3 order48_four_C4xA4) = 4 := by
+  apply order48_card_sylow_three_eq_four_of_cube_roots card_order48_four_C4xA4
+  change pow_eq_one_card order48_four_C4xA4 3 = 9
+  rw [order48_four_pow_eq_one_card_prod, order48_four_pow_three_C4,
+    order48_four_pow_three_A4]
+
+theorem card_sylow_three_order48_four_V4xA4 :
+    Nat.card (Sylow 3 order48_four_V4xA4) = 4 := by
+  apply order48_card_sylow_three_eq_four_of_cube_roots card_order48_four_V4xA4
+  change pow_eq_one_card order48_four_V4xA4 3 = 9
+  rw [order48_four_pow_eq_one_card_prod, order48_four_pow_three_V4,
+    order48_four_pow_three_A4]
+
+theorem card_sylow_three_order48_four_C2xSL23 :
+    Nat.card (Sylow 3 order48_four_C2xSL23) = 4 := by
+  apply order48_card_sylow_three_eq_four_of_cube_roots card_order48_four_C2xSL23
+  change pow_eq_one_card order48_four_C2xSL23 3 = 9
+  rw [order48_four_pow_eq_one_card_prod, order48_four_pow_three_C2,
+    order48_four_pow_three_SL23]
+
+theorem card_sylow_three_order48_four_GL23 :
+    Nat.card (Sylow 3 order48_four_GL23) = 4 := by
+  apply order48_card_sylow_three_eq_four_of_cube_roots card_order48_four_GL23
+  change pow_eq_one_card order48_four_GL23 3 = 9
+  exact order48_four_pow_three_GL23
+
+theorem card_sylow_three_order48_four_C4fiberS4 :
+    Nat.card (Sylow 3 order48_four_C4fiberS4) = 4 := by
+  apply order48_card_sylow_three_eq_four_of_cube_roots card_order48_four_C4fiberS4
+  change pow_eq_one_card order48_four_C4fiberS4 3 = 9
+  exact order48_four_pow_three_C4fiberS4
+
+theorem card_sylow_three_order48_four_C4centralSL23 :
+    Nat.card (Sylow 3 order48_four_C4centralSL23) = 4 := by
+  apply order48_card_sylow_three_eq_four_of_cube_roots
+    card_order48_four_C4centralSL23
+  change pow_eq_one_card order48_four_C4centralSL23 3 = 9
+  exact order48_four_pow_three_C4centralSL23
+
+theorem card_sylow_three_order48_four_GL23DetTwist :
+    Nat.card (Sylow 3 order48_four_GL23DetTwist) = 4 := by
+  apply order48_card_sylow_three_eq_four_of_cube_roots
+    card_order48_four_GL23DetTwist
+  change pow_eq_one_card order48_four_GL23DetTwist 3 = 9
+  exact order48_four_pow_three_GL23DetTwist
+
+/-- Every displayed residual representative really lies in the branch with
+four Sylow `3`-subgroups. -/
+theorem card_sylow_three_order48_four_residualKnownReps (i : Fin 8) :
+    Nat.card (Sylow 3 (order48_four_residualKnownReps i)) = 4 := by
+  fin_cases i
+  · exact card_sylow_three_order48_four_C2xS4
+  · exact card_sylow_three_order48_four_GL23
+  · exact card_sylow_three_order48_four_C4fiberS4
+  · exact card_sylow_three_order48_four_C4xA4
+  · exact card_sylow_three_order48_four_C4centralSL23
+  · exact card_sylow_three_order48_four_V4xA4
+  · exact card_sylow_three_order48_four_C2xSL23
+  · exact card_sylow_three_order48_four_GL23DetTwist
+
 end Smallgroups.UsefulTheorems

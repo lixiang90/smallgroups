@@ -176,21 +176,53 @@ private theorem orderOf_eq_three_iff [Finite G] (hG : Nat.card G = 48) (g : G) :
     · exact absurd (orderOf_eq_one_iff.mp h1) hg1
     · exact h3
 
-private theorem card_orderOf_eq_three [Finite G] (hG : Nat.card G = 48)
-    (hSyl : Nat.card (Sylow 3 G) = 16) :
-    {g : G | orderOf g = 3}.ncard = 32 := by
+/-- In a group of order `48`, the elements of order `3` are the disjoint
+union of the two nonidentity elements in each Sylow `3`-subgroup. -/
+theorem card_orderOf_eq_three_eq_twice_card_sylow [Finite G]
+    (hG : Nat.card G = 48) :
+    {g : G | orderOf g = 3}.ncard = 2 * Nat.card (Sylow 3 G) := by
   have hset : {g : G | orderOf g = 3} = ⋃ P : Sylow 3 G, sylowThreeNonId P := by
     ext g; simp [orderOf_eq_three_iff hG]
-  have hFinIdx : Finite (Sylow 3 G) := Nat.finite_of_card_ne_zero (by rw [hSyl]; norm_num)
-  haveI := Fintype.ofFinite (Sylow 3 G)
+  haveI : Fintype (Sylow 3 G) := Fintype.ofFinite _
   rw [hset, Set.ncard_iUnion_of_finite (fun P => Set.toFinite _)
     (sylowThreeNonId_pairwiseDisjoint hG)]
   rw [finsum_eq_sum_of_fintype]
   rw [Finset.sum_congr rfl (fun P _ => sylowThreeNonId_ncard hG P)]
   rw [Finset.sum_const, Finset.card_univ]
-  have : Fintype.card (Sylow 3 G) = 16 := by rw [← Nat.card_eq_fintype_card]; exact hSyl
-  rw [this]
-  rfl
+  rw [← Nat.card_eq_fintype_card]
+  simp [Nat.mul_comm]
+
+private theorem card_orderOf_eq_three [Finite G] (hG : Nat.card G = 48)
+    (hSyl : Nat.card (Sylow 3 G) = 16) :
+    {g : G | orderOf g = 3}.ncard = 32 := by
+  rw [card_orderOf_eq_three_eq_twice_card_sylow hG, hSyl]
+
+/-- The number of solutions of `g ^ 3 = 1` in a group of order `48` is one
+plus twice the number of Sylow `3`-subgroups. -/
+theorem order48_card_pow_three_eq_one [Finite G] (hG : Nat.card G = 48) :
+    Nat.card {g : G // g ^ 3 = 1} = 2 * Nat.card (Sylow 3 G) + 1 := by
+  have hset : {g : G | g ^ 3 = 1} = {1} ∪ {g : G | orderOf g = 3} := by
+    ext g
+    constructor
+    · intro hg
+      have hdvd : orderOf g ∣ 3 := orderOf_dvd_of_pow_eq_one hg
+      rcases (Nat.dvd_prime (by norm_num : Nat.Prime 3)).mp hdvd with h1 | h3
+      · exact Or.inl (orderOf_eq_one_iff.mp h1)
+      · exact Or.inr h3
+    · rintro (rfl | hg)
+      · simp
+      · exact orderOf_dvd_iff_pow_eq_one.mp (by rw [hg])
+  have hdisj : Disjoint ({1} : Set G) {g : G | orderOf g = 3} := by
+    apply Set.disjoint_left.mpr
+    intro g hg1 hg3
+    change orderOf g = 3 at hg3
+    rw [Set.mem_singleton_iff.mp hg1, orderOf_one] at hg3
+    norm_num at hg3
+  change Nat.card ↑{g : G | g ^ 3 = 1} = 2 * Nat.card (Sylow 3 G) + 1
+  rw [Nat.card_coe_set_eq, hset,
+    Set.ncard_union_eq hdisj (Set.toFinite _) (Set.toFinite _),
+    Set.ncard_singleton, card_orderOf_eq_three_eq_twice_card_sylow hG]
+  omega
 
 /-- If a group of order `48` has `16` Sylow `3`-subgroups, then it has a unique
 (hence normal) Sylow `2`-subgroup. -/

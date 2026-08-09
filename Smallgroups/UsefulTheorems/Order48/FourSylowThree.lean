@@ -675,6 +675,124 @@ theorem order48_card_quotient_zpowers_of_order_two [Finite G]
   rw [Nat.card_zpowers, hz2, hG] at h
   omega
 
+/-- Quotienting by a central involution preserves the solutions of
+`x ^ 3 = 1`.  A cube root in the quotient has a canonical cube-root lift:
+if `g` is any lift, then `g ^ 4` is another lift and its cube is trivial. -/
+noncomputable def order48_powThreeEquivQuotientCentralOrderTwo
+    {z : G} (hzcenter : z ∈ Subgroup.center G) (hz2 : orderOf z = 2)
+    [(Subgroup.zpowers z).Normal] :
+    {x : G // x ^ 3 = 1} ≃
+      {x : G ⧸ Subgroup.zpowers z // x ^ 3 = 1} := by
+  let Z : Subgroup G := Subgroup.zpowers z
+  let q : G →* G ⧸ Z := QuotientGroup.mk' Z
+  have hZcard : Nat.card Z = 2 := by
+    dsimp [Z]
+    rw [Nat.card_zpowers, hz2]
+  refine Equiv.ofBijective
+    (fun x => ⟨q x.1, by rw [← map_pow, x.2, map_one]⟩) ⟨?_, ?_⟩
+  · intro x y hxy
+    apply Subtype.ext
+    let d : G := x.1 * y.1⁻¹
+    have hmap : q d = 1 := by
+      dsimp [d]
+      rw [map_mul, map_inv]
+      have hxy' := congrArg Subtype.val hxy
+      change q x.1 = q y.1 at hxy'
+      rw [hxy']
+      simp
+    have hdZ : d ∈ Z := by
+      rw [← QuotientGroup.ker_mk' Z]
+      exact MonoidHom.mem_ker.mpr hmap
+    have hdcenter : d ∈ Subgroup.center G := by
+      exact (Subgroup.zpowers_le.mpr hzcenter) hdZ
+    have hd2 : d ^ 2 = 1 := by
+      have hsub : (⟨d, hdZ⟩ : Z) ^ Nat.card Z = 1 := pow_card_eq_one'
+      have hval := congrArg Subtype.val hsub
+      rw [hZcard] at hval
+      simpa using hval
+    have hcomm : x.1 * y.1 = y.1 * x.1 := by
+      have hdcomm : d * y.1 = y.1 * d :=
+        ((Subgroup.mem_center_iff.mp hdcenter) y.1).symm
+      have hdy : d * y.1 = x.1 := by
+        dsimp [d]
+        group
+      calc
+        x.1 * y.1 = (d * y.1) * y.1 := by rw [hdy]
+        _ = d * (y.1 * y.1) := by rw [mul_assoc]
+        _ = (y.1 * d) * y.1 := by rw [← mul_assoc, hdcomm]
+        _ = y.1 * (d * y.1) := by rw [mul_assoc]
+        _ = y.1 * x.1 := by rw [hdy]
+    have hd3 : d ^ 3 = 1 := by
+      dsimp [d]
+      rw [(show Commute x.1 y.1⁻¹ from
+        (show Commute x.1 y.1 from hcomm).inv_right).mul_pow]
+      simp [x.2, y.2]
+    have hd1 : d = 1 := by
+      have h := hd3
+      rw [show 3 = 2 + 1 by norm_num, pow_succ, hd2, one_mul] at h
+      exact h
+    exact mul_inv_eq_one.mp hd1
+  · intro y
+    obtain ⟨g, hg⟩ := QuotientGroup.mk'_surjective Z y.1
+    have hg3map : q (g ^ 3) = 1 := by
+      rw [map_pow, hg, y.2]
+    have hg3Z : g ^ 3 ∈ Z := by
+      rw [← QuotientGroup.ker_mk' Z]
+      exact MonoidHom.mem_ker.mpr hg3map
+    have hg3sq : (g ^ 3) ^ 2 = 1 := by
+      have hsub : (⟨g ^ 3, hg3Z⟩ : Z) ^ Nat.card Z = 1 := pow_card_eq_one'
+      have hval := congrArg Subtype.val hsub
+      rw [hZcard] at hval
+      simpa using hval
+    have hg6 : g ^ 6 = 1 := by
+      calc
+        g ^ 6 = (g ^ 3) ^ 2 := by simpa using (pow_mul g 3 2)
+        _ = 1 := hg3sq
+    have hg4cube : (g ^ 4) ^ 3 = 1 := by
+      calc
+        (g ^ 4) ^ 3 = g ^ 12 := by simpa using (pow_mul g 4 3).symm
+        _ = (g ^ 6) ^ 2 := by simpa using (pow_mul g 6 2)
+        _ = 1 := by rw [hg6, one_pow]
+    refine ⟨⟨g ^ 4, hg4cube⟩, ?_⟩
+    apply Subtype.ext
+    change q (g ^ 4) = y.1
+    rw [map_pow, hg]
+    calc
+      y.1 ^ 4 = y.1 ^ 3 * y.1 := by norm_num [pow_succ]
+      _ = y.1 := by rw [y.2, one_mul]
+
+/-- Cardinal form of
+`order48_powThreeEquivQuotientCentralOrderTwo`. -/
+theorem order48_card_pow_three_eq_one_quotient_central_order_two
+    {z : G} (hzcenter : z ∈ Subgroup.center G) (hz2 : orderOf z = 2)
+    [(Subgroup.zpowers z).Normal] :
+    Nat.card {x : G // x ^ 3 = 1} =
+      Nat.card {x : G ⧸ Subgroup.zpowers z // x ^ 3 = 1} :=
+  Nat.card_congr
+    (order48_powThreeEquivQuotientCentralOrderTwo hzcenter hz2)
+
+/-- Nine cube roots characterize the four-Sylow-three branch for groups of
+order `48`. -/
+theorem order48_card_sylow_three_eq_four_of_cube_roots [Finite G]
+    (hG : Nat.card G = 48)
+    (hroots : Nat.card {x : G // x ^ 3 = 1} = 9) :
+    Nat.card (Sylow 3 G) = 4 := by
+  rw [order48_card_pow_three_eq_one hG] at hroots
+  omega
+
+/-- If the quotient by a central involution has nine cube roots, then an
+order-`48` group has four Sylow `3`-subgroups. -/
+theorem order48_card_sylow_three_eq_four_of_quotient_cube_roots
+    [Finite G] (hG : Nat.card G = 48) {z : G}
+    (hzcenter : z ∈ Subgroup.center G) (hz2 : orderOf z = 2)
+    [(Subgroup.zpowers z).Normal]
+    (hquot : Nat.card {x : G ⧸ Subgroup.zpowers z // x ^ 3 = 1} = 9) :
+    Nat.card (Sylow 3 G) = 4 := by
+  have hroots : Nat.card {x : G // x ^ 3 = 1} = 9 := by
+    rw [order48_card_pow_three_eq_one_quotient_central_order_two hzcenter hz2,
+      hquot]
+  exact order48_card_sylow_three_eq_four_of_cube_roots hG hroots
+
 private theorem order48_card_sylow_three_eq_one_of_normal_card_three
     {H : Type*} [Group H] [Finite H] (hH : Nat.card H = 24)
     (N : Subgroup H) [N.Normal] (hN : Nat.card N = 3) :
