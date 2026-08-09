@@ -12,3 +12,4 @@ import Smallgroups.UsefulTheorems.Order48.UniqueSylowThree_Summary
 import Smallgroups.UsefulTheorems.Order48.DistinctnessNormal
 import Smallgroups.UsefulTheorems.Order48.SixteenSylowThree
 import Smallgroups.UsefulTheorems.Order48.FourSylowThree
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeReps
