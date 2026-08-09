@@ -5,7 +5,9 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order48.Sylow
 import Smallgroups.UsefulTheorems.Order4P_12
+import Smallgroups.UsefulTheorems.Order24
 import Smallgroups.UsefulTheorems.Order36
+import Smallgroups.UsefulTheorems.PGroupGeneration.CentralExtension
 
 /-!
 # The four-Sylow-three branch for groups of order 48
@@ -659,5 +661,297 @@ theorem order48_four_sylow_three_typed_extension_cases [Finite G]
     rcases prime_sq_classification hker4 with hcyc | helem
     · exact Or.inr ⟨⟨Or.inl hcyc, hcenter⟩, h4.2⟩
     · exact Or.inr ⟨⟨Or.inr helem, hcenter⟩, h4.2⟩
+
+/-! ### Reduction through a central involution -/
+
+/-- Quotienting a group of order `48` by an involution gives a group of
+order `24`. -/
+theorem order48_card_quotient_zpowers_of_order_two [Finite G]
+    (hG : Nat.card G = 48) {z : G} (hz2 : orderOf z = 2)
+    [(Subgroup.zpowers z).Normal] :
+    Nat.card (G ⧸ Subgroup.zpowers z) = 24 := by
+  have h := Subgroup.card_eq_card_quotient_mul_card_subgroup
+    (Subgroup.zpowers z)
+  rw [Nat.card_zpowers, hz2, hG] at h
+  omega
+
+private theorem order48_card_sylow_three_eq_one_of_normal_card_three
+    {H : Type*} [Group H] [Finite H] (hH : Nat.card H = 24)
+    (N : Subgroup H) [N.Normal] (hN : Nat.card N = 3) :
+    Nat.card (Sylow 3 H) = 1 := by
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hfact : (Nat.card H).factorization 3 = 1 := by
+    rw [hH]
+    decide +kernel
+  let P : Sylow 3 H := Sylow.ofCard N (by rw [hfact, pow_one, hN])
+  have hPnormal : (P : Subgroup H).Normal := by
+    dsimp [P]
+    infer_instance
+  haveI := Sylow.unique_of_normal P hPnormal
+  exact Nat.card_unique
+
+private theorem order48_card_sylow_three_prod_of_cards_three_eight
+    {N H : Type*} [Group N] [Group H] [Finite N] [Finite H]
+    (hN : Nat.card N = 3) (hH : Nat.card H = 8) :
+    Nat.card (Sylow 3 (N × H)) = 1 := by
+  let K : Subgroup (N × H) := (MonoidHom.snd N H).ker
+  haveI : K.Normal := by
+    dsimp [K]
+    infer_instance
+  have hK : Nat.card K = 3 := by
+    rw [show K = (⊤ : Subgroup N).prod (⊥ : Subgroup H) by
+      dsimp [K]
+      rw [MonoidHom.ker_snd]]
+    rw [Nat.card_congr (Subgroup.prodEquiv (⊤ : Subgroup N) (⊥ : Subgroup H)).toEquiv,
+      Nat.card_prod, Subgroup.card_top, Subgroup.card_bot, hN]
+  apply order48_card_sylow_three_eq_one_of_normal_card_three (N := K)
+  · rw [Nat.card_prod, hN, hH]
+  · exact hK
+
+private theorem order48_card_sylow_three_semidirect_of_cards_three_eight
+    {N H : Type*} [Group N] [Group H] [Finite N] [Finite H]
+    (φ : H →* MulAut N) (hN : Nat.card N = 3) (hH : Nat.card H = 8) :
+    Nat.card (Sylow 3 (SemidirectProduct N H φ)) = 1 := by
+  haveI : Finite (SemidirectProduct N H φ) :=
+    Finite.of_equiv _ SemidirectProduct.equivProd.symm
+  let K : Subgroup (SemidirectProduct N H φ) :=
+    (SemidirectProduct.rightHom : SemidirectProduct N H φ →* H).ker
+  haveI : K.Normal := by
+    dsimp [K]
+    infer_instance
+  have hK : Nat.card K = 3 := by
+    have e : N ≃* (SemidirectProduct.inl :
+        N →* SemidirectProduct N H φ).range :=
+      MonoidHom.ofInjective (SemidirectProduct.inl_injective (φ := φ))
+    rw [show K = (SemidirectProduct.inl :
+        N →* SemidirectProduct N H φ).range by
+      dsimp [K]
+      rw [← SemidirectProduct.range_inl_eq_ker_rightHom (φ := φ)]]
+    rw [← hN, Nat.card_congr e.toEquiv]
+  apply order48_card_sylow_three_eq_one_of_normal_card_three (N := K)
+  · rw [SemidirectProduct.card, hN, hH]
+  · exact hK
+
+private theorem order48_card_sylow_three_order24_normalC3_reps (i : Fin 12) :
+    Nat.card (Sylow 3 (order24_normalC3_reps i)) = 1 := by
+  fin_cases i
+  · exact order48_card_sylow_three_prod_of_cards_three_eight
+      card_order24_C3 card_order24_C8
+  · exact order48_card_sylow_three_prod_of_cards_three_eight
+      card_order24_C3 card_order24_C4C2
+  · exact order48_card_sylow_three_prod_of_cards_three_eight
+      card_order24_C3 card_order24_C2C2C2
+  · exact order48_card_sylow_three_prod_of_cards_three_eight
+      card_order24_C3 card_order24_D8
+  · exact order48_card_sylow_three_prod_of_cards_three_eight
+      card_order24_C3 card_order24_Q8
+  · exact order48_card_sylow_three_semidirect_of_cards_three_eight
+      (order24_action order88_chiC8) card_order24_C3 card_order24_C8
+  · exact order48_card_sylow_three_semidirect_of_cards_three_eight
+      (order24_action order88_chiC4C2_fst) card_order24_C3 card_order24_C4C2
+  · exact order48_card_sylow_three_semidirect_of_cards_three_eight
+      (order24_action order88_chiC4C2_snd) card_order24_C3 card_order24_C4C2
+  · exact order48_card_sylow_three_semidirect_of_cards_three_eight
+      (order24_action order88_chiC2C2C2) card_order24_C3 card_order24_C2C2C2
+  · exact order48_card_sylow_three_semidirect_of_cards_three_eight
+      (order24_action order88_chiD8_rot) card_order24_C3 card_order24_D8
+  · exact order48_card_sylow_three_semidirect_of_cards_three_eight
+      (order24_action order88_chiD8_ref) card_order24_C3 card_order24_D8
+  · exact order48_card_sylow_three_semidirect_of_cards_three_eight
+      (order24_action order88_chiQ8) card_order24_C3 card_order24_Q8
+
+private noncomputable def order48_sylow_equiv_of_mulEquiv
+    {H : Type*} [Group H] {p : ℕ} (e : G ≃* H) :
+    Sylow p G ≃ Sylow p H where
+  toFun P := P.comapOfInjective e.symm.toMonoidHom e.symm.injective
+    (by rw [MonoidHom.range_eq_top.mpr e.symm.surjective]; exact le_top)
+  invFun Q := Q.comapOfInjective e.toMonoidHom e.injective
+    (by rw [MonoidHom.range_eq_top.mpr e.surjective]; exact le_top)
+  left_inv P := by
+    apply Sylow.ext
+    rw [Sylow.coe_comapOfInjective, Sylow.coe_comapOfInjective, Subgroup.comap_comap]
+    have h : e.symm.toMonoidHom.comp e.toMonoidHom = MonoidHom.id G := by
+      ext x
+      simp
+    rw [h, Subgroup.comap_id]
+  right_inv Q := by
+    apply Sylow.ext
+    rw [Sylow.coe_comapOfInjective, Sylow.coe_comapOfInjective, Subgroup.comap_comap]
+    have h : e.toMonoidHom.comp e.symm.toMonoidHom = MonoidHom.id H := by
+      ext x
+      simp
+    rw [h, Subgroup.comap_id]
+
+private theorem order48_card_sylow_of_mulEquiv
+    {H : Type*} [Group H] (p : ℕ) (e : G ≃* H) :
+    Nat.card (Sylow p G) = Nat.card (Sylow p H) :=
+  Nat.card_congr (order48_sylow_equiv_of_mulEquiv e)
+
+/-- The four-Sylow-three part of the order-`24` classification consists of
+exactly the two representatives with a normal Sylow `2`-subgroup and `S₄`.
+This is the form needed after quotienting an order-`48` group by a central
+involution. -/
+theorem order24_classification_of_card_sylow_three_eq_four
+    {H : Type*} [Group H] [Finite H]
+    (hH : Nat.card H = 24) (hSyl : Nat.card (Sylow 3 H) = 4) :
+    Nonempty (H ≃* order24_RM) ∨ Nonempty (H ≃* order24_RN) ∨
+      Nonempty (H ≃* order24_RO) := by
+  obtain ⟨i, hi⟩ := order24_classification hH
+  fin_cases i
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (0 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (1 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (2 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (3 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (4 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (5 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (6 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (7 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (8 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (9 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (10 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact (by
+      have hc := order48_card_sylow_of_mulEquiv 3 hi.some
+      have hrep := order48_card_sylow_three_order24_normalC3_reps (11 : Fin 12)
+      simp only [order24_reps, order24_normalC3_reps] at hc hrep
+      omega)
+  · exact Or.inl (by simpa [order24_reps] using hi)
+  · exact Or.inr (Or.inl (by simpa [order24_reps] using hi))
+  · exact Or.inr (Or.inr (by simpa [order24_reps] using hi))
+
+/-- If a central subgroup has order `2` or `4`, it contains a central
+involution.  In the four-Sylow-three branch, quotienting by that involution
+still leaves four Sylow `3`-subgroups: a unique Sylow `3`-subgroup downstairs
+would pull back to a forbidden normal subgroup of order `6` upstairs. -/
+theorem order48_central_kernel_reduction_to_order24 [Finite G]
+    (hG : Nat.card G = 48) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (K : Subgroup G) (hKcenter : K ≤ Subgroup.center G)
+    (hKcard : Nat.card K = 2 ∨ Nat.card K = 4) :
+    ∃ z : G, z ∈ K ∧ orderOf z = 2 ∧
+      ∃ hzcenter : z ∈ Subgroup.center G,
+        letI := normal_of_le_center (Subgroup.zpowers_le.mpr hzcenter)
+        Nat.card (G ⧸ Subgroup.zpowers z) = 24 ∧
+        Nat.card (Sylow 3 (G ⧸ Subgroup.zpowers z)) = 4 ∧
+        (Nonempty ((G ⧸ Subgroup.zpowers z) ≃* order24_RM) ∨
+          Nonempty ((G ⧸ Subgroup.zpowers z) ≃* order24_RN) ∨
+          Nonempty ((G ⧸ Subgroup.zpowers z) ≃* order24_RO)) := by
+  have htwo_dvd : 2 ∣ Nat.card K := by
+    rcases hKcard with h2 | h4
+    · simp [h2]
+    · simp [h4]
+  obtain ⟨zK, hzK2⟩ :=
+    exists_prime_orderOf_dvd_card' (G := K) 2 htwo_dvd
+  let z : G := zK
+  have hzK : z ∈ K := zK.property
+  have hz2 : orderOf z = 2 :=
+    (orderOf_injective K.subtype K.subtype_injective zK).trans hzK2
+  have hzcenter : z ∈ Subgroup.center G := hKcenter hzK
+  have hZnormal : (Subgroup.zpowers z).Normal :=
+    normal_of_le_center (Subgroup.zpowers_le.mpr hzcenter)
+  letI : (Subgroup.zpowers z).Normal := hZnormal
+  have hQcard : Nat.card (G ⧸ Subgroup.zpowers z) = 24 :=
+    order48_card_quotient_zpowers_of_order_two hG hz2
+  have hQsyl : Nat.card (Sylow 3 (G ⧸ Subgroup.zpowers z)) = 4 := by
+    rcases card_sylow_3_of_card_24_eq_one_or_four hQcard with hQone | hQfour
+    · obtain ⟨P⟩ :=
+        (Sylow.nonempty : Nonempty (Sylow 3 (G ⧸ Subgroup.zpowers z)))
+      haveI : Subsingleton (Sylow 3 (G ⧸ Subgroup.zpowers z)) :=
+        (Nat.card_eq_one_iff_unique.mp hQone).1
+      have hPnormal : (P : Subgroup (G ⧸ Subgroup.zpowers z)).Normal :=
+        Sylow.normal_of_subsingleton P
+      let A : Subgroup G :=
+        (P : Subgroup (G ⧸ Subgroup.zpowers z)).comap
+          (QuotientGroup.mk' (Subgroup.zpowers z))
+      have hAnormal : A.Normal := by
+        dsimp [A]
+        exact hPnormal.comap (QuotientGroup.mk' (Subgroup.zpowers z))
+      letI : A.Normal := hAnormal
+      have hPcard : Nat.card (P : Subgroup (G ⧸ Subgroup.zpowers z)) = 3 :=
+        card_sylow_3_subgroup_of_card_24 hQcard P
+      have hZcard : Nat.card (Subgroup.zpowers z) = 2 := by
+        rw [Nat.card_zpowers, hz2]
+      have hAcard : Nat.card A = 6 := by
+        have hpre := QuotientGroup.card_preimage_mk (Subgroup.zpowers z)
+          ((P : Subgroup (G ⧸ Subgroup.zpowers z)) :
+            Set (G ⧸ Subgroup.zpowers z))
+        change Nat.card A = Nat.card (Subgroup.zpowers z) *
+          Nat.card (P : Subgroup (G ⧸ Subgroup.zpowers z)) at hpre
+        rw [hZcard, hPcard] at hpre
+        exact hpre
+      exact (order48_no_normal_subgroup_card_six hG hSyl A) hAcard |>.elim
+    · exact hQfour
+  exact ⟨z, hzK, hz2, hzcenter, hQcard, hQsyl,
+    order24_classification_of_card_sylow_three_eq_four hQcard hQsyl⟩
+
+/-- The action-kernel reduction therefore always supplies a central
+involution whose order-`24` quotient remains in the four-Sylow-three branch
+and is covered by the completed order-`24` classification. -/
+theorem order48_four_sylow_three_order24_reduction [Finite G]
+    (hG : Nat.card G = 48) (hSyl : Nat.card (Sylow 3 G) = 4) :
+    ∃ ψ : G →* Equiv.Perm (Fin 4),
+      ((Nat.card ψ.ker = 2 ∧
+          Nonempty (G ⧸ ψ.ker ≃* Equiv.Perm (Fin 4))) ∨
+        (Nat.card ψ.ker = 4 ∧
+          Nonempty (G ⧸ ψ.ker ≃* alternatingGroup (Fin 4)))) ∧
+      ∃ z : G, z ∈ ψ.ker ∧ orderOf z = 2 ∧
+        ∃ hzcenter : z ∈ Subgroup.center G,
+          letI := normal_of_le_center (Subgroup.zpowers_le.mpr hzcenter)
+          Nat.card (G ⧸ Subgroup.zpowers z) = 24 ∧
+          Nat.card (Sylow 3 (G ⧸ Subgroup.zpowers z)) = 4 ∧
+          (Nonempty ((G ⧸ Subgroup.zpowers z) ≃* order24_RM) ∨
+            Nonempty ((G ⧸ Subgroup.zpowers z) ≃* order24_RN) ∨
+            Nonempty ((G ⧸ Subgroup.zpowers z) ≃* order24_RO)) := by
+  obtain ⟨ψ, hnormalizes, hψ⟩ :=
+    order48_four_sylow_three_extension_cases hG hSyl
+  refine ⟨ψ, hψ, ?_⟩
+  rcases hψ with h2 | h4
+  · exact order48_central_kernel_reduction_to_order24 hG hSyl ψ.ker
+      (normal_subgroup_card_two_le_center ψ.ker h2.1) (Or.inl h2.1)
+  · exact order48_central_kernel_reduction_to_order24 hG hSyl ψ.ker
+      (normal_subgroup_card_four_A4_quotient_le_center_of_normalizes_sylow
+        hG ψ.ker h4.1 h4.2 hnormalizes) (Or.inr h4.1)
 
 end Smallgroups.UsefulTheorems
