@@ -157,8 +157,9 @@ force a normal Sylow `3`-subgroup. -/
 theorem order48_sylow_three_conj_action_kernel_cases [Finite G]
     (hG : Nat.card G = 48) (hSyl : Nat.card (Sylow 3 G) = 4) :
     ∃ ψ : G →* Equiv.Perm (Fin 4),
-      Nat.card ψ.ker = 2 ∨ Nat.card ψ.ker = 4 ∨
-        Nat.card ψ.ker = 6 := by
+      (∀ P : Sylow 3 G, ψ.ker ≤ Subgroup.normalizer (P : Set G)) ∧
+        (Nat.card ψ.ker = 2 ∨ Nat.card ψ.ker = 4 ∨
+          Nat.card ψ.ker = 6) := by
   haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
   haveI : Fintype (Sylow 3 G) := Fintype.ofFinite _
   have hfincard : Fintype.card (Sylow 3 G) = 4 := by
@@ -170,8 +171,9 @@ theorem order48_sylow_three_conj_action_kernel_cases [Finite G]
   let ψ : G →* Equiv.Perm (Fin 4) :=
     (Equiv.permCongrHom ε).toMonoidHom.comp φ
   obtain ⟨P0⟩ := (Sylow.nonempty : Nonempty (Sylow 3 G))
-  have hker_le : ψ.ker ≤ Subgroup.normalizer (P0 : Set G) := by
-    intro g hg
+  have hker_le_all : ∀ P : Sylow 3 G,
+      ψ.ker ≤ Subgroup.normalizer (P : Set G) := by
+    intro P g hg
     have hgψ := MonoidHom.mem_ker.mp hg
     have hgφ : φ g = 1 := by
       have hgφ' : ε.permCongr (φ g) = 1 := hgψ
@@ -183,7 +185,8 @@ theorem order48_sylow_three_conj_action_kernel_cases [Finite G]
         exact hgφ'
       exact ε.permCongr.injective hgφ''
     rw [← Sylow.stabilizer_eq_normalizer, MulAction.mem_stabilizer_iff]
-    exact Equiv.Perm.ext_iff.mp hgφ P0
+    exact Equiv.Perm.ext_iff.mp hgφ P
+  have hker_le : ψ.ker ≤ Subgroup.normalizer (P0 : Set G) := hker_le_all P0
   have hnorm : Nat.card (Subgroup.normalizer (P0 : Set G)) = 12 :=
     order48_card_normalizer_sylow_three_of_card_sylow_three_eq_four hG hSyl P0
   have hker_dvd : Nat.card ψ.ker ∣ 12 :=
@@ -203,7 +206,7 @@ theorem order48_sylow_three_conj_action_kernel_cases [Finite G]
   have hker_pos : 0 < Nat.card ψ.ker := Nat.card_pos
   have hker_le_card : Nat.card ψ.ker ≤ 12 :=
     Nat.le_of_dvd (by norm_num) hker_dvd
-  refine ⟨ψ, ?_⟩
+  refine ⟨ψ, hker_le_all, ?_⟩
   interval_cases hk : Nat.card ψ.ker
   · exfalso
     omega
@@ -235,16 +238,17 @@ theorem order48_sylow_three_conj_action_kernel_cases [Finite G]
 theorem order48_sylow_three_conj_action_kernel_range_cases [Finite G]
     (hG : Nat.card G = 48) (hSyl : Nat.card (Sylow 3 G) = 4) :
     ∃ ψ : G →* Equiv.Perm (Fin 4),
-      (Nat.card ψ.ker = 2 ∧ ψ.range = ⊤) ∨
-      (Nat.card ψ.ker = 4 ∧ ψ.range = alternatingGroup (Fin 4)) := by
-  obtain ⟨ψ, hker⟩ :=
+      (∀ P : Sylow 3 G, ψ.ker ≤ Subgroup.normalizer (P : Set G)) ∧
+        ((Nat.card ψ.ker = 2 ∧ ψ.range = ⊤) ∨
+        (Nat.card ψ.ker = 4 ∧ ψ.range = alternatingGroup (Fin 4))) := by
+  obtain ⟨ψ, hnormalizes, hker⟩ :=
     order48_sylow_three_conj_action_kernel_cases hG hSyl
   have hperm : Nat.card (Equiv.Perm (Fin 4)) = 24 := by
     rw [Nat.card_eq_fintype_card]
     decide
   have hmul := ψ.ker.card_mul_index
   rw [Subgroup.index_ker ψ, hG] at hmul
-  refine ⟨ψ, ?_⟩
+  refine ⟨ψ, hnormalizes, ?_⟩
   rcases hker with h2 | h4 | h6
   · rw [h2] at hmul
     have hrange : Nat.card ψ.range = 24 := by omega
@@ -283,12 +287,14 @@ kernel of order `4`. -/
 theorem order48_four_sylow_three_extension_cases [Finite G]
     (hG : Nat.card G = 48) (hSyl : Nat.card (Sylow 3 G) = 4) :
     ∃ ψ : G →* Equiv.Perm (Fin 4),
-      (Nat.card ψ.ker = 2 ∧
-        Nonempty (G ⧸ ψ.ker ≃* Equiv.Perm (Fin 4))) ∨
-      (Nat.card ψ.ker = 4 ∧
-        Nonempty (G ⧸ ψ.ker ≃* alternatingGroup (Fin 4))) := by
-  obtain ⟨ψ, hψ⟩ := order48_sylow_three_conj_action_kernel_range_cases hG hSyl
-  refine ⟨ψ, ?_⟩
+      (∀ P : Sylow 3 G, ψ.ker ≤ Subgroup.normalizer (P : Set G)) ∧
+        ((Nat.card ψ.ker = 2 ∧
+          Nonempty (G ⧸ ψ.ker ≃* Equiv.Perm (Fin 4))) ∨
+        (Nat.card ψ.ker = 4 ∧
+          Nonempty (G ⧸ ψ.ker ≃* alternatingGroup (Fin 4)))) := by
+  obtain ⟨ψ, hnormalizes, hψ⟩ :=
+    order48_sylow_three_conj_action_kernel_range_cases hG hSyl
+  refine ⟨ψ, hnormalizes, ?_⟩
   rcases hψ with h2 | h4
   · exact Or.inl ⟨h2.1,
       order48_quotient_ker_mulEquiv_S4_of_range_top ψ h2.2⟩
@@ -522,6 +528,113 @@ theorem normal_elemAbelian_card_four_A4_quotient_action_cases [Finite G]
     · rw [← hrange_eq]
       exact hρ3
 
+/-- If a normal subgroup of order four with `A₄` quotient normalizes every
+Sylow `3`-subgroup, then it is central.  This is the extra information carried
+by the kernel of the conjugation action on the four Sylow subgroups. -/
+theorem normal_subgroup_card_four_A4_quotient_le_center_of_normalizes_sylow
+    [Finite G] (hG : Nat.card G = 48) (K : Subgroup G) [K.Normal]
+    (hKcard : Nat.card K = 4)
+    (hquot : Nonempty (G ⧸ K ≃* alternatingGroup (Fin 4)))
+    (hnormalizes : ∀ P : Sylow 3 G, K ≤ Subgroup.normalizer (P : Set G)) :
+    K ≤ Subgroup.center G := by
+  haveI : Fact (Nat.Prime 2) := ⟨by norm_num⟩
+  haveI : Fact (Nat.Prime 3) := ⟨by norm_num⟩
+  have hKsq : Nat.card K = 2 ^ 2 := by omega
+  letI : CommGroup K := IsPGroup.commGroupOfCardEqPrimeSq hKsq
+  obtain ⟨P⟩ := (Sylow.nonempty : Nonempty (Sylow 3 G))
+  have hPcard : Nat.card (P : Subgroup G) = 3 :=
+    card_sylow_three_subgroup_of_card_48 hG P
+  have hdisj : Disjoint K (P : Subgroup G) :=
+    Subgroup.disjoint_of_coprime_natCard (by
+      rw [hKcard, hPcard]
+      norm_num)
+  have hcomm_le_P : ⁅K, (P : Subgroup G)⁆ ≤ (P : Subgroup G) :=
+    Subgroup.le_normalizer_iff_commutator_le_right.mp (hnormalizes P)
+  have hcomm_le_K : ⁅K, (P : Subgroup G)⁆ ≤ K :=
+    Subgroup.commutator_le_left K (P : Subgroup G)
+  have hcomm_bot : ⁅K, (P : Subgroup G)⁆ = ⊥ := by
+    rw [← le_bot_iff]
+    exact (le_inf hcomm_le_K hcomm_le_P).trans hdisj.eq_bot.le
+  have hKcentP : K ≤ Subgroup.centralizer (P : Subgroup G) :=
+    Subgroup.commutator_eq_bot_iff_le_centralizer.mp hcomm_bot
+  have hPcentK : (P : Subgroup G) ≤ Subgroup.centralizer K :=
+    Subgroup.le_centralizer_iff.mp hKcentP
+  let S : Subgroup G := Subgroup.normalClosure (P : Set G)
+  have hScentK : S ≤ Subgroup.centralizer K := by
+    dsimp [S]
+    apply Subgroup.normalClosure_le_normal
+    exact hPcentK
+  obtain ⟨e⟩ := hquot
+  let q : G →* alternatingGroup (Fin 4) :=
+    e.toMonoidHom.comp (QuotientGroup.mk' K)
+  have hqsurj : Function.Surjective q :=
+    e.surjective.comp (QuotientGroup.mk'_surjective K)
+  have hqker : q.ker = K := by
+    ext g
+    simp [q]
+  let J : Subgroup (alternatingGroup (Fin 4)) := S.map q
+  haveI hJnormal : J.Normal :=
+    Subgroup.Normal.map (inferInstance : S.Normal) q hqsurj
+  have hqPinj : Function.Injective (q.comp (P : Subgroup G).subtype) := by
+    rw [injective_iff_map_eq_one]
+    intro x hx
+    have hxK : (x : G) ∈ K := by
+      rw [← hqker, MonoidHom.mem_ker]
+      exact hx
+    have hxinf : (x : G) ∈ K ⊓ (P : Subgroup G) := ⟨hxK, x.property⟩
+    have hxone : (x : G) = 1 := by
+      rw [hdisj.eq_bot] at hxinf
+      exact Subgroup.mem_bot.mp hxinf
+    exact Subtype.ext hxone
+  have hPmapcard : Nat.card ((P : Subgroup G).map q) = 3 := by
+    have hrange : (q.comp (P : Subgroup G).subtype).range =
+        (P : Subgroup G).map q := by
+      rw [MonoidHom.range_comp, Subgroup.range_subtype]
+    rw [← hrange]
+    exact (Nat.card_congr (MonoidHom.ofInjective hqPinj).toEquiv).symm.trans hPcard
+  have hPmap_le_J : (P : Subgroup G).map q ≤ J := by
+    dsimp [J, S]
+    exact Subgroup.map_mono Subgroup.subset_normalClosure
+  have hthree_dvd : 3 ∣ Nat.card J := by
+    rw [← hPmapcard]
+    exact Subgroup.card_dvd_of_le hPmap_le_J
+  have hJdvd : Nat.card J ∣ 12 := by
+    have h := J.card_subgroup_dvd_card
+    rw [card_order36_A4] at h
+    exact h
+  have hJle : Nat.card J ≤ 12 := Nat.le_of_dvd (by norm_num) hJdvd
+  have hJcard : Nat.card J = 12 := by
+    interval_cases hcard : Nat.card J
+    all_goals try { exfalso; norm_num [hcard] at hJdvd }
+    all_goals try { exfalso; norm_num [hcard] at hthree_dvd }
+    · exact (order48_A4_no_normal_subgroup_card_three J hcard).elim
+    · exact (order48_A4_no_normal_subgroup_card_six J hcard).elim
+    · rfl
+  have hJtop : J = ⊤ :=
+    Subgroup.eq_top_of_card_eq J (by rw [hJcard, card_order36_A4])
+  have hSKtop : S ⊔ K = ⊤ := by
+    rw [Subgroup.eq_top_iff']
+    intro g
+    have hqg : q g ∈ J := by rw [hJtop]; exact Subgroup.mem_top _
+    rcases hqg with ⟨s, hsS, hsg⟩
+    have hks : g * s⁻¹ ∈ K := by
+      rw [← hqker, MonoidHom.mem_ker]
+      rw [map_mul, map_inv, hsg]
+      group
+    have hprod : (g * s⁻¹) * s = g := by group
+    rw [← hprod]
+    exact (S ⊔ K).mul_mem
+      ((show K ≤ S ⊔ K from le_sup_right) hks)
+      ((show S ≤ S ⊔ K from le_sup_left) hsS)
+  have hKcentK : K ≤ Subgroup.centralizer K :=
+    Subgroup.le_centralizer_iff_isMulCommutative.mpr inferInstance
+  have htopcentK : (⊤ : Subgroup G) ≤ Subgroup.centralizer K := by
+    rw [← hSKtop]
+    exact sup_le hScentK hKcentK
+  have hKcentTop : K ≤ Subgroup.centralizer (⊤ : Subgroup G) :=
+    Subgroup.le_centralizer_iff.mp htopcentK
+  simpa [Subgroup.centralizer_univ] using hKcentTop
+
 /-- The residual extension cases with every kernel and quotient of order at
 most four replaced by its prime or prime-square isomorphism type. -/
 theorem order48_four_sylow_three_typed_extension_cases [Finite G]
@@ -529,29 +642,22 @@ theorem order48_four_sylow_three_typed_extension_cases [Finite G]
     ∃ ψ : G →* Equiv.Perm (Fin 4),
       (Nonempty (ψ.ker ≃* CyclicRep 2) ∧ ψ.ker ≤ Subgroup.center G ∧
         Nonempty (G ⧸ ψ.ker ≃* Equiv.Perm (Fin 4))) ∨
-      (((Nonempty (ψ.ker ≃* CyclicRep (2 ^ 2)) ∧
-          ψ.ker ≤ Subgroup.center G) ∨
-          (Nonempty (ψ.ker ≃* ElemAbelianRep 2) ∧
-            (ψ.ker ≤ Subgroup.center G ∨
-              ∃ φQ : G ⧸ ψ.ker →* MulAut ψ.ker,
-                (∀ g : G,
-                  φQ ((QuotientGroup.mk' ψ.ker) g) = MulAut.conjNormal g) ∧
-                Nat.card φQ.range = 3))) ∧
+      (((Nonempty (ψ.ker ≃* CyclicRep (2 ^ 2)) ∨
+          Nonempty (ψ.ker ≃* ElemAbelianRep 2)) ∧
+        ψ.ker ≤ Subgroup.center G) ∧
         Nonempty (G ⧸ ψ.ker ≃* alternatingGroup (Fin 4))) := by
-  obtain ⟨ψ, hψ⟩ := order48_four_sylow_three_extension_cases hG hSyl
+  obtain ⟨ψ, hnormalizes, hψ⟩ :=
+    order48_four_sylow_three_extension_cases hG hSyl
   refine ⟨ψ, ?_⟩
   rcases hψ with h2 | h4
   · exact Or.inl ⟨prime_classification (by norm_num) h2.1,
       normal_subgroup_card_two_le_center ψ.ker h2.1, h2.2⟩
   · have hker4 : Nat.card ψ.ker = 2 ^ 2 := by omega
+    have hcenter : ψ.ker ≤ Subgroup.center G :=
+      normal_subgroup_card_four_A4_quotient_le_center_of_normalizes_sylow
+        hG ψ.ker h4.1 h4.2 hnormalizes
     rcases prime_sq_classification hker4 with hcyc | helem
-    · obtain ⟨e⟩ := hcyc
-      haveI : IsCyclic ψ.ker := e.isCyclic.mpr inferInstance
-      exact Or.inr ⟨Or.inl ⟨⟨e⟩,
-        normal_cyclic_subgroup_card_four_A4_quotient_le_center
-          ψ.ker h4.1 h4.2⟩, h4.2⟩
-    · exact Or.inr ⟨Or.inr ⟨helem,
-        normal_elemAbelian_card_four_A4_quotient_action_cases
-          ψ.ker h4.1 helem h4.2⟩, h4.2⟩
+    · exact Or.inr ⟨⟨Or.inl hcyc, hcenter⟩, h4.2⟩
+    · exact Or.inr ⟨⟨Or.inr helem, hcenter⟩, h4.2⟩
 
 end Smallgroups.UsefulTheorems
