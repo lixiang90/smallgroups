@@ -172,16 +172,46 @@ noncomputable def order48CocycleTwoPreimageQuotientEquiv [Finite N]
         (order48CocycleTwoPreimageToN φ f hf)
         (order48CocycleTwoPreimageToN_surjective φ f hf))
 
-/-- Every central `C₂`-extension of `N ⋊ C₃`, with `|N| = 8`, splits
-over its normal order-`16` preimage as a semidirect product by a group of
-order `3`. -/
-theorem order48_cocycle_over_semidirect_reduction [Finite N]
+/-- The conjugation action of an ambient subgroup on the normal order-`16`
+preimage. -/
+noncomputable def order48CocycleComplementAction
+    (K : Subgroup (CocycleGroup f hf)) :
+    K →* MulAut (order48CocycleTwoPreimage φ f hf) :=
+  (order48CocycleTwoPreimage φ f hf).normalizerMonoidHom.comp
+    (Subgroup.inclusion (by
+      rw [(order48CocycleTwoPreimage φ f hf).normalizer_eq_top]
+      exact le_top))
+
+/-- Conjugation by every ambient element fixes the canonical kernel
+involution.  In particular, every complement action supplied by
+Schur–Zassenhaus descends through the central quotient. -/
+theorem order48CocycleComplementAction_fixes_kernel
+    (K : Subgroup (CocycleGroup f hf)) (k : K) :
+    order48CocycleComplementAction φ f hf K k
+        (order48CocycleTwoPreimageKernelGenerator φ f hf) =
+      order48CocycleTwoPreimageKernelGenerator φ f hf := by
+  apply Subtype.ext
+  change k.1 * CocycleGroup.inl (hf := hf)
+      (Multiplicative.ofAdd (1 : ZMod 2)) * k.1⁻¹ =
+    CocycleGroup.inl (hf := hf) (Multiplicative.ofAdd (1 : ZMod 2))
+  have hcomm := Subgroup.mem_center_iff.mp
+    (CocycleGroup.inl_mem_center
+      (hf := hf) (Multiplicative.ofAdd (1 : ZMod 2))) k.1
+  rw [hcomm]
+  group
+
+/-- Strong form of the semidirect reduction: the action is explicitly the
+ambient conjugation action, and it fixes the canonical central involution. -/
+theorem order48_cocycle_over_semidirect_reduction_fixed_kernel [Finite N]
     (hN : Nat.card N = 8) :
-    ∃ (K : Subgroup (CocycleGroup f hf))
-      (ρ : K →* MulAut (order48CocycleTwoPreimage φ f hf)),
+    ∃ K : Subgroup (CocycleGroup f hf),
       Nat.card K = 3 ∧
+      (∀ k : K, order48CocycleComplementAction φ f hf K k
+          (order48CocycleTwoPreimageKernelGenerator φ f hf) =
+        order48CocycleTwoPreimageKernelGenerator φ f hf) ∧
       Nonempty (CocycleGroup f hf ≃*
-        SemidirectProduct (order48CocycleTwoPreimage φ f hf) K ρ) := by
+        SemidirectProduct (order48CocycleTwoPreimage φ f hf) K
+          (order48CocycleComplementAction φ f hf K)) := by
   let P : Subgroup (CocycleGroup f hf) :=
     order48CocycleTwoPreimage φ f hf
   have hP : Nat.card P = 16 :=
@@ -200,15 +230,60 @@ theorem order48_cocycle_over_semidirect_reduction [Finite N]
   have hcop : Nat.Coprime (Nat.card P) P.index := by
     rw [hP, hindex]
     norm_num
-  obtain ⟨K, ρ, e⟩ := schurZassenhaus_semidirectProduct P hcop
-  have hK : Nat.card K = 3 := by
-    have hcard := Nat.card_congr e.some.toEquiv
-    rw [SemidirectProduct.card, hE, hP] at hcard
+  obtain ⟨K, hK⟩ := Subgroup.exists_right_complement'_of_coprime hcop
+  have hcardK : Nat.card K = 3 := by
+    have hcard : Nat.card (SemidirectProduct P K
+        (order48CocycleComplementAction φ f hf K)) = Nat.card (CocycleGroup f hf) :=
+      Nat.card_congr (SemidirectProduct.mulEquivSubgroup hK).toEquiv
+    rw [SemidirectProduct.card, hP, hE] at hcard
     omega
-  exact ⟨K, ρ, hK, e⟩
+  refine ⟨K, hcardK, ?_, ?_⟩
+  · exact order48CocycleComplementAction_fixes_kernel φ f hf K
+  · exact ⟨(SemidirectProduct.mulEquivSubgroup hK).symm⟩
+
+/-- The normal preimage is one of the fourteen classified groups of order
+`16`.  The quotient and fixed-kernel results above retain the extra data
+needed to eliminate incompatible representatives and actions. -/
+theorem order48CocycleTwoPreimage_order16_classification [Finite N]
+    (hN : Nat.card N = 8) :
+    ∃ i : Fin 14, Nonempty
+      (order48CocycleTwoPreimage φ f hf ≃* order16_wild_reps i) :=
+  order16_wild_classification (card_order48CocycleTwoPreimage φ f hf hN)
+
+/-- Every central `C₂`-extension of `N ⋊ C₃`, with `|N| = 8`, splits
+over its normal order-`16` preimage as a semidirect product by a group of
+order `3`. -/
+theorem order48_cocycle_over_semidirect_reduction [Finite N]
+    (hN : Nat.card N = 8) :
+    ∃ (K : Subgroup (CocycleGroup f hf))
+      (ρ : K →* MulAut (order48CocycleTwoPreimage φ f hf)),
+      Nat.card K = 3 ∧
+      Nonempty (CocycleGroup f hf ≃*
+        SemidirectProduct (order48CocycleTwoPreimage φ f hf) K ρ) := by
+  obtain ⟨K, hK, _, e⟩ :=
+    order48_cocycle_over_semidirect_reduction_fixed_kernel φ f hf hN
+  exact ⟨K, order48CocycleComplementAction φ f hf K, hK, e⟩
 
 /-- The `RM = (C₂)³ ⋊ C₃` cocycle branch has a normal order-`16`
 subgroup and a complement of order `3`. -/
+theorem order48_RM_cocycle_semidirect_reduction_fixed_kernel
+    (f : order24_RM → order24_RM → ZMod 2) (hf : IsCentralCocycle f) :
+    ∃ K : Subgroup (CocycleGroup f hf),
+      Nat.card K = 3 ∧
+      (∀ k : K,
+        order48CocycleComplementAction order24_c3ActionC2C2C2 f hf K k
+            (order48CocycleTwoPreimageKernelGenerator
+              order24_c3ActionC2C2C2 f hf) =
+          order48CocycleTwoPreimageKernelGenerator
+            order24_c3ActionC2C2C2 f hf) ∧
+      Nonempty (CocycleGroup f hf ≃*
+        SemidirectProduct
+          (order48CocycleTwoPreimage order24_c3ActionC2C2C2 f hf) K
+          (order48CocycleComplementAction
+            order24_c3ActionC2C2C2 f hf K)) :=
+  order48_cocycle_over_semidirect_reduction_fixed_kernel
+    order24_c3ActionC2C2C2 f hf card_order24_C2C2C2
+
 theorem order48_RM_cocycle_semidirect_reduction
     (f : order24_RM → order24_RM → ZMod 2) (hf : IsCentralCocycle f) :
     ∃ (K : Subgroup (CocycleGroup f hf))
@@ -223,6 +298,23 @@ theorem order48_RM_cocycle_semidirect_reduction
 
 /-- The `RN = Q₈ ⋊ C₃` cocycle branch has a normal order-`16`
 subgroup and a complement of order `3`. -/
+theorem order48_RN_cocycle_semidirect_reduction_fixed_kernel
+    (f : order24_RN → order24_RN → ZMod 2) (hf : IsCentralCocycle f) :
+    ∃ K : Subgroup (CocycleGroup f hf),
+      Nat.card K = 3 ∧
+      (∀ k : K,
+        order48CocycleComplementAction order24_c3ActionQ8 f hf K k
+            (order48CocycleTwoPreimageKernelGenerator
+              order24_c3ActionQ8 f hf) =
+          order48CocycleTwoPreimageKernelGenerator
+            order24_c3ActionQ8 f hf) ∧
+      Nonempty (CocycleGroup f hf ≃*
+        SemidirectProduct
+          (order48CocycleTwoPreimage order24_c3ActionQ8 f hf) K
+          (order48CocycleComplementAction order24_c3ActionQ8 f hf K)) :=
+  order48_cocycle_over_semidirect_reduction_fixed_kernel
+    order24_c3ActionQ8 f hf card_order24_Q8
+
 theorem order48_RN_cocycle_semidirect_reduction
     (f : order24_RN → order24_RN → ZMod 2) (hf : IsCentralCocycle f) :
     ∃ (K : Subgroup (CocycleGroup f hf))
