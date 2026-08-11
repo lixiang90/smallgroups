@@ -14,3 +14,4 @@ import Smallgroups.UsefulTheorems.Order48.SixteenSylowThree
 import Smallgroups.UsefulTheorems.Order48.FourSylowThree
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeReps
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeDistinctness
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeCocycles
