@@ -17,4 +17,5 @@ import Smallgroups.UsefulTheorems.Order48.FourSylowThreeDistinctness
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeCocycles
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeSemidirect
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeKernelTypes
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeCocycleBranch
 import Smallgroups.UsefulTheorems.Order48.Classification
