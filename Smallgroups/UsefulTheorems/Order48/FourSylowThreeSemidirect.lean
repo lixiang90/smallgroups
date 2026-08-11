@@ -64,6 +64,114 @@ theorem card_order48CocycleTwoPreimage [Finite N] (hN : Nat.card N = 8) :
     Nat.card_eq_fintype_card, hN]
   decide
 
+private theorem order48CocycleTwoPreimage_right_eq_one
+    (x : order48CocycleTwoPreimage φ f hf) : x.1.snd.right = 1 := by
+  rcases x.2 with ⟨n, hn⟩
+  simpa using congrArg SemidirectProduct.right hn.symm
+
+/-- Projection of the normal order-`16` preimage back onto its order-`8`
+factor. -/
+def order48CocycleTwoPreimageToN :
+    order48CocycleTwoPreimage φ f hf →* N where
+  toFun x := x.1.snd.left
+  map_one' := rfl
+  map_mul' x y := by
+    change (x.1.snd * y.1.snd).left = x.1.snd.left * y.1.snd.left
+    rw [SemidirectProduct.mul_left]
+    rw [order48CocycleTwoPreimage_right_eq_one φ f hf x, map_one]
+    rfl
+
+@[simp] theorem order48CocycleTwoPreimageToN_apply
+    (x : order48CocycleTwoPreimage φ f hf) :
+    order48CocycleTwoPreimageToN φ f hf x = x.1.snd.left := rfl
+
+theorem order48CocycleTwoPreimageToN_surjective :
+    Function.Surjective (order48CocycleTwoPreimageToN φ f hf) := by
+  intro n
+  refine ⟨⟨⟨0, SemidirectProduct.inl n⟩, ?_⟩, rfl⟩
+  exact ⟨n, rfl⟩
+
+/-- The canonical central involution inside the order-`16` preimage. -/
+def order48CocycleTwoPreimageKernelGenerator :
+    order48CocycleTwoPreimage φ f hf :=
+  ⟨CocycleGroup.inl (hf := hf) (Multiplicative.ofAdd (1 : ZMod 2)),
+    by
+      change (1 : SemidirectProduct N (Multiplicative (ZMod 3)) φ) ∈
+        (SemidirectProduct.inl : N →*
+          SemidirectProduct N (Multiplicative (ZMod 3)) φ).range
+      exact Subgroup.one_mem _⟩
+
+theorem order_order48CocycleTwoPreimageKernelGenerator :
+    orderOf (order48CocycleTwoPreimageKernelGenerator φ f hf) = 2 := by
+  calc
+    orderOf (order48CocycleTwoPreimageKernelGenerator φ f hf) =
+        orderOf (CocycleGroup.inl (hf := hf)
+          (Multiplicative.ofAdd (1 : ZMod 2))) :=
+      (orderOf_injective
+        (order48CocycleTwoPreimage φ f hf).subtype Subtype.coe_injective
+        (order48CocycleTwoPreimageKernelGenerator φ f hf)).symm
+    _ = orderOf (Multiplicative.ofAdd (1 : ZMod 2)) :=
+      orderOf_injective (CocycleGroup.inl (hf := hf))
+        CocycleGroup.inl_injective _
+    _ = 2 := by
+      rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+
+theorem order48CocycleTwoPreimageKernelGenerator_mem_center :
+    order48CocycleTwoPreimageKernelGenerator φ f hf ∈
+      Subgroup.center (order48CocycleTwoPreimage φ f hf) := by
+  rw [Subgroup.mem_center_iff]
+  intro x
+  apply Subtype.ext
+  exact (Subgroup.mem_center_iff.mp
+    (CocycleGroup.inl_mem_center
+      (hf := hf) (Multiplicative.ofAdd (1 : ZMod 2)))) x.1
+
+instance order48CocycleTwoPreimageKernelNormal :
+    (Subgroup.zpowers
+      (order48CocycleTwoPreimageKernelGenerator φ f hf)).Normal :=
+  normal_of_le_center (Subgroup.zpowers_le.mpr
+    (order48CocycleTwoPreimageKernelGenerator_mem_center φ f hf))
+
+theorem order48CocycleTwoPreimage_kernel_eq_zpowers [Finite N]
+    (hN : Nat.card N = 8) :
+    (order48CocycleTwoPreimageToN φ f hf).ker =
+      Subgroup.zpowers (order48CocycleTwoPreimageKernelGenerator φ f hf) := by
+  let P := order48CocycleTwoPreimage φ f hf
+  let π := order48CocycleTwoPreimageToN φ f hf
+  let z := order48CocycleTwoPreimageKernelGenerator φ f hf
+  have hzker : z ∈ π.ker := by
+    rw [MonoidHom.mem_ker]
+    change (1 : N) = 1
+    rfl
+  have hle : Subgroup.zpowers z ≤ π.ker := Subgroup.zpowers_le.mpr hzker
+  have hP : Nat.card P = 16 := card_order48CocycleTwoPreimage φ f hf hN
+  have hquot : Nat.card (P ⧸ π.ker) = 8 := by
+    rw [Nat.card_congr
+      (QuotientGroup.quotientKerEquivOfSurjective π
+        (order48CocycleTwoPreimageToN_surjective φ f hf)).toEquiv,
+      hN]
+  have hker : Nat.card π.ker = 2 := by
+    have hcard := Subgroup.card_eq_card_quotient_mul_card_subgroup π.ker
+    rw [hP, hquot] at hcard
+    omega
+  symm
+  apply Subgroup.eq_of_le_of_card_ge hle
+  rw [Nat.card_zpowers,
+    order_order48CocycleTwoPreimageKernelGenerator φ f hf, hker]
+
+/-- Quotienting the normal order-`16` preimage by its canonical central
+involution recovers the original order-`8` factor. -/
+noncomputable def order48CocycleTwoPreimageQuotientEquiv [Finite N]
+    (hN : Nat.card N = 8) :
+    order48CocycleTwoPreimage φ f hf ⧸
+        Subgroup.zpowers (order48CocycleTwoPreimageKernelGenerator φ f hf) ≃* N := by
+  exact
+    (QuotientGroup.quotientMulEquivOfEq
+        (order48CocycleTwoPreimage_kernel_eq_zpowers φ f hf hN).symm).trans
+      (QuotientGroup.quotientKerEquivOfSurjective
+        (order48CocycleTwoPreimageToN φ f hf)
+        (order48CocycleTwoPreimageToN_surjective φ f hf))
+
 /-- Every central `C₂`-extension of `N ⋊ C₃`, with `|N| = 8`, splits
 over its normal order-`16` preimage as a semidirect product by a group of
 order `3`. -/
