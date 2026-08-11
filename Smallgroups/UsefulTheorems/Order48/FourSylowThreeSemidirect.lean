@@ -200,12 +200,113 @@ theorem order48CocycleComplementAction_fixes_kernel
   rw [hcomm]
   group
 
+/-- Projection of an ambient subgroup to the `C₃` factor of the order-`24`
+base group. -/
+def order48CocycleComplementToC3
+    (K : Subgroup (CocycleGroup f hf)) :
+    K →* Multiplicative (ZMod 3) :=
+  (SemidirectProduct.rightHom (N := N)).comp
+    ((CocycleGroup.rightHom (hf := hf)).comp K.subtype)
+
+@[simp] theorem order48CocycleComplementToC3_apply
+    (K : Subgroup (CocycleGroup f hf)) (k : K) :
+    order48CocycleComplementToC3 φ f hf K k = k.1.snd.right := rfl
+
+/-- Compatibility of the complement action with the quotient action.  The
+only discrepancy is conjugation by the `N`-component of the chosen
+complement element; it disappears in the abelian `RM` branch. -/
+theorem order48CocycleComplementAction_toN
+    (K : Subgroup (CocycleGroup f hf)) (k : K)
+    (p : order48CocycleTwoPreimage φ f hf) :
+    order48CocycleTwoPreimageToN φ f hf
+        (order48CocycleComplementAction φ f hf K k p) =
+      k.1.snd.left *
+        φ (order48CocycleComplementToC3 φ f hf K k)
+          (order48CocycleTwoPreimageToN φ f hf p) *
+        k.1.snd.left⁻¹ := by
+  change (k.1.snd * p.1.snd * k.1.snd⁻¹).left = _
+  rw [SemidirectProduct.mul_left, SemidirectProduct.mul_left,
+    SemidirectProduct.inv_left]
+  simp only [order48CocycleComplementToC3_apply,
+    order48CocycleTwoPreimageToN_apply, map_inv]
+  simp only [SemidirectProduct.mul_right]
+  rw [order48CocycleTwoPreimage_right_eq_one φ f hf p]
+  simp only [mul_one]
+  simp
+
+/-- In the elementary-abelian `RM` branch, the induced action on the
+order-`8` quotient is exactly the prescribed `C₃` action. -/
+theorem order48_RM_CocycleComplementAction_toN
+    (f : order24_RM → order24_RM → ZMod 2) (hf : IsCentralCocycle f)
+    (K : Subgroup (CocycleGroup f hf)) (k : K)
+    (p : order48CocycleTwoPreimage order24_c3ActionC2C2C2 f hf) :
+    order48CocycleTwoPreimageToN order24_c3ActionC2C2C2 f hf
+        (order48CocycleComplementAction
+          order24_c3ActionC2C2C2 f hf K k p) =
+      order24_c3ActionC2C2C2
+          (order48CocycleComplementToC3
+            order24_c3ActionC2C2C2 f hf K k)
+        (order48CocycleTwoPreimageToN
+          order24_c3ActionC2C2C2 f hf p) := by
+  rw [order48CocycleComplementAction_toN]
+  rw [mul_comm k.1.snd.left]
+  group
+
+/-- A complement to the order-`16` preimage projects injectively to the
+original `C₃` factor. -/
+theorem order48CocycleComplementToC3_injective
+    (K : Subgroup (CocycleGroup f hf))
+    (hK : (order48CocycleTwoPreimage φ f hf).IsComplement' K) :
+    Function.Injective (order48CocycleComplementToC3 φ f hf K) := by
+  rw [← MonoidHom.ker_eq_bot_iff, Subgroup.eq_bot_iff_forall]
+  intro k hk
+  have hkright : k.1.snd.right = 1 := by
+    simpa only [MonoidHom.mem_ker,
+      order48CocycleComplementToC3_apply] using hk
+  have hkP : k.1 ∈ order48CocycleTwoPreimage φ f hf := by
+    change k.1.snd ∈ (SemidirectProduct.inl :
+      N →* SemidirectProduct N (Multiplicative (ZMod 3)) φ).range
+    refine ⟨k.1.snd.left, ?_⟩
+    apply SemidirectProduct.ext
+    · rfl
+    · simpa using hkright.symm
+  have hkinf : k.1 ∈ order48CocycleTwoPreimage φ f hf ⊓ K :=
+    ⟨hkP, k.2⟩
+  have hkone : k.1 = 1 := by
+    have := (hK.disjoint.le_bot hkinf : k.1 ∈ (⊥ : Subgroup (CocycleGroup f hf)))
+    exact Subgroup.mem_bot.mp this
+  exact Subtype.ext hkone
+
+/-- Since both groups have order three, the projection of a complement is
+an isomorphism onto the original `C₃` factor. -/
+noncomputable def order48CocycleComplementEquivC3 [Finite N]
+    (hN : Nat.card N = 8) (K : Subgroup (CocycleGroup f hf))
+    (hK : (order48CocycleTwoPreimage φ f hf).IsComplement' K) :
+    K ≃* Multiplicative (ZMod 3) := by
+  let κ := order48CocycleComplementToC3 φ f hf K
+  have hcardK : Nat.card K = 3 := by
+    have hE : Nat.card (CocycleGroup f hf) = 48 := by
+      rw [CocycleGroup.card_eq, SemidirectProduct.card, hN,
+        Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+      decide
+    have hcard := hK.card_mul
+    rw [card_order48CocycleTwoPreimage φ f hf hN, hE] at hcard
+    omega
+  have hcardC3 : Nat.card (Multiplicative (ZMod 3)) = 3 := by
+    rw [Nat.card_eq_fintype_card]
+    decide
+  apply MulEquiv.ofBijective κ
+  exact (Nat.bijective_iff_injective_and_card κ).mpr
+    ⟨order48CocycleComplementToC3_injective φ f hf K hK,
+      hcardK.trans hcardC3.symm⟩
+
 /-- Strong form of the semidirect reduction: the action is explicitly the
 ambient conjugation action, and it fixes the canonical central involution. -/
 theorem order48_cocycle_over_semidirect_reduction_fixed_kernel [Finite N]
     (hN : Nat.card N = 8) :
     ∃ K : Subgroup (CocycleGroup f hf),
       Nat.card K = 3 ∧
+      Function.Bijective (order48CocycleComplementToC3 φ f hf K) ∧
       (∀ k : K, order48CocycleComplementAction φ f hf K k
           (order48CocycleTwoPreimageKernelGenerator φ f hf) =
         order48CocycleTwoPreimageKernelGenerator φ f hf) ∧
@@ -237,7 +338,8 @@ theorem order48_cocycle_over_semidirect_reduction_fixed_kernel [Finite N]
       Nat.card_congr (SemidirectProduct.mulEquivSubgroup hK).toEquiv
     rw [SemidirectProduct.card, hP, hE] at hcard
     omega
-  refine ⟨K, hcardK, ?_, ?_⟩
+  refine ⟨K, hcardK, ?_, ?_, ?_⟩
+  · exact (order48CocycleComplementEquivC3 φ f hf hN K hK).bijective
   · exact order48CocycleComplementAction_fixes_kernel φ f hf K
   · exact ⟨(SemidirectProduct.mulEquivSubgroup hK).symm⟩
 
@@ -260,7 +362,7 @@ theorem order48_cocycle_over_semidirect_reduction [Finite N]
       Nat.card K = 3 ∧
       Nonempty (CocycleGroup f hf ≃*
         SemidirectProduct (order48CocycleTwoPreimage φ f hf) K ρ) := by
-  obtain ⟨K, hK, _, e⟩ :=
+  obtain ⟨K, hK, _, _, e⟩ :=
     order48_cocycle_over_semidirect_reduction_fixed_kernel φ f hf hN
   exact ⟨K, order48CocycleComplementAction φ f hf K, hK, e⟩
 
@@ -270,6 +372,8 @@ theorem order48_RM_cocycle_semidirect_reduction_fixed_kernel
     (f : order24_RM → order24_RM → ZMod 2) (hf : IsCentralCocycle f) :
     ∃ K : Subgroup (CocycleGroup f hf),
       Nat.card K = 3 ∧
+      Function.Bijective
+        (order48CocycleComplementToC3 order24_c3ActionC2C2C2 f hf K) ∧
       (∀ k : K,
         order48CocycleComplementAction order24_c3ActionC2C2C2 f hf K k
             (order48CocycleTwoPreimageKernelGenerator
@@ -302,6 +406,8 @@ theorem order48_RN_cocycle_semidirect_reduction_fixed_kernel
     (f : order24_RN → order24_RN → ZMod 2) (hf : IsCentralCocycle f) :
     ∃ K : Subgroup (CocycleGroup f hf),
       Nat.card K = 3 ∧
+      Function.Bijective
+        (order48CocycleComplementToC3 order24_c3ActionQ8 f hf K) ∧
       (∀ k : K,
         order48CocycleComplementAction order24_c3ActionQ8 f hf K k
             (order48CocycleTwoPreimageKernelGenerator
