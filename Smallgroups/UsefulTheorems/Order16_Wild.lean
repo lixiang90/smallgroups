@@ -1306,6 +1306,36 @@ private theorem order16_wild_invariant_spec (i : Fin 14) :
   · exact invariant_G12
   · exact invariant_G13
 
+/-- Public projection of the order-`16` invariant table: the number of
+elements whose fourth power is one. -/
+def order16_wild_pow_four_card : Fin 14 → ℕ
+  | 0 => 16 | 1 => 8 | 2 => 12 | 3 => 8 | 4 => 12 | 5 => 12 | 6 => 4
+  | 7 => 16 | 8 => 16 | 9 => 16 | 10 => 16 | 11 => 16 | 12 => 16 | 13 => 16
+
+/-- Public projection of the order-`16` invariant table: the number of
+distinct squares. -/
+def order16_wild_square_image_card : Fin 14 → ℕ
+  | 0 => 1 | 1 => 4 | 2 => 4 | 3 => 4 | 4 => 4 | 5 => 4 | 6 => 8
+  | 7 => 2 | 8 => 2 | 9 => 3 | 10 => 2 | 11 => 2 | 12 => 3 | 13 => 4
+
+theorem pow_four_card_order16_wild_reps (i : Fin 14) :
+    pow_eq_one_card (order16_wild_reps i) 4 =
+      order16_wild_pow_four_card i := by
+  have h := congrArg (fun x : ℕ × ℕ × ℕ × ℕ => x.2.2.1)
+    (order16_wild_invariant_spec i)
+  rw [show order16_wild_pow_four_card i =
+      (order16_wild_invariant i).2.2.1 by fin_cases i <;> rfl]
+  simpa [wildInvariantOf] using h
+
+theorem square_image_card_order16_wild_reps (i : Fin 14) :
+    sq_image_card (order16_wild_reps i) =
+      order16_wild_square_image_card i := by
+  have h := congrArg (fun x : ℕ × ℕ × ℕ × ℕ => x.2.2.2)
+    (order16_wild_invariant_spec i)
+  rw [show order16_wild_square_image_card i =
+      (order16_wild_invariant i).2.2.2 by fin_cases i <;> rfl]
+  simpa [wildInvariantOf] using h
+
 end Invariants
 
 /-! ### Recognition lemmas
