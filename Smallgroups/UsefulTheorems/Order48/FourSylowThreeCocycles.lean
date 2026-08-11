@@ -43,4 +43,29 @@ theorem order48_four_sylow_three_cocycle_reduction [Finite G]
     exact Or.inr (Or.inr
       (cocycleGroup_reconstruction_of_quotient_iso hzcenter hz2 e))
 
+/-- Exhaustiveness of the displayed residual representatives for all central
+`C₂`-extensions of a fixed base group. -/
+def Order48FourCocycleExhaustive (Q : Type*) [Group Q] : Prop :=
+  ∀ (f : Q → Q → ZMod 2) (hf : IsCentralCocycle f),
+    ∃ i : Fin 8, Nonempty
+      (CocycleGroup f hf ≃* order48_four_residualKnownReps i)
+
+/-- Once the three finite cocycle problems over `RM`, `RN`, and `RO` have
+been solved, the four-Sylow-three branch is exhaustive.  This theorem is the
+final assembly interface for the remaining cohomology calculations. -/
+theorem order48_four_sylow_three_classification_of_cocycle_exhaustive [Finite G]
+    (hG : Nat.card G = 48) (hSyl : Nat.card (Sylow 3 G) = 4)
+    (hRM : Order48FourCocycleExhaustive order24_RM)
+    (hRN : Order48FourCocycleExhaustive order24_RN)
+    (hRO : Order48FourCocycleExhaustive order24_RO) :
+    ∃ i : Fin 8, Nonempty (G ≃* order48_four_residualKnownReps i) := by
+  rcases order48_four_sylow_three_cocycle_reduction hG hSyl with
+      ⟨f, hf, eG⟩ | ⟨f, hf, eG⟩ | ⟨f, hf, eG⟩
+  · obtain ⟨i, eC⟩ := hRM f hf
+    exact ⟨i, ⟨eG.some.trans eC.some⟩⟩
+  · obtain ⟨i, eC⟩ := hRN f hf
+    exact ⟨i, ⟨eG.some.trans eC.some⟩⟩
+  · obtain ⟨i, eC⟩ := hRO f hf
+    exact ⟨i, ⟨eG.some.trans eC.some⟩⟩
+
 end Smallgroups.UsefulTheorems
