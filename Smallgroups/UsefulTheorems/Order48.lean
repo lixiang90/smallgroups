@@ -13,3 +13,4 @@ import Smallgroups.UsefulTheorems.Order48.DistinctnessNormal
 import Smallgroups.UsefulTheorems.Order48.SixteenSylowThree
 import Smallgroups.UsefulTheorems.Order48.FourSylowThree
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeReps
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeDistinctness
