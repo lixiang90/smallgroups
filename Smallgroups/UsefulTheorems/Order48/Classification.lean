@@ -6,6 +6,7 @@ Authors: Smallgroups contributors
 import Smallgroups.UsefulTheorems.Order48.DistinctnessNormal
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeDistinctness
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeCocycles
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionClassifiers
 import Smallgroups.UsefulTheorems.Order48.SixteenSylowThree
 
 /-!
@@ -264,5 +265,21 @@ theorem order48_isClassif_of_cocycle_exhaustive
       rw [Equiv.symm_apply_apply]
       exact e⟩
   distinct := order48_all_reps_fin_pairwise
+
+/-! ### Final interface in terms of the remaining finite action problems -/
+
+/-- The complete order-`48` classification follows from the two compatible
+`C₃`-action orbit problems over `RM` and `RN`, together with the `RO` cocycle
+problem.  The action hypotheses only quantify over the four-Sylow-`3` branch,
+which is exactly the branch produced by the cocycle reductions. -/
+theorem order48_isClassif_of_action_complete
+    (hRM : Order48RMWildActionComplete)
+    (hRN : Order48RNWildActionComplete)
+    (hRO : Order48FourCocycleExhaustive order24_RO) :
+    IsClassif 48 order48_all_reps_fin := by
+  exact order48_isClassif_of_cocycle_exhaustive
+    (order48_RM_cocycle_exhaustive_of_wild_action_complete hRM)
+    (order48_RN_cocycle_exhaustive_of_wild_action_complete hRN)
+    hRO
 
 end Smallgroups.UsefulTheorems
