@@ -44,6 +44,34 @@ def Order48RNWildActionComplete : Prop :=
           (Multiplicative (ZMod 3)) phi ≃*
           order48_four_residualKnownReps j)
 
+/-- The residual action problem restricted to one fixed Wild kernel.  Keeping
+these predicates separate lets the five RM kernel calculations live in small,
+independently compiled modules. -/
+def Order48WildKernelActionComplete (i : Fin 14) : Prop :=
+  ∀ phi : Multiplicative (ZMod 3) →* MulAut (order16_wild_reps i),
+    Nat.card {x : SemidirectProduct (order16_wild_reps i)
+      (Multiplicative (ZMod 3)) phi // x ^ 3 = 1} = 9 →
+    ∃ j : Fin 8,
+      Nonempty (SemidirectProduct (order16_wild_reps i)
+        (Multiplicative (ZMod 3)) phi ≃*
+        order48_four_residualKnownReps j)
+
+/-- Assemble the five square-image-compatible RM kernel classifiers. -/
+theorem order48_RM_wild_action_complete_of_kernel_cases
+    (h0 : Order48WildKernelActionComplete 0)
+    (h7 : Order48WildKernelActionComplete 7)
+    (h8 : Order48WildKernelActionComplete 8)
+    (h10 : Order48WildKernelActionComplete 10)
+    (h11 : Order48WildKernelActionComplete 11) :
+    Order48RMWildActionComplete := by
+  intro i hi φ hRoots
+  rcases hi with rfl | rfl | rfl | rfl | rfl
+  · exact h0 φ hRoots
+  · exact h7 φ hRoots
+  · exact h8 φ hRoots
+  · exact h10 φ hRoots
+  · exact h11 φ hRoots
+
 theorem order48_RM_cocycle_exhaustive_of_wild_action_complete
     (hOrbit : Order48RMWildActionComplete) :
     Order48FourCocycleExhaustive order24_RM := by

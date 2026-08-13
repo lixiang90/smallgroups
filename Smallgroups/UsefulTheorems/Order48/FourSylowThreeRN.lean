@@ -59,6 +59,36 @@ theorem order48_RN_G11_action_card_sylow_three :
     (card_order16_wild_G11) order48_RN_G11_action).mpr
     order48_RN_G11_action_card_cube_roots
 
+noncomputable def order48_RN_G11_splitEquiv :
+    SemidirectProduct order16_wild_G11
+        (Multiplicative (ZMod 3)) order48_RN_G11_action ≃*
+      Multiplicative (ZMod 2) × order24_RN where
+  toFun x := (x.left.2, ⟨x.left.1, x.right⟩)
+  invFun x := ⟨(x.2.left, x.1), x.2.right⟩
+  left_inv := by
+    rintro ⟨⟨a, b⟩, c⟩
+    rfl
+  right_inv := by
+    rintro ⟨a, ⟨b, c⟩⟩
+    rfl
+  map_mul' := by
+    rintro ⟨⟨a, b⟩, c⟩ ⟨⟨a', b'⟩, c'⟩
+    ext <;> revert a b c a' b' c' <;> decide
+
+theorem order48_RN_G11_action_mulEquiv_C2xRN :
+    Nonempty (SemidirectProduct order16_wild_G11
+      (Multiplicative (ZMod 3)) order48_RN_G11_action ≃*
+      Multiplicative (ZMod 2) × order24_RN) :=
+  ⟨order48_RN_G11_splitEquiv⟩
+
+theorem order48_RN_G11_action_mem_residualKnownReps :
+    Nonempty (SemidirectProduct order16_wild_G11
+      (Multiplicative (ZMod 3)) order48_RN_G11_action ≃*
+      order48_four_residualKnownReps 6) := by
+  obtain ⟨eSL⟩ := order24_SL23_mulEquiv_RN
+  exact ⟨order48_RN_G11_splitEquiv.trans
+    (MulEquiv.prodCongr (MulEquiv.refl _) eSL.symm)⟩
+
 noncomputable def order48_RN_wildAction
     (f : order24_RN → order24_RN → ZMod 2) (hf : IsCentralCocycle f)
     (i : Fin 14) (eP :

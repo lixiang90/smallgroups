@@ -222,6 +222,21 @@ theorem card_order48_four_C2xSL23 : Nat.card order48_four_C2xSL23 = 48 := by
   rw [Nat.card_eq_fintype_card]
   decide +kernel
 
+theorem card_order24_SL23 :
+    Nat.card (Matrix.SpecialLinearGroup (Fin 2) (ZMod 3)) = 24 := by
+  rw [Nat.card_eq_fintype_card]
+  decide +kernel
+
+theorem card_center_order24_SL23 :
+    Nat.card (Subgroup.center (Matrix.SpecialLinearGroup (Fin 2) (ZMod 3))) = 2 := by
+  rw [Nat.card_eq_fintype_card]
+  decide +kernel
+
+theorem card_pow_two_eq_one_order24_SL23 :
+    pow_eq_one_card (Matrix.SpecialLinearGroup (Fin 2) (ZMod 3)) 2 = 2 := by
+  rw [pow_eq_one_card, Nat.card_eq_fintype_card]
+  decide +kernel
+
 theorem card_order48_four_c4SL23Diagonal_zpowers :
     Nat.card (Subgroup.zpowers order48_four_c4SL23Diagonal) = 2 := by
   rw [Nat.card_zpowers]
@@ -398,10 +413,36 @@ private theorem order48_four_pow_three_A4 :
   rw [pow_eq_one_card, Nat.card_eq_fintype_card]
   decide +kernel
 
-private theorem order48_four_pow_three_SL23 :
+theorem order48_four_pow_three_SL23 :
     pow_eq_one_card (Matrix.SpecialLinearGroup (Fin 2) (ZMod 3)) 3 = 9 := by
   rw [pow_eq_one_card, Nat.card_eq_fintype_card]
   decide +kernel
+
+/-- The concrete matrix group `SL(2,3)` is the `Q₈ ⋊ C₃` representative from
+the order-`24` classification.  This identification uses the complete
+order-`24` classification and its separating triple `(center, roots₂,
+roots₃) = (2,2,9)`. -/
+theorem order24_SL23_mulEquiv_RN :
+    Nonempty (Matrix.SpecialLinearGroup (Fin 2) (ZMod 3) ≃* order24_RN) := by
+  obtain ⟨i, e⟩ := order24_classification card_order24_SL23
+  obtain ⟨e⟩ := e
+  have hcenter : order24_center_card i = 2 := by
+    rw [← card_center_order24_reps i]
+    exact (card_center_eq_of_mulEquiv e).symm.trans card_center_order24_SL23
+  have htwo : order24_pow_two_eq_one_card i = 2 := by
+    rw [← card_pow_two_eq_one_order24_reps i]
+    exact (pow_eq_one_card_eq_of_mulEquiv 2 e).symm.trans
+      card_pow_two_eq_one_order24_SL23
+  have hthree : order24_pow_three_eq_one_card i = 9 := by
+    rw [← card_pow_three_eq_one_order24_reps i]
+    exact (pow_eq_one_card_eq_of_mulEquiv 3 e).symm.trans
+      order48_four_pow_three_SL23
+  have hi : i = 13 := by
+    fin_cases i <;> simp_all [order24_center_card,
+      order24_pow_two_eq_one_card, order24_pow_three_eq_one_card]
+  subst i
+  simpa [order24_reps] using (⟨e⟩ : Nonempty
+    (Matrix.SpecialLinearGroup (Fin 2) (ZMod 3) ≃* order24_reps 13))
 
 private theorem order48_four_pow_three_GL23 :
     pow_eq_one_card order48_four_GL23 3 = 9 := by

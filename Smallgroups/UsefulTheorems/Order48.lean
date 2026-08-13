@@ -20,6 +20,7 @@ import Smallgroups.UsefulTheorems.Order48.FourSylowThreeKernelTypes
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeCocycleBranch
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionCore
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRM
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRMExamples
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRN
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRO
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionOrbits
