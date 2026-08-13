@@ -224,4 +224,238 @@ theorem order48_c3_action_card_sylow_three_eq_four_iff
     rw [order48_card_pow_three_eq_one hG] at hroots
     omega
 
+/-! ### Cube roots over a commutative kernel -/
+
+noncomputable abbrev order48_c3Generator : Multiplicative (ZMod 3) :=
+  Multiplicative.ofAdd (1 : ZMod 3)
+
+/-- In the generator fibre of a semidirect product with commutative kernel,
+the cube-root equation is exactly the order-three norm equation. -/
+theorem order48_c3_action_cube_generator_iff_norm_one
+    {K : Type} [CommGroup K]
+    (φ : Multiplicative (ZMod 3) →* MulAut K) (x : K) :
+    (⟨x, order48_c3Generator⟩ :
+      SemidirectProduct K (Multiplicative (ZMod 3)) φ) ^ 3 = 1 ↔
+      x * φ order48_c3Generator x *
+        φ order48_c3Generator (φ order48_c3Generator x) = 1 := by
+  rw [pow_three]
+  constructor
+  · intro h
+    have hleft := congrArg SemidirectProduct.left h
+    simp only [SemidirectProduct.mul_left, SemidirectProduct.one_left] at hleft
+    rw [(φ order48_c3Generator).map_mul] at hleft
+    simpa only [mul_assoc] using hleft
+  · intro h
+    apply SemidirectProduct.ext
+    · simp only [SemidirectProduct.mul_left, SemidirectProduct.one_left]
+      rw [(φ order48_c3Generator).map_mul]
+      simpa only [mul_assoc] using h
+    · change order48_c3Generator *
+        (order48_c3Generator * order48_c3Generator) = 1
+      decide
+
+/-- The inverse-generator fibre has the same norm equation. -/
+theorem order48_c3_action_cube_generator_sq_iff_norm_one
+    {K : Type} [CommGroup K]
+    (φ : Multiplicative (ZMod 3) →* MulAut K) (x : K) :
+    (⟨x, order48_c3Generator ^ 2⟩ :
+      SemidirectProduct K (Multiplicative (ZMod 3)) φ) ^ 3 = 1 ↔
+      x * φ order48_c3Generator x *
+        φ order48_c3Generator (φ order48_c3Generator x) = 1 := by
+  have hthree : φ order48_c3Generator
+      (φ order48_c3Generator (φ order48_c3Generator x)) = x := by
+    have hp := congrArg (fun a : MulAut K => a x)
+      (order48_c3_action_generator_pow_three φ)
+    simpa only [pow_succ, pow_zero, mul_one, MulAut.mul_apply,
+      MulAut.one_apply] using hp
+  have hc2 : φ (order48_c3Generator ^ 2) x =
+      φ order48_c3Generator (φ order48_c3Generator x) := by
+    rw [map_pow, pow_two]
+    rfl
+  have hc22 : φ (order48_c3Generator ^ 2)
+      (φ (order48_c3Generator ^ 2) x) = φ order48_c3Generator x := by
+    rw [map_pow, pow_two, MulAut.mul_apply, MulAut.mul_apply]
+    exact congrArg (φ order48_c3Generator) hthree
+  rw [pow_three]
+  constructor
+  · intro hpair
+    have h := congrArg SemidirectProduct.left hpair
+    simp only [SemidirectProduct.mul_left, SemidirectProduct.one_left] at h
+    rw [(φ (order48_c3Generator ^ 2)).map_mul] at h
+    rw [hc22, hc2] at h
+    convert h using 1 <;> ac_rfl
+  · intro h
+    apply SemidirectProduct.ext
+    · simp only [SemidirectProduct.mul_left, SemidirectProduct.one_left]
+      rw [(φ (order48_c3Generator ^ 2)).map_mul]
+      rw [hc22, hc2]
+      convert h using 1 <;> ac_rfl
+    · change (order48_c3Generator ^ 2) *
+        ((order48_c3Generator ^ 2) * (order48_c3Generator ^ 2)) = 1
+      decide
+
+private noncomputable def order48_c3ActionRootsSigmaEquiv
+    {K : Type} [Group K]
+    (φ : Multiplicative (ZMod 3) →* MulAut K) :
+    {z : SemidirectProduct K (Multiplicative (ZMod 3)) φ // z ^ 3 = 1} ≃
+      Σ g : Multiplicative (ZMod 3),
+        {x : K // (⟨x, g⟩ : SemidirectProduct K _ φ) ^ 3 = 1} where
+  toFun z := ⟨z.1.right, ⟨z.1.left, z.2⟩⟩
+  invFun z := ⟨⟨z.2.1, z.1⟩, z.2.2⟩
+  left_inv z := by cases z; rfl
+  right_inv z := by cases z with | mk g z => cases z; rfl
+
+private noncomputable def order48_subtypeIffEquiv
+    {α : Type} {p q : α → Prop} (h : ∀ x, p x ↔ q x) :
+    Subtype p ≃ Subtype q where
+  toFun x := ⟨x, (h x).mp x.2⟩
+  invFun x := ⟨x, (h x).mpr x.2⟩
+  left_inv x := by cases x; rfl
+  right_inv x := by cases x; rfl
+
+/-- For an elementary abelian `2`-kernel, the cube roots consist of the
+identity plus two copies of the kernel of the order-three norm. -/
+theorem order48_c3_action_card_cube_roots_eq_one_add_twice_norm
+    {K : Type} [CommGroup K] [Finite K]
+    (h2 : ∀ x : K, x ^ 2 = 1)
+    (φ : Multiplicative (ZMod 3) →* MulAut K) :
+    Nat.card {z : SemidirectProduct K (Multiplicative (ZMod 3)) φ //
+        z ^ 3 = 1} =
+      1 + 2 * Nat.card {x : K //
+        x * φ order48_c3Generator x *
+          φ order48_c3Generator (φ order48_c3Generator x) = 1} := by
+  rw [Nat.card_congr (order48_c3ActionRootsSigmaEquiv φ), Nat.card_sigma]
+  change (∑ g : Multiplicative (ZMod 3), Nat.card
+    {x : K // (⟨x, g⟩ : SemidirectProduct K _ φ) ^ 3 = 1}) = _
+  have hsum : (∑ g : Multiplicative (ZMod 3), Nat.card
+      {x : K // (⟨x, g⟩ : SemidirectProduct K _ φ) ^ 3 = 1}) =
+      Nat.card {x : K //
+        (⟨x, 1⟩ : SemidirectProduct K _ φ) ^ 3 = 1} +
+      Nat.card {x : K //
+        (⟨x, order48_c3Generator⟩ : SemidirectProduct K _ φ) ^ 3 = 1} +
+      Nat.card {x : K //
+        (⟨x, order48_c3Generator ^ 2⟩ :
+          SemidirectProduct K _ φ) ^ 3 = 1} := by
+    classical
+    exact Fin.sum_univ_three _
+  rw [hsum]
+  have hOne : Nat.card
+      {x : K // (⟨x, 1⟩ : SemidirectProduct K _ φ) ^ 3 = 1} = 1 := by
+    rw [Nat.card_eq_one_iff_unique]
+    constructor
+    · constructor
+      rintro ⟨x, hx⟩ ⟨y, hy⟩
+      apply Subtype.ext
+      have toOne : ∀ z : K,
+          (⟨z, 1⟩ : SemidirectProduct K _ φ) ^ 3 = 1 → z = 1 := by
+        intro z hz
+        have hzleft := congrArg SemidirectProduct.left hz
+        simp only [pow_three, SemidirectProduct.mul_left,
+          SemidirectProduct.one_left, map_one, MulAut.one_apply] at hzleft
+        have hz2 := h2 z
+        rw [pow_two] at hz2
+        simpa [hz2] using hzleft
+      exact (toOne x hx).trans (toOne y hy).symm
+    · exact ⟨1, by simp⟩
+  rw [hOne]
+  have hc : Nat.card {x : K //
+      (⟨x, order48_c3Generator⟩ : SemidirectProduct K _ φ) ^ 3 = 1} =
+      Nat.card {x : K // x * φ order48_c3Generator x *
+        φ order48_c3Generator (φ order48_c3Generator x) = 1} := by
+    apply Nat.card_congr
+    exact order48_subtypeIffEquiv
+      (order48_c3_action_cube_generator_iff_norm_one φ)
+  have hc2 : Nat.card {x : K //
+      (⟨x, order48_c3Generator ^ 2⟩ :
+        SemidirectProduct K _ φ) ^ 3 = 1} =
+      Nat.card {x : K // x * φ order48_c3Generator x *
+        φ order48_c3Generator (φ order48_c3Generator x) = 1} := by
+    apply Nat.card_congr
+    exact order48_subtypeIffEquiv
+      (order48_c3_action_cube_generator_sq_iff_norm_one φ)
+  omega
+
+/-- Thus the residual root count `9` is equivalent to a four-element norm
+kernel for an elementary abelian order-`16` kernel. -/
+theorem order48_c3_action_card_cube_roots_eq_nine_iff_norm_card_four
+    {K : Type} [CommGroup K] [Finite K]
+    (h2 : ∀ x : K, x ^ 2 = 1)
+    (φ : Multiplicative (ZMod 3) →* MulAut K) :
+    Nat.card {z : SemidirectProduct K (Multiplicative (ZMod 3)) φ //
+        z ^ 3 = 1} = 9 ↔
+      Nat.card {x : K // x * φ order48_c3Generator x *
+        φ order48_c3Generator (φ order48_c3Generator x) = 1} = 4 := by
+  rw [order48_c3_action_card_cube_roots_eq_one_add_twice_norm h2 φ]
+  omega
+
+/-- The order-three norm on a commutative kernel, regarded as a group
+homomorphism. -/
+noncomputable def order48_c3ActionNormHom
+    {K : Type} [CommGroup K]
+    (φ : Multiplicative (ZMod 3) →* MulAut K) : K →* K where
+  toFun x := x * φ order48_c3Generator x *
+    φ order48_c3Generator (φ order48_c3Generator x)
+  map_one' := by
+    rw [(φ order48_c3Generator).map_one]
+    rw [(φ order48_c3Generator).map_one]
+    group
+  map_mul' x y := by
+    rw [(φ order48_c3Generator).map_mul,
+      (φ order48_c3Generator).map_mul]
+    ac_rfl
+
+/-- For an exponent-two commutative kernel, the norm image is precisely the
+fixed subgroup of the action generator. -/
+theorem order48_c3ActionNormHom_range_eq_fixed
+    {K : Type} [CommGroup K]
+    (h2 : ∀ x : K, x ^ 2 = 1)
+    (φ : Multiplicative (ZMod 3) →* MulAut K) :
+    (order48_c3ActionNormHom φ).range =
+      {x : K | φ order48_c3Generator x = x} := by
+  ext y
+  constructor
+  · rintro ⟨x, rfl⟩
+    change φ order48_c3Generator
+      (x * φ order48_c3Generator x *
+        φ order48_c3Generator (φ order48_c3Generator x)) = _
+    rw [(φ order48_c3Generator).map_mul,
+      (φ order48_c3Generator).map_mul]
+    have hp := congrArg (fun a : MulAut K => a x)
+      (order48_c3_action_generator_pow_three φ)
+    have h3 : φ order48_c3Generator
+        (φ order48_c3Generator (φ order48_c3Generator x)) = x := by
+      simpa [order48_c3Generator, pow_succ, MulAut.mul_apply] using hp
+    rw [h3]
+    change _ = x * φ order48_c3Generator x *
+      φ order48_c3Generator (φ order48_c3Generator x)
+    ac_rfl
+  · intro hy
+    refine ⟨y, ?_⟩
+    change y * φ order48_c3Generator y *
+      φ order48_c3Generator (φ order48_c3Generator y) = y
+    rw [hy, hy]
+    have hy2 := h2 y
+    rw [pow_two] at hy2
+    simp [hy2]
+
+/-- On an elementary abelian kernel of order `16`, residual root count `9`
+forces the generator-fixed subgroup to have order `4`. -/
+theorem order48_c3_action_fixed_card_four_of_card_cube_roots_nine
+    {K : Type} [CommGroup K] [Finite K]
+    (hK : Nat.card K = 16) (h2 : ∀ x : K, x ^ 2 = 1)
+    (φ : Multiplicative (ZMod 3) →* MulAut K)
+    (hRoots : Nat.card {z : SemidirectProduct K (Multiplicative (ZMod 3)) φ //
+      z ^ 3 = 1} = 9) :
+    Nat.card {x : K // φ order48_c3Generator x = x} = 4 := by
+  have hker : Nat.card (order48_c3ActionNormHom φ).ker = 4 := by
+    have := (order48_c3_action_card_cube_roots_eq_nine_iff_norm_card_four
+      h2 φ).mp hRoots
+    simpa [order48_c3ActionNormHom, MonoidHom.mem_ker] using this
+  have hrange : Nat.card (order48_c3ActionNormHom φ).range = 4 := by
+    have hmul := (order48_c3ActionNormHom φ).ker.card_mul_index
+    rw [Subgroup.index_ker, hker, hK] at hmul
+    omega
+  have heq := order48_c3ActionNormHom_range_eq_fixed h2 φ
+  exact (Nat.card_congr (Equiv.setCongr heq)).symm.trans hrange
+
 end Smallgroups.UsefulTheorems

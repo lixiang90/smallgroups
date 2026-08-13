@@ -368,6 +368,18 @@ theorem order48_RM_G0_action_card_sylow_three :
     (by rw [Nat.card_eq_fintype_card]; decide) order48_RM_G0_action).mpr
     order48_RM_G0_action_card_cube_roots
 
+/-- Any elementary-abelian residual action has a four-element fixed subgroup.
+This is the structural input for the remaining `G₀` orbit calculation. -/
+theorem order48_RM_G0_fixed_card_four
+    (φ : Multiplicative (ZMod 3) →* MulAut order16_wild_C2pow4)
+    (hRoots : Nat.card {x : SemidirectProduct order16_wild_C2pow4
+      (Multiplicative (ZMod 3)) φ // x ^ 3 = 1} = 9) :
+    Nat.card {x : order16_wild_C2pow4 //
+      φ order48_c3Generator x = x} = 4 := by
+  apply order48_c3_action_fixed_card_four_of_card_cube_roots_nine
+    (by rw [Nat.card_eq_fintype_card]; decide)
+    (fun x => by revert x; decide) φ hRoots
+
 noncomputable def order48_RM_G0_splitEquiv :
     SemidirectProduct order16_wild_C2pow4
         (Multiplicative (ZMod 3)) order48_RM_G0_action ≃*
