@@ -67,10 +67,17 @@ private theorem order48_RN_kernelCandidate_index
     (i : Fin 14) (h : order48_RN_kernelCandidate i)
     (hi : i ≠ 0 ∧ i ≠ 1 ∧ i ≠ 6 ∧ i ≠ 7 ∧ i ≠ 13) :
     i = 11 ∨ i = 12 := by
-  fin_cases i <;> simp_all
-  all_goals
-    exact (@of_decide_eq_false _ (order48_RN_kernelCandidate_decidable _)
-      (by decide +kernel)) h
+  fin_cases i
+  all_goals first
+    | exact (hi.1 rfl).elim
+    | exact (hi.2.1 rfl).elim
+    | exact (hi.2.2.1 rfl).elim
+    | exact (hi.2.2.2.1 rfl).elim
+    | exact (hi.2.2.2.2 rfl).elim
+    | exact Or.inl rfl
+    | exact Or.inr rfl
+    | exact ((@of_decide_eq_false _ (order48_RN_kernelCandidate_decidable _)
+        (by decide +kernel)) h).elim
 
 private def order48_RN_pairRootsEquiv {G H : Type*} [Group G] [Group H]
     (e : G ≃* H) (z : G) (n : ℕ) :

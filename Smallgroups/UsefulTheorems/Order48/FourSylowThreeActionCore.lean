@@ -283,13 +283,15 @@ theorem order48_c3_action_cube_generator_sq_iff_norm_one
     simp only [SemidirectProduct.mul_left, SemidirectProduct.one_left] at h
     rw [(φ (order48_c3Generator ^ 2)).map_mul] at h
     rw [hc22, hc2] at h
-    convert h using 1 <;> ac_rfl
+    convert h using 1
+    all_goals ac_rfl
   · intro h
     apply SemidirectProduct.ext
     · simp only [SemidirectProduct.mul_left, SemidirectProduct.one_left]
       rw [(φ (order48_c3Generator ^ 2)).map_mul]
       rw [hc22, hc2]
-      convert h using 1 <;> ac_rfl
+      convert h using 1
+      all_goals ac_rfl
     · change (order48_c3Generator ^ 2) *
         ((order48_c3Generator ^ 2) * (order48_c3Generator ^ 2)) = 1
       decide
