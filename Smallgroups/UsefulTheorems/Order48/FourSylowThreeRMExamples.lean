@@ -295,18 +295,18 @@ theorem order48_RM_G10_action_card_sylow_three :
 
 /-! ### The `G₈` automorphism filter -/
 
-private noncomputable def order48_RM_G8_r : order16_wild_G8 :=
+noncomputable def order48_RM_G8_r : order16_wild_G8 :=
   SemidirectProduct.inl
     (Multiplicative.ofAdd (1 : ZMod 4), (1 : Multiplicative (ZMod 2)))
 
-private noncomputable def order48_RM_G8_s : order16_wild_G8 :=
+noncomputable def order48_RM_G8_s : order16_wild_G8 :=
   SemidirectProduct.inl
     ((1 : Multiplicative (ZMod 4)), Multiplicative.ofAdd (1 : ZMod 2))
 
-private noncomputable def order48_RM_G8_t : order16_wild_G8 :=
+noncomputable def order48_RM_G8_t : order16_wild_G8 :=
   SemidirectProduct.inr (Multiplicative.ofAdd (1 : ZMod 2))
 
-private theorem order48_RM_G8_hom_eval
+theorem order48_RM_G8_hom_eval
     {M : Type*} [Monoid M] (f : order16_wild_G8 →* M)
     (x : order16_wild_G8) :
     f x = f order48_RM_G8_r ^ (Multiplicative.toAdd x.left.1).val *

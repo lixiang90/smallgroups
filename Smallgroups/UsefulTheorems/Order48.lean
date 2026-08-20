@@ -27,4 +27,5 @@ import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionOrbits
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionClassifiers
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeG0
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeG7
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeG8
 import Smallgroups.UsefulTheorems.Order48.Classification
