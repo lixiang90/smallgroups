@@ -25,7 +25,7 @@ open SemidirectProduct
 
 /-- The order-three automorphism fixing the `C₄` factor and cycling the two
 elementary factors of `G₇ = C₄ × C₂ × C₂`. -/
-noncomputable def order48_RM_G7_tau3 : MulAut order16_wild_G7 where
+def order48_RM_G7_tau3 : MulAut order16_wild_G7 where
   toFun p := ((p.1.1, p.2), (p.1.2 * p.2))
   invFun p := ((p.1.1, p.1.2 * p.2), p.1.2)
   left_inv := by
@@ -50,6 +50,11 @@ noncomputable def order48_RM_G7_action :
   MonoidHom.mk' (fun x => order48_RM_G7_tau3 ^
     (Multiplicative.toAdd x).val)
     (fun a b => pow_val_add order48_RM_G7_tau3_pow_three a.toAdd b.toAdd)
+
+@[simp] theorem order48_RM_G7_action_generator :
+    order48_RM_G7_action order48_c3Generator = order48_RM_G7_tau3 := by
+  change order48_RM_G7_tau3 ^ (1 : ZMod 3).val = order48_RM_G7_tau3
+  norm_num [ZMod.val_one]
 
 noncomputable instance order48_RM_G7_action_fintype :
     Fintype (SemidirectProduct order16_wild_G7
