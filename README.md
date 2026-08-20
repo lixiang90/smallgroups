@@ -39,6 +39,7 @@ theorems:
 | `4·5²` | 100 | 16 | `P ⋊ H` with &#124;P&#124; = 25, &#124;H&#124; = 4 — 16 actions | `Order100` |
 | `2⁴` (Wild) | 16 | 14 | 5 abelian types + 9 `C₈`/`K₈`-extension types | `Order16_Wild` |
 | `3·8` | 24 | 15 | twelve `C₃ ⋊ H` cases, two normal Sylow-`2` cases, and `S₄` | `Order24` |
+| `2⁴·3` | 48 | 52 | 42 normal-Sylow-`3`, 2 sixteen-Sylow-`3`, and 8 four-Sylow-`3` types | `Order48` |
 | `12·7` | 84 | 15 | `C₇ ⋊ H` with &#124;H&#124; = 12 — 15 actions over the 5 order-12 types | `Order84` |
 | `5·12` | 60 | 13 | 12 solvable `ℤ/5 ⋊[φ] K` (`K` of order 12) + `A₅` | `Order60.Classification` |
 | `2·3²·5` | 90 | 10 | `N ⋊ C₂` with &#124;N&#124; = 45 — 10 involutions over the 2 order-45 types | `Order90` |
@@ -251,6 +252,18 @@ theorems:
     Sylow-`3` subgroups, which gives `S₄`. The representatives `order24_reps` are separated by the
     invariant tuple `(|Z(G)|, #{x²=1}, #{x³=1})`, giving `order24_reps_pairwise` and
     `order24_isClassif`. Instantiated at **24** in `Classifications_21_to_30/Order24`.
+
+  * `Order48/` — the **complete classification** of groups of order `48 = 2⁴ · 3` into
+    **fifty-two** classes, split by the number `n₃` of Sylow-`3` subgroups. The `n₃ = 1` branch
+    contributes `42` semidirect products `C₃ ⋊ K`, with `K` ranging over the fourteen order-`16`
+    groups and the actions classified up to automorphisms. The `n₃ = 16` branch contributes two
+    faithful `C₃`-action types with normal Sylow-`2` subgroup `(C₂)⁴` or `C₄ × C₄`. In the residual
+    `n₃ = 4` branch, the action on the four Sylow subgroups reduces the problem to central
+    extensions of three order-`24` quotient types; explicit cocycle and signed-cover normal forms
+    yield the remaining eight representatives. `order48_complete`, `order48_all_reps_pairwise`,
+    and `order48_isClassif` assemble the result. Instantiated at **48** in
+    `Classifications_41_to_50/Order48`, with a structural `Fin 52` indexing; alignment with GAP
+    SmallGroups numbering is intentionally deferred.
 
   * `Order54.lean` — the **complete classification** of groups of order `54 = 2 · 3³` into
     **fifteen** classes. The Sylow-`3` subgroup (order `27`) is unique and normal, so
