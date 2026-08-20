@@ -3,7 +3,7 @@ Copyright (c) 2026 Smallgroups contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
-import Smallgroups.UsefulTheorems.Order48.FourSylowThreeS4NormalForm
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeS4CoverPresentation
 
 /-!
 # A two-bit presentation for central double covers of `S₄`
@@ -238,5 +238,109 @@ theorem order48_RO_cocycle_normalized_two_bit_presentation
     exact ha2sign
   · rw [← hbcsq, ← habsq]
     exact ha2sign
+
+/-- The normalized central element and adjacent lifts generate the whole
+cocycle extension. -/
+theorem order48_RO_normalized_generators_generate
+    {f : order24_RO → order24_RO → ZMod 2} {hf : IsCentralCocycle f}
+    {z a b c : CocycleGroup f hf}
+    (hz : (CocycleGroup.rightHom (hf := hf)) z = 1)
+    (ha : (CocycleGroup.rightHom (hf := hf)) a = order48_RO_s01)
+    (hb : (CocycleGroup.rightHom (hf := hf)) b = order48_RO_s12)
+    (hc : (CocycleGroup.rightHom (hf := hf)) c = order48_RO_s23)
+    (hzne : z ≠ 1) :
+    Subgroup.closure (Set.range (order48_s4SignedGen z a b c)) = ⊤ := by
+  let K := Subgroup.closure (Set.range (order48_s4SignedGen z a b c))
+  have hzK : z ∈ K := Subgroup.subset_closure ⟨0, rfl⟩
+  have haK : a ∈ K := Subgroup.subset_closure ⟨1, rfl⟩
+  have hbK : b ∈ K := Subgroup.subset_closure ⟨2, rfl⟩
+  have hcK : c ∈ K := Subgroup.subset_closure ⟨3, rfl⟩
+  have hs4gen : Subgroup.closure
+      (Set.range (order48_s4NormalGen order48_RO_s01 order48_RO_s12
+        order48_RO_s23)) = ⊤ := by
+    have hgen : order48_s4NormalGen order48_RO_s01 order48_RO_s12
+        order48_RO_s23 =
+        (fun i : Fin 3 ↦ Equiv.swap i.castSucc i.succ) := by
+      funext i
+      fin_cases i <;> rfl
+    rw [hgen]
+    apply Subgroup.closure_eq_top_of_mclosure_eq_top
+    exact Equiv.Perm.mclosure_swap_castSucc_succ 3
+  have hmaptop : K.map (CocycleGroup.rightHom (hf := hf)) = ⊤ := by
+    apply top_unique
+    rw [← hs4gen, Subgroup.closure_le]
+    rintro q ⟨i, rfl⟩
+    fin_cases i
+    · exact ⟨a, haK, by simpa [order48_s4NormalGen] using ha⟩
+    · exact ⟨b, hbK, by simpa [order48_s4NormalGen] using hb⟩
+    · exact ⟨c, hcK, by simpa [order48_s4NormalGen] using hc⟩
+  rw [Subgroup.eq_top_iff']
+  intro x
+  have hxmap : x.snd ∈ K.map (CocycleGroup.rightHom (hf := hf)) := by
+    rw [hmaptop]
+    exact Subgroup.mem_top _
+  obtain ⟨k, hkK, hk⟩ := hxmap
+  let y := x * k⁻¹
+  have hysnd : y.snd = 1 := by
+    change x.snd * k.snd⁻¹ = 1
+    have hk' : k.snd = x.snd := hk
+    rw [hk']
+    group
+  have hyeq := order48_RO_snd_one_eq_zpow y hysnd
+  have hzCanonical : z = order48_RO_z hf := by
+    have hzker : z ∈ (CocycleGroup.rightHom (hf := hf)).ker := by
+      rw [MonoidHom.mem_ker]
+      exact hz
+    rw [CocycleGroup.ker_rightHom] at hzker
+    obtain ⟨m, hm⟩ := hzker
+    subst z
+    fin_cases m
+    · exfalso
+      apply hzne
+      change (CocycleGroup.inl (hf := hf)) 1 = 1
+      exact map_one _
+    · rfl
+  have hyK : y ∈ K := by
+    rw [hyeq, ← hzCanonical]
+    exact K.pow_mem hzK _
+  have hx : x = y * k := by
+    dsimp [y]
+    group
+  rw [hx]
+  exact K.mul_mem hyK hkK
+
+/-- Every RO cocycle extension is isomorphic to one of the four signed
+presentations. -/
+theorem order48_RO_cocycle_is_signed_presentation
+    (f : order24_RO → order24_RO → ZMod 2) (hf : IsCentralCocycle f) :
+    ∃ squareSign commutatorSign : Fin 2,
+      Nonempty (order48_s4CoverPresentation squareSign commutatorSign ≃*
+        CocycleGroup f hf) := by
+  obtain ⟨z, a, b, c, sq, cm, hzcenter, hz2, hzne, ha, hb, hc,
+    ha2, hb2, hc2, hab3, hbc3, hac⟩ :=
+    order48_RO_cocycle_normalized_two_bit_presentation f hf
+  let squareSign : Fin 2 := ⟨sq.val, sq.val_lt⟩
+  let commutatorSign : Fin 2 := ⟨cm.val, cm.val_lt⟩
+  have hzright : (CocycleGroup.rightHom (hf := hf)) z = 1 := by
+    change z.snd = 1
+    have hzcenterSnd : z.snd ∈ Subgroup.center order24_RO := by
+      rw [Subgroup.mem_center_iff] at hzcenter ⊢
+      intro q
+      exact congrArg (fun x : CocycleGroup f hf ↦ x.snd)
+        (hzcenter (⟨0, q⟩ : CocycleGroup f hf))
+    rw [Subgroup.card_eq_one.mp card_center_order24_RO] at hzcenterSnd
+    exact Subgroup.mem_bot.mp hzcenterSnd
+  have hgen := order48_RO_normalized_generators_generate hzright ha hb hc hzne
+  have hcard := (order48_RO_cocycle_card_and_sylow_three f hf).1
+  refine ⟨squareSign, commutatorSign, ?_⟩
+  apply nonempty_mulEquiv_s4CoverPresentation_of_card z a b c hcard squareSign
+    commutatorSign hzcenter hz2
+  · simpa [squareSign] using ha2
+  · simpa [squareSign] using hb2
+  · simpa [squareSign] using hc2
+  · exact hab3
+  · exact hbc3
+  · simpa [commutatorSign] using hac
+  · exact hgen
 
 end Smallgroups.UsefulTheorems

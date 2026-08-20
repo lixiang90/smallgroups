@@ -49,7 +49,7 @@ private def order48_s4NormalNext : Fin 3 → Fin 24 → Fin 24
   | 2, s => ![1, 0, 4, 8, 2, 6, 5, 9, 3, 7, 11, 10,
       13, 12, 16, 20, 14, 18, 17, 21, 15, 19, 23, 22] s
 
-private def order48_s4NormalGen : Fin 3 → H
+def order48_s4NormalGen : Fin 3 → H
   | 0 => a
   | 1 => b
   | 2 => c
@@ -369,7 +369,7 @@ private theorem order48_s4SignedNormal_transition
 private def order48_s4SignedNormal (z a b c : H) (q : Fin 2 × Fin 24) : H :=
   z ^ q.1.val * order48_s4Normal a b c q.2
 
-private def order48_s4SignedGen (z a b c : H) : Fin 4 → H
+def order48_s4SignedGen (z a b c : H) : Fin 4 → H
   | 0 => z
   | 1 => a
   | 2 => b
@@ -378,7 +378,7 @@ private def order48_s4SignedGen (z a b c : H) : Fin 4 → H
 /-- The signed type-`A₃` relations give an explicit 48-element spanning
 family.  This is the finite-presentation bound needed for central double
 covers of `S₄`. -/
-theorem natCard_le_48_of_s4_signed_coxeter_generators
+theorem finite_and_natCard_le_48_of_s4_signed_coxeter_generators
     (z : H) (squareSign commutatorSign : Fin 2)
     (hzcenter : z ∈ Subgroup.center H) (hz2 : z ^ 2 = 1)
     (ha : a ^ 2 = z ^ squareSign.val)
@@ -387,7 +387,7 @@ theorem natCard_le_48_of_s4_signed_coxeter_generators
     (hab : (a * b) ^ 3 = 1) (hbc : (b * c) ^ 3 = 1)
     (hac : a * c * a⁻¹ * c⁻¹ = z ^ commutatorSign.val)
     (hgen : Subgroup.closure (Set.range (order48_s4SignedGen z a b c)) = ⊤) :
-    Nat.card H ≤ 48 := by
+    Finite H ∧ Nat.card H ≤ 48 := by
   have hzcomm (x : H) : Commute z x :=
     (Subgroup.mem_center_iff.mp hzcenter x).symm
   have hzz : z * z = 1 := by simpa [pow_two] using hz2
@@ -528,8 +528,23 @@ theorem natCard_le_48_of_s4_signed_coxeter_generators
       simpa [order48_s4SignedNormal, order48_s4Normal, order48_s4NormalA,
         order48_s4NormalB, order48_s4NormalC] using hq.symm⟩
   letI : Finite H := Finite.of_surjective (order48_s4SignedNormal z a b c) hnormalSurj
+  refine ⟨inferInstance, ?_⟩
   simpa [Nat.card_prod] using
     Nat.card_le_card_of_surjective (order48_s4SignedNormal z a b c) hnormalSurj
+
+/-- Cardinal-only form of the signed normal-form theorem. -/
+theorem natCard_le_48_of_s4_signed_coxeter_generators
+    (z : H) (squareSign commutatorSign : Fin 2)
+    (hzcenter : z ∈ Subgroup.center H) (hz2 : z ^ 2 = 1)
+    (ha : a ^ 2 = z ^ squareSign.val)
+    (hb : b ^ 2 = z ^ squareSign.val)
+    (hc : c ^ 2 = z ^ squareSign.val)
+    (hab : (a * b) ^ 3 = 1) (hbc : (b * c) ^ 3 = 1)
+    (hac : a * c * a⁻¹ * c⁻¹ = z ^ commutatorSign.val)
+    (hgen : Subgroup.closure (Set.range (order48_s4SignedGen z a b c)) = ⊤) :
+    Nat.card H ≤ 48 :=
+  (finite_and_natCard_le_48_of_s4_signed_coxeter_generators a b c z squareSign
+    commutatorSign hzcenter hz2 ha hb hc hab hbc hac hgen).2
 
 end S4NormalForm
 
