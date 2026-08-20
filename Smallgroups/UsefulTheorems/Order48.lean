@@ -31,4 +31,5 @@ import Smallgroups.UsefulTheorems.Order48.FourSylowThreeG8
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeG10
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeG11
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRMComplete
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRNComplete
 import Smallgroups.UsefulTheorems.Order48.Classification

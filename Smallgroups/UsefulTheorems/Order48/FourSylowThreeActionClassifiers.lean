@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionOrbits
-import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRN
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRNKernelTypes
 
 /-!
 # Interfaces from Wild action orbits to cocycle exhaustiveness
@@ -36,6 +36,7 @@ def Order48RMWildActionComplete : Prop :=
 
 def Order48RNWildActionComplete : Prop :=
   ∀ (i : Fin 14),
+    (i = 11 ∨ i = 12) →
     ∀ phi : Multiplicative (ZMod 3) →* MulAut (order16_wild_reps i),
       Nat.card {x : SemidirectProduct (order16_wild_reps i)
         (Multiplicative (ZMod 3)) phi // x ^ 3 = 1} = 9 →
@@ -71,6 +72,16 @@ theorem order48_RM_wild_action_complete_of_kernel_cases
   · exact h8 φ hRoots
   · exact h10 φ hRoots
   · exact h11 φ hRoots
+
+/-- Assemble the two central-double-cover kernel classifiers in the RN branch. -/
+theorem order48_RN_wild_action_complete_of_kernel_cases
+    (h11 : Order48WildKernelActionComplete 11)
+    (h12 : Order48WildKernelActionComplete 12) :
+    Order48RNWildActionComplete := by
+  intro i hi φ hRoots
+  rcases hi with rfl | rfl
+  · exact h11 φ hRoots
+  · exact h12 φ hRoots
 
 theorem order48_RM_cocycle_exhaustive_of_wild_action_complete
     (hOrbit : Order48RMWildActionComplete) :
@@ -114,7 +125,8 @@ theorem order48_RN_cocycle_exhaustive_of_wild_action_complete
   have hRootsA := (order48_c3_action_card_sylow_three_eq_four_iff
     (card_order16_wild_reps i)
     (order48_RN_wildAction f hf i eP K eK)).mp hSylA
-  obtain ⟨j, eA⟩ := hOrbit i
+  have hi := order48_RN_cocycle_kernel_index_restriction f hf i eP
+  obtain ⟨j, eA⟩ := hOrbit i hi
     (order48_RN_wildAction f hf i eP K eK) hRootsA
   exact ⟨j, ⟨eG.some.trans eA.some⟩⟩
 
