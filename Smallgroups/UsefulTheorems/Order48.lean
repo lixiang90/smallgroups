@@ -23,6 +23,7 @@ import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRM
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRMExamples
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRN
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRO
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeS4NormalForm
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeROPresentation
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionOrbits
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionClassifiers
