@@ -57,6 +57,108 @@ private def order48_G7_word
     b ^ (Multiplicative.toAdd x.1.2).val *
     c ^ (Multiplicative.toAdd x.2).val
 
+private abbrev order48_G7_triple :=
+  order16_wild_G7 × order16_wild_G7 × order16_wild_G7
+
+private def order48_G7_e (i : ZMod 4) (j k : ZMod 2) : order16_wild_G7 :=
+  ((Multiplicative.ofAdd i, Multiplicative.ofAdd j), Multiplicative.ofAdd k)
+
+private def order48_G7_elements : List order16_wild_G7 := [
+  order48_G7_e 0 0 0, order48_G7_e 0 0 1,
+  order48_G7_e 0 1 0, order48_G7_e 0 1 1,
+  order48_G7_e 1 0 0, order48_G7_e 1 0 1,
+  order48_G7_e 1 1 0, order48_G7_e 1 1 1,
+  order48_G7_e 2 0 0, order48_G7_e 2 0 1,
+  order48_G7_e 2 1 0, order48_G7_e 2 1 1,
+  order48_G7_e 3 0 0, order48_G7_e 3 0 1,
+  order48_G7_e 3 1 0, order48_G7_e 3 1 1]
+
+/-- GAP was used to discover these 32 pairs.  Lean checks below, in the kernel,
+that the right-hand triple defines the required conjugator for the left-hand
+order-three generator images. -/
+private def order48_G7_conjugatorTable :
+    List (order48_G7_triple × order48_G7_triple) := [
+  ((order48_G7_e 1 1 0, order48_G7_e 2 0 1, order48_G7_e 0 1 1),
+    (order48_G7_e 1 0 1, order48_G7_e 2 1 1, order48_G7_e 0 1 0)),
+  ((order48_G7_e 1 0 1, order48_G7_e 0 1 1, order48_G7_e 2 1 0),
+    (order48_G7_e 1 1 0, order48_G7_e 2 1 1, order48_G7_e 0 0 1)),
+  ((order48_G7_e 3 1 0, order48_G7_e 2 0 1, order48_G7_e 2 1 1),
+    (order48_G7_e 3 0 1, order48_G7_e 2 1 1, order48_G7_e 2 1 0)),
+  ((order48_G7_e 3 0 1, order48_G7_e 2 1 1, order48_G7_e 2 1 0),
+    (order48_G7_e 3 1 0, order48_G7_e 2 1 1, order48_G7_e 2 0 1)),
+  ((order48_G7_e 1 1 0, order48_G7_e 0 0 1, order48_G7_e 0 1 1),
+    (order48_G7_e 3 0 1, order48_G7_e 0 1 1, order48_G7_e 0 1 0)),
+  ((order48_G7_e 1 0 1, order48_G7_e 0 1 1, order48_G7_e 0 1 0),
+    (order48_G7_e 3 1 0, order48_G7_e 0 1 1, order48_G7_e 0 0 1)),
+  ((order48_G7_e 3 1 0, order48_G7_e 0 0 1, order48_G7_e 2 1 1),
+    (order48_G7_e 1 0 1, order48_G7_e 0 1 1, order48_G7_e 2 1 0)),
+  ((order48_G7_e 3 0 1, order48_G7_e 2 1 1, order48_G7_e 0 1 0),
+    (order48_G7_e 1 1 0, order48_G7_e 0 1 1, order48_G7_e 2 0 1)),
+  ((order48_G7_e 1 0 0, order48_G7_e 0 0 1, order48_G7_e 2 1 1),
+    (order48_G7_e 1 0 0, order48_G7_e 2 0 1, order48_G7_e 0 1 1)),
+  ((order48_G7_e 1 0 0, order48_G7_e 2 0 1, order48_G7_e 0 1 1),
+    (order48_G7_e 3 0 0, order48_G7_e 2 0 1, order48_G7_e 2 1 1)),
+  ((order48_G7_e 1 1 1, order48_G7_e 2 1 1, order48_G7_e 0 1 0),
+    (order48_G7_e 1 0 1, order48_G7_e 2 1 0, order48_G7_e 0 1 1)),
+  ((order48_G7_e 3 1 1, order48_G7_e 2 1 1, order48_G7_e 2 1 0),
+    (order48_G7_e 1 0 1, order48_G7_e 0 1 0, order48_G7_e 2 1 1)),
+  ((order48_G7_e 1 0 0, order48_G7_e 0 1 1, order48_G7_e 2 1 0),
+    (order48_G7_e 1 0 0, order48_G7_e 2 1 1, order48_G7_e 0 0 1)),
+  ((order48_G7_e 1 0 0, order48_G7_e 2 1 1, order48_G7_e 0 1 0),
+    (order48_G7_e 1 0 0, order48_G7_e 0 1 1, order48_G7_e 2 0 1)),
+  ((order48_G7_e 1 1 1, order48_G7_e 0 0 1, order48_G7_e 2 1 1),
+    (order48_G7_e 1 1 0, order48_G7_e 2 0 1, order48_G7_e 0 1 1)),
+  ((order48_G7_e 3 1 1, order48_G7_e 2 0 1, order48_G7_e 2 1 1),
+    (order48_G7_e 1 1 0, order48_G7_e 0 0 1, order48_G7_e 2 1 1)),
+  ((order48_G7_e 1 0 0, order48_G7_e 0 0 1, order48_G7_e 0 1 1),
+    (order48_G7_e 3 0 0, order48_G7_e 0 0 1, order48_G7_e 0 1 1)),
+  ((order48_G7_e 1 0 0, order48_G7_e 2 0 1, order48_G7_e 2 1 1),
+    (order48_G7_e 1 0 0, order48_G7_e 0 0 1, order48_G7_e 2 1 1)),
+  ((order48_G7_e 1 1 1, order48_G7_e 0 1 1, order48_G7_e 0 1 0),
+    (order48_G7_e 3 0 1, order48_G7_e 0 1 0, order48_G7_e 0 1 1)),
+  ((order48_G7_e 3 1 1, order48_G7_e 0 1 1, order48_G7_e 2 1 0),
+    (order48_G7_e 3 0 1, order48_G7_e 2 1 0, order48_G7_e 2 1 1)),
+  ((order48_G7_e 1 0 0, order48_G7_e 0 1 1, order48_G7_e 0 1 0),
+    (order48_G7_e 3 0 0, order48_G7_e 0 1 1, order48_G7_e 0 0 1)),
+  ((order48_G7_e 1 0 0, order48_G7_e 2 1 1, order48_G7_e 2 1 0),
+    (order48_G7_e 3 0 0, order48_G7_e 2 1 1, order48_G7_e 2 0 1)),
+  ((order48_G7_e 1 1 1, order48_G7_e 0 0 1, order48_G7_e 0 1 1),
+    (order48_G7_e 3 1 0, order48_G7_e 0 0 1, order48_G7_e 0 1 1)),
+  ((order48_G7_e 3 1 1, order48_G7_e 2 0 1, order48_G7_e 0 1 1),
+    (order48_G7_e 3 1 0, order48_G7_e 2 0 1, order48_G7_e 2 1 1)),
+  ((order48_G7_e 1 1 0, order48_G7_e 0 1 1, order48_G7_e 0 1 0),
+    (order48_G7_e 3 1 1, order48_G7_e 0 0 1, order48_G7_e 0 1 0)),
+  ((order48_G7_e 1 1 0, order48_G7_e 2 1 1, order48_G7_e 2 1 0),
+    (order48_G7_e 1 1 1, order48_G7_e 2 0 1, order48_G7_e 0 1 0)),
+  ((order48_G7_e 1 0 1, order48_G7_e 0 0 1, order48_G7_e 0 1 1),
+    (order48_G7_e 3 1 1, order48_G7_e 0 1 0, order48_G7_e 0 0 1)),
+  ((order48_G7_e 1 0 1, order48_G7_e 2 0 1, order48_G7_e 2 1 1),
+    (order48_G7_e 1 1 1, order48_G7_e 2 1 0, order48_G7_e 0 0 1)),
+  ((order48_G7_e 3 1 0, order48_G7_e 2 1 1, order48_G7_e 0 1 0),
+    (order48_G7_e 3 1 1, order48_G7_e 2 0 1, order48_G7_e 2 1 0)),
+  ((order48_G7_e 3 1 0, order48_G7_e 0 1 1, order48_G7_e 2 1 0),
+    (order48_G7_e 1 1 1, order48_G7_e 0 0 1, order48_G7_e 2 1 0)),
+  ((order48_G7_e 3 0 1, order48_G7_e 2 0 1, order48_G7_e 0 1 1),
+    (order48_G7_e 1 1 1, order48_G7_e 0 1 0, order48_G7_e 2 0 1)),
+  ((order48_G7_e 3 0 1, order48_G7_e 0 0 1, order48_G7_e 2 1 1),
+    (order48_G7_e 3 1 1, order48_G7_e 2 1 0, order48_G7_e 2 0 1))]
+
+private def order48_G7_preimage
+    (u v w y : order16_wild_G7) : order16_wild_G7 :=
+  (order48_G7_elements.find? (fun x => order48_G7_word u v w x = y)).getD 1
+
+private def order48_G7_inverseImages (t : order48_G7_triple) :
+    order48_G7_triple :=
+  (order48_G7_preimage t.1 t.2.1 t.2.2 order48_G7_a,
+    order48_G7_preimage t.1 t.2.1 t.2.2 order48_G7_b,
+    order48_G7_preimage t.1 t.2.1 t.2.2 order48_G7_c)
+
+private def order48_G7_conjugatorImages (a b c : order16_wild_G7) :
+    order48_G7_triple :=
+  match order48_G7_conjugatorTable.find? (fun p => p.1 = (a, b, c)) with
+  | some p => order48_G7_inverseImages p.2
+  | none => (order48_G7_a, order48_G7_b, order48_G7_c)
+
 private def order48_decidableExistsThree {α : Type*} [Fintype α]
     (p : α → α → α → Prop) (hp : ∀ a b c, Decidable (p a b c)) :
     Decidable (∃ a b c, p a b c) :=
@@ -103,7 +205,7 @@ private def order48_G7_conjugacyWitness
       (order48_RM_G7_tau3 u) (order48_RM_G7_tau3 v)
       (order48_RM_G7_tau3 w) x)
 
-private def order48_G7_coordinateComplete : Prop :=
+private def order48_G7_coordinatesListed : Prop :=
   ∀ (a b c : order16_wild_G7),
     a ^ 4 = 1 →
     b ^ 2 = 1 →
@@ -118,21 +220,15 @@ private def order48_G7_coordinateComplete : Prop :=
       (order48_G7_word a b c
         (order48_G7_word a b c order48_G7_c)) = order48_G7_c →
     ¬(a = order48_G7_a ∧ b = order48_G7_b ∧ c = order48_G7_c) →
-    (∀ x y, order48_G7_word a b c x =
-      order48_G7_word a b c y → x = y) →
-    (∀ x y, order48_G7_word a b c (x * y) =
-      order48_G7_word a b c x * order48_G7_word a b c y) →
-    ∃ u v w, order48_G7_conjugacyWitness a b c u v w
+    (∀ x, order48_G7_word a b c x = 1 → x = 1) →
+    (order48_G7_conjugatorTable.find?
+      (fun p => p.1 = (a, b, c))).isSome = true
 
-private def order48_G7_coordinateComplete_decidable :
-    Decidable order48_G7_coordinateComplete :=
+private def order48_G7_coordinatesListed_decidable :
+    Decidable order48_G7_coordinatesListed :=
   order48_decidableForallThree _ (fun a b c => by
-    let q := order48_G7_conjugacyWitness a b c
-    let hq : Decidable (∃ u v w, q u v w) :=
-      order48_decidableExistsThree q (fun _ _ _ => by
-        dsimp [q, order48_G7_conjugacyWitness]
-        infer_instance)
-    letI := hq
+    have hq : Decidable ((order48_G7_conjugatorTable.find?
+        (fun p => p.1 = (a, b, c))).isSome = true) := inferInstance
     have ha4 : Decidable (a ^ 4 = 1) := inferInstance
     have hb2 : Decidable (b ^ 2 = 1) := inferInstance
     have hc2 : Decidable (c ^ 2 = 1) := inferInstance
@@ -145,28 +241,45 @@ private def order48_G7_coordinateComplete_decidable :
     have hcc : Decidable (order48_G7_word a b c
         (order48_G7_word a b c
           (order48_G7_word a b c order48_G7_c)) = order48_G7_c) := inferInstance
-    have hi : Decidable (∀ x y, order48_G7_word a b c x =
-        order48_G7_word a b c y → x = y) := inferInstance
-    have hm : Decidable (∀ x y, order48_G7_word a b c (x * y) =
-        order48_G7_word a b c x * order48_G7_word a b c y) := inferInstance
+    have hk : Decidable (∀ x, order48_G7_word a b c x = 1 → x = 1) :=
+      inferInstance
     have hn : Decidable
         (¬(a = order48_G7_a ∧ b = order48_G7_b ∧ c = order48_G7_c)) :=
       inferInstance
     exact order48_decidableImp ha4 <| order48_decidableImp hb2 <|
       order48_decidableImp hc2 <| order48_decidableImp hca <|
       order48_decidableImp hcb <| order48_decidableImp hcc <|
-      order48_decidableImp hn <| order48_decidableImp hi <|
-      order48_decidableImp hm hq)
+      order48_decidableImp hn <| order48_decidableImp hk hq)
 
-private def order48_G7_coordinateComplete_check : Bool :=
-  @decide order48_G7_coordinateComplete order48_G7_coordinateComplete_decidable
+private theorem order48_G7_coordinatesListed_proof :
+    order48_G7_coordinatesListed := by
+  exact @of_decide_eq_true order48_G7_coordinatesListed
+    order48_G7_coordinatesListed_decidable (by decide +kernel)
 
-private theorem order48_G7_coordinateComplete_proof :
-    order48_G7_coordinateComplete := by
-  exact @of_decide_eq_true order48_G7_coordinateComplete
-    order48_G7_coordinateComplete_decidable (by
-  change order48_G7_coordinateComplete_check = true
-  native_decide)
+private def order48_G7_tableCorrect : Prop :=
+  ∀ a b c : order16_wild_G7,
+    (order48_G7_conjugatorTable.find?
+      (fun p => p.1 = (a, b, c))).isSome = true →
+    let t := order48_G7_conjugatorImages a b c
+    order48_G7_conjugacyWitness a b c t.1 t.2.1 t.2.2
+
+private def order48_G7_tableCorrect_decidable :
+    Decidable order48_G7_tableCorrect :=
+  order48_decidableForallThree _ (fun a b c => by
+    let t := order48_G7_conjugatorImages a b c
+    have hp : Decidable ((order48_G7_conjugatorTable.find?
+        (fun p => p.1 = (a, b, c))).isSome = true) := inferInstance
+    have hq : Decidable (order48_G7_conjugacyWitness
+        a b c t.1 t.2.1 t.2.2) := by
+      dsimp [order48_G7_conjugacyWitness]
+      infer_instance
+    exact order48_decidableImp hp hq)
+
+set_option maxHeartbeats 800000 in
+-- Kernel evaluation validates the 32 explicit GAP-discovered conjugator rows.
+private theorem order48_G7_tableCorrect_proof : order48_G7_tableCorrect := by
+  exact @of_decide_eq_true order48_G7_tableCorrect
+    order48_G7_tableCorrect_decidable (by decide +kernel)
 
 private theorem order48_G7_order_three_coordinates
     (a b c : order16_wild_G7)
@@ -183,7 +296,7 @@ private theorem order48_G7_order_three_coordinates
     (hne : ¬(a = order48_G7_a ∧ b = order48_G7_b ∧ c = order48_G7_c))
     (hinj : ∀ x y, order48_G7_word a b c x =
       order48_G7_word a b c y → x = y)
-    (hmulIn : ∀ x y, order48_G7_word a b c (x * y) =
+    (_hmulIn : ∀ x y, order48_G7_word a b c (x * y) =
       order48_G7_word a b c x * order48_G7_word a b c y) :
     ∃ (u v w : order16_wild_G7),
       (∀ x y, order48_G7_word u v w x =
@@ -194,10 +307,16 @@ private theorem order48_G7_order_three_coordinates
         order48_G7_word
           (order48_RM_G7_tau3 u) (order48_RM_G7_tau3 v)
           (order48_RM_G7_tau3 w) x) := by
-  obtain ⟨u, v, w, _, _, _, hinj', hmul', hinter⟩ :=
-    order48_G7_coordinateComplete_proof a b c ha4 hb2 hc2
-      hcubeA hcubeB hcubeC hne hinj hmulIn
-  exact ⟨u, v, w, hinj', hmul', hinter⟩
+  let t := order48_G7_conjugatorImages a b c
+  have hker : ∀ y, order48_G7_word a b c y = 1 → y = 1 := by
+    intro y hy
+    apply hinj y 1
+    simpa [order48_G7_word] using hy
+  have hlisted := order48_G7_coordinatesListed_proof a b c ha4 hb2 hc2
+    hcubeA hcubeB hcubeC hne hker
+  have ht := order48_G7_tableCorrect_proof a b c hlisted
+  rcases ht with ⟨_, _, _, hinj', hmul', hinter⟩
+  exact ⟨t.1, t.2.1, t.2.2, hinj', hmul', hinter⟩
 
 private theorem order48_G7_action_conjugate
     (φ : Multiplicative (ZMod 3) →* MulAut order16_wild_G7)
