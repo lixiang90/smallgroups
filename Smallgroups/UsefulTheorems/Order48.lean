@@ -25,6 +25,7 @@ import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRN
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRO
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeS4NormalForm
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeROPresentation
+import Smallgroups.UsefulTheorems.Order48.FourSylowThreeROComplete
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionOrbits
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeActionClassifiers
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeG0
@@ -35,3 +36,4 @@ import Smallgroups.UsefulTheorems.Order48.FourSylowThreeG11
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRMComplete
 import Smallgroups.UsefulTheorems.Order48.FourSylowThreeRNComplete
 import Smallgroups.UsefulTheorems.Order48.Classification
+import Smallgroups.UsefulTheorems.Order48.Complete

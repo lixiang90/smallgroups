@@ -366,14 +366,47 @@ private theorem order48_s4SignedNormal_transition
       t, u, haa, hbb, hcc, haa', hbb', hcc', haba', hbcb', hca', hcbac,
       haba0, hbcb0, hca0, hcbac0, hzz, (hzcomm _).eq, mul_assoc]
 
-private def order48_s4SignedNormal (z a b c : H) (q : Fin 2 × Fin 24) : H :=
+def order48_s4SignedNormal (z a b c : H) (q : Fin 2 × Fin 24) : H :=
   z ^ q.1.val * order48_s4Normal a b c q.2
+
+@[simp] theorem map_order48_s4SignedNormal
+    {Q : Type*} [Group Q] (phi : H →* Q) (z : H) (q : Fin 2 × Fin 24) :
+    phi (order48_s4SignedNormal z a b c q) =
+      order48_s4SignedNormal (phi z) (phi a) (phi b) (phi c) q := by
+  rcases q with ⟨e, s⟩
+  fin_cases e <;> fin_cases s <;>
+    simp [order48_s4SignedNormal, order48_s4Normal, order48_s4NormalA,
+      order48_s4NormalB, order48_s4NormalC]
 
 def order48_s4SignedGen (z a b c : H) : Fin 4 → H
   | 0 => z
   | 1 => a
   | 2 => b
   | 3 => c
+
+/-- Surjectivity of the explicit 48-state normal-form map certifies that the
+four displayed elements generate.  This lets concrete finite models use a
+small kernel-checked equality table without deciding subgroup closure. -/
+theorem s4_signed_generators_generate_of_normal_surjective
+    (z : H)
+    (hsurj : Function.Surjective (order48_s4SignedNormal z a b c)) :
+    Subgroup.closure (Set.range (order48_s4SignedGen z a b c)) = ⊤ := by
+  let K := Subgroup.closure (Set.range (order48_s4SignedGen z a b c))
+  have hzK : z ∈ K := Subgroup.subset_closure ⟨0, rfl⟩
+  have haK : a ∈ K := Subgroup.subset_closure ⟨1, rfl⟩
+  have hbK : b ∈ K := Subgroup.subset_closure ⟨2, rfl⟩
+  have hcK : c ∈ K := Subgroup.subset_closure ⟨3, rfl⟩
+  rw [Subgroup.eq_top_iff']
+  intro x
+  obtain ⟨⟨e, s⟩, rfl⟩ := hsurj x
+  have hA (i : Fin 2) : order48_s4NormalA a i ∈ K := by
+    fin_cases i <;> simp [order48_s4NormalA, haK]
+  have hB (i : Fin 3) : order48_s4NormalB a b i ∈ K := by
+    fin_cases i <;> simp [order48_s4NormalB, haK, hbK, K.mul_mem]
+  have hC (i : Fin 4) : order48_s4NormalC a b c i ∈ K := by
+    fin_cases i <;> simp [order48_s4NormalC, haK, hbK, hcK, K.mul_mem]
+  apply K.mul_mem (K.pow_mem hzK _)
+  exact K.mul_mem (K.mul_mem (hA _) (hB _)) (hC _)
 
 /-- The signed type-`A₃` relations give an explicit 48-element spanning
 family.  This is the finite-presentation bound needed for central double
