@@ -405,6 +405,7 @@ private theorem order48_RO11_relations :
 
 set_option maxRecDepth 10000 in
 set_option maxHeartbeats 4000000 in
+-- Kernel-checking the 96-by-48 parent normal-form cover needs extra reductions.
 private theorem order48_RO11_generate :
     Subgroup.closure (Set.range (order48_s4SignedGen order48_RO11_z
       order48_RO11_a order48_RO11_b order48_RO11_c)) = ⊤ := by
