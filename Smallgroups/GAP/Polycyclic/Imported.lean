@@ -31,6 +31,7 @@ import Smallgroups.GAP.Polycyclic.Imported.Order26
 import Smallgroups.GAP.Polycyclic.Imported.Order26Match
 import Smallgroups.GAP.Polycyclic.Imported.Order27
 import Smallgroups.GAP.Polycyclic.Imported.Order27Match
+import Smallgroups.GAP.Polycyclic.Imported.Order32
 import Smallgroups.GAP.Polycyclic.Imported.Order33
 import Smallgroups.GAP.Polycyclic.Imported.Order33Match
 import Smallgroups.GAP.Polycyclic.Imported.Order34

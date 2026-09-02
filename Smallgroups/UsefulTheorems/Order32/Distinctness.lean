@@ -32,9 +32,10 @@ been constructed as descendants of the 14 order-16 parents. Of these, 4 pairs tu
 to be literally the same Lean type (the same abelian group of order 32 is genuinely
 reachable as a central extension of two different order-16 quotients), and one further
 pair (`G1`'s `C₈×C₄` and `G13`'s `C₄×C₈`) is isomorphic via a plain `Prod.swap` despite
-being different Lean types — leaving **31 distinct concrete types**. This file proves
-those 31 pairwise non-isomorphic. This is NOT yet `IsClassif 32` — many cocycle-bit
-branches remain unconstructed; the full classification is expected to have 51 classes.
+being different Lean types — leaving 31 candidate concrete types. This file proves a
+**25-member subfamily** pairwise non-isomorphic. This is NOT yet `IsClassif 32` — four
+constructed candidates remain parked in unresolved ties, and many cocycle-bit branches
+remain unconstructed; the full classification has 51 classes.
 
 The dropped duplicates (kept under the lower-numbered parent):
 * `G0`'s `C₄×C₂×C₂×C₂` branch = `G7`'s 3rd branch (`G0.lean:40`, `G7.lean:37-38`).
@@ -56,6 +57,8 @@ The dropped duplicates (kept under the lower-numbered parent):
   newly-added `Nat.card (frattini ·)` invariant (`PGroupGeneration/Frattini.lean`,
   `frattini_card_eq_of_mulEquiv`) is appended as a 6th coordinate — this is the one place
   the p-group-generation Frattini toolkit is actually invoked for distinctness.
+* One formerly tied pair is separated by the kernel-checked count of commuting ordered
+  pairs `(x,y)` satisfying `x²=1` and `y⁴=1` (256 versus 192).
 -/
 
 namespace Smallgroups.UsefulTheorems
@@ -514,9 +517,10 @@ theorem card_order32_new_reps (i : Fin 13) : Nat.card (order32_new_reps i) = 32 
       | exact card_order32_k8c4_psi6
       | exact card_order32_k8ydbl_psi6
 
-/-! ### Distinctness of 9 of the 13 genuinely-new representatives (partial)
+/-! ### Initial coarse-invariant pass on 9 of the 13 genuinely-new representatives
 
-Two ties remain **unresolved** among the 13 genuinely-new representatives, both tied on
+At this stage two ties remain unresolved among the 13 genuinely-new representatives,
+both tied on
 the `(|Z(·)|, pow_eq_one_card _ 2, _ 4, sq_image_card _)` tuple:
 
 * `order32_k8c4_psi5` vs `order32_k8c4_psi6` — both `(8, 8, 32, 4)`.
@@ -528,7 +532,8 @@ automorphism of their shared normal factor `K₈`: any such automorphism would f
 instead of `C₄`), contradicting their already-proven distinctness
 (`order16_wild_pairwise_noniso`). So this pair is either separated by a strictly finer
 invariant (e.g. `Nat.card (frattini ·)`, untested) or requires some other argument.
-The `k8ydbl_psi3`/`psi6` pair's status is unknown. **Both are left open.**
+The `k8ydbl_psi3`/`psi6` pair's status is unknown.  The first pair is resolved later in
+this file by a powered-commuting-pair count; the second remains open.
 
 This section proves distinctness only for the remaining 9 representatives (indices `0`–`8`
 of `order32_new_reps`), via the same 4-tuple invariant. -/
@@ -650,6 +655,120 @@ theorem order32_new_reps_resolved_pairwise : PairwiseNonMulEquiv order32_new_rep
     have hinj : Function.Injective order32_new_invariant_table := by decide
     exact hinj hij
 
+/-! ### Resolving the `k8c4_psi5` / `k8c4_psi6` tie
+
+The old four-coordinate invariant gives `(8, 8, 32, 4)` for both groups.  Counting
+ordered commuting pairs with the first element of exponent dividing `m` and the second
+of exponent dividing `n` is a finer isomorphism invariant.  At `(m,n)=(2,4)` the two
+values are `256` and `192`. -/
+
+noncomputable def order32PoweredCommutingPairCard (H : Type*) [Group H]
+    (m n : ℕ) : ℕ :=
+  Nat.card {p : H × H //
+    p.1 * p.2 = p.2 * p.1 ∧ p.1 ^ m = 1 ∧ p.2 ^ n = 1}
+
+noncomputable def order32PoweredCommutingPairEquivOfMulEquiv
+    {H K : Type*} [Group H] [Group K] (m n : ℕ) (e : H ≃* K) :
+    {p : H × H // p.1 * p.2 = p.2 * p.1 ∧ p.1 ^ m = 1 ∧ p.2 ^ n = 1} ≃
+      {p : K × K // p.1 * p.2 = p.2 * p.1 ∧ p.1 ^ m = 1 ∧ p.2 ^ n = 1} where
+  toFun p := ⟨(e p.1.1, e p.1.2), by
+    refine ⟨?_, ?_, ?_⟩
+    · simpa [map_mul] using congrArg e p.2.1
+    · rw [← map_pow, p.2.2.1, map_one]
+    · rw [← map_pow, p.2.2.2, map_one]⟩
+  invFun p := ⟨(e.symm p.1.1, e.symm p.1.2), by
+    refine ⟨?_, ?_, ?_⟩
+    · simpa [map_mul] using congrArg e.symm p.2.1
+    · rw [← map_pow]
+      exact e.injective (by simp [p.2.2.1])
+    · rw [← map_pow]
+      exact e.injective (by simp [p.2.2.2])⟩
+  left_inv p := by ext <;> simp
+  right_inv p := by ext <;> simp
+
+theorem order32PoweredCommutingPairCard_eq_of_mulEquiv
+    {H K : Type*} [Group H] [Group K] (m n : ℕ) (e : H ≃* K) :
+    order32PoweredCommutingPairCard H m n = order32PoweredCommutingPairCard K m n :=
+  Nat.card_congr (order32PoweredCommutingPairEquivOfMulEquiv m n e)
+
+set_option maxHeartbeats 4000000 in -- finite count over 32² concrete pairs
+private theorem powered_commuting_pair_psi5 :
+    order32PoweredCommutingPairCard order32_k8c4_psi5 2 4 = 256 := by
+  rw [order32PoweredCommutingPairCard, Nat.card_eq_fintype_card]
+  decide +kernel
+
+set_option maxHeartbeats 4000000 in -- finite count over 32² concrete pairs
+private theorem powered_commuting_pair_psi6 :
+    order32PoweredCommutingPairCard order32_k8c4_psi6 2 4 = 192 := by
+  rw [order32PoweredCommutingPairCard, Nat.card_eq_fintype_card]
+  decide +kernel
+
+theorem order32_k8c4_psi5_not_equiv_psi6 :
+    ¬ Nonempty (order32_k8c4_psi5 ≃* order32_k8c4_psi6) := by
+  rintro ⟨e⟩
+  have h := order32PoweredCommutingPairCard_eq_of_mulEquiv 2 4 e
+  rw [powered_commuting_pair_psi5, powered_commuting_pair_psi6] at h
+  omega
+
+/-- The newly separated pair, packaged as a two-element family. -/
+noncomputable abbrev order32_k8c4_tied_reps : Fin 2 → Type
+  | 0 => order32_k8c4_psi5
+  | 1 => order32_k8c4_psi6
+
+noncomputable instance instGroupOrder32K8C4TiedReps :
+    ∀ i, Group (order32_k8c4_tied_reps i)
+  | 0 => inferInstanceAs (Group order32_k8c4_psi5)
+  | 1 => inferInstanceAs (Group order32_k8c4_psi6)
+
+theorem card_order32_k8c4_tied_reps (i : Fin 2) :
+    Nat.card (order32_k8c4_tied_reps i) = 32 := by
+  fin_cases i
+  · exact card_order32_k8c4_psi5
+  · exact card_order32_k8c4_psi6
+
+set_option maxHeartbeats 4000000 in -- finite invariants over concrete order-32 elements
+private theorem old_invariant_psi5 :
+    order32TrivialInvariant order32_k8c4_psi5 = (8, 8, 32, 4) :=
+  order32TrivialInvariant_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+set_option maxHeartbeats 4000000 in -- finite invariants over concrete order-32 elements
+private theorem old_invariant_psi6 :
+    order32TrivialInvariant order32_k8c4_psi6 = (8, 8, 32, 4) :=
+  order32TrivialInvariant_eq_of_counts (by decide +kernel) (by decide +kernel)
+    (by decide +kernel) (by decide +kernel)
+
+private theorem order32_k8c4_tied_invariant_spec (i : Fin 2) :
+    order32TrivialInvariant (order32_k8c4_tied_reps i) = (8, 8, 32, 4) := by
+  fin_cases i
+  · exact old_invariant_psi5
+  · exact old_invariant_psi6
+
+theorem order32_k8c4_tied_reps_pairwise :
+    PairwiseNonMulEquiv order32_k8c4_tied_reps := by
+  rintro i j ⟨e⟩
+  fin_cases i <;> fin_cases j
+  · rfl
+  · exact absurd ⟨e⟩ order32_k8c4_psi5_not_equiv_psi6
+  · exact absurd ⟨e.symm⟩ order32_k8c4_psi5_not_equiv_psi6
+  · rfl
+
+theorem order32_resolved_disjoint_k8c4_tied (i : Fin 9) (j : Fin 2) :
+    ¬ Nonempty (order32_new_reps_resolved i ≃* order32_k8c4_tied_reps j) := by
+  rintro ⟨e⟩
+  have h := order32TrivialInvariant_eq_of_mulEquiv e
+  rw [order32_new_invariant_spec i, order32_k8c4_tied_invariant_spec j] at h
+  revert h
+  fin_cases i <;> decide
+
+theorem order32_trivial_disjoint_k8c4_tied (i : Fin 9) (j : Fin 2) :
+    ¬ Nonempty (order32_trivial_reps i ≃* order32_k8c4_tied_reps j) := by
+  rintro ⟨e⟩
+  have h := order32TrivialInvariant_eq_of_mulEquiv e
+  rw [order32_trivial_invariant_spec i, order32_k8c4_tied_invariant_spec j] at h
+  revert h
+  fin_cases i <;> decide
+
 /-! ### Final assembly
 
 Two of the 9 "resolved" new representatives (`order32_k8c4_psi3`, index `7`, and
@@ -761,11 +880,12 @@ theorem order32_nonabelian_reps_pairwise :
 
 /-- **Partial result**: 23 of the concrete order-32 representatives constructed so far
 (the 7 abelian types, the 9 `Qᵢ × C₂` types, and 7 of the 13 genuinely-new types) are
-pairwise non-isomorphic. This excludes 6 representatives whose distinctness from their
-nearest tied neighbour remains open (documented above and in the module doc): the
+pairwise non-isomorphic. This legacy subfamily excludes 6 representatives that the
+coarse invariant did not separate (documented above and in the module doc): the
 `c8c2tw_u7`/`k8xdbl_psi5` duplicates were already merged away, but `k8c4_psi5` vs
 `k8c4_psi6`, `k8ydbl_psi3` vs `k8ydbl_psi6`, and the two new/trivial cross-ties
-(`k8c4_psi3` vs `G12×C2`, `k8xdbl_psi3` vs `G4×C2`) remain unresolved. -/
+(`k8c4_psi3` vs `G12×C2`, `k8xdbl_psi3` vs `G4×C2`) were unresolved at this stage.
+The stronger theorem below recovers the `k8c4_psi5`/`psi6` pair. -/
 theorem order32_partial_distinct :
     PairwiseNonMulEquiv
       (Sum.elim order32_abelian_reps (Sum.elim order32_trivial_reps order32_new_reps_final)) :=
@@ -782,5 +902,46 @@ theorem order32_partial_distinct :
         have h3 := card_center_eq_of_mulEquiv e'
         have h2 := order32_new_final_center_le j
         omega)
+
+/-! ### Strengthened 25-representative result
+
+The powered-commuting-pair invariant above lets us add both `k8c4_psi5` and
+`k8c4_psi6` to the previously assembled 23 representatives. -/
+
+theorem order32_new_final_disjoint_k8c4_tied (i : Fin 7) (j : Fin 2) :
+    ¬ Nonempty (order32_new_reps_final i ≃* order32_k8c4_tied_reps j) := by
+  rintro ⟨e⟩
+  have h := order32TrivialInvariant_eq_of_mulEquiv e
+  rw [order32_new_final_invariant_spec i, order32_k8c4_tied_invariant_spec j] at h
+  revert h
+  fin_cases i <;> decide
+
+theorem order32_k8c4_tied_center_eq (i : Fin 2) :
+    Nat.card (Subgroup.center (order32_k8c4_tied_reps i)) = 8 := by
+  exact congrArg Prod.fst (order32_k8c4_tied_invariant_spec i)
+
+theorem order32_abelian_disjoint_k8c4_tied (i : Fin 7) (j : Fin 2) :
+    ¬ Nonempty (order32_abelian_reps i ≃* order32_k8c4_tied_reps j) := by
+  rintro ⟨e⟩
+  have h := card_center_eq_of_mulEquiv e
+  rw [order32_abelian_center_eq i, order32_k8c4_tied_center_eq j] at h
+  omega
+
+/-- **Improved partial result**: 25 concrete groups of order 32 are pairwise
+non-isomorphic.  Compared with `order32_partial_distinct`, this adds the two groups
+separated by the powered-commuting-pair count. -/
+theorem order32_partial_distinct_25 :
+    PairwiseNonMulEquiv
+      (Sum.elim
+        (Sum.elim order32_abelian_reps
+          (Sum.elim order32_trivial_reps order32_new_reps_final))
+        order32_k8c4_tied_reps) :=
+  order32_partial_distinct.sum order32_k8c4_tied_reps_pairwise
+    (fun i j => by
+      rcases i with i | i
+      · exact order32_abelian_disjoint_k8c4_tied i j
+      · rcases i with i | i
+        · exact order32_trivial_disjoint_k8c4_tied i j
+        · exact order32_new_final_disjoint_k8c4_tied i j)
 
 end Smallgroups.UsefulTheorems

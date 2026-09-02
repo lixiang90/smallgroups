@@ -44,6 +44,17 @@ structure IsCentralCocycle (f : Q → Q → M) : Prop where
   one_left : ∀ a : Q, f 1 a = 0
   one_right : ∀ a : Q, f a 1 = 0
 
+/-- On finite groups with decidable coefficient equality, being a normalized central
+2-cocycle is a computable predicate.  This is the entry point for exhaustive cocycle
+enumeration in the p-group generation algorithm. -/
+instance instDecidableIsCentralCocycle [Fintype Q] [DecidableEq M]
+    (f : Q → Q → M) : Decidable (IsCentralCocycle f) :=
+  decidable_of_iff'
+    ((∀ a b c : Q, f a b + f (a * b) c = f b c + f a (b * c)) ∧
+     (∀ a : Q, f 1 a = 0) ∧ (∀ a : Q, f a 1 = 0))
+    ⟨fun h => ⟨h.cocycle, h.one_left, h.one_right⟩,
+     fun h => ⟨h.1, h.2.1, h.2.2⟩⟩
+
 /-- The zero cocycle (yielding the direct product `M × Q`). -/
 theorem IsCentralCocycle.zero : IsCentralCocycle (fun _ _ : Q => (0 : M)) :=
   ⟨fun _ _ _ => rfl, fun _ => rfl, fun _ => rfl⟩
@@ -176,6 +187,14 @@ def toProd : CocycleGroup f hf ≃ M × Q where
   invFun x := ⟨x.1, x.2⟩
   left_inv _ := rfl
   right_inv _ := rfl
+
+instance instDecidableEq [DecidableEq M] [DecidableEq Q] :
+    DecidableEq (CocycleGroup f hf) :=
+  fun _ _ => decidable_of_iff' _ CocycleGroup.ext_iff
+
+instance instFintype [Fintype M] [Fintype Q] [DecidableEq M] [DecidableEq Q] :
+    Fintype (CocycleGroup f hf) :=
+  Fintype.ofEquiv _ (toProd (hf := hf)).symm
 
 instance [Finite M] [Finite Q] : Finite (CocycleGroup f hf) :=
   Finite.of_equiv _ (toProd (hf := hf)).symm

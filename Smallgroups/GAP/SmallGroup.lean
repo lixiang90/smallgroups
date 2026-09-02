@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.GAP.Polycyclic.Imported
+import Smallgroups.GAP.Order32
 
 /-!
 # The unified accessor `smallGroup N j`
@@ -27,6 +28,175 @@ hand-maintained for now).
 -/
 
 namespace Smallgroups.GAP
+
+/-
+/-- The 51 imported GAP presentations of order 32, indexed without an invalid case:
+index `i : Fin 51` denotes `SmallGroup(32, i + 1)`. -/
+@[reducible]
+def smallPres32 : Fin 51 → PCPres
+  | 0 => smallGroup_32_1
+  | 1 => smallGroup_32_2
+  | 2 => smallGroup_32_3
+  | 3 => smallGroup_32_4
+  | 4 => smallGroup_32_5
+  | 5 => smallGroup_32_6
+  | 6 => smallGroup_32_7
+  | 7 => smallGroup_32_8
+  | 8 => smallGroup_32_9
+  | 9 => smallGroup_32_10
+  | 10 => smallGroup_32_11
+  | 11 => smallGroup_32_12
+  | 12 => smallGroup_32_13
+  | 13 => smallGroup_32_14
+  | 14 => smallGroup_32_15
+  | 15 => smallGroup_32_16
+  | 16 => smallGroup_32_17
+  | 17 => smallGroup_32_18
+  | 18 => smallGroup_32_19
+  | 19 => smallGroup_32_20
+  | 20 => smallGroup_32_21
+  | 21 => smallGroup_32_22
+  | 22 => smallGroup_32_23
+  | 23 => smallGroup_32_24
+  | 24 => smallGroup_32_25
+  | 25 => smallGroup_32_26
+  | 26 => smallGroup_32_27
+  | 27 => smallGroup_32_28
+  | 28 => smallGroup_32_29
+  | 29 => smallGroup_32_30
+  | 30 => smallGroup_32_31
+  | 31 => smallGroup_32_32
+  | 32 => smallGroup_32_33
+  | 33 => smallGroup_32_34
+  | 34 => smallGroup_32_35
+  | 35 => smallGroup_32_36
+  | 36 => smallGroup_32_37
+  | 37 => smallGroup_32_38
+  | 38 => smallGroup_32_39
+  | 39 => smallGroup_32_40
+  | 40 => smallGroup_32_41
+  | 41 => smallGroup_32_42
+  | 42 => smallGroup_32_43
+  | 43 => smallGroup_32_44
+  | 44 => smallGroup_32_45
+  | 45 => smallGroup_32_46
+  | 46 => smallGroup_32_47
+  | 47 => smallGroup_32_48
+  | 48 => smallGroup_32_49
+  | 49 => smallGroup_32_50
+  | 50 => smallGroup_32_51
+
+/-- The GAP-numbered order-32 groups.  Unlike the legacy two-natural-number
+dispatcher, this family has no out-of-range fallback. -/
+@[reducible]
+def smallGroup32 (i : Fin 51) : Type := PCGroup (smallPres32 i)
+
+instance instGroupSmallGroup32 : ∀ i : Fin 51, Group (smallGroup32 i)
+  | 0 => inferInstanceAs (Group (PCGroup smallGroup_32_1))
+  | 1 => inferInstanceAs (Group (PCGroup smallGroup_32_2))
+  | 2 => inferInstanceAs (Group (PCGroup smallGroup_32_3))
+  | 3 => inferInstanceAs (Group (PCGroup smallGroup_32_4))
+  | 4 => inferInstanceAs (Group (PCGroup smallGroup_32_5))
+  | 5 => inferInstanceAs (Group (PCGroup smallGroup_32_6))
+  | 6 => inferInstanceAs (Group (PCGroup smallGroup_32_7))
+  | 7 => inferInstanceAs (Group (PCGroup smallGroup_32_8))
+  | 8 => inferInstanceAs (Group (PCGroup smallGroup_32_9))
+  | 9 => inferInstanceAs (Group (PCGroup smallGroup_32_10))
+  | 10 => inferInstanceAs (Group (PCGroup smallGroup_32_11))
+  | 11 => inferInstanceAs (Group (PCGroup smallGroup_32_12))
+  | 12 => inferInstanceAs (Group (PCGroup smallGroup_32_13))
+  | 13 => inferInstanceAs (Group (PCGroup smallGroup_32_14))
+  | 14 => inferInstanceAs (Group (PCGroup smallGroup_32_15))
+  | 15 => inferInstanceAs (Group (PCGroup smallGroup_32_16))
+  | 16 => inferInstanceAs (Group (PCGroup smallGroup_32_17))
+  | 17 => inferInstanceAs (Group (PCGroup smallGroup_32_18))
+  | 18 => inferInstanceAs (Group (PCGroup smallGroup_32_19))
+  | 19 => inferInstanceAs (Group (PCGroup smallGroup_32_20))
+  | 20 => inferInstanceAs (Group (PCGroup smallGroup_32_21))
+  | 21 => inferInstanceAs (Group (PCGroup smallGroup_32_22))
+  | 22 => inferInstanceAs (Group (PCGroup smallGroup_32_23))
+  | 23 => inferInstanceAs (Group (PCGroup smallGroup_32_24))
+  | 24 => inferInstanceAs (Group (PCGroup smallGroup_32_25))
+  | 25 => inferInstanceAs (Group (PCGroup smallGroup_32_26))
+  | 26 => inferInstanceAs (Group (PCGroup smallGroup_32_27))
+  | 27 => inferInstanceAs (Group (PCGroup smallGroup_32_28))
+  | 28 => inferInstanceAs (Group (PCGroup smallGroup_32_29))
+  | 29 => inferInstanceAs (Group (PCGroup smallGroup_32_30))
+  | 30 => inferInstanceAs (Group (PCGroup smallGroup_32_31))
+  | 31 => inferInstanceAs (Group (PCGroup smallGroup_32_32))
+  | 32 => inferInstanceAs (Group (PCGroup smallGroup_32_33))
+  | 33 => inferInstanceAs (Group (PCGroup smallGroup_32_34))
+  | 34 => inferInstanceAs (Group (PCGroup smallGroup_32_35))
+  | 35 => inferInstanceAs (Group (PCGroup smallGroup_32_36))
+  | 36 => inferInstanceAs (Group (PCGroup smallGroup_32_37))
+  | 37 => inferInstanceAs (Group (PCGroup smallGroup_32_38))
+  | 38 => inferInstanceAs (Group (PCGroup smallGroup_32_39))
+  | 39 => inferInstanceAs (Group (PCGroup smallGroup_32_40))
+  | 40 => inferInstanceAs (Group (PCGroup smallGroup_32_41))
+  | 41 => inferInstanceAs (Group (PCGroup smallGroup_32_42))
+  | 42 => inferInstanceAs (Group (PCGroup smallGroup_32_43))
+  | 43 => inferInstanceAs (Group (PCGroup smallGroup_32_44))
+  | 44 => inferInstanceAs (Group (PCGroup smallGroup_32_45))
+  | 45 => inferInstanceAs (Group (PCGroup smallGroup_32_46))
+  | 46 => inferInstanceAs (Group (PCGroup smallGroup_32_47))
+  | 47 => inferInstanceAs (Group (PCGroup smallGroup_32_48))
+  | 48 => inferInstanceAs (Group (PCGroup smallGroup_32_49))
+  | 49 => inferInstanceAs (Group (PCGroup smallGroup_32_50))
+  | 50 => inferInstanceAs (Group (PCGroup smallGroup_32_51))
+
+theorem card_smallGroup32 : ∀ i : Fin 51, Nat.card (smallGroup32 i) = 32
+  | 0 => card_smallGroup_32_1
+  | 1 => card_smallGroup_32_2
+  | 2 => card_smallGroup_32_3
+  | 3 => card_smallGroup_32_4
+  | 4 => card_smallGroup_32_5
+  | 5 => card_smallGroup_32_6
+  | 6 => card_smallGroup_32_7
+  | 7 => card_smallGroup_32_8
+  | 8 => card_smallGroup_32_9
+  | 9 => card_smallGroup_32_10
+  | 10 => card_smallGroup_32_11
+  | 11 => card_smallGroup_32_12
+  | 12 => card_smallGroup_32_13
+  | 13 => card_smallGroup_32_14
+  | 14 => card_smallGroup_32_15
+  | 15 => card_smallGroup_32_16
+  | 16 => card_smallGroup_32_17
+  | 17 => card_smallGroup_32_18
+  | 18 => card_smallGroup_32_19
+  | 19 => card_smallGroup_32_20
+  | 20 => card_smallGroup_32_21
+  | 21 => card_smallGroup_32_22
+  | 22 => card_smallGroup_32_23
+  | 23 => card_smallGroup_32_24
+  | 24 => card_smallGroup_32_25
+  | 25 => card_smallGroup_32_26
+  | 26 => card_smallGroup_32_27
+  | 27 => card_smallGroup_32_28
+  | 28 => card_smallGroup_32_29
+  | 29 => card_smallGroup_32_30
+  | 30 => card_smallGroup_32_31
+  | 31 => card_smallGroup_32_32
+  | 32 => card_smallGroup_32_33
+  | 33 => card_smallGroup_32_34
+  | 34 => card_smallGroup_32_35
+  | 35 => card_smallGroup_32_36
+  | 36 => card_smallGroup_32_37
+  | 37 => card_smallGroup_32_38
+  | 38 => card_smallGroup_32_39
+  | 39 => card_smallGroup_32_40
+  | 40 => card_smallGroup_32_41
+  | 41 => card_smallGroup_32_42
+  | 42 => card_smallGroup_32_43
+  | 43 => card_smallGroup_32_44
+  | 44 => card_smallGroup_32_45
+  | 45 => card_smallGroup_32_46
+  | 46 => card_smallGroup_32_47
+  | 47 => card_smallGroup_32_48
+  | 48 => card_smallGroup_32_49
+  | 49 => card_smallGroup_32_50
+  | 50 => card_smallGroup_32_51
+-/
 
 /-- The pc presentation of `SmallGroup(N, j)`, for the imported orders.
 Out-of-range or not-yet-imported pairs default to the trivial presentation. -/
@@ -66,6 +236,57 @@ def smallPres : ℕ → ℕ → PCPres
   | 27, 3 => smallGroup_27_3
   | 27, 4 => smallGroup_27_4
   | 27, 5 => smallGroup_27_5
+  | 32, 1 => smallGroup_32_1
+  | 32, 2 => smallGroup_32_2
+  | 32, 3 => smallGroup_32_3
+  | 32, 4 => smallGroup_32_4
+  | 32, 5 => smallGroup_32_5
+  | 32, 6 => smallGroup_32_6
+  | 32, 7 => smallGroup_32_7
+  | 32, 8 => smallGroup_32_8
+  | 32, 9 => smallGroup_32_9
+  | 32, 10 => smallGroup_32_10
+  | 32, 11 => smallGroup_32_11
+  | 32, 12 => smallGroup_32_12
+  | 32, 13 => smallGroup_32_13
+  | 32, 14 => smallGroup_32_14
+  | 32, 15 => smallGroup_32_15
+  | 32, 16 => smallGroup_32_16
+  | 32, 17 => smallGroup_32_17
+  | 32, 18 => smallGroup_32_18
+  | 32, 19 => smallGroup_32_19
+  | 32, 20 => smallGroup_32_20
+  | 32, 21 => smallGroup_32_21
+  | 32, 22 => smallGroup_32_22
+  | 32, 23 => smallGroup_32_23
+  | 32, 24 => smallGroup_32_24
+  | 32, 25 => smallGroup_32_25
+  | 32, 26 => smallGroup_32_26
+  | 32, 27 => smallGroup_32_27
+  | 32, 28 => smallGroup_32_28
+  | 32, 29 => smallGroup_32_29
+  | 32, 30 => smallGroup_32_30
+  | 32, 31 => smallGroup_32_31
+  | 32, 32 => smallGroup_32_32
+  | 32, 33 => smallGroup_32_33
+  | 32, 34 => smallGroup_32_34
+  | 32, 35 => smallGroup_32_35
+  | 32, 36 => smallGroup_32_36
+  | 32, 37 => smallGroup_32_37
+  | 32, 38 => smallGroup_32_38
+  | 32, 39 => smallGroup_32_39
+  | 32, 40 => smallGroup_32_40
+  | 32, 41 => smallGroup_32_41
+  | 32, 42 => smallGroup_32_42
+  | 32, 43 => smallGroup_32_43
+  | 32, 44 => smallGroup_32_44
+  | 32, 45 => smallGroup_32_45
+  | 32, 46 => smallGroup_32_46
+  | 32, 47 => smallGroup_32_47
+  | 32, 48 => smallGroup_32_48
+  | 32, 49 => smallGroup_32_49
+  | 32, 50 => smallGroup_32_50
+  | 32, 51 => smallGroup_32_51
   | 9, 1 => smallGroup_9_1
   | 9, 2 => smallGroup_9_2
   | 49, 1 => smallGroup_49_1

@@ -1,0 +1,21 @@
+/-
+Copyright (c) 2026 Smallgroups contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Smallgroups contributors
+-/
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart01
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart02
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart03
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart04
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart05
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart06
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart07
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart08
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart09
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart10
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart11
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart12
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart13
+import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart14
+
+/-! All 14 order-16 table/PC alignments. -/

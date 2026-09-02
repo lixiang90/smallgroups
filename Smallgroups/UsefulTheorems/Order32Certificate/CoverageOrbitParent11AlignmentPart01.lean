@@ -1,0 +1,29 @@
+/-
+Copyright (c) 2026 Smallgroups contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Smallgroups contributors
+-/
+import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent11Core
+import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart46
+import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent10AlignmentPart10
+
+set_option maxRecDepth 100000
+set_option linter.style.longLine false
+
+/-! Parent 11, orbit 0, alignment to GAP id 46. -/
+
+namespace Smallgroups.UsefulTheorems.Order32Certificate
+
+open Smallgroups.UsefulTheorems.GF2Certificate
+open Smallgroups.GAP
+
+abbrev orbitP11OrbitGroup0 := CocycleGroup
+  (orbitP11SelectedCocycle 0) (orbitP11SelectedCocycle_consistent 0)
+set_option maxHeartbeats 8000000 in
+-- Kernel check that this selected orbit is the canonical generated representative.
+noncomputable def orbitP11GapEquiv0 :
+    orbitP11OrbitGroup0 ≃* PCGroup smallGroup_32_46 :=
+  (Order16Table.CocycleGroup.congrCocycleEq _ _ (by decide +kernel)).trans
+    generatedGapEquiv46
+
+end Smallgroups.UsefulTheorems.Order32Certificate

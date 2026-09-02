@@ -1,0 +1,34 @@
+/-
+Copyright (c) 2026 Smallgroups contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Smallgroups contributors
+-/
+import Smallgroups.UsefulTheorems.Order32Certificate.CoverageLinearParent11Data
+import Smallgroups.UsefulTheorems.Order32Certificate.CoverageLinearParent10BatchIdentity
+
+set_option maxRecDepth 100000
+
+/-! One batched kernel check of all 225 reduction columns for parent 11. -/
+
+namespace Smallgroups.UsefulTheorems.Order32Certificate
+
+open Smallgroups.UsefulTheorems.GF2Certificate
+
+set_option maxHeartbeats 100000000 in
+-- The proposition contains only finite bit-vector computations.
+theorem coverageP11_packed_certificate :
+    Order16Table.PackedCoverageCertificate parent11Table
+      coverageP11TotalBasis coverageP11CoordinateRows coverageP11EquationTriples
+      coverageP11CorrectionColumns coverageP11PackedCoordinateMasks
+      coverageP11PackedEquationMasks := by
+  unfold Order16Table.PackedCoverageCertificate
+  decide +kernel
+
+theorem coverageP11_reduction_identity_batched : coverageP11ReductionMap = LinearMap.id := by
+  unfold coverageP11ReductionMap
+  exact Order16Table.reductionIdentityOfPackedCertificate parent11Table
+    coverageP11TotalBasis coverageP11CoordinateRows coverageP11EquationTriples
+    coverageP11CorrectionColumns coverageP11PackedCoordinateMasks
+    coverageP11PackedEquationMasks coverageP11_packed_certificate
+
+end Smallgroups.UsefulTheorems.Order32Certificate

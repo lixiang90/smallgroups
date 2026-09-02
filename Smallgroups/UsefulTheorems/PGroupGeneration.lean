@@ -5,7 +5,16 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.PGroupGeneration.CentralExtension
 import Smallgroups.UsefulTheorems.PGroupGeneration.CocycleGroup
+import Smallgroups.UsefulTheorems.PGroupGeneration.CertifiedTable
 import Smallgroups.UsefulTheorems.PGroupGeneration.Reconstruction
 import Smallgroups.UsefulTheorems.PGroupGeneration.Equivalences
+import Smallgroups.UsefulTheorems.PGroupGeneration.FiniteCohomology
 import Smallgroups.UsefulTheorems.PGroupGeneration.PCentralSeries
 import Smallgroups.UsefulTheorems.PGroupGeneration.Frattini
+import Smallgroups.UsefulTheorems.PGroupGeneration.CocycleSynthesis
+import Smallgroups.UsefulTheorems.PGroupGeneration.CohomologyDecomposition
+import Smallgroups.UsefulTheorems.PGroupGeneration.GF2Certificate
+import Smallgroups.UsefulTheorems.PGroupGeneration.PackedGF2Certificate
+import Smallgroups.UsefulTheorems.PGroupGeneration.PackedCoverage
+import Smallgroups.UsefulTheorems.PGroupGeneration.OrbitReduction
+import Smallgroups.UsefulTheorems.PGroupGeneration.LocalProfileInvariant
