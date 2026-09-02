@@ -119,6 +119,10 @@ Authors: Smallgroups contributors
                 "import Smallgroups.UsefulTheorems.Order32Certificate.LocalProfilesData",
                 f"import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart{group_id:02d}",
             ]
+            if previous_part is None:
+                lines.append(
+                    "import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart51"
+                )
             if previous_part is not None:
                 lines.append(
                     f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_part}"

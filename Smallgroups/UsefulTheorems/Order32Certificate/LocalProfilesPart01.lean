@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.LocalProfilesData
 import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart01
+import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart51
 
 set_option maxRecDepth 100000
 set_option linter.style.longLine false

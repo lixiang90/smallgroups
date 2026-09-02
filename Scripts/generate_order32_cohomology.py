@@ -579,6 +579,26 @@ def lean_zmod2_vector(values):
 
 def emit_lean_certificates(groups, output_dir: Path, chunk_size: int = 13):
     output_dir.mkdir(parents=True, exist_ok=True)
+    # Lake schedules independent modules concurrently.  These certificates contain
+    # several expensive finite kernel checks, so keep their otherwise independent
+    # families behind a small number of explicit import barriers.  This preserves
+    # ordinary parallelism elsewhere in the project while preventing a clean CI
+    # build from elaborating several multi-gigabyte certificates at once.
+    linear_parent_ids = [g["gap16_id"] for g in groups if g["gap16_id"] != 14]
+    if not linear_parent_ids:
+        raise RuntimeError("expected non-elementary-abelian order-16 parents")
+    linear_serial_tail = (
+        f"CoverageLinearParent{linear_parent_ids[-1]:02d}BatchIdentity"
+    )
+    final_orbit_group = groups[-1]
+    final_orbit_parent = final_orbit_group["gap16_id"]
+    orbit_core_serial_tail = f"CoverageOrbitParent{final_orbit_parent:02d}Core"
+    orbit_path_serial_tail = (
+        f"CoverageOrbitParent{final_orbit_parent:02d}PathIdentity"
+    )
+    orbit_reduction_serial_tail = (
+        f"CoverageOrbitParent{final_orbit_parent:02d}Reduction"
+    )
     # Remove superseded pilot certificates.  Leaving these source files in the Lean
     # library makes Lake elaborate them even though the scalable orbit proof does not
     # import them, and on Windows their independent finite checks can exhaust memory.
@@ -664,6 +684,10 @@ Authors: Smallgroups contributors
                 "import Smallgroups.UsefulTheorems.Order32Certificate.Tables",
                 "import Smallgroups.GAP.Polycyclic.Imported.Order16",
             ]
+            if previous_part is None:
+                lines.append(
+                    "import Smallgroups.UsefulTheorems.Order32Certificate.Reps"
+                )
             if previous_part is not None:
                 lines.append(
                     f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_part}"
@@ -885,6 +909,7 @@ Authors: Smallgroups contributors
     parent14_batch = [
         header.rstrip(),
         "import Smallgroups.UsefulTheorems.Order32Certificate.CoverageParent14PackedData",
+        "import Smallgroups.UsefulTheorems.Order32Certificate.LocalProfilesIdentity",
         "",
         "set_option maxRecDepth 100000",
         "",
@@ -999,6 +1024,7 @@ Authors: Smallgroups contributors
     orbit_data = [
         header.rstrip(),
         "import Smallgroups.UsefulTheorems.Order32Certificate.CoverageParent14Data",
+        f"import Smallgroups.UsefulTheorems.Order32Certificate.{linear_serial_tail}",
         "",
         "set_option maxRecDepth 100000",
         "set_option linter.style.longLine false",
@@ -1387,9 +1413,13 @@ Authors: Smallgroups contributors
             )
 
     scalable_complete_modules = []
-    previous_orbit_core = None
-    previous_orbit_path_part = None
-    previous_orbit_alignment = None
+    previous_orbit_core = "Parent14OrbitAlignmentPart07"
+    # All orbit cores are built before the path certificates begin.  The path
+    # parts themselves already form one global chain across all fourteen parents.
+    previous_orbit_path_part = orbit_core_serial_tail
+    # Likewise, direct orbit/GAP alignments wait for every reduction certificate.
+    previous_orbit_alignment = orbit_reduction_serial_tail
+    previous_orbit_reduction = orbit_path_serial_tail
     for group in groups:
         parent = group["gap16_id"]
         h = group["h2_dimension"]
@@ -1422,6 +1452,7 @@ Authors: Smallgroups contributors
             header.rstrip(),
             f"import Smallgroups.UsefulTheorems.Order32Certificate.{linear_module}Data",
             "import Smallgroups.UsefulTheorems.PGroupGeneration.OrbitReduction",
+            f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_orbit_core}",
             "",
             "set_option maxRecDepth 100000",
             "set_option linter.style.longLine false",
@@ -1648,11 +1679,13 @@ Authors: Smallgroups contributors
         (output_dir / f"{path_identity_name}.lean").write_text(
             "\n".join(path_identity), encoding="utf-8"
         )
+        previous_orbit_path_part = path_identity_name
 
         decomposition = [
             header.rstrip(),
             f"import Smallgroups.UsefulTheorems.Order32Certificate.{linear_identity_module}",
             "import Smallgroups.UsefulTheorems.PGroupGeneration.CohomologyDecomposition",
+            f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_orbit_reduction}",
             "",
             "namespace Smallgroups.UsefulTheorems.Order32Certificate",
             "",
@@ -1761,6 +1794,7 @@ Authors: Smallgroups contributors
         (output_dir / f"{module_tag}Reduction.lean").write_text(
             "\n".join(reduction), encoding="utf-8"
         )
+        previous_orbit_reduction = f"{module_tag}Reduction"
 
         alignment_parts = []
         for extension in sorted(group["extensions"], key=lambda e: e["orbit_index"]):
@@ -1921,6 +1955,9 @@ Authors: Smallgroups contributors
         (output_dir / f"{complete_name}.lean").write_text(
             "\n".join(complete), encoding="utf-8"
         )
+        # Do not start the next parent's GAP alignments until this parent's
+        # aggregation and completion theorem have both elaborated.
+        previous_orbit_alignment = complete_name
 
     scalable_all = [header.rstrip()]
     scalable_all.extend(
@@ -2099,6 +2136,10 @@ Authors: Smallgroups contributors
             "import Smallgroups.UsefulTheorems.Order32Certificate.Reps",
             "import Smallgroups.GAP.Polycyclic.Imported.Order32",
         ]
+        if previous_part is None:
+            lines.append(
+                "import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignment"
+            )
         if previous_part is not None:
             lines.append(
                 f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_part}"

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent08Core
-import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent07PathPart01
+import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent07PathIdentity
 
 set_option maxRecDepth 100000
 

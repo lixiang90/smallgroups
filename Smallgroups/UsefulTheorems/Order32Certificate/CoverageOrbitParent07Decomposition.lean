@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.CoverageLinearParent07BatchIdentity
 import Smallgroups.UsefulTheorems.PGroupGeneration.CohomologyDecomposition
+import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent06Reduction
 
 namespace Smallgroups.UsefulTheorems.Order32Certificate
 
