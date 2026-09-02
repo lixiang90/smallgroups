@@ -38,6 +38,7 @@ theorems:
 | `8·11` | 88 | 12 | `ℤ/11 ⋊ H` (`H` of order 8) — 12 actions | `Order88` |
 | `4·5²` | 100 | 16 | `P ⋊ H` with &#124;P&#124; = 25, &#124;H&#124; = 4 — 16 actions | `Order100` |
 | `2⁴` (Wild) | 16 | 14 | 5 abelian types + 9 `C₈`/`K₈`-extension types | `Order16_Wild` |
+| `2⁵` | 32 | 51 | checked central-`C₂` extensions, ordered as GAP `SmallGroup(32,1..51)` | `Order32Certificate` |
 | `3·8` | 24 | 15 | twelve `C₃ ⋊ H` cases, two normal Sylow-`2` cases, and `S₄` | `Order24` |
 | `2⁴·3` | 48 | 52 | 42 normal-Sylow-`3`, 2 sixteen-Sylow-`3`, and 8 four-Sylow-`3` types | `Order48` |
 | `12·7` | 84 | 15 | `C₇ ⋊ H` with &#124;H&#124; = 12 — 15 actions over the 5 order-12 types | `Order84` |
@@ -245,6 +246,25 @@ theorems:
     extension cocycle `t²`). `order16_wild_classification` (exhaustiveness), `order16_wild_distinct`
     (via the invariant tuple `(|Z(G)|, #{x²=1}, #{x⁴=1}, #squares)`, checked by `decide`), and
     `order16_wild_isClassif`. Instantiated at **16** in `Classifications_11_to_20/Order16`.
+
+  * `Order32Certificate/` — the **complete classification** of groups of order `32 = 2⁵` into
+    **fifty-one** classes, in the exact order of GAP's `SmallGroup(32, 1)` through
+    `SmallGroup(32, 51)`. Every order-`32` group is reduced along a central subgroup of order `2`
+    to a central extension of one of the fourteen order-`16` groups. Normalized `C₂`-valued
+    cocycles are classified by checked `Z²/B²` computations over `GF(2)` and by checked
+    automorphism-orbit paths. The resulting extension tables are matched to the imported GAP pc
+    presentations by explicit generator maps; duplicates arising from different central kernels
+    are allowed during enumeration and are collapsed to the same GAP representative.
+
+    GAP and Python generate the tables and certificates but are not part of the trusted proof:
+    Lean checks the group tables, cocycle equations, row reductions, quotient-space coverage,
+    orbit moves, coboundary transports, pc maps, and the local isomorphism-invariant profiles used
+    for pairwise distinctness. The capstones are `order32_gap_classification`,
+    `smallGroup32_pairwise_noniso`, `smallGroup32_isClassif`, and
+    `numIsoClasses_order32_eq`. Public wrappers are provided by
+    `Classifications_31_to_40/Order32.lean` and `GAP_Classifications/GAP_31_to_40/Order32.lean`;
+    the earlier structural development in `Order32/` remains available as supporting lemmas and
+    regression coverage.
 
   * `Order24.lean` — the **complete classification** of groups of order `24 = 3 · 8` into
     **fifteen** classes. Sylow counting splits the proof into the normal Sylow-`3` branch
@@ -517,7 +537,7 @@ theorems:
   counting) in namespace `Smallgroups.GAP_Classifications.OrderN`, with index
   `⟨j - 1, _⟩` corresponding to `SmallGroup(N, j)`. Completed so far: order `1`, all
   prime orders (`SmallGroup(p, 1) = ℤ/p`, see `GAP/Prime.lean`), the prime-power
-  orders `4, 8, 9, 16, 25, 27, 49`, every odd squarefree prime-pair order at most
+  orders `4, 8, 9, 16, 25, 27, 32, 49`, every odd squarefree prime-pair order at most
   `100`, and every order `2p ≤ 100` for odd prime `p` (representatives are imported
   pc groups, see below).
 
@@ -547,6 +567,10 @@ theorems:
   * `Scripts/generate_gap_prime_pairs.py` — regenerates the uniform match and GAP
     classification modules for the odd-`pq` and `2p` families after pc import.
 
+* `Certificates/Order32/` — generated central-extension and local-profile data for the order-`32`
+  proof, together with fixed GAP/SmallGrp/ANUPQ versions, SHA-256 hashes, regeneration commands,
+  and the precise certificate trust model. See `Certificates/Order32/README.md`.
+
 
 ## Building
 
@@ -554,3 +578,14 @@ theorems:
 lake exe cache get   # fetch the prebuilt Mathlib cache
 lake build
 ```
+
+The order-`32` Lean sources can be reproduced from the checked-in certificate data without
+modifying the worktree:
+
+```sh
+python Scripts/generate_order32_cohomology.py --from-json --check-lean
+```
+
+On Windows, a clean build of the generated order-`32` leaf modules can require substantial memory
+when Lake runs many of them concurrently. If physical memory is limited, build those leaves in
+small batches; the certificate README records the exact commands and environment.
