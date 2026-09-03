@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent10Data
-import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent09Core
 
 set_option maxRecDepth 100000
 set_option linter.style.longLine false

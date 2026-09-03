@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.CoverageLinearParent03Data
-import Smallgroups.UsefulTheorems.Order32Certificate.CoverageLinearParent02BatchIdentity
 
 set_option maxRecDepth 100000
 

@@ -151,6 +151,86 @@ def applyOrbitPath {a h : ℕ} (actionColumns : Fin a → Fin h → ℕ) :
   | g :: word, c =>
       applyOrbitPath actionColumns word (orbitAction (actionColumns g) c)
 
+theorem applyOrbitPath_append {a h : ℕ} (actionColumns : Fin a → Fin h → ℕ)
+    (left right : List (Fin a)) (c : Fin h → F2) :
+    applyOrbitPath actionColumns (left ++ right) c =
+      applyOrbitPath actionColumns right (applyOrbitPath actionColumns left c) := by
+  induction left generalizing c with
+  | nil => rfl
+  | cons g word ih =>
+      simp only [List.cons_append, applyOrbitPath]
+      exact ih (orbitAction (actionColumns g) c)
+
+/-- Recover the generator word from a ranked orbit forest.  Roots have rank zero;
+every other vertex stores its predecessor and the final generator on its path. -/
+def orbitForestPathAux {a n : ℕ} (parent : Fin n → Fin n)
+    (generator : Fin n → Fin a) : ℕ → Fin n → List (Fin a)
+  | 0, _ => []
+  | d + 1, k => orbitForestPathAux parent generator d (parent k) ++ [generator k]
+
+/-- The generator word assigned to a vertex by a ranked orbit forest. -/
+def orbitForestPath {a n : ℕ} (parent : Fin n → Fin n)
+    (generator : Fin n → Fin a) (rank : Fin n → ℕ) (k : Fin n) : List (Fin a) :=
+  orbitForestPathAux parent generator (rank k) k
+
+/-- The local check attached to one vertex of a ranked orbit forest. -/
+def OrbitForestEdge {a h n : ℕ} (actionColumns : Fin a → Fin h → ℕ)
+    (start target : Fin n → Fin h → F2) (parent : Fin n → Fin n)
+    (generator : Fin n → Fin a) (rank : Fin n → ℕ) (k : Fin n) : Prop :=
+  (rank k = 0 → start k = target k) ∧
+    (0 < rank k →
+      rank (parent k) + 1 = rank k ∧
+        start (parent k) = start k ∧
+          orbitAction (actionColumns (generator k)) (target (parent k)) = target k)
+
+/-- Local checks sufficient to certify all endpoints of a ranked orbit forest.
+The root clause identifies the representative coefficient vector.  The non-root
+clause checks decreasing rank, a common representative, and one generator edge. -/
+def OrbitForestCertificate {a h n : ℕ} (actionColumns : Fin a → Fin h → ℕ)
+    (start target : Fin n → Fin h → F2) (parent : Fin n → Fin n)
+    (generator : Fin n → Fin a) (rank : Fin n → ℕ) : Prop :=
+  ∀ k, OrbitForestEdge actionColumns start target parent generator rank k
+
+private theorem applyOrbitForestPathAux_eq {a h n : ℕ}
+    (actionColumns : Fin a → Fin h → ℕ) (start target : Fin n → Fin h → F2)
+    (parent : Fin n → Fin n) (generator : Fin n → Fin a) (rank : Fin n → ℕ)
+    (certificate : OrbitForestCertificate actionColumns start target parent generator rank) :
+    ∀ d k, rank k = d →
+      applyOrbitPath actionColumns (orbitForestPathAux parent generator d k) (start k) =
+        target k := by
+  intro d
+  induction d with
+  | zero =>
+      intro k hk
+      simpa [orbitForestPathAux, applyOrbitPath] using (certificate k).1 hk
+  | succ d ih =>
+      intro k hk
+      have hkpos : 0 < rank k := by
+        rw [hk]
+        exact Nat.zero_lt_succ d
+      obtain ⟨hparentRank, hstart, hedge⟩ := (certificate k).2 hkpos
+      have hparent : rank (parent k) = d := by
+        apply Nat.succ.inj
+        simpa [Nat.succ_eq_add_one, hk] using hparentRank
+      rw [orbitForestPathAux, applyOrbitPath_append]
+      change orbitAction (actionColumns (generator k))
+          (applyOrbitPath actionColumns
+            (orbitForestPathAux parent generator d (parent k)) (start k)) = target k
+      rw [← hstart, ih (parent k) hparent]
+      exact hedge
+
+/-- Every path reconstructed from a locally checked ranked orbit forest reaches its
+declared target.  This replaces one full path reduction per vector by one edge check. -/
+theorem applyOrbitForestPath_eq {a h n : ℕ} (actionColumns : Fin a → Fin h → ℕ)
+    (start target : Fin n → Fin h → F2) (parent : Fin n → Fin n)
+    (generator : Fin n → Fin a) (rank : Fin n → ℕ)
+    (certificate : OrbitForestCertificate actionColumns start target parent generator rank)
+    (k : Fin n) :
+    applyOrbitPath actionColumns (orbitForestPath parent generator rank k) (start k) =
+      target k := by
+  exact applyOrbitForestPathAux_eq actionColumns start target parent generator rank
+    certificate (rank k) k rfl
+
 /-- Compose the checked one-generator extension isomorphisms along an automorphism word. -/
 noncomputable def orbitPathEquiv {a h : ℕ} (basis : Fin h → ℕ)
     (actionColumns correctionColumns : Fin a → Fin h → ℕ)

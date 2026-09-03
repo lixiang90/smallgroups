@@ -503,6 +503,46 @@ def refresh_shortest_orbit_words(group):
     group["orbit_words"] = [words_by_mask[k] for k in range(1 << group["h2_dimension"])]
 
 
+def build_orbit_forest(group):
+    """Compress shortest orbit words to one checked predecessor edge per H² vector."""
+    words = group["orbit_words"]
+    normalizations = group["orbit_normalizations"]
+    actions = group["h2_action_generators"]
+    lookup = {}
+    for vector, word in enumerate(words):
+        orbit = normalizations[vector]["orbit_index"]
+        key = (orbit, tuple(word))
+        if key in lookup:
+            raise RuntimeError(
+                f"duplicate orbit-forest path for parent {group['gap16_id']}: {key}"
+            )
+        lookup[key] = vector
+
+    parents = []
+    generators = []
+    ranks = []
+    for vector, word in enumerate(words):
+        rank = len(word)
+        ranks.append(rank)
+        if rank == 0:
+            parents.append(vector)
+            generators.append(0)
+            continue
+        orbit = normalizations[vector]["orbit_index"]
+        parent = lookup[(orbit, tuple(word[:-1]))]
+        generator = word[-1]
+        if xor_vectors(actions[generator], parent) != vector:
+            raise RuntimeError(
+                f"bad orbit-forest edge for parent {group['gap16_id']}, vector {vector}"
+            )
+        parents.append(parent)
+        generators.append(generator)
+
+    group["orbit_forest_parent"] = parents
+    group["orbit_forest_generator"] = generators
+    group["orbit_forest_rank"] = ranks
+
+
 def identify_extensions(groups, gap_bash: Path, gap_exe: str):
     records = []
     script = []
@@ -579,26 +619,14 @@ def lean_zmod2_vector(values):
 
 def emit_lean_certificates(groups, output_dir: Path, chunk_size: int = 13):
     output_dir.mkdir(parents=True, exist_ok=True)
-    # Lake schedules independent modules concurrently.  These certificates contain
-    # several expensive finite kernel checks, so keep their otherwise independent
-    # families behind a small number of explicit import barriers.  This preserves
-    # ordinary parallelism elsewhere in the project while preventing a clean CI
-    # build from elaborating several multi-gigabyte certificates at once.
+    for group in groups:
+        build_orbit_forest(group)
+    # The generated dependency graph records mathematical dependencies only.
+    # Resource-sensitive serialization belongs in CI/build scheduling, not in
+    # synthetic cross-parent imports that invalidate unrelated certificates.
     linear_parent_ids = [g["gap16_id"] for g in groups if g["gap16_id"] != 14]
     if not linear_parent_ids:
         raise RuntimeError("expected non-elementary-abelian order-16 parents")
-    linear_serial_tail = (
-        f"CoverageLinearParent{linear_parent_ids[-1]:02d}BatchIdentity"
-    )
-    final_orbit_group = groups[-1]
-    final_orbit_parent = final_orbit_group["gap16_id"]
-    orbit_core_serial_tail = f"CoverageOrbitParent{final_orbit_parent:02d}Core"
-    orbit_path_serial_tail = (
-        f"CoverageOrbitParent{final_orbit_parent:02d}PathIdentity"
-    )
-    orbit_reduction_serial_tail = (
-        f"CoverageOrbitParent{final_orbit_parent:02d}Reduction"
-    )
     # Remove superseded pilot certificates.  Leaving these source files in the Lean
     # library makes Lake elaborate them even though the scalable orbit proof does not
     # import them, and on Windows their independent finite checks can exhaust memory.
@@ -607,6 +635,7 @@ def emit_lean_certificates(groups, output_dir: Path, chunk_size: int = 13):
         "CoverageParent14ColumnsPart*.lean",
         "CoverageParent14OrbitPart*.lean",
         "CoverageParent14PackedColumnsPart*.lean",
+        "CoverageOrbitParent14PathPart*.lean",
     ]
     for pattern in obsolete_patterns:
         for path in output_dir.glob(pattern):
@@ -1024,7 +1053,6 @@ Authors: Smallgroups contributors
     orbit_data = [
         header.rstrip(),
         "import Smallgroups.UsefulTheorems.Order32Certificate.CoverageParent14Data",
-        f"import Smallgroups.UsefulTheorems.Order32Certificate.{linear_serial_tail}",
         "",
         "set_option maxRecDepth 100000",
         "set_option linter.style.longLine false",
@@ -1212,7 +1240,6 @@ Authors: Smallgroups contributors
     # The packed linear certificate format is now validated on parent 14.  Emit
     # the same fallback-free coverage data for the other thirteen parents.
     all_coverage_identities = ["CoverageLinearParent14BatchIdentity"]
-    previous_batch = "CoverageLinearParent14BatchIdentity"
     for group in groups:
         parent = group["gap16_id"]
         if parent == 14:
@@ -1230,7 +1257,6 @@ Authors: Smallgroups contributors
             header.rstrip(),
             "import Smallgroups.UsefulTheorems.Order32Certificate.Tables",
             "import Smallgroups.UsefulTheorems.PGroupGeneration.PackedCoverage",
-            f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_batch}",
             "",
             "set_option maxRecDepth 100000",
             "set_option linter.style.longLine false",
@@ -1354,7 +1380,6 @@ Authors: Smallgroups contributors
         batch = [
             header.rstrip(),
             f"import Smallgroups.UsefulTheorems.Order32Certificate.{module_tag}Data",
-            f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_batch}",
             "",
             "set_option maxRecDepth 100000",
             "",
@@ -1387,7 +1412,6 @@ Authors: Smallgroups contributors
         (output_dir / f"{batch_name}.lean").write_text(
             "\n".join(batch), encoding="utf-8"
         )
-        previous_batch = batch_name
 
     all_coverage = [header.rstrip()]
     all_coverage.extend(
@@ -1413,13 +1437,6 @@ Authors: Smallgroups contributors
             )
 
     scalable_complete_modules = []
-    previous_orbit_core = "Parent14OrbitAlignmentPart07"
-    # All orbit cores are built before the path certificates begin.  The path
-    # parts themselves already form one global chain across all fourteen parents.
-    previous_orbit_path_part = orbit_core_serial_tail
-    # Likewise, direct orbit/GAP alignments wait for every reduction certificate.
-    previous_orbit_alignment = orbit_reduction_serial_tail
-    previous_orbit_reduction = orbit_path_serial_tail
     for group in groups:
         parent = group["gap16_id"]
         h = group["h2_dimension"]
@@ -1452,7 +1469,6 @@ Authors: Smallgroups contributors
             header.rstrip(),
             f"import Smallgroups.UsefulTheorems.Order32Certificate.{linear_module}Data",
             "import Smallgroups.UsefulTheorems.PGroupGeneration.OrbitReduction",
-            f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_orbit_core}",
             "",
             "set_option maxRecDepth 100000",
             "set_option linter.style.longLine false",
@@ -1482,6 +1498,21 @@ Authors: Smallgroups contributors
             f"  coeffMask {h} ({prefix}RepresentativeMask ({prefix}Index k))",
             f"def {prefix}TargetCoeff (k : Fin {vector_count}) : Fin {h} → F2 :=",
             f"  coeffMask {h} k.val",
+        ])
+        if parent == 14:
+            data.extend([
+                "",
+                "/-- Predecessor vertex in the shortest-path orbit forest. -/",
+                f"def {prefix}ForestParent : Fin {vector_count} → Fin {vector_count} :=",
+                f"  {lean_vector(group['orbit_forest_parent'])}",
+                "/-- Final generator on the shortest path to a vertex. -/",
+                f"def {prefix}ForestGenerator : Fin {vector_count} → Fin {aut_count} :=",
+                f"  {lean_vector(group['orbit_forest_generator'])}",
+                "/-- Distance from the orbit representative in the shortest-path forest. -/",
+                f"def {prefix}ForestRank : Fin {vector_count} → ℕ :=",
+                f"  {lean_vector(group['orbit_forest_rank'])}",
+            ])
+        data.extend([
             "",
             "end Smallgroups.UsefulTheorems.Order32Certificate",
             "",
@@ -1494,10 +1525,6 @@ Authors: Smallgroups contributors
             header.rstrip(),
             f"import Smallgroups.UsefulTheorems.Order32Certificate.{module_tag}Data",
         ]
-        if previous_orbit_core is not None:
-            core.append(
-                f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_orbit_core}"
-            )
         core.extend([
             "",
             "set_option maxRecDepth 100000",
@@ -1578,84 +1605,209 @@ Authors: Smallgroups contributors
         (output_dir / f"{module_tag}Core.lean").write_text(
             "\n".join(core), encoding="utf-8"
         )
-        previous_orbit_core = f"{module_tag}Core"
-
-        path_parts = []
-        path_chunk_size = 16
-        for part_index, offset in enumerate(range(0, vector_count, path_chunk_size), start=1):
-            part_name = f"{module_tag}PathPart{part_index:02d}"
-            path_parts.append(part_name)
-            lines = [
+        path_identity_name = f"{module_tag}PathIdentity"
+        if parent == 14:
+            forest_chunk_width = 64
+            forest_chunk_count = vector_count // forest_chunk_width
+            if forest_chunk_count * forest_chunk_width != vector_count:
+                raise RuntimeError("parent-14 forest vector count is not evenly chunked")
+            forest_data_name = f"{module_tag}ForestData"
+            forest_data = [
                 header.rstrip(),
                 f"import Smallgroups.UsefulTheorems.Order32Certificate.{module_tag}Core",
+                "",
+                "namespace Smallgroups.UsefulTheorems.Order32Certificate",
+                "",
+                "/-- Row-major indexing of independently checked forest chunks. -/",
+                f"def {prefix}ForestChunkIndex (c : Fin {forest_chunk_count})",
+                f"    (j : Fin {forest_chunk_width}) : Fin {vector_count} :=",
+                f"  ⟨c.val * {forest_chunk_width} + j.val, by omega⟩",
+                "",
+                "end Smallgroups.UsefulTheorems.Order32Certificate",
+                "",
             ]
-            if previous_orbit_path_part is not None:
-                lines.append(
-                    f"import Smallgroups.UsefulTheorems.Order32Certificate."
-                    f"{previous_orbit_path_part}"
+            (output_dir / f"{forest_data_name}.lean").write_text(
+                "\n".join(forest_data), encoding="utf-8"
+            )
+            forest_parts = []
+            for chunk in range(forest_chunk_count):
+                part_name = f"{module_tag}ForestPart{chunk + 1:02d}"
+                forest_parts.append(part_name)
+                forest_part = [
+                    header.rstrip(),
+                    f"import Smallgroups.UsefulTheorems.Order32Certificate.{forest_data_name}",
+                    "",
+                    "set_option maxRecDepth 100000",
+                    "set_option linter.style.longLine false",
+                    "",
+                    f"/-! Parent-14 orbit-forest edge certificate, chunk {chunk + 1}. -/",
+                    "",
+                    "namespace Smallgroups.UsefulTheorems.Order32Certificate",
+                    "",
+                    "open Smallgroups.UsefulTheorems.GF2Certificate",
+                    "",
+                    "set_option maxHeartbeats 100000000 in",
+                    "-- Kernel reduction checks 64 independently generated orbit-forest edges.",
+                    f"theorem {prefix}_forest_chunk_{chunk:02d} : ∀ j : Fin {forest_chunk_width},",
+                    f"    Order16Table.OrbitForestEdge {prefix}ActionColumns",
+                    f"      {prefix}RepresentativeCoeff {prefix}TargetCoeff {prefix}ForestParent",
+                    f"      {prefix}ForestGenerator {prefix}ForestRank",
+                    f"      ({prefix}ForestChunkIndex {chunk} j) := by",
+                    "  unfold Order16Table.OrbitForestEdge",
+                    "  decide +kernel",
+                    "",
+                    "end Smallgroups.UsefulTheorems.Order32Certificate",
+                    "",
+                ]
+                (output_dir / f"{part_name}.lean").write_text(
+                    "\n".join(forest_part), encoding="utf-8"
                 )
-            lines.extend([
+
+            path_identity = [header.rstrip()]
+            path_identity.extend(
+                f"import Smallgroups.UsefulTheorems.Order32Certificate.{name}"
+                for name in forest_parts
+            )
+            path_identity.extend([
                 "",
                 "set_option maxRecDepth 100000",
-                *( ["set_option linter.style.longLine false"] if parent == 14 else [] ),
+                "set_option linter.style.longLine false",
                 "",
-                f"/-! Checked short orbit paths for parent {parent}; generated part {part_index}. -/",
+                "/-! One local edge check per H² vector certifies the parent-14 orbit forest. -/",
                 "",
                 "namespace Smallgroups.UsefulTheorems.Order32Certificate",
                 "",
                 "open Smallgroups.UsefulTheorems.GF2Certificate",
                 "",
             ])
-            for k in range(offset, min(offset + path_chunk_size, vector_count)):
-                word_term = lean_path(group["orbit_words"][k])
+            path_identity.extend([
+                f"theorem {prefix}_forest_chunks (c : Fin {forest_chunk_count}) : ∀ j : Fin {forest_chunk_width},",
+                f"    Order16Table.OrbitForestEdge {prefix}ActionColumns",
+                f"      {prefix}RepresentativeCoeff {prefix}TargetCoeff {prefix}ForestParent",
+                f"      {prefix}ForestGenerator {prefix}ForestRank",
+                f"      ({prefix}ForestChunkIndex c j) := by",
+                "  fin_cases c",
+            ])
+            for chunk in range(forest_chunk_count):
+                path_identity.append(f"  · exact {prefix}_forest_chunk_{chunk:02d}")
+            path_identity.extend([
+                "",
+                f"theorem {prefix}_forest_certificate :",
+                f"    Order16Table.OrbitForestCertificate {prefix}ActionColumns",
+                f"      {prefix}RepresentativeCoeff {prefix}TargetCoeff {prefix}ForestParent",
+                f"      {prefix}ForestGenerator {prefix}ForestRank := by",
+                "  unfold Order16Table.OrbitForestCertificate",
+                "  intro k",
+                f"  let c : Fin {forest_chunk_count} := ⟨k.val / {forest_chunk_width}, by omega⟩",
+                f"  let j : Fin {forest_chunk_width} := ⟨k.val % {forest_chunk_width}, by omega⟩",
+                f"  have hedge := {prefix}_forest_chunks c j",
+                f"  have hindex : {prefix}ForestChunkIndex c j = k := by",
+                "    apply Fin.ext",
+                f"    simp only [{prefix}ForestChunkIndex, c, j]",
+                "    omega",
+                "  rw [hindex] at hedge",
+                "  exact hedge",
+                "",
+                f"theorem {prefix}_forest_endpoint (k : Fin {vector_count}) :",
+                f"    Order16Table.applyOrbitPath {prefix}ActionColumns",
+                f"        (Order16Table.orbitForestPath {prefix}ForestParent",
+                f"          {prefix}ForestGenerator {prefix}ForestRank k)",
+                f"        ({prefix}RepresentativeCoeff k) = {prefix}TargetCoeff k :=",
+                f"  Order16Table.applyOrbitForestPath_eq {prefix}ActionColumns",
+                f"    {prefix}RepresentativeCoeff {prefix}TargetCoeff {prefix}ForestParent",
+                f"    {prefix}ForestGenerator {prefix}ForestRank {prefix}_forest_certificate k",
+                "",
+                f"noncomputable def {prefix}NormalizeEquiv (k : Fin {vector_count}) :",
+                f"    CocycleGroup ({prefix}SelectedCocycle ({prefix}Index k))",
+                f"        ({prefix}SelectedCocycle_consistent ({prefix}Index k)) ≃*",
+                f"      CocycleGroup ({prefix}TargetCocycle k) ({prefix}TargetCocycle_consistent k) := by",
+                f"  let e := Order16Table.orbitPathEquiv parent{parent}Table {linear_prefix}HBasis",
+                f"    {prefix}ActionColumns {prefix}CorrectionColumns {prefix}_hbasis_cocycle",
+                f"    {prefix}Aut {prefix}_action_linear",
+                f"    (Order16Table.orbitForestPath {prefix}ForestParent",
+                f"      {prefix}ForestGenerator {prefix}ForestRank k) ({prefix}RepresentativeCoeff k)",
+                "  exact e.trans (Order16Table.CocycleGroup.congrCocycleEq _ _",
+                f"    (congrArg (Order16Table.hCocycle parent{parent}Table {linear_prefix}HBasis)",
+                f"      ({prefix}_forest_endpoint k)))",
+                "",
+                "end Smallgroups.UsefulTheorems.Order32Certificate",
+                "",
+            ])
+            (output_dir / f"{path_identity_name}.lean").write_text(
+                "\n".join(path_identity), encoding="utf-8"
+            )
+            path_parts = []
+        else:
+            path_parts = []
+            path_chunk_size = 16
+            for part_index, offset in enumerate(range(0, vector_count, path_chunk_size), start=1):
+                part_name = f"{module_tag}PathPart{part_index:02d}"
+                path_parts.append(part_name)
+                lines = [
+                    header.rstrip(),
+                    f"import Smallgroups.UsefulTheorems.Order32Certificate.{module_tag}Core",
+                ]
                 lines.extend([
-                    f"theorem {prefix}_path_endpoint_{k} :",
-                    f"    Order16Table.applyOrbitPath {prefix}ActionColumns {word_term}",
-                    f"      ({prefix}RepresentativeCoeff {k}) = {prefix}TargetCoeff {k} := by",
-                    "  decide +kernel",
                     "",
-                    f"noncomputable def {prefix}NormalizeEquiv{k} :",
-                    f"    CocycleGroup ({prefix}SelectedCocycle ({prefix}Index {k}))",
-                    f"        ({prefix}SelectedCocycle_consistent ({prefix}Index {k})) ≃*",
-                    f"      CocycleGroup ({prefix}TargetCocycle {k})",
-                    f"        ({prefix}TargetCocycle_consistent {k}) := by",
-                    f"  let e := Order16Table.orbitPathEquiv parent{parent}Table {linear_prefix}HBasis",
-                    f"    {prefix}ActionColumns {prefix}CorrectionColumns {prefix}_hbasis_cocycle",
-                    f"    {prefix}Aut {prefix}_action_linear {word_term} ({prefix}RepresentativeCoeff {k})",
-                    "  exact e.trans (Order16Table.CocycleGroup.congrCocycleEq _ _",
-                    f"    (congrArg (Order16Table.hCocycle parent{parent}Table {linear_prefix}HBasis)",
-                    f"      {prefix}_path_endpoint_{k}))",
+                    "set_option maxRecDepth 100000",
+                    *( ["set_option linter.style.longLine false"] if parent == 14 else [] ),
+                    "",
+                    f"/-! Checked short orbit paths for parent {parent}; generated part {part_index}. -/",
+                    "",
+                    "namespace Smallgroups.UsefulTheorems.Order32Certificate",
+                    "",
+                    "open Smallgroups.UsefulTheorems.GF2Certificate",
                     "",
                 ])
-            lines.extend(["end Smallgroups.UsefulTheorems.Order32Certificate", ""])
-            (output_dir / f"{part_name}.lean").write_text("\n".join(lines), encoding="utf-8")
-            previous_orbit_path_part = part_name
+                for k in range(offset, min(offset + path_chunk_size, vector_count)):
+                    word_term = lean_path(group["orbit_words"][k])
+                    lines.extend([
+                        f"theorem {prefix}_path_endpoint_{k} :",
+                        f"    Order16Table.applyOrbitPath {prefix}ActionColumns {word_term}",
+                        f"      ({prefix}RepresentativeCoeff {k}) = {prefix}TargetCoeff {k} := by",
+                        "  decide +kernel",
+                        "",
+                        f"noncomputable def {prefix}NormalizeEquiv{k} :",
+                        f"    CocycleGroup ({prefix}SelectedCocycle ({prefix}Index {k}))",
+                        f"        ({prefix}SelectedCocycle_consistent ({prefix}Index {k})) ≃*",
+                        f"      CocycleGroup ({prefix}TargetCocycle {k})",
+                        f"        ({prefix}TargetCocycle_consistent {k}) := by",
+                        f"  let e := Order16Table.orbitPathEquiv parent{parent}Table {linear_prefix}HBasis",
+                        f"    {prefix}ActionColumns {prefix}CorrectionColumns {prefix}_hbasis_cocycle",
+                        f"    {prefix}Aut {prefix}_action_linear {word_term} ({prefix}RepresentativeCoeff {k})",
+                        "  exact e.trans (Order16Table.CocycleGroup.congrCocycleEq _ _",
+                        f"    (congrArg (Order16Table.hCocycle parent{parent}Table {linear_prefix}HBasis)",
+                        f"      {prefix}_path_endpoint_{k}))",
+                        "",
+                    ])
+                lines.extend(["end Smallgroups.UsefulTheorems.Order32Certificate", ""])
+                (output_dir / f"{part_name}.lean").write_text("\n".join(lines), encoding="utf-8")
 
-        path_identity_name = f"{module_tag}PathIdentity"
-        path_identity = [header.rstrip()]
-        path_identity.extend(
-            f"import Smallgroups.UsefulTheorems.Order32Certificate.{name}"
-            for name in path_parts
-        )
-        path_identity.extend([
+        if parent != 14:
+            path_identity = [header.rstrip()]
+            path_identity.extend(
+                f"import Smallgroups.UsefulTheorems.Order32Certificate.{name}"
+                for name in path_parts
+            )
+            path_identity.extend([
             "",
             "namespace Smallgroups.UsefulTheorems.Order32Certificate",
             "",
-        ])
-        if vector_count < 16:
-            path_identity.extend([
+            ])
+            if vector_count < 16:
+                path_identity.extend([
                 f"noncomputable def {prefix}NormalizeEquiv : ∀ k : Fin {vector_count},",
                 f"    CocycleGroup ({prefix}SelectedCocycle ({prefix}Index k))",
                 f"        ({prefix}SelectedCocycle_consistent ({prefix}Index k)) ≃*",
                 f"      CocycleGroup ({prefix}TargetCocycle k) ({prefix}TargetCocycle_consistent k)",
-            ])
-            for k in range(vector_count):
-                path_identity.append(f"  | {k} => {prefix}NormalizeEquiv{k}")
-        else:
+                ])
+                for k in range(vector_count):
+                    path_identity.append(f"  | {k} => {prefix}NormalizeEquiv{k}")
+            else:
             # Lean's numeral-pattern exhaustiveness checker stops unfolding `Fin`
             # after fifteen successors.  A finite-cases existence proof followed by
             # choice scales to the 1024 parent-14 coefficient vectors.
-            path_identity.extend([
+                path_identity.extend([
                 "set_option maxRecDepth 100000 in",
                 "set_option maxHeartbeats 8000000 in",
                 "-- Enumerating every finite coefficient vector selects its checked normalization equivalence.",
@@ -1664,28 +1816,26 @@ Authors: Smallgroups contributors
                 f"        ({prefix}SelectedCocycle_consistent ({prefix}Index k)) ≃*",
                 f"      CocycleGroup ({prefix}TargetCocycle k) ({prefix}TargetCocycle_consistent k)) := by",
                 "  fin_cases k",
-            ])
-            for k in range(vector_count):
-                path_identity.append(f"  · exact ⟨{prefix}NormalizeEquiv{k}⟩")
-            path_identity.extend([
+                ])
+                for k in range(vector_count):
+                    path_identity.append(f"  · exact ⟨{prefix}NormalizeEquiv{k}⟩")
+                path_identity.extend([
                 "",
                 f"noncomputable def {prefix}NormalizeEquiv (k : Fin {vector_count}) :",
                 f"    CocycleGroup ({prefix}SelectedCocycle ({prefix}Index k))",
                 f"        ({prefix}SelectedCocycle_consistent ({prefix}Index k)) ≃*",
                 f"      CocycleGroup ({prefix}TargetCocycle k) ({prefix}TargetCocycle_consistent k) :=",
                 f"  ({prefix}NormalizeEquiv_nonempty k).some",
-            ])
-        path_identity.extend(["", "end Smallgroups.UsefulTheorems.Order32Certificate", ""])
-        (output_dir / f"{path_identity_name}.lean").write_text(
-            "\n".join(path_identity), encoding="utf-8"
-        )
-        previous_orbit_path_part = path_identity_name
+                ])
+            path_identity.extend(["", "end Smallgroups.UsefulTheorems.Order32Certificate", ""])
+            (output_dir / f"{path_identity_name}.lean").write_text(
+                "\n".join(path_identity), encoding="utf-8"
+            )
 
         decomposition = [
             header.rstrip(),
             f"import Smallgroups.UsefulTheorems.Order32Certificate.{linear_identity_module}",
             "import Smallgroups.UsefulTheorems.PGroupGeneration.CohomologyDecomposition",
-            f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_orbit_reduction}",
             "",
             "namespace Smallgroups.UsefulTheorems.Order32Certificate",
             "",
@@ -1794,7 +1944,6 @@ Authors: Smallgroups contributors
         (output_dir / f"{module_tag}Reduction.lean").write_text(
             "\n".join(reduction), encoding="utf-8"
         )
-        previous_orbit_reduction = f"{module_tag}Reduction"
 
         alignment_parts = []
         for extension in sorted(group["extensions"], key=lambda e: e["orbit_index"]):
@@ -1821,11 +1970,6 @@ Authors: Smallgroups contributors
                     f"import Smallgroups.UsefulTheorems.Order32Certificate.{module_tag}Core",
                     "import Smallgroups.GAP.Polycyclic.Imported.Order32",
                 ])
-            if previous_orbit_alignment is not None:
-                lines.append(
-                    f"import Smallgroups.UsefulTheorems.Order32Certificate."
-                    f"{previous_orbit_alignment}"
-                )
             lines.extend([
                 "",
                 "set_option maxRecDepth 100000",
@@ -1882,7 +2026,6 @@ Authors: Smallgroups contributors
             (output_dir / f"{alignment_name}.lean").write_text(
                 "\n".join(lines), encoding="utf-8"
             )
-            previous_orbit_alignment = alignment_name
 
         gap_core = [header.rstrip()]
         gap_core.extend(
@@ -1955,9 +2098,6 @@ Authors: Smallgroups contributors
         (output_dir / f"{complete_name}.lean").write_text(
             "\n".join(complete), encoding="utf-8"
         )
-        # Do not start the next parent's GAP alignments until this parent's
-        # aggregation and completion theorem have both elaborated.
-        previous_orbit_alignment = complete_name
 
     scalable_all = [header.rstrip()]
     scalable_all.extend(

@@ -5,7 +5,6 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent13Core
 import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart33
-import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent13AlignmentPart07
 
 set_option maxRecDepth 100000
 set_option linter.style.longLine false

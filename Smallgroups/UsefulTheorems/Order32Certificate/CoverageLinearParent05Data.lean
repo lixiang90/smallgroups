@@ -5,7 +5,6 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.Tables
 import Smallgroups.UsefulTheorems.PGroupGeneration.PackedCoverage
-import Smallgroups.UsefulTheorems.Order32Certificate.CoverageLinearParent04BatchIdentity
 
 set_option maxRecDepth 100000
 set_option linter.style.longLine false

@@ -18,4 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
+        with:
+          build: false
+      # Lake 5 intentionally schedules independent jobs concurrently and has no
+      # `-j` option.  Build the heavy certificates as separate processes first;
+      # the final project build then reuses their oleans.
+      - name: Build Order32 certificates serially
+        run: python Scripts/build_order32_serial.py
+      - name: Build project
+        run: lake build
       - uses: leanprover-community/docgen-action@v1

@@ -53,6 +53,103 @@ central_extensions.json  AFC69BB26DA8E737CFF2F2B43FC70C6482D5CF09B7305E764726CC1
 local_profiles.json      37A2D58A9A03BC64A443C8EFA6E878434912C8EA7F762E5916A410125D0709A9
 ```
 
-On Windows, build the generated leaf modules in small batches or one at a time. Several
-finite PC checks can each use about 2 GiB during elaboration, so asking Lake to rebuild
-many independent alignment parts simultaneously can exceed physical memory.
+## Parent 14 orbit forest
+
+Parent 14 is the elementary abelian quotient `(C₂)^4`.  Its `H²` coordinate space has
+dimension 10, hence 1024 vectors, four checked orbit generators, and seven orbits.  The
+old certificate expanded a shortest word separately for every vector: 64 generated
+`CoverageOrbitParent14PathPartNN` files, 1024 separately constructed extension
+isomorphisms, and a large `fin_cases` dispatcher in `PathIdentity`.
+
+The generator now emits a shortest-path forest instead.  For every vector it records a
+parent, final generator, and rank; roots are the seven representative masks
+`[0, 1, 2, 19, 20, 40, 184]`.  Sixteen independent chunks check 64 local edges each.
+`OrbitReduction.lean` proves once, by well-founded recursion on rank, that following the
+parent pointers reaches the requested vector.  `orbitP14NormalizeEquiv` keeps its old
+type and name, but is now assembled by this generic theorem rather than by 1024 generated
+proof terms.
+
+The following Windows measurements used Lean/mathlib 4.32.2 on this checkout.  Commands
+were run with the toolchain's `lake.exe`; wall times include import/cache loading.
+
+| Check | Before / experiment | Result |
+|---|---:|---|
+| `Tables.lean` | 86.28 s | reference baseline |
+| `CoverageLinearParent01BatchIdentity` | 95.69 s | reference baseline |
+| `CoverageOrbitParent14Core` | 231.65 s | reference baseline |
+| one old Parent 14 path part | 19.58 s | 64 files, roughly 17–21 min in aggregate |
+| one giant forest `decide +kernel` | >180 s, 5.36 GiB | interrupted; rejected design |
+| 16 checks in one Lean process | >5.25 GiB | interrupted; rejected design |
+| 16 independent forest chunks | 16–43 s each, 474 s total | all passed serially |
+| new `PathIdentity` aggregate | 12 s | passed |
+| representative forest chunk peak | about 1.8 GiB | one Lean process |
+| all 400 certificate modules, topologically serialized | about 3 h 58 min | all passed on a loaded Windows workstation |
+| subsequent full `lake build` | 296.42 s (4.94 min) | passed with the certificate cache populated |
+
+The former generated tree contained 446 Lean files and 32,883 lines, including 1,802
+`decide +kernel` occurrences.  The current certificate directory contains 400 Lean files
+and 15,923 lines.  A clean parallel GitHub build was the full-suite baseline: it was
+terminated with exit 143 before producing a wall-clock result.  The current topological
+inventory is printed reproducibly by:
+
+```text
+python Scripts/build_order32_serial.py --dry-run
+```
+
+It contains 400 certificate modules after deleting the 64 old Parent 14 path parts and
+adding the forest data/chunks plus the quadratic bridge.  The CI command below is the
+authoritative full-suite post-change measurement and avoids an unreproducible OOM result.
+
+## Evaluator choice
+
+The forest keeps `decide +kernel`, but only for 64-edge local certificates.  This choice
+was measured rather than applied globally:
+
+- a single packed native check (`native_decide`) had not completed after 200 seconds;
+- `bv_decide` rejected the edge predicate because it is not wholly in its supported
+  `BitVec` fragment;
+- a giant kernel decision accumulated more than 5 GiB;
+- independent 64-edge kernel checks completed with bounded per-process memory.
+
+The large `Nat` masks therefore remain at the trusted decoding boundary for now.  A
+future BitVec conversion should first isolate a pure fixed-width boolean checker and
+prove a reflection theorem back to `OrbitForestEdge`; merely changing storage types does
+not make the current higher-order cocycle predicate suitable for `bv_decide`.
+
+## Quadratic-form bridge and remaining work
+
+`PGroupGeneration/QuadraticCocycle.lean` constructs the square quadratic map of a central
+`C₂` cocycle and proves that its polar form is the commutator pairing, that normalized
+coboundaries do not change it, and that it commutes with linear pullback.
+`Order32Certificate/Parent14Quadratic.lean` gives an explicit checked equivalence between
+the Parent 14 table and `F₂⁴`, transports its cocycles, and proves that representative 0
+is the zero quadratic normal form.  Existing seven-orbit completeness is re-exported next
+to this structural interface, so downstream classification and GAP numbering are
+unchanged.
+
+Completing the replacement of the remaining orbit computation requires these lemmas:
+
+1. define the rank of the polar linear map and prove invariance under `GL(4,2)`;
+2. define its radical and the restriction of the quadratic map to that radical;
+3. define the Arf invariant on the nondegenerate quotient and prove coordinate invariance;
+4. calculate `(polar rank, radical restriction, Arf)` for all seven representatives and
+   prove that the tuples separate them;
+5. formalize the characteristic-two Witt reduction showing every four-dimensional
+   quadratic map is equivalent to one of those seven forms.
+
+Until those structural lemmas land, the checked forest supplies completeness while the
+quadratic invariants can be developed and tested independently.
+
+## Low-memory build
+
+Lake 5 schedules independent jobs concurrently and has no `-j` option.  Do not encode
+resource scheduling as cross-module mathematical imports.  Build the generated modules
+in dependency order as separate processes, then run the ordinary project build:
+
+```text
+python Scripts/build_order32_serial.py
+lake build
+```
+
+The workflow uses exactly this sequence.  On Windows, the script also avoids the memory
+spike from launching many approximately 2 GiB checks at once.

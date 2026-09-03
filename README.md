@@ -252,9 +252,15 @@ theorems:
     `SmallGroup(32, 51)`. Every order-`32` group is reduced along a central subgroup of order `2`
     to a central extension of one of the fourteen order-`16` groups. Normalized `C₂`-valued
     cocycles are classified by checked `Z²/B²` computations over `GF(2)` and by checked
-    automorphism-orbit paths. The resulting extension tables are matched to the imported GAP pc
-    presentations by explicit generator maps; duplicates arising from different central kernels
-    are allowed during enumeration and are collapsed to the same GAP representative.
+    automorphism orbits. For the largest Parent 14 branch (`(C₂)^4`, with 1024 `H²` vectors),
+    a generated ranked orbit forest checks 1024 local edges in 16 bounded chunks; one generic
+    recursive theorem assembles the normalization equivalence. This replaces 64 expanded path
+    files and 1024 generated isomorphism proof terms while preserving the public API. The
+    accompanying quadratic-form bridge identifies cocycle squares on `F₂⁴`, their polar
+    commutator form, coboundary invariance, and linear-coordinate equivariance. The resulting
+    extension tables are matched to the imported GAP pc presentations by explicit generator
+    maps; duplicates arising from different central kernels are allowed during enumeration and
+    are collapsed to the same GAP representative.
 
     GAP and Python generate the tables and certificates but are not part of the trusted proof:
     Lean checks the group tables, cocycle equations, row reductions, quotient-space coverage,
@@ -587,5 +593,13 @@ python Scripts/generate_order32_cohomology.py --from-json --check-lean
 ```
 
 On Windows, a clean build of the generated order-`32` leaf modules can require substantial memory
-when Lake runs many of them concurrently. If physical memory is limited, build those leaves in
-small batches; the certificate README records the exact commands and environment.
+when Lake runs many of them concurrently. Lake 5 has no `-j` build option, so use the same
+process-level serialization as CI before the full build:
+
+```sh
+python Scripts/build_order32_serial.py
+lake build
+```
+
+The certificate README records the baseline, peak-memory observations, evaluator comparison,
+and the remaining rank/radical/Arf lemmas for the structural Parent 14 replacement.
