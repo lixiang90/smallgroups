@@ -16,3 +16,47 @@ rev = "v4.32.2"
 
 [[lean_lib]]
 name = "Smallgroups"
+
+[[lean_lib]]
+name = "SmallgroupsDocs"
+# BEGIN GENERATED DOC ROOTS
+roots = [
+  "Smallgroups.Classifications.Classifications_11_to_20",
+  "Smallgroups.Classifications.Classifications_1_to_10",
+  "Smallgroups.Classifications.Classifications_21_to_30",
+  "Smallgroups.Classifications.Classifications_31_to_40.Order31",
+  "Smallgroups.Classifications.Classifications_31_to_40.Order36",
+  "Smallgroups.Classifications.Classifications_31_to_40.Order37",
+  "Smallgroups.Classifications.Classifications_31_to_40.Order40",
+  "Smallgroups.Classifications.Classifications_41_to_50",
+  "Smallgroups.Classifications.Classifications_51_to_60",
+  "Smallgroups.Classifications.Classifications_61_to_70",
+  "Smallgroups.Classifications.Classifications_71_to_80",
+  "Smallgroups.Classifications.Classifications_81_to_90",
+  "Smallgroups.Classifications.Classifications_91_to_100",
+  "Smallgroups.GAP",
+  "Smallgroups.GAP_Classifications.GAP_11_to_20",
+  "Smallgroups.GAP_Classifications.GAP_1_to_10",
+  "Smallgroups.GAP_Classifications.GAP_21_to_30",
+  "Smallgroups.GAP_Classifications.GAP_31_to_40.Order31",
+  "Smallgroups.GAP_Classifications.GAP_31_to_40.Order33",
+  "Smallgroups.GAP_Classifications.GAP_31_to_40.Order34",
+  "Smallgroups.GAP_Classifications.GAP_31_to_40.Order35",
+  "Smallgroups.GAP_Classifications.GAP_31_to_40.Order37",
+  "Smallgroups.GAP_Classifications.GAP_31_to_40.Order38",
+  "Smallgroups.GAP_Classifications.GAP_31_to_40.Order39",
+  "Smallgroups.GAP_Classifications.GAP_41_to_50",
+  "Smallgroups.GAP_Classifications.GAP_51_to_60",
+  "Smallgroups.GAP_Classifications.GAP_61_to_70",
+  "Smallgroups.GAP_Classifications.GAP_71_to_80",
+  "Smallgroups.GAP_Classifications.GAP_81_to_90",
+  "Smallgroups.GAP_Classifications.GAP_91_to_100",
+  "Smallgroups.UsefulTheorems.Isoclinism",
+  "Smallgroups.UsefulTheorems.Order32.Distinctness",
+  "Smallgroups.UsefulTheorems.Order48",
+  "Smallgroups.UsefulTheorems.Order4Prime",
+  "Smallgroups.UsefulTheorems.Order60",
+  "Smallgroups.UsefulTheorems.Order72",
+  "Smallgroups.UsefulTheorems.Order80",
+]
+# END GENERATED DOC ROOTS

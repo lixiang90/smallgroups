@@ -636,6 +636,7 @@ def emit_lean_certificates(groups, output_dir: Path, chunk_size: int = 13):
         "CoverageParent14OrbitPart*.lean",
         "CoverageParent14PackedColumnsPart*.lean",
         "CoverageOrbitParent14PathPart*.lean",
+        "Parent14OrbitAlignmentPart*.lean",
     ]
     for pattern in obsolete_patterns:
         for path in output_dir.glob(pattern):
@@ -648,6 +649,8 @@ def emit_lean_certificates(groups, output_dir: Path, chunk_size: int = 13):
         "CoverageParent14GapCore.lean",
         "CoverageParent14Identity.lean",
         "CoverageParent14Linear.lean",
+        "CoverageParent14OrbitCore.lean",
+        "CoverageParent14OrbitData.lean",
         "CoverageParent14OrbitIdentity.lean",
         "CoverageParent14PackedCore.lean",
         "CoverageParent14PackedIdentity.lean",
@@ -1037,205 +1040,11 @@ Authors: Smallgroups contributors
         "\n".join(packed_identity), encoding="utf-8"
     )
 
-    # Orbit-normalization data for every one of the 2^10 H² coordinates.  Each
-    # witness records an actual table automorphism and a one-cochain whose
-    # coboundary is the discrepancy from the chosen orbit representative.
-    normalizations = parent14["orbit_normalizations"]
-    if len(normalizations) != 2 ** hdim:
-        raise RuntimeError("parent-14 orbit normalization table is incomplete")
-
     def inverse_permutation(permutation):
         answer = [0] * len(permutation)
         for i, value in enumerate(permutation):
             answer[value] = i
         return answer
-
-    orbit_data = [
-        header.rstrip(),
-        "import Smallgroups.UsefulTheorems.Order32Certificate.CoverageParent14Data",
-        "",
-        "set_option maxRecDepth 100000",
-        "set_option linter.style.longLine false",
-        "",
-        "/-! Generated orbit witnesses for `SmallGroup(16,14)`; do not edit. -/",
-        "",
-        "namespace Smallgroups.UsefulTheorems.Order32Certificate",
-        "",
-        "open Smallgroups.UsefulTheorems.GF2Certificate",
-        "",
-        f"def parent14OrbitRepresentativeMask : Fin {len(parent14['orbit_representatives'])} → ℕ :=",
-        f"  {lean_vector(parent14['orbit_representatives'])}",
-        "set_option maxHeartbeats 8000000 in",
-        "-- Elaborating the 1024-entry orbit-index certificate requires the larger budget.",
-        f"def parent14OrbitIndex : Fin {2 ** hdim} → Fin {len(parent14['orbit_representatives'])} :=",
-        f"  {lean_vector([n['orbit_index'] for n in normalizations])}",
-        "set_option maxHeartbeats 8000000 in",
-        "-- Elaborating the 1024 automorphism permutations requires the larger budget.",
-        f"def parent14OrbitPerm : Fin {2 ** hdim} → Fin 16 → Fin 16 :=",
-        "  ![" + ", ".join(lean_vector(n["permutation"]) for n in normalizations) + "]",
-        "set_option maxHeartbeats 8000000 in",
-        "-- Elaborating the 1024 inverse permutations requires the larger budget.",
-        f"def parent14OrbitInvPerm : Fin {2 ** hdim} → Fin 16 → Fin 16 :=",
-        "  ![" + ", ".join(
-            lean_vector(inverse_permutation(n["permutation"])) for n in normalizations
-        ) + "]",
-        "set_option maxHeartbeats 8000000 in",
-        "-- Elaborating the 1024 coboundary witnesses requires the larger budget.",
-        f"def parent14OrbitOneMask : Fin {2 ** hdim} → ℕ :=",
-        f"  {lean_vector([n['one_cochain'] for n in normalizations])}",
-        "",
-        f"def parent14OrbitRepresentativeVec (o : Fin {len(parent14['orbit_representatives'])}) : TwoVec :=",
-        "  synthesizeTwo parent14HBasis",
-        f"    (coeffMask {hdim} (parent14OrbitRepresentativeMask o))",
-        f"def parent14OrbitVec (k : Fin {2 ** hdim}) : TwoVec :=",
-        f"  synthesizeTwo parent14HBasis (coeffMask {hdim} k.val)",
-        f"def parent14OrbitOneVec (k : Fin {2 ** hdim}) : OneVec :=",
-        "  oneMask (parent14OrbitOneMask k)",
-        "",
-        f"def parent14OrbitNormalizes (k : Fin {2 ** hdim}) : Prop :=",
-        "  ∀ a b : Order16Table.Q parent14Table,",
-        "    Order16Table.decodeTwo parent14Table",
-        "        (parent14OrbitRepresentativeVec (parent14OrbitIndex k)) a b =",
-        "      Order16Table.decodeTwo parent14Table (parent14OrbitVec k)",
-        "          ⟨parent14OrbitInvPerm k a.val⟩ ⟨parent14OrbitInvPerm k b.val⟩ +",
-        "        centralCoboundary (Order16Table.Q parent14Table) F2",
-        "          (Order16Table.decodeOne parent14Table (parent14OrbitOneVec k))",
-        "          ⟨parent14OrbitInvPerm k a.val⟩ ⟨parent14OrbitInvPerm k b.val⟩",
-        "",
-        f"def parent14OrbitCertificate (k : Fin {2 ** hdim}) : Prop :=",
-        "  (∀ a : Fin 16, parent14OrbitInvPerm k (parent14OrbitPerm k a) = a) ∧",
-        "  (∀ a : Fin 16, parent14OrbitPerm k (parent14OrbitInvPerm k a) = a) ∧",
-        "  (∀ a b : Fin 16, parent14OrbitPerm k (parent14Table.mul a b) =",
-        "    parent14Table.mul (parent14OrbitPerm k a) (parent14OrbitPerm k b)) ∧",
-        "  parent14OrbitNormalizes k",
-        "",
-        "end Smallgroups.UsefulTheorems.Order32Certificate",
-        "",
-    ]
-    (output_dir / "CoverageParent14OrbitData.lean").write_text(
-        "\n".join(orbit_data), encoding="utf-8"
-    )
-
-    orbit_parts = []
-    orbit_chunk_size = 16
-    for part_index, offset in enumerate(
-        range(0, 2 ** hdim, orbit_chunk_size), start=1
-    ):
-        part_name = f"CoverageParent14OrbitPart{part_index:02d}"
-        orbit_parts.append(part_name)
-        lines = [
-            header.rstrip(),
-            "import Smallgroups.UsefulTheorems.Order32Certificate.CoverageParent14OrbitData",
-            "",
-            "set_option maxRecDepth 100000",
-            "",
-            "/-! Generated checks of parent-14 orbit witnesses; do not edit. -/",
-            "",
-            "namespace Smallgroups.UsefulTheorems.Order32Certificate",
-            "",
-        ]
-        for k in range(offset, min(offset + orbit_chunk_size, 2 ** hdim)):
-            lines.extend([
-                "set_option maxHeartbeats 8000000 in",
-                "-- Finite check of an automorphism transport and coboundary correction.",
-                f"theorem parent14_orbit_certificate_{k} : parent14OrbitCertificate {k} := by",
-                "  unfold parent14OrbitCertificate parent14OrbitNormalizes",
-                "  decide +kernel",
-                "",
-            ])
-        lines.extend(["end Smallgroups.UsefulTheorems.Order32Certificate", ""])
-        (output_dir / f"{part_name}.lean").write_text("\n".join(lines), encoding="utf-8")
-
-    orbit_identity = [header.rstrip()]
-    orbit_identity.extend(
-        f"import Smallgroups.UsefulTheorems.Order32Certificate.{name}"
-        for name in orbit_parts
-    )
-    orbit_identity.extend([
-        "",
-        "namespace Smallgroups.UsefulTheorems.Order32Certificate",
-        "",
-        f"theorem parent14_orbit_certificate : ∀ k : Fin {2 ** hdim}, parent14OrbitCertificate k",
-    ])
-    for k in range(2 ** hdim):
-        orbit_identity.append(f"  | {k} => parent14_orbit_certificate_{k}")
-    orbit_identity.extend([
-        "",
-        "end Smallgroups.UsefulTheorems.Order32Certificate",
-        "",
-    ])
-    (output_dir / "CoverageParent14OrbitIdentity.lean").write_text(
-        "\n".join(orbit_identity), encoding="utf-8"
-    )
-
-    # Direct PC maps for all seven parent-14 orbit representatives.  Four of
-    # these GAP ids also occur first under other parents, so the canonical 51
-    # maps are not sufficient to close this branch.
-    parent14_alignment_parts = []
-    for extension in sorted(parent14["extensions"], key=lambda e: e["orbit_index"]):
-        orbit_index = extension["orbit_index"]
-        child = extension["gap32_id"]
-        part_name = f"Parent14OrbitAlignmentPart{orbit_index + 1:02d}"
-        previous_part = parent14_alignment_parts[-1] if parent14_alignment_parts else None
-        parent14_alignment_parts.append(part_name)
-        exponents = "![" + ", ".join(
-            "[" + ", ".join(map(str, row)) + "]"
-            for row in extension["pc_exponents"]
-        ) + "]"
-        lines = [
-            header.rstrip(),
-            "import Smallgroups.UsefulTheorems.Order32Certificate.CoverageParent14OrbitCore",
-            "import Smallgroups.GAP.Polycyclic.Imported.Order32",
-        ]
-        if previous_part is not None:
-            lines.append(
-                f"import Smallgroups.UsefulTheorems.Order32Certificate.{previous_part}"
-            )
-        lines.extend([
-            "",
-            "set_option maxRecDepth 100000",
-            "set_option linter.style.longLine false",
-            "",
-            f"/-! Direct parent-14 orbit {orbit_index} alignment to GAP id {child}. -/",
-            "",
-            "namespace Smallgroups.UsefulTheorems.Order32Certificate",
-            "",
-            "open Smallgroups.GAP",
-            "",
-            f"abbrev parent14OrbitGroup{orbit_index} :=",
-            f"  CocycleGroup (parent14SelectedCocycle {orbit_index})",
-            f"    (parent14SelectedCocycle_consistent {orbit_index})",
-            f"def parent14GapExponents{orbit_index} : Fin 32 → List ℕ := {exponents}",
-            f"def parent14OrbitToGap{orbit_index} (x : parent14OrbitGroup{orbit_index}) :",
-            f"    PCGroup smallGroup_32_{child} :=",
-            f"  evalVec (parent14GapExponents{orbit_index} (certifiedExtensionIndex x))",
-            f"    (pcGens smallGroup_32_{child}.layers)",
-            "",
-            "set_option maxHeartbeats 8000000 in",
-            "-- Finite verification of the generated 32-element PC isomorphism.",
-            f"noncomputable def parent14OrbitGapEquiv{orbit_index} :",
-            f"    parent14OrbitGroup{orbit_index} ≃* PCGroup smallGroup_32_{child} :=",
-            f"  mulEquivOfDecide parent14OrbitToGap{orbit_index}",
-            "    (by decide +kernel) (by decide +kernel)",
-            "",
-            "end Smallgroups.UsefulTheorems.Order32Certificate",
-            "",
-        ])
-        (output_dir / f"{part_name}.lean").write_text("\n".join(lines), encoding="utf-8")
-
-    parent14_alignment = [header.rstrip()]
-    parent14_alignment.extend(
-        f"import Smallgroups.UsefulTheorems.Order32Certificate.{name}"
-        for name in parent14_alignment_parts
-    )
-    parent14_alignment.extend([
-        "",
-        "/-! Direct PC alignment for all seven parent-14 orbit representatives. -/",
-        "",
-    ])
-    (output_dir / "Parent14OrbitAlignment.lean").write_text(
-        "\n".join(parent14_alignment), encoding="utf-8"
-    )
 
     # The packed linear certificate format is now validated on parent 14.  Emit
     # the same fallback-free coverage data for the other thirteen parents.
@@ -1953,22 +1762,17 @@ Authors: Smallgroups contributors
             alignment_parts.append(alignment_name)
             canonical_parent, canonical_orbit = canonical_occurrence[child]
             is_canonical = canonical_parent == parent and canonical_orbit == orbit_index
-            reuse_parent14_alignment = parent == 14
+            direct_pc_alignment = parent == 14 or not is_canonical
             lines = [header.rstrip()]
-            if reuse_parent14_alignment:
+            if direct_pc_alignment:
                 lines.extend([
                     f"import Smallgroups.UsefulTheorems.Order32Certificate.{module_tag}Core",
-                    f"import Smallgroups.UsefulTheorems.Order32Certificate.Parent14OrbitAlignmentPart{orbit_index + 1:02d}",
+                    "import Smallgroups.GAP.Polycyclic.Imported.Order32",
                 ])
             elif is_canonical:
                 lines.extend([
                     f"import Smallgroups.UsefulTheorems.Order32Certificate.{module_tag}Core",
                     f"import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart{child:02d}",
-                ])
-            else:
-                lines.extend([
-                    f"import Smallgroups.UsefulTheorems.Order32Certificate.{module_tag}Core",
-                    "import Smallgroups.GAP.Polycyclic.Imported.Order32",
                 ])
             lines.extend([
                 "",
@@ -1985,16 +1789,7 @@ Authors: Smallgroups contributors
                 f"abbrev {prefix}OrbitGroup{orbit_index} := CocycleGroup",
                 f"  ({prefix}SelectedCocycle {orbit_index}) ({prefix}SelectedCocycle_consistent {orbit_index})",
             ])
-            if reuse_parent14_alignment:
-                lines.extend([
-                    f"set_option maxHeartbeats 8000000 in",
-                    "-- Reuse the independently checked direct PC map from the parent-14 pilot.",
-                    f"noncomputable def {prefix}GapEquiv{orbit_index} :",
-                    f"    {prefix}OrbitGroup{orbit_index} ≃* PCGroup smallGroup_32_{child} :=",
-                    f"  (Order16Table.CocycleGroup.congrCocycleEq _ _ (by decide +kernel)).trans",
-                    f"    parent14OrbitGapEquiv{orbit_index}",
-                ])
-            elif is_canonical:
+            if is_canonical and not direct_pc_alignment:
                 lines.extend([
                     f"set_option maxHeartbeats 8000000 in",
                     "-- Kernel check that this selected orbit is the canonical generated representative.",

@@ -21,10 +21,22 @@ jobs:
         with:
           build: false
       # Lake 5 intentionally schedules independent jobs concurrently and has no
-      # `-j` option.  Build the heavy certificates as separate processes first;
-      # the final project build then reuses their oleans.
-      - name: Build Order32 certificates serially
-        run: python Scripts/build_order32_serial.py
+      # job-count option. Keep the high-memory forest and PC-map checks isolated,
+      # and submit the remaining certificates in small topological batches.
+      - name: Build Order32 certificates with bounded batching
+        run: python Scripts/build_order32_serial.py --timings-json .lake/order32-build-timings.json
+      - name: Upload Order32 build timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: order32-build-timings
+          path: .lake/order32-build-timings.json
       - name: Build project
         run: lake build
+      - name: Select the reduced documentation target
+        run: |
+          python Scripts/generate_doc_entrypoint.py --check
+          python Scripts/generate_doc_entrypoint.py --select-doc-target
       - uses: leanprover-community/docgen-action@v1
+        env:
+          DISABLE_EQUATIONS: 1

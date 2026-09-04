@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent14Core
-import Smallgroups.UsefulTheorems.Order32Certificate.Parent14OrbitAlignmentPart01
+import Smallgroups.GAP.Polycyclic.Imported.Order32
 
 set_option maxRecDepth 100000
 set_option linter.style.longLine false
@@ -18,11 +18,17 @@ open Smallgroups.GAP
 
 abbrev orbitP14OrbitGroup0 := CocycleGroup
   (orbitP14SelectedCocycle 0) (orbitP14SelectedCocycle_consistent 0)
+def orbitP14GapExponents0 : Fin 32 → List ℕ := ![[0, 0, 0, 0, 0], [1, 0, 0, 0, 0], [0, 1, 0, 0, 0], [1, 1, 0, 0, 0], [0, 0, 1, 0, 0], [1, 0, 1, 0, 0], [0, 0, 0, 1, 0], [1, 0, 0, 1, 0], [0, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 0, 0], [1, 1, 1, 0, 0], [0, 1, 0, 1, 0], [1, 1, 0, 1, 0], [0, 1, 0, 0, 1], [1, 1, 0, 0, 1], [0, 0, 1, 1, 0], [1, 0, 1, 1, 0], [0, 0, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 1, 1], [1, 0, 0, 1, 1], [0, 1, 1, 1, 0], [1, 1, 1, 1, 0], [0, 1, 1, 0, 1], [1, 1, 1, 0, 1], [0, 1, 0, 1, 1], [1, 1, 0, 1, 1], [0, 0, 1, 1, 1], [1, 0, 1, 1, 1], [0, 1, 1, 1, 1], [1, 1, 1, 1, 1]]
+def orbitP14ToGap0 (x : orbitP14OrbitGroup0) :
+    PCGroup smallGroup_32_51 :=
+  evalVec (orbitP14GapExponents0 (certifiedExtensionIndex x))
+    (pcGens smallGroup_32_51.layers)
+
 set_option maxHeartbeats 8000000 in
--- Reuse the independently checked direct PC map from the parent-14 pilot.
+-- Finite verification of the generated 32-element PC isomorphism.
 noncomputable def orbitP14GapEquiv0 :
     orbitP14OrbitGroup0 ≃* PCGroup smallGroup_32_51 :=
-  (Order16Table.CocycleGroup.congrCocycleEq _ _ (by decide +kernel)).trans
-    parent14OrbitGapEquiv0
+  mulEquivOfDecide orbitP14ToGap0
+    (by decide +kernel) (by decide +kernel)
 
 end Smallgroups.UsefulTheorems.Order32Certificate

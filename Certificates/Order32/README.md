@@ -69,6 +69,10 @@ parent pointers reaches the requested vector.  `orbitP14NormalizeEquiv` keeps it
 type and name, but is now assembled by this generic theorem rather than by 1024 generated
 proof terms.
 
+The GAP maps for the seven Parent 14 representatives now target the forest-selected
+cocycles directly.  This removes the earlier 1024-entry normalization data/core pair,
+seven pilot alignment modules, and seven extra cocycle-equality kernel checks.
+
 The following Windows measurements used Lean/mathlib 4.32.2 on this checkout.  Commands
 were run with the toolchain's `lake.exe`; wall times include import/cache loading.
 
@@ -83,12 +87,12 @@ were run with the toolchain's `lake.exe`; wall times include import/cache loadin
 | 16 independent forest chunks | 16–43 s each, 474 s total | all passed serially |
 | new `PathIdentity` aggregate | 12 s | passed |
 | representative forest chunk peak | about 1.8 GiB | one Lean process |
-| all 400 certificate modules, topologically serialized | about 3 h 58 min | all passed on a loaded Windows workstation |
+| all 400 certificate modules, topologically serialized | about 3 h 58 min | pre-batching baseline on a loaded Windows workstation |
 | subsequent full `lake build` | 296.42 s (4.94 min) | passed with the certificate cache populated |
 
 The former generated tree contained 446 Lean files and 32,883 lines, including 1,802
-`decide +kernel` occurrences.  The current certificate directory contains 400 Lean files
-and 15,923 lines.  A clean parallel GitHub build was the full-suite baseline: it was
+`decide +kernel` occurrences.  The current certificate directory contains 391 Lean files.
+A clean parallel GitHub build was the full-suite baseline: it was
 terminated with exit 143 before producing a wall-clock result.  The current topological
 inventory is printed reproducibly by:
 
@@ -96,9 +100,12 @@ inventory is printed reproducibly by:
 python Scripts/build_order32_serial.py --dry-run
 ```
 
-It contains 400 certificate modules after deleting the 64 old Parent 14 path parts and
-adding the forest data/chunks plus the quadratic bridge.  The CI command below is the
-authoritative full-suite post-change measurement and avoids an unreproducible OOM result.
+With the default batch size it schedules 391 modules in 205 Lake invocations: the 16
+measured high-memory forest chunks and 112 direct PC-map modules remain isolated, while
+the other modules use 77 topological batches of at most four targets.  Passing
+`--batch-size 1` restores one-target-per-process behavior.  The CI command below is
+the authoritative full-suite
+post-change measurement and avoids an unreproducible OOM result.
 
 ## Evaluator choice
 
@@ -142,14 +149,15 @@ quadratic invariants can be developed and tested independently.
 
 ## Low-memory build
 
-Lake 5 schedules independent jobs concurrently and has no `-j` option.  Do not encode
+Lake 5 schedules independent jobs concurrently and has no job-count option.  Do not encode
 resource scheduling as cross-module mathematical imports.  Build the generated modules
-in dependency order as separate processes, then run the ordinary project build:
+with bounded topological batches, then run the ordinary project build:
 
 ```text
-python Scripts/build_order32_serial.py
+python Scripts/build_order32_serial.py --timings-json .lake/order32-build-timings.json
 lake build
 ```
 
-The workflow uses exactly this sequence.  On Windows, the script also avoids the memory
-spike from launching many approximately 2 GiB checks at once.
+The JSON report records each batch, its modules, status, and elapsed wall time; CI uploads
+it even when a batch fails.  On Windows, the script also avoids launching the measured
+approximately 1.8 GiB forest checks or the multi-gigabyte PC-map checks together.

@@ -262,6 +262,9 @@ theorems:
     maps; duplicates arising from different central kernels are allowed during enumeration and
     are collapsed to the same GAP representative.
 
+    The seven Parent 14 GAP maps now consume the forest-selected cocycles directly, removing
+    the earlier normalization data/core pair, seven pilot map modules, and their bridge checks.
+
     GAP and Python generate the tables and certificates but are not part of the trusted proof:
     Lean checks the group tables, cocycle equations, row reductions, quotient-space coverage,
     orbit moves, coboundary transports, pc maps, and the local isomorphism-invariant profiles used
@@ -593,13 +596,15 @@ python Scripts/generate_order32_cohomology.py --from-json --check-lean
 ```
 
 On Windows, a clean build of the generated order-`32` leaf modules can require substantial memory
-when Lake runs many of them concurrently. Lake 5 has no `-j` build option, so use the same
-process-level serialization as CI before the full build:
+when Lake runs many of them concurrently. Lake 5 has no job-count option, so use the same
+bounded scheduler as CI before the full build:
 
 ```sh
-python Scripts/build_order32_serial.py
+python Scripts/build_order32_serial.py --timings-json .lake/order32-build-timings.json
 lake build
 ```
 
 The certificate README records the baseline, peak-memory observations, evaluator comparison,
-and the remaining rank/radical/Arf lemmas for the structural Parent 14 replacement.
+batch inventory, and the remaining rank/radical/Arf lemmas for the structural Parent 14
+replacement. CI documentation uses a generated 37-root public target, which excludes the
+Order32 certificate implementation and modules that import it; equation rendering is disabled.
