@@ -597,7 +597,8 @@ python Scripts/generate_order32_cohomology.py --from-json --check-lean
 
 On Windows, a clean build of the generated order-`32` leaf modules can require substantial memory
 when Lake runs many of them concurrently. Lake 5 has no job-count option, so use the same
-bounded scheduler as CI before the full build:
+scheduler as CI: it isolates every module containing a kernel decision and batches only
+decision-free modules before the full build:
 
 ```sh
 python Scripts/build_order32_serial.py --timings-json .lake/order32-build-timings.json

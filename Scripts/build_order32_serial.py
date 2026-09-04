@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Build Order32 certificates with memory-aware topological batching.
 
-The measured high-memory orbit-forest and PC-alignment checks remain isolated in one
-Lake process each. All other modules are submitted in small, bounded topological batches
-to avoid paying for hundreds of Lake startups while retaining the low-memory policy.
+Every module containing a kernel decision remains isolated in one Lake process. Modules
+without kernel decisions are submitted in small, bounded topological batches to avoid
+paying for unnecessary Lake startups while retaining the low-memory policy.
 """
 
 from __future__ import annotations
@@ -81,7 +81,16 @@ def build_batches(
 
     for name in modules:
         source = sources[name].read_text(encoding="utf-8")
-        if ISOLATED_MODULE_RE.search(name) or "mulEquivOfDecide" in source:
+        # A source-level check is deliberately conservative. The first batched CI run
+        # grouped Tables with three RepsPart modules, placing 95 kernel decisions in one
+        # Lake invocation; the runner terminated that first batch with exit code 143.
+        # Treat every kernel reduction as potentially memory-heavy. Modules containing
+        # only data and already-proved theorem composition remain safe to batch.
+        if (
+            ISOLATED_MODULE_RE.search(name)
+            or "mulEquivOfDecide" in source
+            or "decide +kernel" in source
+        ):
             flush_bounded()
             batches.append(BuildBatch("isolated", (name,)))
         else:

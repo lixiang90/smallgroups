@@ -21,8 +21,8 @@ jobs:
         with:
           build: false
       # Lake 5 intentionally schedules independent jobs concurrently and has no
-      # job-count option. Keep the high-memory forest and PC-map checks isolated,
-      # and submit the remaining certificates in small topological batches.
+      # job-count option. Keep every kernel decision isolated, and submit only
+      # decision-free certificate modules in small topological batches.
       - name: Build Order32 certificates with bounded batching
         run: python Scripts/build_order32_serial.py --timings-json .lake/order32-build-timings.json
       - name: Upload Order32 build timings

@@ -100,12 +100,14 @@ inventory is printed reproducibly by:
 python Scripts/build_order32_serial.py --dry-run
 ```
 
-With the default batch size it schedules 391 modules in 205 Lake invocations: the 16
-measured high-memory forest chunks and 112 direct PC-map modules remain isolated, while
-the other modules use 77 topological batches of at most four targets.  Passing
-`--batch-size 1` restores one-target-per-process behavior.  The CI command below is
-the authoritative full-suite
-post-change measurement and avoids an unreproducible OOM result.
+With the default batch size it schedules 391 modules in 358 Lake invocations: all 311
+modules containing `decide +kernel` remain isolated, while modules without kernel
+decisions use 47 topological batches of at most four targets.  This conservative policy
+was adopted after a CI runner terminated the initial batch of `Tables` and three
+`RepsPart` modules, which together contained 95 kernel decisions.  Passing
+`--batch-size 1` restores one-target-per-process behavior.  The CI command below is the
+authoritative full-suite post-change measurement and retains the successful serial
+build's memory bound.
 
 ## Evaluator choice
 
