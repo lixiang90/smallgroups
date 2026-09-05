@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent08Core
-import Smallgroups.GAP.Polycyclic.Imported.Order32
+import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart09
+import Smallgroups.GAP.Polycyclic.PresentationHom
 
 set_option maxRecDepth 100000
 set_option linter.style.longLine false
@@ -18,17 +19,23 @@ open Smallgroups.GAP
 
 abbrev orbitP8OrbitGroup2 := CocycleGroup
   (orbitP8SelectedCocycle 2) (orbitP8SelectedCocycle_consistent 2)
-def orbitP8GapExponents2 : Fin 32 → List ℕ := ![[0, 0, 0, 0, 0], [0, 0, 0, 1, 1], [1, 0, 0, 1, 1], [1, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 1, 0, 1, 1], [0, 0, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 0, 0, 1], [0, 0, 0, 1, 0], [1, 1, 0, 1, 1], [1, 1, 0, 0, 0], [1, 0, 1, 0, 0], [1, 0, 1, 1, 1], [1, 0, 0, 1, 0], [1, 0, 0, 0, 1], [0, 1, 1, 1, 1], [0, 1, 1, 0, 0], [0, 1, 0, 0, 1], [0, 1, 0, 1, 0], [0, 0, 1, 1, 0], [0, 0, 1, 0, 1], [1, 1, 1, 0, 0], [1, 1, 1, 1, 1], [1, 1, 0, 1, 0], [1, 1, 0, 0, 1], [1, 0, 1, 0, 1], [1, 0, 1, 1, 0], [0, 1, 1, 1, 0], [0, 1, 1, 0, 1], [1, 1, 1, 0, 1], [1, 1, 1, 1, 0]]
-def orbitP8ToGap2 (x : orbitP8OrbitGroup2) :
-    PCGroup smallGroup_32_9 :=
-  evalVec (orbitP8GapExponents2 (certifiedExtensionIndex x))
-    (pcGens smallGroup_32_9.layers)
+def orbitP8Standard2ForwardIndex : Fin 32 → Fin 32 := ![0, 21, 22, 25, 5, 28, 9, 6, 1, 20, 13, 14, 30, 11, 23, 24, 19, 16, 4, 29, 8, 7, 26, 3, 12, 15, 31, 10, 18, 17, 27, 2]
+def orbitP8Standard2BackwardIndex : Fin 32 → Fin 32 := ![0, 8, 31, 23, 18, 4, 7, 21, 20, 6, 27, 13, 24, 10, 11, 25, 17, 29, 28, 16, 9, 1, 2, 14, 15, 3, 22, 30, 5, 19, 12, 26]
+
+def orbitP8Standard2ToGenerated (x : orbitP8OrbitGroup2) : generatedGroup9 where
+  fst := (((orbitP8Standard2ForwardIndex (certifiedExtensionIndex x)).val % 2 : ℕ) : ZMod 2)
+  snd := ⟨⟨(orbitP8Standard2ForwardIndex (certifiedExtensionIndex x)).val / 2, by omega⟩⟩
+
+def orbitP8Standard2FromGenerated (x : generatedGroup9) : orbitP8OrbitGroup2 where
+  fst := (((orbitP8Standard2BackwardIndex (certifiedExtensionIndex x)).val % 2 : ℕ) : ZMod 2)
+  snd := ⟨⟨(orbitP8Standard2BackwardIndex (certifiedExtensionIndex x)).val / 2, by omega⟩⟩
 
 set_option maxHeartbeats 8000000 in
--- Finite verification of the generated 32-element PC isomorphism.
+-- Kernel reduction checks multiplication and both inverse tables.
 noncomputable def orbitP8GapEquiv2 :
     orbitP8OrbitGroup2 ≃* PCGroup smallGroup_32_9 :=
-  mulEquivOfDecide orbitP8ToGap2
-    (by decide +kernel) (by decide +kernel)
+  (CycExt.mulEquivOfExplicitInverse orbitP8Standard2ToGenerated orbitP8Standard2FromGenerated
+    (by decide +kernel) (by decide +kernel)).trans
+    generatedGapEquiv9
 
 end Smallgroups.UsefulTheorems.Order32Certificate

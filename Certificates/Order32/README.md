@@ -53,6 +53,70 @@ central_extensions.json  AFC69BB26DA8E737CFF2F2B43FC70C6482D5CF09B7305E764726CC1
 local_profiles.json      37A2D58A9A03BC64A443C8EFA6E878434912C8EA7F762E5916A410125D0709A9
 ```
 
+## Relation-based GAP alignment
+
+The 51 standard representatives and 14 order-16 parent maps no longer ask
+`decide +kernel` to check all pairs in a 16- or 32-element multiplication table.  The
+generic constructor in
+`GAP/Polycyclic/PresentationHom.lean` proves that a map out of one `CycExt` layer is a
+homomorphism when the image of its new generator satisfies that layer's power and
+conjugation relations.  Generated alignments apply this theorem recursively through
+the pc tower, then check one explicit right inverse and use equality of finite
+cardinalities to obtain a `MulEquiv`.
+
+The other 47 coverage representatives now use an explicit indexed equivalence to the
+already verified standard representative with the same GAP id, then compose with its
+GAP equivalence.  Thus the certificate has 65 direct pc relation maps rather than 112,
+and none of its former 112 `mulEquivOfDecide` calls remain.  All relation, multiplication,
+and inverse obligations are ordinary kernel-checked proof terms.  A CI audit rejects
+`bv_decide`, `native_decide`, `sorry`, `admit`, `axiom`, and `unsafe` in the Order-32
+certificates and the local Polycyclic and PGroupGeneration proof infrastructure.
+
+Generated alignment imports are also split by the exact representative and GAP data
+chunks they use.  Standard alignments, parent-table alignments, and coverage alignments
+no longer form artificial serial import chains; the aggregate modules remain the only
+place that imports all parts.
+
+The relation theorem extends conjugation from a generating list to the entire
+inner group. Each order-32 alignment therefore checks five power relations and ten
+generator conjugation relations, then a 32-entry right inverse. All 51 standard maps
+and all 14 parent maps passed local compilation. With precise imports and `lean -j1`,
+the standard modules took 16.573--24.690 seconds each (median 18.186 seconds), with
+1.28--1.32 GiB peak working set. `AlignmentPart01` took 19.532 seconds; the earlier
+local baseline was 102.705 seconds. These measurements combine the source and import
+improvements and use the stated local invocation; CI timings are reported separately.
+
+The CycExt infrastructure imports `Mathlib.Tactic.Group` and `SplitIfs` explicitly,
+and the certified-table infrastructure imports `FinCases` and `NormNum`. This avoids
+loading the full `Mathlib.Tactic` umbrella into every certificate. Explicit PUnit and
+ZMod field imports preserve the instances previously supplied indirectly.
+
+## Shared cocycle basis proofs
+
+The fourteen `CocycleBasisParentNN` modules check the 55 H² basis vectors once.  Coverage
+modules and standard representatives import the same proofs.  Each of the 51 standard
+representatives checks equality of its encoded cocycle with the corresponding linear
+combination on pairs of elements, then applies
+`Order16Table.isCentralCocycle_decodeTwo_synthesize`.  The representative no longer
+repeats the cocycle identity on all triples.  Its group law still uses the original
+packed cocycle, so downstream computations do not repeatedly evaluate the linear sum.
+
+## Interpreting CI measurements
+
+The successful `969dc66` [CI baseline](https://github.com/lixiang90/smallgroups/actions/runs/33864362685)
+spent 5400.916 seconds on certificates, 93 seconds on the final project build, and 2171
+seconds on documentation.  It was a mixed-cache run: all 51 standard alignments, all 14
+parent alignments, and the representative modules were replayed.  The 47 direct coverage
+maps were actually rebuilt and took 2114.875 seconds in aggregate.  Parent 14's sixteen
+forest checks took 353.320 seconds.
+
+The old workflow saved its Lean cache before the custom certificate build.  The workflow
+now restores a separately versioned cache, checks generated-source consistency, and saves
+the cache only after both certificate and project builds pass, before changing the
+documentation target.  The first run in the new cache namespace must rebuild more
+modules.  Compare individual rebuilt modules or runs with matching cache conditions;
+neither total time nor a cached replay is evidence of a proof-compilation speedup.
+
 ## Parent 14 orbit forest
 
 Parent 14 is the elementary abelian quotient `(C₂)^4`.  Its `H²` coordinate space has
@@ -61,7 +125,7 @@ old certificate expanded a shortest word separately for every vector: 64 generat
 `CoverageOrbitParent14PathPartNN` files, 1024 separately constructed extension
 isomorphisms, and a large `fin_cases` dispatcher in `PathIdentity`.
 
-The generator now emits a shortest-path forest instead.  For every vector it records a
+The first stage emitted a shortest-path forest instead.  For every vector it records a
 parent, final generator, and rank; roots are the seven representative masks
 `[0, 1, 2, 19, 20, 40, 184]`.  Sixteen independent chunks check 64 local edges each.
 `OrbitReduction.lean` proves once, by well-founded recursion on rank, that following the
@@ -69,9 +133,9 @@ parent pointers reaches the requested vector.  `orbitP14NormalizeEquiv` keeps it
 type and name, but is now assembled by this generic theorem rather than by 1024 generated
 proof terms.
 
-The GAP maps for the seven Parent 14 representatives now target the forest-selected
-cocycles directly.  This removes the earlier 1024-entry normalization data/core pair,
-seven pilot alignment modules, and seven extra cocycle-equality kernel checks.
+The second stage keeps the same seven Parent 14 cocycles and composes their GAP maps
+through the standard representatives. The forest described above is now retired.  The earlier 1024-entry normalization data/core pair and
+seven pilot alignment modules remain unnecessary.
 
 The following Windows measurements used Lean/mathlib 4.32.2 on this checkout.  Commands
 were run with the toolchain's `lake.exe`; wall times include import/cache loading.
@@ -91,7 +155,7 @@ were run with the toolchain's `lake.exe`; wall times include import/cache loadin
 | subsequent full `lake build` | 296.42 s (4.94 min) | passed with the certificate cache populated |
 
 The former generated tree contained 446 Lean files and 32,883 lines, including 1,802
-`decide +kernel` occurrences.  The current certificate directory contains 391 Lean files.
+`decide +kernel` occurrences.  The first-stage certificate directory contained 391 Lean files.
 A clean parallel GitHub build was the full-suite baseline: it was
 terminated with exit 143 before producing a wall-clock result.  The current topological
 inventory is printed reproducibly by:
@@ -100,9 +164,9 @@ inventory is printed reproducibly by:
 python Scripts/build_order32_serial.py --dry-run
 ```
 
-With the default batch size it schedules 391 modules in 358 Lake invocations: all 311
-modules containing `decide +kernel` remain isolated, while modules without kernel
-decisions use 47 topological batches of at most four targets.  This conservative policy
+The scheduler isolates every module containing `decide +kernel`; modules without kernel
+decisions use topological batches of at most four targets.  Its printed inventory includes
+the shared cocycle basis and additional structural modules.  This conservative policy
 was adopted after a CI runner terminated the initial batch of `Tables` and three
 `RepsPart` modules, which together contained 95 kernel decisions.  Passing
 `--batch-size 1` restores one-target-per-process behavior.  The CI command below is the
@@ -111,43 +175,42 @@ build's memory bound.
 
 ## Evaluator choice
 
-The forest keeps `decide +kernel`, but only for 64-edge local certificates.  This choice
-was measured rather than applied globally:
+All finite certificate checks use `decide +kernel`.  Python and GAP supply only data
+and witnesses; the Lean kernel verifies every mathematical obligation.  Native or
+bitvector decision procedures that expand the trusted computing base are excluded.
+The former forest used sixteen independent 64-edge checks to bound memory; the second
+stage removes them entirely through ordinary mathematical theorems.
 
-- a single packed native check (`native_decide`) had not completed after 200 seconds;
-- `bv_decide` rejected the edge predicate because it is not wholly in its supported
-  `BitVec` fragment;
-- a giant kernel decision accumulated more than 5 GiB;
-- independent 64-edge kernel checks completed with bounded per-process memory.
+## Structural quadratic classification for Parent 14
 
-The large `Nat` masks therefore remain at the trusted decoding boundary for now.  A
-future BitVec conversion should first isolate a pure fixed-width boolean checker and
-prove a reflection theorem back to `OrbitForestEdge`; merely changing storage types does
-not make the current higher-order cocycle predicate suitable for `bv_decide`.
+`QuadraticDimensionFour.lean` proves that every quadratic space of dimension four over
+`F₂` is isometric to one of seven forms: zero, one square, `H`, `A`, `H` plus one
+square, `H ⊥ H`, or `H ⊥ A`. The proof splits off a nondegenerate plane, classifies the
+two-dimensional remainder, absorbs square coefficients into a radical vector when its
+square is nonzero, and uses the explicit identity `A ⊥ A ≃ H ⊥ H`. With zero polarization,
+the quadratic map is a linear functional and is classified using its kernel.
 
-## Quadratic-form bridge and remaining work
+`QuadraticNormalForms4Distinct.lean` separates these forms using their zero counts
+`[16, 8, 12, 4, 8, 10, 6]` together with whether polarization vanishes. These are proved
+isometry invariants. This gives the required separation without a separate abstract
+Arf-invariant quotient construction. `QuadraticInvariants.lean` additionally proves
+polar-kernel transport and dimension invariance and defines the linear restriction of
+the quadratic map to that kernel.
 
-`PGroupGeneration/QuadraticCocycle.lean` constructs the square quadratic map of a central
-`C₂` cocycle and proves that its polar form is the commutator pairing, that normalized
-coboundaries do not change it, and that it commutes with linear pullback.
-`Order32Certificate/Parent14Quadratic.lean` gives an explicit checked equivalence between
-the Parent 14 table and `F₂⁴`, transports its cocycles, and proves that representative 0
-is the zero quadratic normal form.  Existing seven-orbit completeness is re-exported next
-to this structural interface, so downstream classification and GAP numbering are
-unchanged.
+`Parent14QuadraticRepresentatives.lean` supplies seven explicit invertible coordinate
+matrices to the existing masks `[0, 1, 2, 19, 20, 40, 184]`. The kernel checks the small
+coordinate identities and transfers pairwise inequivalence to the existing representatives.
+`QuadraticCocycleSplitting.lean` proves that equal square maps differ by a coboundary,
+using an ordinary linear section of an abelian exponent-two extension, and consequently
+that isometric square maps give isomorphic cocycle groups.
 
-Completing the replacement of the remaining orbit computation requires these lemmas:
-
-1. define the rank of the polar linear map and prove invariance under `GL(4,2)`;
-2. define its radical and the restriction of the quadratic map to that radical;
-3. define the Arf invariant on the nondegenerate quotient and prove coordinate invariance;
-4. calculate `(polar rank, radical restriction, Arf)` for all seven representatives and
-   prove that the tuples separate them;
-5. formalize the characteristic-two Witt reduction showing every four-dimensional
-   quadratic map is equivalent to one of those seven forms.
-
-Until those structural lemmas land, the checked forest supplies completeness while the
-quadratic invariants can be developed and tested independently.
+`Parent14QuadraticClassification.lean` applies these results directly to any normalized
+cocycle on Parent 14. `orbitP14_cocycle_orbit_complete` retains its public statement but
+now invokes this structural proof. The 1024-vertex forest, its sixteen checking modules,
+the forest aggregate, and the unnecessary Parent 14 cohomology-decomposition and packed
+identity modules are removed (22 retired source modules in total). The generator emits
+only the seven selected cocycles, their compositional GAP maps, and the structural
+completeness wrapper for this parent, and its reproducibility check rejects retired files.
 
 ## Low-memory build
 
@@ -162,4 +225,5 @@ lake build
 
 The JSON report records each batch, its modules, status, and elapsed wall time; CI uploads
 it even when a batch fails.  On Windows, the script also avoids launching the measured
-approximately 1.8 GiB forest checks or the multi-gigabyte PC-map checks together.
+finite checks together. Large finite checks remain isolated even after the structural
+replacement and the reduction in alignment cost.

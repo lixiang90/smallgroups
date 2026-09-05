@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.PGroupGeneration.CertifiedTable
 import Smallgroups.UsefulTheorems.PGroupGeneration.FiniteCohomology
+import Mathlib.Algebra.Field.ZMod
 import Mathlib.LinearAlgebra.StdBasis
 import Mathlib.Data.BitVec
 

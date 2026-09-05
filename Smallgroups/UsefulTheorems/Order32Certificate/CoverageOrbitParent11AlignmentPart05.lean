@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.CoverageOrbitParent11Core
-import Smallgroups.GAP.Polycyclic.Imported.Order32
+import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart28
+import Smallgroups.GAP.Polycyclic.PresentationHom
 
 set_option maxRecDepth 100000
 set_option linter.style.longLine false
@@ -18,17 +19,23 @@ open Smallgroups.GAP
 
 abbrev orbitP11OrbitGroup4 := CocycleGroup
   (orbitP11SelectedCocycle 4) (orbitP11SelectedCocycle_consistent 4)
-def orbitP11GapExponents4 : Fin 32 → List ℕ := ![[0, 0, 0, 0, 0], [0, 0, 0, 1, 0], [1, 0, 0, 1, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 1], [0, 1, 1, 0, 1], [0, 1, 0, 0, 1], [0, 1, 0, 1, 1], [0, 0, 0, 0, 1], [0, 0, 0, 1, 1], [1, 1, 1, 0, 0], [1, 1, 1, 1, 0], [1, 1, 0, 1, 0], [1, 1, 0, 0, 0], [1, 0, 0, 1, 0], [1, 0, 0, 0, 0], [0, 0, 1, 1, 0], [0, 0, 1, 0, 0], [0, 1, 1, 1, 0], [0, 1, 1, 0, 0], [0, 1, 0, 0, 0], [0, 1, 0, 1, 0], [1, 0, 1, 0, 1], [1, 0, 1, 1, 1], [1, 1, 1, 0, 1], [1, 1, 1, 1, 1], [1, 1, 0, 1, 1], [1, 1, 0, 0, 1], [0, 0, 1, 1, 1], [0, 0, 1, 0, 1], [1, 0, 1, 0, 0], [1, 0, 1, 1, 0]]
-def orbitP11ToGap4 (x : orbitP11OrbitGroup4) :
-    PCGroup smallGroup_32_28 :=
-  evalVec (orbitP11GapExponents4 (certifiedExtensionIndex x))
-    (pcGens smallGroup_32_28.layers)
+def orbitP11Standard4ForwardIndex : Fin 32 → Fin 32 := ![0, 8, 16, 28, 11, 25, 23, 31, 1, 9, 27, 13, 15, 3, 17, 29, 6, 20, 10, 24, 22, 30, 4, 18, 26, 12, 14, 2, 7, 21, 5, 19]
+def orbitP11Standard4BackwardIndex : Fin 32 → Fin 32 := ![0, 8, 27, 13, 22, 30, 16, 28, 1, 9, 18, 4, 25, 11, 26, 12, 2, 14, 23, 31, 17, 29, 20, 6, 19, 5, 24, 10, 3, 15, 21, 7]
+
+def orbitP11Standard4ToGenerated (x : orbitP11OrbitGroup4) : generatedGroup28 where
+  fst := (((orbitP11Standard4ForwardIndex (certifiedExtensionIndex x)).val % 2 : ℕ) : ZMod 2)
+  snd := ⟨⟨(orbitP11Standard4ForwardIndex (certifiedExtensionIndex x)).val / 2, by omega⟩⟩
+
+def orbitP11Standard4FromGenerated (x : generatedGroup28) : orbitP11OrbitGroup4 where
+  fst := (((orbitP11Standard4BackwardIndex (certifiedExtensionIndex x)).val % 2 : ℕ) : ZMod 2)
+  snd := ⟨⟨(orbitP11Standard4BackwardIndex (certifiedExtensionIndex x)).val / 2, by omega⟩⟩
 
 set_option maxHeartbeats 8000000 in
--- Finite verification of the generated 32-element PC isomorphism.
+-- Kernel reduction checks multiplication and both inverse tables.
 noncomputable def orbitP11GapEquiv4 :
     orbitP11OrbitGroup4 ≃* PCGroup smallGroup_32_28 :=
-  mulEquivOfDecide orbitP11ToGap4
-    (by decide +kernel) (by decide +kernel)
+  (CycExt.mulEquivOfExplicitInverse orbitP11Standard4ToGenerated orbitP11Standard4FromGenerated
+    (by decide +kernel) (by decide +kernel)).trans
+    generatedGapEquiv28
 
 end Smallgroups.UsefulTheorems.Order32Certificate

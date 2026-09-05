@@ -5,6 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.GAP.Polycyclic.CyclicExtension
 import Smallgroups.GAP.Polycyclic.Basic
+import Smallgroups.GAP.Polycyclic.PresentationHom
 
 /-!
 # Polycyclic (pc) groups

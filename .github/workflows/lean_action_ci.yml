@@ -17,9 +17,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+      - name: Restore Lean build cache
+        id: lean-build-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: .lake
+          # A new namespace excludes caches saved before the custom build ran.
+          key: lake-order32-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: lake-order32-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}-
       - uses: leanprover/lean-action@v1
         with:
           build: false
+          use-github-cache: false
+      - name: Audit Order32 trust boundary
+        run: python Scripts/audit_order32_trust.py
+      - name: Check generated Order32 certificates
+        run: python Scripts/generate_order32_cohomology.py --from-json --check-lean
       # Lake 5 intentionally schedules independent jobs concurrently and has no
       # job-count option. Keep every kernel decision isolated, and submit only
       # decision-free certificate modules in small topological batches.
@@ -33,6 +46,14 @@ jobs:
           path: .lake/order32-build-timings.json
       - name: Build project
         run: lake build
+      # Save only after both builds succeed and before the documentation step
+      # changes the Lake target. Mathlib's own cache remains enabled in lean-action.
+      - name: Save Lean build cache
+        if: success() && steps.lean-build-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: .lake
+          key: ${{ steps.lean-build-cache.outputs.cache-primary-key }}
       - name: Select the reduced documentation target
         run: |
           python Scripts/generate_doc_entrypoint.py --check

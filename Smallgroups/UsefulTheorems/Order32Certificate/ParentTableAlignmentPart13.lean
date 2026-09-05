@@ -5,7 +5,7 @@ Authors: Smallgroups contributors
 -/
 import Smallgroups.UsefulTheorems.Order32Certificate.Tables
 import Smallgroups.GAP.Polycyclic.Imported.Order16
-import Smallgroups.UsefulTheorems.Order32Certificate.ParentTableAlignmentPart12
+import Smallgroups.GAP.Polycyclic.PresentationHom
 
 set_option maxRecDepth 100000
 set_option linter.style.longLine false
@@ -21,11 +21,42 @@ def parent13TableToGap (x : CertifiedTableGroup parent13Table) :
     PCGroup smallGroup_16_13 :=
   evalVec (parent13GapExponents x.val) (pcGens smallGroup_16_13.layers)
 
+-- The per-layer relation certificates require a larger kernel-reduction budget.
+set_option maxHeartbeats 8000000
+
+def parent13RelationFromIndex (i : Fin 16) : CertifiedTableGroup parent13Table := ⟨i⟩
+
+def parent13RelationMap0 : pcTower [] →* CertifiedTableGroup parent13Table where
+  toFun _ := 1
+  map_one' := rfl
+  map_mul' _ _ := (mul_one 1).symm
+
+def parent13RelationMap4 : pcTower [sg16_13_L4] →* CertifiedTableGroup parent13Table :=
+  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_13_L4 [])
+    parent13RelationMap0 (parent13RelationFromIndex 4)
+    (by decide +kernel)
+
+def parent13RelationMap3 : pcTower [sg16_13_L3, sg16_13_L4] →* CertifiedTableGroup parent13Table :=
+  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_13_L3 [sg16_13_L4])
+    parent13RelationMap4 (parent13RelationFromIndex 3)
+    (by decide +kernel)
+
+def parent13RelationMap2 : pcTower [sg16_13_L2, sg16_13_L3, sg16_13_L4] →* CertifiedTableGroup parent13Table :=
+  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_13_L2 [sg16_13_L3, sg16_13_L4])
+    parent13RelationMap3 (parent13RelationFromIndex 2)
+    (by decide +kernel)
+
+def parent13RelationToSource : PCGroup smallGroup_16_13 →* CertifiedTableGroup parent13Table :=
+  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_13_L1 [sg16_13_L2, sg16_13_L3, sg16_13_L4])
+    parent13RelationMap2 (parent13RelationFromIndex 1) (by decide +kernel)
+
 set_option maxHeartbeats 8000000 in
--- Finite verification of the generated 16-element table isomorphism.
+-- Kernel reduction checks the finite pc relations and explicit right inverse.
 noncomputable def parent13TableGapEquiv :
     CertifiedTableGroup parent13Table ≃* PCGroup smallGroup_16_13 :=
-  mulEquivOfDecide parent13TableToGap
-    (by decide +kernel) (by decide +kernel)
+  (CycExt.mulEquivOfRightInverseCardEq parent13RelationToSource parent13TableToGap
+    (by decide +kernel) (by
+      rw [card_smallGroup_16_13, Nat.card_eq_fintype_card,
+        CertifiedTableGroup.fintype_card])).symm
 
 end Smallgroups.UsefulTheorems.Order32Certificate

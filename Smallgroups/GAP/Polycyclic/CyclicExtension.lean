@@ -6,7 +6,8 @@ Authors: Smallgroups contributors
 import Mathlib.Data.ZMod.Basic
 import Mathlib.GroupTheory.QuotientGroup.Basic
 import Mathlib.SetTheory.Cardinal.Finite
-import Mathlib.Tactic
+import Mathlib.Tactic.Group
+import Mathlib.Tactic.SplitIfs
 
 /-!
 # Polycyclic groups, layer by layer: cyclic extensions

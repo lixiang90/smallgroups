@@ -3,9 +3,9 @@ Copyright (c) 2026 Smallgroups contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Smallgroups contributors
 -/
-import Smallgroups.UsefulTheorems.Order32Certificate.Reps
-import Smallgroups.GAP.Polycyclic.Imported.Order32
-import Smallgroups.UsefulTheorems.Order32Certificate.AlignmentPart40
+import Smallgroups.UsefulTheorems.Order32Certificate.RepsPart04
+import Smallgroups.GAP.Polycyclic.Imported.Order32Part03
+import Smallgroups.GAP.Polycyclic.PresentationHom
 
 set_option maxRecDepth 100000
 set_option linter.style.longLine false
@@ -22,9 +22,47 @@ def generatedToGap41 (x : generatedGroup41) :
   evalVec (gapExponents41 (certifiedExtensionIndex x))
     (pcGens smallGroup_32_41.layers)
 
-set_option maxHeartbeats 8000000 in -- finite verification of a 32-element isomorphism
+-- The per-layer relation certificates require a larger kernel-reduction budget.
+set_option maxHeartbeats 8000000
+
+def generatedRelation41FromIndex (i : Fin 32) : generatedGroup41 where
+  fst := ((i.val % 2 : ℕ) : ZMod 2)
+  snd := ⟨⟨i.val / 2, by omega⟩⟩
+
+def generatedRelation41Map0 : pcTower [] →* generatedGroup41 where
+  toFun _ := 1
+  map_one' := rfl
+  map_mul' _ _ := (mul_one 1).symm
+
+def generatedRelation41Map5 : pcTower [sg32_41_L5] →* generatedGroup41 :=
+  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_41_L5 [])
+    generatedRelation41Map0 (generatedRelation41FromIndex 8)
+    (by decide +kernel)
+
+def generatedRelation41Map4 : pcTower [sg32_41_L4, sg32_41_L5] →* generatedGroup41 :=
+  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_41_L4 [sg32_41_L5])
+    generatedRelation41Map5 (generatedRelation41FromIndex 6)
+    (by decide +kernel)
+
+def generatedRelation41Map3 : pcTower [sg32_41_L3, sg32_41_L4, sg32_41_L5] →* generatedGroup41 :=
+  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_41_L3 [sg32_41_L4, sg32_41_L5])
+    generatedRelation41Map4 (generatedRelation41FromIndex 1)
+    (by decide +kernel)
+
+def generatedRelation41Map2 : pcTower [sg32_41_L2, sg32_41_L3, sg32_41_L4, sg32_41_L5] →* generatedGroup41 :=
+  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_41_L2 [sg32_41_L3, sg32_41_L4, sg32_41_L5])
+    generatedRelation41Map3 (generatedRelation41FromIndex 5)
+    (by decide +kernel)
+
+def generatedRelation41ToSource : PCGroup smallGroup_32_41 →* generatedGroup41 :=
+  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_41_L1 [sg32_41_L2, sg32_41_L3, sg32_41_L4, sg32_41_L5])
+    generatedRelation41Map2 (generatedRelation41FromIndex 3) (by decide +kernel)
+
+set_option maxHeartbeats 8000000 in
+-- Kernel reduction checks the finite pc relations and explicit right inverse.
 noncomputable def generatedGapEquiv41 :
     generatedGroup41 ≃* PCGroup smallGroup_32_41 :=
-  mulEquivOfDecide generatedToGap41 (by decide +kernel) (by decide +kernel)
+  (CycExt.mulEquivOfRightInverseCardEq generatedRelation41ToSource generatedToGap41
+    (by decide +kernel) (by rw [card_smallGroup_32_41, card_generatedGroup41])).symm
 
 end Smallgroups.UsefulTheorems.Order32Certificate

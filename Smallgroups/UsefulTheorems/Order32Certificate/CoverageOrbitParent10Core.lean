@@ -14,11 +14,6 @@ namespace Smallgroups.UsefulTheorems.Order32Certificate
 
 open Smallgroups.UsefulTheorems.GF2Certificate
 
-theorem orbitP10_hbasis_cocycle (i : Fin 6) :
-    IsCentralCocycle
-      (Order16Table.decodeTwo parent10Table (twoMask (coverageP10HBasis i))) := by
-  fin_cases i <;> decide +kernel
-
 def orbitP10AutCertificate (g : Fin 7) : Prop :=
   (∀ a : Fin 16, orbitP10AutInvPerm g (orbitP10AutPerm g a) = a) ∧
   (∀ a : Fin 16, orbitP10AutPerm g (orbitP10AutInvPerm g a) = a) ∧
