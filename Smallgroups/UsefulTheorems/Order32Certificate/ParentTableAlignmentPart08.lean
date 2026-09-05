@@ -21,9 +21,6 @@ def parent8TableToGap (x : CertifiedTableGroup parent8Table) :
     PCGroup smallGroup_16_8 :=
   evalVec (parent8GapExponents x.val) (pcGens smallGroup_16_8.layers)
 
--- The per-layer relation certificates require a larger kernel-reduction budget.
-set_option maxHeartbeats 8000000
-
 def parent8RelationFromIndex (i : Fin 16) : CertifiedTableGroup parent8Table := ⟨i⟩
 
 def parent8RelationMap0 : pcTower [] →* CertifiedTableGroup parent8Table where
@@ -31,21 +28,29 @@ def parent8RelationMap0 : pcTower [] →* CertifiedTableGroup parent8Table where
   map_one' := rfl
   map_mul' _ _ := (mul_one 1).symm
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def parent8RelationMap4 : pcTower [sg16_8_L4] →* CertifiedTableGroup parent8Table :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_8_L4 [])
     parent8RelationMap0 (parent8RelationFromIndex 4)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def parent8RelationMap3 : pcTower [sg16_8_L3, sg16_8_L4] →* CertifiedTableGroup parent8Table :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_8_L3 [sg16_8_L4])
     parent8RelationMap4 (parent8RelationFromIndex 3)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def parent8RelationMap2 : pcTower [sg16_8_L2, sg16_8_L3, sg16_8_L4] →* CertifiedTableGroup parent8Table :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_8_L2 [sg16_8_L3, sg16_8_L4])
     parent8RelationMap3 (parent8RelationFromIndex 2)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks the outer generator power and conjugation relations.
 def parent8RelationToSource : PCGroup smallGroup_16_8 →* CertifiedTableGroup parent8Table :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_8_L1 [sg16_8_L2, sg16_8_L3, sg16_8_L4])
     parent8RelationMap2 (parent8RelationFromIndex 1) (by decide +kernel)

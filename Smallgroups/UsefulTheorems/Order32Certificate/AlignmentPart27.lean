@@ -22,9 +22,6 @@ def generatedToGap27 (x : generatedGroup27) :
   evalVec (gapExponents27 (certifiedExtensionIndex x))
     (pcGens smallGroup_32_27.layers)
 
--- The per-layer relation certificates require a larger kernel-reduction budget.
-set_option maxHeartbeats 8000000
-
 def generatedRelation27FromIndex (i : Fin 32) : generatedGroup27 where
   fst := ((i.val % 2 : ℕ) : ZMod 2)
   snd := ⟨⟨i.val / 2, by omega⟩⟩
@@ -34,26 +31,36 @@ def generatedRelation27Map0 : pcTower [] →* generatedGroup27 where
   map_one' := rfl
   map_mul' _ _ := (mul_one 1).symm
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def generatedRelation27Map5 : pcTower [sg32_27_L5] →* generatedGroup27 :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_27_L5 [])
     generatedRelation27Map0 (generatedRelation27FromIndex 1)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def generatedRelation27Map4 : pcTower [sg32_27_L4, sg32_27_L5] →* generatedGroup27 :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_27_L4 [sg32_27_L5])
     generatedRelation27Map5 (generatedRelation27FromIndex 8)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def generatedRelation27Map3 : pcTower [sg32_27_L3, sg32_27_L4, sg32_27_L5] →* generatedGroup27 :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_27_L3 [sg32_27_L4, sg32_27_L5])
     generatedRelation27Map4 (generatedRelation27FromIndex 20)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def generatedRelation27Map2 : pcTower [sg32_27_L2, sg32_27_L3, sg32_27_L4, sg32_27_L5] →* generatedGroup27 :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_27_L2 [sg32_27_L3, sg32_27_L4, sg32_27_L5])
     generatedRelation27Map3 (generatedRelation27FromIndex 28)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks the outer generator power and conjugation relations.
 def generatedRelation27ToSource : PCGroup smallGroup_32_27 →* generatedGroup27 :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg32_27_L1 [sg32_27_L2, sg32_27_L3, sg32_27_L4, sg32_27_L5])
     generatedRelation27Map2 (generatedRelation27FromIndex 14) (by decide +kernel)

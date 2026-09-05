@@ -21,9 +21,6 @@ def parent12TableToGap (x : CertifiedTableGroup parent12Table) :
     PCGroup smallGroup_16_12 :=
   evalVec (parent12GapExponents x.val) (pcGens smallGroup_16_12.layers)
 
--- The per-layer relation certificates require a larger kernel-reduction budget.
-set_option maxHeartbeats 8000000
-
 def parent12RelationFromIndex (i : Fin 16) : CertifiedTableGroup parent12Table := ⟨i⟩
 
 def parent12RelationMap0 : pcTower [] →* CertifiedTableGroup parent12Table where
@@ -31,21 +28,29 @@ def parent12RelationMap0 : pcTower [] →* CertifiedTableGroup parent12Table whe
   map_one' := rfl
   map_mul' _ _ := (mul_one 1).symm
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def parent12RelationMap4 : pcTower [sg16_12_L4] →* CertifiedTableGroup parent12Table :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_12_L4 [])
     parent12RelationMap0 (parent12RelationFromIndex 4)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def parent12RelationMap3 : pcTower [sg16_12_L3, sg16_12_L4] →* CertifiedTableGroup parent12Table :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_12_L3 [sg16_12_L4])
     parent12RelationMap4 (parent12RelationFromIndex 3)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks this layer's generator power and conjugation relations.
 def parent12RelationMap2 : pcTower [sg16_12_L2, sg16_12_L3, sg16_12_L4] →* CertifiedTableGroup parent12Table :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_12_L2 [sg16_12_L3, sg16_12_L4])
     parent12RelationMap3 (parent12RelationFromIndex 2)
     (by decide +kernel)
 
+set_option maxHeartbeats 8000000 in
+-- Kernel checks the outer generator power and conjugation relations.
 def parent12RelationToSource : PCGroup smallGroup_16_12 →* CertifiedTableGroup parent12Table :=
   CycExt.liftOfGeneratorRelations (D := pcTowerLayerData sg16_12_L1 [sg16_12_L2, sg16_12_L3, sg16_12_L4])
     parent12RelationMap2 (parent12RelationFromIndex 1) (by decide +kernel)

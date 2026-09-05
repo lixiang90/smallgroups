@@ -91,6 +91,23 @@ and the certified-table infrastructure imports `FinCases` and `NormNum`. This av
 loading the full `Mathlib.Tactic` umbrella into every certificate. Explicit PUnit and
 ZMod field imports preserve the instances previously supplied indirectly.
 
+The three planned pilot comparisons all met the time and memory gate:
+
+| Leaf module | Old → new wall time | Old → new peak working set |
+|---|---:|---:|
+| `AlignmentPart01` | 54.122 → 19.532 s | 3.503 → 1.301 GiB |
+| `CoverageOrbitParent03AlignmentPart05` | 60.136 → 17.010 s | 3.669 → 1.914 GiB |
+| `CoverageOrbitParent14AlignmentPart01` | 61.301 → 17.775 s | 3.934 → 2.093 GiB |
+
+Old leaf sources were taken from `969dc66` and compiled with the current shared dependency
+cache, Lean 4.32.2 and `-j1`, one process at a time. New measurements reuse the phase-two
+verification records; some were taken with other builds running. This is a bounded
+engineering comparison of leaf algorithms and imports, not an old-commit cold build or
+statistical benchmark. Time fell 63.9--71.7% and peak working set fell 46.8--62.9%.
+All 95 coverage mappings passed locally: 1352.595 seconds in aggregate, including
+827.172 seconds for the 47 indexed compositions and 525.423 seconds for the 48 canonical
+compositions. Full CI results must be interpreted using the cache caveat below.
+
 ## Shared cocycle basis proofs
 
 The fourteen `CocycleBasisParentNN` modules check the 55 H² basis vectors once.  Coverage
@@ -117,7 +134,7 @@ documentation target.  The first run in the new cache namespace must rebuild mor
 modules.  Compare individual rebuilt modules or runs with matching cache conditions;
 neither total time nor a cached replay is evidence of a proof-compilation speedup.
 
-## Parent 14 orbit forest
+## First-stage Parent 14 forest (retired)
 
 Parent 14 is the elementary abelian quotient `(C₂)^4`.  Its `H²` coordinate space has
 dimension 10, hence 1024 vectors, four checked orbit generators, and seven orbits.  The
@@ -125,12 +142,12 @@ old certificate expanded a shortest word separately for every vector: 64 generat
 `CoverageOrbitParent14PathPartNN` files, 1024 separately constructed extension
 isomorphisms, and a large `fin_cases` dispatcher in `PathIdentity`.
 
-The first stage emitted a shortest-path forest instead.  For every vector it records a
+The first stage emitted a shortest-path forest instead.  For every vector it recorded a
 parent, final generator, and rank; roots are the seven representative masks
 `[0, 1, 2, 19, 20, 40, 184]`.  Sixteen independent chunks check 64 local edges each.
 `OrbitReduction.lean` proves once, by well-founded recursion on rank, that following the
-parent pointers reaches the requested vector.  `orbitP14NormalizeEquiv` keeps its old
-type and name, but is now assembled by this generic theorem rather than by 1024 generated
+parent pointers reaches the requested vector.  `orbitP14NormalizeEquiv` kept its old
+type and name, but was assembled by this generic theorem rather than by 1024 generated
 proof terms.
 
 The second stage keeps the same seven Parent 14 cocycles and composes their GAP maps

@@ -630,9 +630,6 @@ def relation_alignment_lines(source_type, stem, forward, result, child, exponent
     generator_preimages = [inverse[1 << index] for index in range(5)]
     layers = [f"sg32_{child}_L{index}" for index in range(1, 6)]
     lines = [
-        "-- The per-layer relation certificates require a larger kernel-reduction budget.",
-        "set_option maxHeartbeats 8000000",
-        "",
         f"def {stem}FromIndex (i : Fin 32) : {source_type} where",
         "  fst := ((i.val % 2 : ℕ) : ZMod 2)",
         "  snd := ⟨⟨i.val / 2, by omega⟩⟩",
@@ -650,6 +647,8 @@ def relation_alignment_lines(source_type, stem, forward, result, child, exponent
         rest = ", ".join(tail[1:])
         rest_list = f"[{rest}]" if rest else "[]"
         lines.extend([
+            "set_option maxHeartbeats 8000000 in",
+            "-- Kernel checks this layer's generator power and conjugation relations.",
             f"def {stem}Map{depth} : pcTower [{tower}] →* {source_type} :=",
             f"  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData {current} {rest_list})",
             f"    {stem}Map{depth + 1 if depth < 5 else 0} ({stem}FromIndex {generator_preimages[depth - 1]})",
@@ -658,6 +657,8 @@ def relation_alignment_lines(source_type, stem, forward, result, child, exponent
         ])
     rest = ", ".join(layers[1:])
     lines.extend([
+        "set_option maxHeartbeats 8000000 in",
+        "-- Kernel checks the outer generator power and conjugation relations.",
         f"def {stem}ToSource : PCGroup smallGroup_32_{child} →* {source_type} :=",
         f"  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData {layers[0]} [{rest}])",
         f"    {stem}Map2 ({stem}FromIndex {generator_preimages[0]}) (by decide +kernel)",
@@ -743,9 +744,6 @@ def relation_parent_alignment_lines(parent, exponents):
     source_type = f"CertifiedTableGroup parent{parent}Table"
     stem = f"parent{parent}Relation"
     lines = [
-        "-- The per-layer relation certificates require a larger kernel-reduction budget.",
-        "set_option maxHeartbeats 8000000",
-        "",
         f"def {stem}FromIndex (i : Fin 16) : {source_type} := ⟨i⟩",
         "",
         f"def {stem}Map0 : pcTower [] →* {source_type} where",
@@ -761,6 +759,8 @@ def relation_parent_alignment_lines(parent, exponents):
         tower = ", ".join(layers[depth - 1:])
         next_map = 0 if depth == 4 else depth + 1
         lines.extend([
+            "set_option maxHeartbeats 8000000 in",
+            "-- Kernel checks this layer's generator power and conjugation relations.",
             f"def {stem}Map{depth} : pcTower [{tower}] →* {source_type} :=",
             f"  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData {current} {rest_list})",
             f"    {stem}Map{next_map} ({stem}FromIndex {generator_preimages[depth - 1]})",
@@ -769,6 +769,8 @@ def relation_parent_alignment_lines(parent, exponents):
         ])
     rest = ", ".join(layers[1:])
     lines.extend([
+        "set_option maxHeartbeats 8000000 in",
+        "-- Kernel checks the outer generator power and conjugation relations.",
         f"def {stem}ToSource : PCGroup smallGroup_16_{parent} →* {source_type} :=",
         f"  CycExt.liftOfGeneratorRelations (D := pcTowerLayerData {layers[0]} [{rest}])",
         f"    {stem}Map2 ({stem}FromIndex {generator_preimages[0]}) (by decide +kernel)",
